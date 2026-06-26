@@ -193,6 +193,14 @@ class LandingpageRequest(BaseModel):
     language: str = "DE"
 
 
+class AnalyzeRequest(BaseModel):
+    content: str
+    content_type: str = "Text"
+    brand_id: str
+    model: str = "claude"
+    language: str = "DE"
+
+
 # ---------------------------------------------------------------------------
 # Brand endpoints
 # ---------------------------------------------------------------------------
@@ -532,6 +540,53 @@ async def generate_landingpage(req: LandingpageRequest):
 async def delete_history(item_id: str):
     await db.history.delete_one({"id": item_id})
     return {"ok": True}
+
+
+@api_router.post("/analyze/content")
+async def analyze_content(req: AnalyzeRequest):
+    brand = await _get_brand_or_404(req.brand_id)
+    ctx = _brand_context(brand, req.language)
+    lang = "Deutsch" if req.language == "DE" else "English"
+    system = (
+        "You are a strict brand guardian and marketing quality auditor. "
+        "You evaluate content against brand guidelines and marketing best practices. "
+        "Return strictly valid JSON and nothing else."
+    )
+    user = (
+        f"{ctx}\n\n"
+        f"Analyze the following {req.content_type} content for the brand above. Respond in {lang}.\n\n"
+        f"CONTENT TO ANALYZE:\n\"\"\"\n{req.content}\n\"\"\"\n\n"
+        "Perform two evaluations:\n"
+        "1) BRAND GUARDIAN: Check brand consistency. Provide checks for: 'Markenkonformität' (overall brand fit), "
+        "'Tonalität' (tone of voice match), 'Sprache & Wording' (language/wording match), "
+        "'Markenbegriffe & Slogan' (uses brand terms/slogan), 'Zielgruppen-Fit' (audience fit). "
+        "Each check has status one of: 'pass', 'warn', 'fail' and a short note.\n"
+        "2) MARKETING SCORE: An overall score 0-100, plus concrete improvement suggestions (e.g. 'Headline stärker', "
+        "'CTA fehlt', 'Bild emotionaler', 'mehr Kontrast', 'SEO verbessern') and a list of strengths.\n\n"
+        'Return ONLY this JSON shape: {"score": 85, "verdict": "one-sentence summary", '
+        '"tone_match": 90, "brand_match": 88, '
+        '"checks": [{"label": "...", "status": "pass", "note": "..."}], '
+        '"improvements": ["...", "..."], "strengths": ["...", "..."]}'
+    )
+    raw = await llm_text(req.model, system, user)
+    data = _extract_json(raw) or {}
+    result = {
+        "id": str(uuid.uuid4()),
+        "type": "analysis",
+        "content_type": req.content_type,
+        "brand_id": req.brand_id,
+        "score": data.get("score", 0),
+        "verdict": data.get("verdict", ""),
+        "tone_match": data.get("tone_match", 0),
+        "brand_match": data.get("brand_match", 0),
+        "checks": data.get("checks", []),
+        "improvements": data.get("improvements", []),
+        "strengths": data.get("strengths", []),
+        "created_at": _now_iso(),
+    }
+    await db.history.insert_one({**result})
+    result.pop("_id", None)
+    return result
 
 
 # ---------------------------------------------------------------------------

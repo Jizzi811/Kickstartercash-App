@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { FolderDown, Download, Trash2, FileText, FileJson, Image as ImageIcon, Share2, PenLine, Zap, LayoutTemplate, CalendarDays } from "lucide-react";
+import { FolderDown, Download, Trash2, FileText, FileJson, Image as ImageIcon, Share2, PenLine, Zap, LayoutTemplate, CalendarDays, ShieldCheck } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 import { PageTitle } from "@/components/PageTitle";
 
@@ -12,6 +12,7 @@ const typeMeta = {
   image: { icon: ImageIcon, label: "Bild" },
   landingpage: { icon: LayoutTemplate, label: "Landingpage" },
   calendar: { icon: CalendarDays, label: "Kalender" },
+  analysis: { icon: ShieldCheck, label: "Analyse" },
 };
 
 function itemToText(it) {
@@ -25,6 +26,9 @@ function itemToText(it) {
   if (it.type === "landingpage") {
     const c = it.content || {};
     return `${c.headline}\n${c.subtitle}\n\nCTA: ${c.cta}`;
+  }
+  if (it.type === "analysis") {
+    return `Score: ${it.score}/100\n${it.verdict}\n\nVerbesserungen:\n${(it.improvements || []).map((x) => "- " + x).join("\n")}`;
   }
   return JSON.stringify(it, null, 2);
 }
@@ -61,14 +65,14 @@ export default function ExportCenter() {
     a.href = it.image; a.download = `image-${it.id}.png`; a.click();
   };
 
-  const title = (it) => it.topic || it.prompt || (it.content?.headline) || it.type;
+  const title = (it) => it.topic || it.prompt || it.content?.headline || it.verdict || it.type;
 
   return (
     <div>
       <PageTitle title={t("export_title")} subtitle={t("export_sub")} icon={FolderDown} />
 
       <div className="flex flex-wrap gap-2 mb-6">
-        {["all", "campaign", "social", "copy", "image", "landingpage", "calendar"].map((f) => (
+        {["all", "campaign", "social", "copy", "image", "landingpage", "calendar", "analysis"].map((f) => (
           <button key={f} data-testid={`export-filter-${f}`} onClick={() => setFilter(f)}
             className={`px-3.5 py-1.5 rounded-sm text-sm border transition-all ${filter === f ? "bg-[#D4AF37] text-black border-[#D4AF37] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#D4AF37]/40"}`}>
             {f === "all" ? t("filter_all") : (typeMeta[f]?.label || f)}

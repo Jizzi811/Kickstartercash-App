@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Palette, Share2, ImageIcon, PenLine, BookOpen, ArrowRight, Sparkles, Zap, LayoutTemplate, CalendarDays, FolderDown } from "lucide-react";
+import { Palette, Share2, ImageIcon, PenLine, BookOpen, ArrowRight, Sparkles, Zap, LayoutTemplate, CalendarDays, FolderDown, ShieldCheck } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { BANNER_URL } from "@/i18n";
 
@@ -13,8 +13,9 @@ const modules = [
   { to: "/copy", icon: PenLine, titleKey: "nav_copy", descKey: "mod_copy_desc", n: "04" },
   { to: "/landing", icon: LayoutTemplate, titleKey: "nav_landing", descKey: "mod_landing_desc", n: "05" },
   { to: "/calendar", icon: CalendarDays, titleKey: "nav_calendar", descKey: "mod_calendar_desc", n: "06" },
-  { to: "/prompts", icon: BookOpen, titleKey: "nav_prompts", descKey: "mod_prompts_desc", n: "07" },
-  { to: "/export", icon: FolderDown, titleKey: "nav_export", descKey: "mod_export_desc", n: "08" },
+  { to: "/guardian", icon: ShieldCheck, titleKey: "nav_guardian", descKey: "mod_guardian_desc", n: "07" },
+  { to: "/prompts", icon: BookOpen, titleKey: "nav_prompts", descKey: "mod_prompts_desc", n: "08" },
+  { to: "/export", icon: FolderDown, titleKey: "nav_export", descKey: "mod_export_desc", n: "09" },
 ];
 
 export default function Dashboard() {

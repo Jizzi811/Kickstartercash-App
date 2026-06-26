@@ -11,6 +11,7 @@ import ImageGenerator from "@/pages/ImageGenerator";
 import Copywriter from "@/pages/Copywriter";
 import Landingpage from "@/pages/Landingpage";
 import ContentCalendar from "@/pages/ContentCalendar";
+import Guardian from "@/pages/Guardian";
 import PromptLibrary from "@/pages/PromptLibrary";
 import ExportCenter from "@/pages/ExportCenter";
 
@@ -29,6 +30,7 @@ function App() {
               <Route path="/copy" element={<Copywriter />} />
               <Route path="/landing" element={<Landingpage />} />
               <Route path="/calendar" element={<ContentCalendar />} />
+              <Route path="/guardian" element={<Guardian />} />
               <Route path="/prompts" element={<PromptLibrary />} />
               <Route path="/export" element={<ExportCenter />} />
             </Routes>
