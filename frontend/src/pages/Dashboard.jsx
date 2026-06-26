@@ -1,12 +1,13 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Palette, Share2, ImageIcon, PenLine, BookOpen, ArrowRight, Sparkles, Zap, LayoutTemplate, CalendarDays, FolderDown, ShieldCheck } from "lucide-react";
+import { Palette, Share2, ImageIcon, PenLine, BookOpen, ArrowRight, Sparkles, Zap, LayoutTemplate, CalendarDays, FolderDown, ShieldCheck, Rocket } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { BANNER_URL } from "@/i18n";
 
 const modules = [
   { to: "/campaign", icon: Zap, titleKey: "nav_campaign", descKey: "mod_campaign_desc", n: "★" },
+  { to: "/funnel", icon: Rocket, titleKey: "nav_funnel", descKey: "mod_funnel_desc", n: "★" },
   { to: "/brand", icon: Palette, titleKey: "nav_brand", descKey: "mod_brand_desc", n: "01" },
   { to: "/social", icon: Share2, titleKey: "nav_social", descKey: "mod_social_desc", n: "02" },
   { to: "/image", icon: ImageIcon, titleKey: "nav_image", descKey: "mod_image_desc", n: "03" },

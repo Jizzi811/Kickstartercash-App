@@ -9,13 +9,15 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+import resend
+import funnel as funnel_renderer
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -24,6 +26,10 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 EMERGENT_LLM_KEY = os.environ['EMERGENT_LLM_KEY']
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
+if RESEND_API_KEY:
+    resend.api_key = RESEND_API_KEY
 
 app = FastAPI(title="Kickstarter Content Maschine")
 api_router = APIRouter(prefix="/api")
@@ -199,6 +205,51 @@ class AnalyzeRequest(BaseModel):
     brand_id: str
     model: str = "claude"
     language: str = "DE"
+
+
+class FunnelConfig(BaseModel):
+    id: str = Field(default_factory=lambda: uuid.uuid4().hex[:10])
+    reflink: str
+    name: str
+    phone: str = ""
+    whatsapp: str = ""
+    email: str
+    role: str = ""
+    city: str = ""
+    telegram: str = ""
+    instagram: str = ""
+    cta_text: str = ""
+    impressum_url: str = ""
+    datenschutz_url: str = ""
+    countdown_enabled: bool = False
+    webinar_date: str = ""
+    created_at: str = Field(default_factory=_now_iso)
+
+
+class FunnelCreate(BaseModel):
+    reflink: str
+    name: str
+    phone: str = ""
+    whatsapp: str = ""
+    email: str
+    role: str = ""
+    city: str = ""
+    telegram: str = ""
+    instagram: str = ""
+    cta_text: str = ""
+    impressum_url: str = ""
+    datenschutz_url: str = ""
+    countdown_enabled: bool = False
+    webinar_date: str = ""
+
+
+class FunnelLead(BaseModel):
+    vorname: str = ""
+    nachname: str = ""
+    email: str = ""
+    telefon: str = ""
+    land: str = ""
+    nachricht: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -596,6 +647,109 @@ async def analyze_content(req: AnalyzeRequest):
 async def get_history(type: Optional[str] = None, limit: int = 50):
     query = {"type": type} if type else {}
     docs = await db.history.find(query, {"_id": 0}).sort("created_at", -1).to_list(limit)
+    return docs
+
+
+# ---------------------------------------------------------------------------
+# Funnel (member sales funnel in KickstarterCash design)
+# ---------------------------------------------------------------------------
+@api_router.post("/funnel", response_model=FunnelConfig)
+async def create_funnel(payload: FunnelCreate):
+    cfg = FunnelConfig(**payload.model_dump())
+    await db.funnels.insert_one(cfg.model_dump())
+    return cfg
+
+
+@api_router.get("/funnel", response_model=List[FunnelConfig])
+async def list_funnels():
+    docs = await db.funnels.find({}, {"_id": 0}).sort("created_at", -1).to_list(200)
+    return docs
+
+
+@api_router.get("/funnel/{funnel_id}", response_model=FunnelConfig)
+async def get_funnel(funnel_id: str):
+    doc = await db.funnels.find_one({"id": funnel_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Funnel not found")
+    return doc
+
+
+@api_router.put("/funnel/{funnel_id}", response_model=FunnelConfig)
+async def update_funnel(funnel_id: str, payload: FunnelCreate):
+    doc = await db.funnels.find_one({"id": funnel_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Funnel not found")
+    update = payload.model_dump()
+    await db.funnels.update_one({"id": funnel_id}, {"$set": update})
+    doc.update(update)
+    return doc
+
+
+@api_router.delete("/funnel/{funnel_id}")
+async def delete_funnel(funnel_id: str):
+    await db.funnels.delete_one({"id": funnel_id})
+    return {"ok": True}
+
+
+@api_router.get("/funnel/{funnel_id}/page")
+async def funnel_page(funnel_id: str, request: Request):
+    doc = await db.funnels.find_one({"id": funnel_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Funnel not found")
+    lead_url = f"/api/funnel/{funnel_id}/lead"
+    html_out = funnel_renderer.render_funnel(doc, lead_url)
+    return Response(content=html_out, media_type="text/html")
+
+
+@api_router.post("/funnel/{funnel_id}/lead")
+async def funnel_lead(funnel_id: str, lead: FunnelLead):
+    cfg = await db.funnels.find_one({"id": funnel_id}, {"_id": 0})
+    if not cfg:
+        raise HTTPException(status_code=404, detail="Funnel not found")
+
+    record = {
+        "id": str(uuid.uuid4()),
+        "funnel_id": funnel_id,
+        **lead.model_dump(),
+        "created_at": _now_iso(),
+    }
+    await db.funnel_leads.insert_one({**record})
+
+    advisor_email = cfg.get("email")
+    email_sent = False
+    if RESEND_API_KEY and advisor_email:
+        name = f"{lead.vorname} {lead.nachname}".strip()
+        html_body = (
+            f"<h2 style='font-family:sans-serif'>Neue Funnel-Anfrage</h2>"
+            f"<table style='font-family:sans-serif;font-size:15px'>"
+            f"<tr><td><b>Name:</b></td><td>{name}</td></tr>"
+            f"<tr><td><b>E-Mail:</b></td><td>{lead.email}</td></tr>"
+            f"<tr><td><b>Telefon/WhatsApp:</b></td><td>{lead.telefon}</td></tr>"
+            f"<tr><td><b>Land:</b></td><td>{lead.land}</td></tr>"
+            f"<tr><td><b>Nachricht:</b></td><td>{lead.nachricht}</td></tr>"
+            f"</table>"
+            f"<p style='font-family:sans-serif;color:#888'>Gesendet über deinen KickstarterCash Funnel.</p>"
+        )
+        params = {
+            "from": SENDER_EMAIL,
+            "to": [advisor_email],
+            "reply_to": lead.email or SENDER_EMAIL,
+            "subject": f"🚀 Neue Funnel-Anfrage von {name or lead.email}",
+            "html": html_body,
+        }
+        try:
+            await asyncio.to_thread(resend.Emails.send, params)
+            email_sent = True
+        except Exception as e:
+            logger.error(f"Funnel lead email failed: {e}")
+
+    record.pop("_id", None)
+    return {"ok": True, "email_sent": email_sent}
+
+
+@api_router.get("/funnel/{funnel_id}/leads")
+async def funnel_leads(funnel_id: str):
+    docs = await db.funnel_leads.find({"funnel_id": funnel_id}, {"_id": 0}).sort("created_at", -1).to_list(500)
     return docs
 
 
