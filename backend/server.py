@@ -3,6 +3,7 @@ import re
 import json
 import uuid
 import base64
+import asyncio
 import logging
 from pathlib import Path
 from datetime import datetime, timezone
@@ -166,6 +167,32 @@ class PromptOptimizeRequest(BaseModel):
     language: str = "DE"
 
 
+class CampaignRequest(BaseModel):
+    topic: str
+    platforms: List[str] = ["Instagram", "Facebook", "LinkedIn"]
+    brand_id: str
+    model: str = "claude"
+    language: str = "DE"
+    apply_logo: bool = False
+    image_style: str = "Luxuriös"
+
+
+class CalendarRequest(BaseModel):
+    topic: str
+    days: int = 30
+    platforms: List[str] = ["Instagram", "Facebook", "LinkedIn"]
+    brand_id: str
+    model: str = "claude"
+    language: str = "DE"
+
+
+class LandingpageRequest(BaseModel):
+    topic: str
+    brand_id: str
+    model: str = "claude"
+    language: str = "DE"
+
+
 # ---------------------------------------------------------------------------
 # Brand endpoints
 # ---------------------------------------------------------------------------
@@ -250,6 +277,31 @@ async def _get_brand_or_404(brand_id: str) -> dict:
     return doc
 
 
+def _build_image_prompt(brand: dict, subject: str, style: str) -> str:
+    brand_line = (
+        f"Apply the brand identity of '{brand.get('name')}': dominant colors {brand.get('primary_color')} (gold) "
+        f"and {brand.get('secondary_color')} (deep black), {brand.get('image_style')}. "
+    )
+    return (
+        f"Create a premium, high-resolution marketing image. Visual style: {style}. {brand_line}"
+        f"Subject: {subject}. The result must look like a professional advertising asset, "
+        "elegant composition, dramatic lighting, no spelling errors in any text."
+    )
+
+
+def _fetch_logo_b64(brand: dict) -> Optional[str]:
+    if not brand.get("logo_url"):
+        return None
+    try:
+        import requests
+        r = requests.get(brand["logo_url"], timeout=15)
+        if r.ok:
+            return base64.b64encode(r.content).decode("utf-8")
+    except Exception as e:
+        logger.warning(f"Logo fetch failed: {e}")
+    return None
+
+
 @api_router.post("/generate/social")
 async def generate_social(req: SocialRequest):
     brand = await _get_brand_or_404(req.brand_id)
@@ -319,26 +371,10 @@ async def generate_copy(req: CopyRequest):
 @api_router.post("/generate/image")
 async def generate_image(req: ImageRequest):
     brand = await _get_brand_or_404(req.brand_id)
-    style_line = f"Visual style: {req.style}. "
-    brand_line = (
-        f"Apply the brand identity of '{brand.get('name')}': dominant colors {brand.get('primary_color')} (gold) "
-        f"and {brand.get('secondary_color')} (deep black), {brand.get('image_style')}. "
-    )
-    full_prompt = (
-        f"Create a premium, high-resolution marketing image. {style_line}{brand_line}"
-        f"Subject: {req.prompt}. The result must look like a professional advertising asset, "
-        "elegant composition, dramatic lighting, no spelling errors in any text."
-    )
-    reference_b64 = None
-    if req.apply_logo and brand.get("logo_url"):
-        try:
-            import requests
-            r = requests.get(brand["logo_url"], timeout=15)
-            if r.ok:
-                reference_b64 = base64.b64encode(r.content).decode("utf-8")
-                full_prompt += " Tastefully integrate the provided brand logo into the composition."
-        except Exception as e:
-            logger.warning(f"Logo fetch failed: {e}")
+    full_prompt = _build_image_prompt(brand, req.prompt, req.style)
+    reference_b64 = _fetch_logo_b64(brand) if req.apply_logo else None
+    if reference_b64:
+        full_prompt += " Tastefully integrate the provided brand logo into the composition."
 
     try:
         image_url = await llm_image(full_prompt, reference_b64)
@@ -373,6 +409,129 @@ async def optimize_prompt(req: PromptOptimizeRequest):
     )
     raw = await llm_text(req.model, system, user)
     return {"optimized": raw.strip()}
+
+
+@api_router.post("/generate/campaign")
+async def generate_campaign(req: CampaignRequest):
+    brand = await _get_brand_or_404(req.brand_id)
+    ctx = _brand_context(brand, req.language)
+    platforms = ", ".join(req.platforms)
+
+    social_user = (
+        f"{ctx}\n\nCreate platform-optimized social media posts about: '{req.topic}'.\n"
+        f"Target platforms: {platforms}.\n"
+        "For EACH platform return an object with keys: platform, caption, hashtags (array without #), cta, image_idea.\n"
+        'Return ONLY this JSON: {"posts": [ {"platform": "...", "caption": "...", "hashtags": ["..."], "cta": "...", "image_idea": "..."} ]}'
+    )
+    copy_user = (
+        f"{ctx}\n\nWrite a high-converting short ad / sales copy about: '{req.topic}'.\n"
+        'Return ONLY this JSON: {"title": "punchy headline", "body": "the ad copy with \\n line breaks", "variants": ["1-2 alternative hooks"]}'
+    )
+    json_system = "You return strictly valid JSON and nothing else."
+    image_prompt = _build_image_prompt(brand, req.topic, req.image_style)
+    reference_b64 = _fetch_logo_b64(brand) if req.apply_logo else None
+    if reference_b64:
+        image_prompt += " Tastefully integrate the provided brand logo into the composition."
+
+    social_raw, copy_raw, image_res = await asyncio.gather(
+        llm_text(req.model, json_system, social_user),
+        llm_text(req.model, json_system, copy_user),
+        llm_image(image_prompt, reference_b64),
+        return_exceptions=True,
+    )
+
+    posts = []
+    if isinstance(social_raw, str):
+        posts = (_extract_json(social_raw) or {}).get("posts", [])
+    copy_data = {"title": "", "body": "", "variants": []}
+    if isinstance(copy_raw, str):
+        copy_data = _extract_json(copy_raw) or copy_data
+    image_url = image_res if isinstance(image_res, str) else None
+    if isinstance(image_res, Exception):
+        logger.error(f"Campaign image error: {image_res}")
+
+    result = {
+        "id": str(uuid.uuid4()),
+        "type": "campaign",
+        "topic": req.topic,
+        "brand_id": req.brand_id,
+        "posts": posts,
+        "copy": copy_data,
+        "image": image_url,
+        "created_at": _now_iso(),
+    }
+    await db.history.insert_one({**result})
+    result.pop("_id", None)
+    return result
+
+
+@api_router.post("/generate/calendar")
+async def generate_calendar(req: CalendarRequest):
+    brand = await _get_brand_or_404(req.brand_id)
+    ctx = _brand_context(brand, req.language)
+    days = req.days if req.days in (30, 60, 90) else 30
+    count = {30: 15, 60: 22, 90: 30}[days]
+    platforms = ", ".join(req.platforms)
+    system = "You are a senior content strategist. Return strictly valid JSON and nothing else."
+    user = (
+        f"{ctx}\n\nCreate a {days}-day content calendar about: '{req.topic}'.\n"
+        f"Distribute {count} posts evenly across the {days} days using these platforms: {platforms}.\n"
+        "Each entry must have: day (integer 1..{days}), platform, title (short content idea), "
+        "caption (1-2 sentences), hashtags (array without #), post_time (e.g. '18:00').\n"
+        f'Return ONLY this JSON: {{"items": [ {{"day": 1, "platform": "...", "title": "...", '
+        '"caption": "...", "hashtags": ["..."], "post_time": "..."} ]}'
+    )
+    raw = await llm_text(req.model, system, user)
+    data = _extract_json(raw) or {"items": []}
+    items = sorted(data.get("items", []), key=lambda x: x.get("day", 0))
+    result = {
+        "id": str(uuid.uuid4()),
+        "type": "calendar",
+        "topic": req.topic,
+        "days": days,
+        "brand_id": req.brand_id,
+        "items": items,
+        "created_at": _now_iso(),
+    }
+    await db.history.insert_one({**result})
+    result.pop("_id", None)
+    return result
+
+
+@api_router.post("/generate/landingpage")
+async def generate_landingpage(req: LandingpageRequest):
+    brand = await _get_brand_or_404(req.brand_id)
+    ctx = _brand_context(brand, req.language)
+    system = "You are an elite conversion copywriter and web strategist. Return strictly valid JSON and nothing else."
+    user = (
+        f"{ctx}\n\nCreate a complete high-converting landing page for: '{req.topic}'.\n"
+        "Return ONLY this JSON shape:\n"
+        '{"headline": "...", "subtitle": "...", "cta": "...", '
+        '"benefits": [{"title": "...", "text": "..."}], '
+        '"testimonials": [{"name": "...", "text": "..."}], '
+        '"faq": [{"q": "...", "a": "..."}], '
+        '"pricing": {"name": "...", "price": "...", "features": ["..."], "cta": "..."}, '
+        '"footer": "...", "seo": {"title": "...", "description": "...", "keywords": ["..."]}}'
+    )
+    raw = await llm_text(req.model, system, user)
+    data = _extract_json(raw) or {}
+    result = {
+        "id": str(uuid.uuid4()),
+        "type": "landingpage",
+        "topic": req.topic,
+        "brand_id": req.brand_id,
+        "content": data,
+        "created_at": _now_iso(),
+    }
+    await db.history.insert_one({**result})
+    result.pop("_id", None)
+    return result
+
+
+@api_router.delete("/history/{item_id}")
+async def delete_history(item_id: str):
+    await db.history.delete_one({"id": item_id})
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------------------

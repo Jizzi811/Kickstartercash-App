@@ -1,16 +1,20 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Palette, Share2, ImageIcon, PenLine, BookOpen, ArrowRight, Sparkles } from "lucide-react";
+import { Palette, Share2, ImageIcon, PenLine, BookOpen, ArrowRight, Sparkles, Zap, LayoutTemplate, CalendarDays, FolderDown } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { BANNER_URL } from "@/i18n";
 
 const modules = [
+  { to: "/campaign", icon: Zap, titleKey: "nav_campaign", descKey: "mod_campaign_desc", n: "★" },
   { to: "/brand", icon: Palette, titleKey: "nav_brand", descKey: "mod_brand_desc", n: "01" },
   { to: "/social", icon: Share2, titleKey: "nav_social", descKey: "mod_social_desc", n: "02" },
   { to: "/image", icon: ImageIcon, titleKey: "nav_image", descKey: "mod_image_desc", n: "03" },
   { to: "/copy", icon: PenLine, titleKey: "nav_copy", descKey: "mod_copy_desc", n: "04" },
-  { to: "/prompts", icon: BookOpen, titleKey: "nav_prompts", descKey: "mod_prompts_desc", n: "05" },
+  { to: "/landing", icon: LayoutTemplate, titleKey: "nav_landing", descKey: "mod_landing_desc", n: "05" },
+  { to: "/calendar", icon: CalendarDays, titleKey: "nav_calendar", descKey: "mod_calendar_desc", n: "06" },
+  { to: "/prompts", icon: BookOpen, titleKey: "nav_prompts", descKey: "mod_prompts_desc", n: "07" },
+  { to: "/export", icon: FolderDown, titleKey: "nav_export", descKey: "mod_export_desc", n: "08" },
 ];
 
 export default function Dashboard() {
@@ -40,10 +44,10 @@ export default function Dashboard() {
           <div className="mt-7 flex items-center gap-3">
             <button
               data-testid="hero-start-social"
-              onClick={() => navigate("/social")}
+              onClick={() => navigate("/campaign")}
               className="inline-flex items-center gap-2 bg-[#D4AF37] text-black px-6 py-3 rounded-sm font-bold tracking-wide hover:bg-[#F3E5AB] transition-colors"
             >
-              {t("nav_social")} <ArrowRight size={16} />
+              {t("nav_campaign")} <ArrowRight size={16} />
             </button>
             <span className="text-sm text-zinc-500">{t("activeBrand")}: <span className="text-[#D4AF37]">{activeBrand?.name}</span></span>
           </div>
