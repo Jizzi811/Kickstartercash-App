@@ -19,23 +19,23 @@ Web-App (nicht mobil), DE/EN umschaltbar, keine Auth.
 - Endpoints: /api/brands (CRUD), /api/generate/{social,copy,image,optimize-prompt}, /api/prompts, /api/history.
 
 ## Implemented (2026-06-26)
-- Dashboard mit Hero + 5 Modul-Karten
-- Modul 1 Brand Designer: Marken CRUD (Logo, Farben, Schriften, Tonalität, Bildstil), aktive Marke wählbar
-- Modul 2 Social Media Maschine: Multi-Plattform Posts (IG/FB/TikTok/X/LinkedIn/Pinterest/Threads) mit Hashtags/CTA/Bildidee
-- Modul 4 KI Bildgenerator: 13 Stil-Vorlagen, optionale Logo-Integration, Download
-- Modul 7 KI Copywriter: 10 Formate, Titel/Body/Varianten, Copy
-- Modul 10 Prompt Bibliothek: 20 Prompts, 10 Kategorien, Suche, Copy (DE/EN)
+- Dashboard mit Hero + 9 Modul-Karten (Hero-CTA → Ein-Klick-Kampagne)
+- Modul 1 Brand Designer: Marken CRUD
+- Modul 2 Social Media Maschine: Multi-Plattform Posts
+- Modul 4 KI Bildgenerator: 13 Stil-Vorlagen + Logo-Integration
+- Modul 7 KI Copywriter: 10 Formate
+- Modul 10 Prompt Bibliothek: 20 Prompts, 10 Kategorien, Suche
+- NEU Ein-Klick-Kampagne (/campaign): EIN Thema → Social-Posts + Werbetext + Markenbild parallel (asyncio.gather)
+- NEU Landingpage-Generator (/landing): Headline/Benefits/Testimonials/FAQ/Pricing/SEO + HTML-Export
+- NEU Content-Kalender (/calendar): 30/60/90-Tage-Plan mit Texten/Hashtags/Posting-Zeiten
+- NEU Export-Center (/export): Historie aller Inhalte, Filter, Export TXT/JSON/PNG, Löschen
 - DE/EN Sprachumschalter, Modell-Umschalter (Claude/GPT), aktive-Marke-Selektor
-
-## Known Issue / Blocker
-- EMERGENT_LLM_KEY Budget = 0.0 -> Text-/Bildgenerierung schlägt fehl bis Guthaben aufgeladen ist.
-  (Prompt-Bibliothek + Brand Designer funktionieren ohne LLM.)
+- Verifiziert: iteration_1 (5 Module) + iteration_2 (4 neue Module) je 100%
 
 ## Backlog (P1/P2)
-- P1: Content-Kalender (Modul 9), Landingpage-Generator (Modul 5), Export-Center (Modul 17)
-- P1: Generierungs-Historie UI (Backend /api/history existiert bereits)
-- P2: Funnel-Generator, Video-Creator, Markenwächter, Marketing-Score, Ideenmaschine
-- P2: Auth/Mitgliederbereich, Speichern/Favoriten von Inhalten
+- P1: Generierungs-Historie in Module integrieren, Favoriten/Speichern
+- P2: Funnel-Generator, Video-Creator, Markenwächter, Marketing-Score, Ideenmaschine, Thumbnail Creator, Werbekampagnen-Generator, Prompt-Optimierer (Backend /api/generate/optimize-prompt existiert), Markenbibliothek-Erweiterung
+- P2: Auth/Mitgliederbereich
 
 ## Next Tasks
 1. User: Universal Key aufladen, dann Text/Bild-Generierung via Testing-Agent verifizieren
