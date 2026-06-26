@@ -29,8 +29,9 @@ Web-App (nicht mobil), DE/EN umschaltbar, keine Auth.
 - NEU Landingpage-Generator (/landing): Headline/Benefits/Testimonials/FAQ/Pricing/SEO + HTML-Export
 - NEU Content-Kalender (/calendar): 30/60/90-Tage-Plan mit Texten/Hashtags/Posting-Zeiten
 - NEU Export-Center (/export): Historie aller Inhalte, Filter, Export TXT/JSON/PNG, Löschen
+- NEU KI-Markenwächter & Marketing-Score (/guardian): analysiert beliebigen Text gegen die aktive Marke → Score (0-100), Sterne, Markenkonformität/Tonalität-Balken, Marken-Checks (pass/warn/fail), Verbesserungen & Stärken
 - DE/EN Sprachumschalter, Modell-Umschalter (Claude/GPT), aktive-Marke-Selektor
-- Verifiziert: iteration_1 (5 Module) + iteration_2 (4 neue Module) je 100%
+- Verifiziert: iteration_1 (5 Module), iteration_2 (4 Module), iteration_3 (Markenwächter) je 100%
 
 ## Backlog (P1/P2)
 - P1: Generierungs-Historie in Module integrieren, Favoriten/Speichern
