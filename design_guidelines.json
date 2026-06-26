@@ -1,0 +1,133 @@
+{
+  "project": {
+    "app_name": "Kickstarter Content Maschine",
+    "brand_name": "KickstarterCash.club",
+    "theme": "dark",
+    "archetype": "5 (Luxury)",
+    "tone": "Premium, Exclusive, Cinematic, High-contrast",
+    "default_language": "DE",
+    "supported_languages": ["DE", "EN"],
+    "tagline": "Exclusivity starts with your membership"
+  },
+  "colors": {
+    "background": {
+      "base": "#050505",
+      "surface": "#0A0A0A",
+      "surface_elevated": "#121212",
+      "glass": "rgba(0, 0, 0, 0.6)"
+    },
+    "primary": {
+      "base": "#D4AF37",
+      "hover": "#F3E5AB",
+      "glow": "rgba(212, 175, 55, 0.4)"
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#A1A1AA",
+      "muted": "#71717A",
+      "inverse": "#000000"
+    },
+    "border": {
+      "subtle": "rgba(255, 255, 255, 0.1)",
+      "accent": "rgba(212, 175, 55, 0.2)",
+      "focus": "#D4AF37"
+    }
+  },
+  "typography": {
+    "font_family": {
+      "headings": "'Playfair Display', serif",
+      "body": "'Manrope', sans-serif",
+      "mono": "'JetBrains Mono', monospace"
+    },
+    "scales": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tight font-light",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight",
+      "h3": "text-xl sm:text-2xl",
+      "body": "text-base leading-relaxed",
+      "labels": "text-xs tracking-[0.2em] uppercase"
+    }
+  },
+  "layout_and_spacing": {
+    "spacing_scale": "Generous (use p-6 to p-12 for containers, gap-6 to gap-8 for grids)",
+    "grid_strategy": "Control Room Grid (Dense but readable). Use grid-cols-1 md:grid-cols-3 lg:grid-cols-4 for the dashboard module cards.",
+    "border_radius": "Sharp to slight curves (rounded-none or rounded-sm/md). Maximum 6px for a precise, architectural luxury feel.",
+    "surfaces": {
+      "header": "Crystal Glass: bg-black/60 backdrop-blur-xl border-b border-white/10",
+      "cards": "Solid background (#0A0A0A) with 1px border-white/5. On hover: border-[#D4AF37]/50 and subtle shadow-[0_0_15px_rgba(212,175,55,0.15)]."
+    }
+  },
+  "components_instructions": {
+    "buttons": {
+      "primary": "bg-[#D4AF37] text-black hover:bg-[#F3E5AB] font-bold tracking-wide transition-all duration-300",
+      "outline": "border border-[#D4AF37]/50 text-[#D4AF37] hover:bg-[#D4AF37]/10"
+    },
+    "forms": "Use Shadcn inputs. Background bg-black/40, border border-white/10, focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37].",
+    "navigation": "Sticky top header with glassmorphism. Left: Logo. Center/Right: Key nav links. Far Right: DE/EN toggle and profile CTA.",
+    "language_toggle": "Simple, elegant text toggle (DE | EN) with active state in gold (#D4AF37).",
+    "testing": "All interactive elements MUST include data-testid attribute (e.g., data-testid='generate-copy-btn')."
+  },
+  "modules": [
+    {
+      "id": "dashboard",
+      "name": "Dashboard",
+      "layout": "Grid of feature cards with deep black backgrounds, metallic gold hover borders, and glowing phosphor icons."
+    },
+    {
+      "id": "brand_designer",
+      "name": "Modul 1: Brand Designer",
+      "features": "Form to store logo, colors, fonts, buttons, image style."
+    },
+    {
+      "id": "social_media_maschine",
+      "name": "Modul 2: Social Media Maschine",
+      "features": "Single prompt input generating consistent posts for IG, FB, TikTok, X, LinkedIn, Pinterest, Threads with emojis, hashtags, CTAs, image suggestions."
+    },
+    {
+      "id": "ki_bildgenerator",
+      "name": "Modul 4: KI Bildgenerator",
+      "features": "Prompt input with luxury style templates (luxuriös, modern, minimalistisch, Business, Premium, Gold, Schwarz, Neon, Corporate, Cartoon, Comic, Anime, Futuristisch). Grid output."
+    },
+    {
+      "id": "ki_copywriter",
+      "name": "Modul 7: KI Copywriter",
+      "features": "Format selection (sales text, product description, Amazon, Etsy, Shopify, newsletter, blog, TikTok hook, YouTube description). Rich text output card with copy/export."
+    },
+    {
+      "id": "prompt_bibliothek",
+      "name": "Modul 10: Prompt Bibliothek",
+      "features": "Categorized list/grid (Marketing, Sales, Websites, AI Images, Video, SEO, Branding, Email, Chatbots, Funnels) with search functionality."
+    }
+  ],
+  "media": {
+    "icons": "Use @phosphor-icons/react (Duotone weight for high-end feel).",
+    "brand_assets": {
+      "logo_winged_kt": "https://customer-assets.emergentagent.com/job_5234ef58-250d-4475-b61a-24b76051aa69/artifacts/nwxii717_bloom-generated-1782456245045.png",
+      "banner": "https://customer-assets.emergentagent.com/job_5234ef58-250d-4475-b61a-24b76051aa69/artifacts/8vt6lvfl_bloom-generated-1782369970582%20-%20Kopie.png"
+    },
+    "backgrounds": [
+      {
+        "url": "https://images.unsplash.com/photo-1526495124232-a04e1849168c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzOTB8MHwxfHNlYXJjaHwyfHxkdWJhaSUyMHNreWxpbmUlMjBuaWdodHxlbnwwfHx8fDE3ODI1MDA0OTN8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Dubai skyline night - use for auth or hero background with heavy black gradient overlay (bg-black/80)."
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1513346940221-6f673d962e97?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAxODF8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGdvbGQlMjBsaWdodCUyMHRyYWlsc3xlbnwwfHx8fDE3ODI1MDA0OTd8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Abstract gold light trails - use sparingly as atmospheric texture behind key sections."
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1585314062340-f1a5a7c9328d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjd8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGJsYWNrJTIwbHV4dXJ5JTIwdGV4dHVyZXxlbnwwfHx8fDE3ODI1MDA1MDJ8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Dark textured luxury wall - use as base page background if solid color is too flat."
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Install required dependencies: yarn add @phosphor-icons/react",
+    "Use Tailwind CSS purely. When using Shadcn, override styles to match the 'Luxury Dark Mode' theme.",
+    "Never use pure white backgrounds. Everything must be dark theme native.",
+    "Implement the 'Crystal Glass' strategy for the header: sticky nav with heavy blur and sharp 1px border.",
+    "Use the exact media URLs provided under the 'media' key. Do not invent or use placeholders.",
+    "Apply 'data-testid' to all buttons, links, and forms.",
+    "Include a prominent DE/EN toggle in the navigation.",
+    "For the output cards in Social Media Maschine and KI Copywriter, include clear 'Copy' and 'Export' buttons.",
+    "Keep typography high-contrast. Use 'Playfair Display' for headings to exude luxury, and 'Manrope' for the UI body text to ensure modern SaaS readability."
+  ]
+}
