@@ -1,0 +1,34 @@
+{
+  "summary": "Verified Gemini 2.5 Flash integration end-to-end (backend + UI) plus GPT-5.2 regression. All 4 backend pytest tests pass and all 5 UI flows succeed - no 'Etwas ist schiefgelaufen' anywhere.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "verification_details": {
+    "backend_pytest": "4/4 pass in 48s - test_copy_gemini, test_landingpage_gemini, test_social_gemini, test_copy_gpt_regression",
+    "model_dropdown": "model-trigger reveals all three options: model-gpt (GPT-5.2), model-gemini (Gemini 2.5 Flash), model-claude (Claude Sonnet 4.5). Header label correctly switches: default 'GPT-5.2' -> 'Gemini 2.5' after selecting Gemini.",
+    "new_brand_created": "TEST_Gemini_FE_60553 via brand-new-btn/brand-save-btn, set active via active-brand-trigger -> brand-option-<id>",
+    "gemini_copy_ui": "POST /api/generate/copy {model:'gemini'} -> 200; copy-result rendered (1716 chars), no error toast",
+    "gemini_landing_ui": "POST /api/generate/landingpage {model:'gemini'} -> 200; landing-result rendered (4219 chars) containing headline/subtitle/benefits/FAQ/pricing/SEO",
+    "gemini_social_ui": "POST /api/generate/social {model:'gemini'} -> 200; 3 platform posts rendered, no error toast",
+    "gpt_regression_ui": "Switched model back to GPT-5.2, label updated, copy generation succeeded (1667 chars)",
+    "gemini_backend_curl_equivalents": "All three Gemini text endpoints (copy, landingpage, social) returned valid JSON with expected fields (headline, benefits[], faq[], pricing, seo, posts[])"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_gemini_generation.py",
+    "/app/test_reports/pytest/pytest_gemini.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is 865 lines - still above the 700-line threshold; recommend splitting into brands.py, generation.py, funnel.py modules.",
+    "llm_text default fallback is still MODEL_MAP.get(model_choice, MODEL_MAP['gpt']) - good, but no explicit error for unknown model strings; safe for now.",
+    "_api_key_for() correctly routes 'gemini' to GEMINI_API_KEY and 'openai' to OPENAI_API_KEY. Claude (anthropic) still uses the exhausted Emergent universal key by design (per agent_to_agent_context_note) - this is intentional.",
+    "Image generation (Nano Banana) still hardcoded to EMERGENT_LLM_KEY - will fail until Emergent budget refilled; not tested per task scope."
+  ],
+  "updated_files": ["/app/backend/tests/test_gemini_generation.py"],
+  "success_rate": {"backend": "100% (4/4)", "frontend": "100% (5/5 flows: model toggle + brand create + copy/landing/social gemini + gpt regression)"},
+  "test_credentials": "N/A (no auth)",
+  "seed_data_creation": "Created one persisted UI test brand 'TEST_Gemini_FE_60553' in MongoDB. Backend pytest brands cleaned up via fixture teardown.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Gemini 2.5 Flash works through user's GEMINI_API_KEY for copy/landing/social. GPT-5.2 still works through OPENAI_API_KEY. DO NOT test Claude or image (Nano Banana) - both route through exhausted Emergent universal key. New test file: /app/backend/tests/test_gemini_generation.py. UI data-testids confirmed working: model-trigger/model-gpt/model-gemini/model-claude, active-brand-trigger, brand-option-<id>, brand-new-btn, brand-input-name, brand-input-tone, brand-save-btn, copy-topic-input/copy-generate-btn/copy-result, landing-topic-input/landing-generate-btn/landing-result, social-topic-input/social-generate-btn, platform-<name>.",
+  "rca of the issue": "Not a bug fix - this iteration validates a new feature (Gemini 2.5 Flash as a third text model option). Backend MODEL_MAP correctly maps 'gemini' to ('gemini','gemini-2.5-flash'); _api_key_for routes it to user's GEMINI_API_KEY. Frontend Layout.jsx exposes model-gemini in the dropdown and renders 'Gemini 2.5' as the header label. All paths verified."
+}

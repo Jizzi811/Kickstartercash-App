@@ -27,6 +27,7 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 EMERGENT_LLM_KEY = os.environ['EMERGENT_LLM_KEY']
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
 if RESEND_API_KEY:
@@ -44,6 +45,7 @@ logger = logging.getLogger(__name__)
 MODEL_MAP = {
     "claude": ("anthropic", "claude-sonnet-4-5-20250929"),
     "gpt": ("openai", "gpt-5.2"),
+    "gemini": ("gemini", "gemini-2.5-flash"),
 }
 IMAGE_MODEL = "gemini-3.1-flash-image-preview"
 
@@ -53,10 +55,11 @@ def _now_iso() -> str:
 
 
 def _api_key_for(provider: str) -> str:
-    """Use the user's own OpenAI key for OpenAI models when configured,
-    otherwise fall back to the Emergent universal key."""
+    """Use the user's own provider key when configured, otherwise the Emergent universal key."""
     if provider == "openai" and OPENAI_API_KEY:
         return OPENAI_API_KEY
+    if provider == "gemini" and GEMINI_API_KEY:
+        return GEMINI_API_KEY
     return EMERGENT_LLM_KEY
 
 
