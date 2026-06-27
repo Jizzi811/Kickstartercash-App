@@ -26,6 +26,7 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 EMERGENT_LLM_KEY = os.environ['EMERGENT_LLM_KEY']
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
 if RESEND_API_KEY:
@@ -51,9 +52,17 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _api_key_for(provider: str) -> str:
+    """Use the user's own OpenAI key for OpenAI models when configured,
+    otherwise fall back to the Emergent universal key."""
+    if provider == "openai" and OPENAI_API_KEY:
+        return OPENAI_API_KEY
+    return EMERGENT_LLM_KEY
+
+
 async def llm_text(model_choice: str, system_message: str, user_text: str) -> str:
     provider, model = MODEL_MAP.get(model_choice, MODEL_MAP["claude"])
-    chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=str(uuid.uuid4()), system_message=system_message)
+    chat = LlmChat(api_key=_api_key_for(provider), session_id=str(uuid.uuid4()), system_message=system_message)
     chat.with_model(provider, model)
     resp = await chat.send_message(UserMessage(text=user_text))
     if isinstance(resp, str):
