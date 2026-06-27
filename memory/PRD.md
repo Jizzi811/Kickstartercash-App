@@ -30,7 +30,7 @@ Web-App (nicht mobil), DE/EN umschaltbar, keine Auth.
 - NEU Content-Kalender (/calendar): 30/60/90-Tage-Plan mit Texten/Hashtags/Posting-Zeiten
 - NEU Export-Center (/export): Historie aller Inhalte, Filter, Export TXT/JSON/PNG, Löschen
 - NEU KI-Markenwächter & Marketing-Score (/guardian): analysiert beliebigen Text gegen die aktive Marke → Score (0-100), Sterne, Markenkonformität/Tonalität-Balken, Marken-Checks (pass/warn/fail), Verbesserungen & Stärken
-- NEU Verkaufs-Funnel (/funnel): Member-Funnel auf Basis hochgeladener KickstarterCash-Vorlage (funnel_bundle.html, 28MB). Member trägt Reflink + Kontaktdaten (Name/Rolle/Ort/Telefon/WhatsApp/E-Mail/Telegram/Instagram) ein → personalisierter öffentlicher Funnel unter /api/funnel/{id}/page. Reflink in allen gelben Buttons; "Jetzt unverbindlich anfragen" → Lead gespeichert + E-Mail an Berater (Resend). Lead-Liste je Funnel im Dashboard.
+- NEU Verkaufs-Funnel (/funnel): Member-Funnel auf Basis hochgeladener KickstarterCash-Vorlage (funnel_bundle.html, 28MB). Member trägt Reflink + Kontaktdaten + eigenes Berater-Foto (Upload, client-seitig auf 400px/JPEG verkleinert) ein → personalisierter öffentlicher Funnel unter /api/funnel/{id}/page. Reflink in allen gelben Buttons; "Jetzt unverbindlich anfragen" → Lead gespeichert + E-Mail an Berater (Resend). Lead-Liste je Funnel im Dashboard. Berater-Foto ersetzt den kc-sponsor-photo Slot als runder <img>. Benigner Bundler-Runtime-Konsolenfehler per Error-Suppressor unterdrückt.
 - DE/EN Sprachumschalter, Modell-Umschalter (Claude/GPT), aktive-Marke-Selektor
 - Verifiziert: iteration_1 (5 Module), iteration_2 (4 Module), iteration_3 (Markenwächter) je 100%; Funnel manuell E2E getestet (Render + Personalisierung + Lead-Erfassung OK)
 
