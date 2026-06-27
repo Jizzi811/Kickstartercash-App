@@ -23,7 +23,7 @@ const navItems = [
 ];
 
 export const Layout = ({ children }) => {
-  const { t, lang, setLang, brands, activeBrand, setActiveBrandId, model, setModel } = useApp();
+  const { t, lang, setLang, model, setModel } = useApp();
   const navigate = useNavigate();
 
   return (
@@ -78,34 +78,6 @@ export const Layout = ({ children }) => {
             </div>
 
             <div className="flex items-center gap-3 ml-auto">
-              {/* Active brand selector */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    data-testid="active-brand-trigger"
-                    className="flex items-center gap-2 px-3 py-2 rounded-sm border border-white/10 hover:border-[#D4AF37]/50 text-sm transition-colors"
-                  >
-                    <span className="w-3 h-3 rounded-full border border-white/20" style={{ background: activeBrand?.primary_color || "#D4AF37" }} />
-                    <span className="hidden sm:inline text-zinc-400">{t("activeBrand")}:</span>
-                    <span className="text-white max-w-[120px] truncate">{activeBrand?.name || "—"}</span>
-                    <ChevronDown size={14} className="text-zinc-500" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-[#0A0A0A] border-white/10 text-white">
-                  {brands.map((b) => (
-                    <DropdownMenuItem
-                      key={b.id}
-                      data-testid={`brand-option-${b.id}`}
-                      onClick={() => setActiveBrandId(b.id)}
-                      className="cursor-pointer focus:bg-[#D4AF37]/10 focus:text-[#D4AF37]"
-                    >
-                      <span className="w-3 h-3 rounded-full mr-2 border border-white/20" style={{ background: b.primary_color }} />
-                      {b.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
               {/* Model toggle */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
