@@ -32,6 +32,7 @@ RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
 POYO_API_KEY = os.environ.get('POYO_API_KEY', '')
 POYO_BASE = "https://api.poyo.ai"
+LOGO_URL = "https://customer-assets.emergentagent.com/job_5234ef58-250d-4475-b61a-24b76051aa69/artifacts/y4lzk2ct_WhatsApp%20Image%202026-06-24%20at%2010.55.48.jpeg"
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
 
@@ -117,20 +118,27 @@ async def pollinations_image(prompt: str, width: int = 1024, height: int = 1024)
     return await asyncio.to_thread(_fetch)
 
 
-async def poyo_nano_banana(prompt: str, size: str = "1:1") -> Optional[str]:
-    """Image generation via poyo.ai Nano Banana (Google Gemini 2.5 Flash Image)."""
+async def poyo_nano_banana(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
+    """Image generation via poyo.ai Nano Banana (Google Gemini 2.5 Flash Image).
+    When image_urls are provided, uses nano-banana-edit to composite reference images (e.g. brand logo)."""
     if not POYO_API_KEY:
         return None
     auth = {"Authorization": f"Bearer {POYO_API_KEY}"}
+    model = "nano-banana-edit" if image_urls else "nano-banana"
+    payload_input = {"prompt": prompt[:5000], "size": size}
+    if image_urls:
+        payload_input["image_urls"] = image_urls
 
     def _submit():
         import requests
         r = requests.post(
             f"{POYO_BASE}/api/generate/submit",
             headers={**auth, "Content-Type": "application/json"},
-            json={"model": "nano-banana", "input": {"prompt": prompt[:5000], "size": size}},
+            json={"model": model, "input": payload_input},
             timeout=30,
         )
+        if r.status_code == 402:
+            raise RuntimeError("Poyo.ai Guthaben aufgebraucht. Bitte unter poyo.ai aufladen. / Poyo.ai credits exhausted, please top up.")
         r.raise_for_status()
         return (r.json().get("data") or {}).get("task_id")
 
@@ -523,9 +531,18 @@ async def generate_copy(req: CopyRequest):
 async def generate_image(req: ImageRequest):
     brand = await _get_brand_or_404(req.brand_id)
     full_prompt = _build_image_prompt(brand, req.prompt, req.style)
+    image_urls = None
+    if req.apply_logo:
+        full_prompt += (
+            " Seamlessly and tastefully integrate the provided KickstarterCash.club brand logo "
+            "into the composition (e.g. as a premium watermark or focal brand mark), keeping it crisp and legible."
+        )
+        image_urls = [LOGO_URL]
 
     try:
-        image_url = await poyo_nano_banana(full_prompt)
+        image_url = await poyo_nano_banana(full_prompt, image_urls=image_urls)
+    except RuntimeError as e:
+        raise HTTPException(status_code=402, detail=str(e))
     except Exception as e:
         logger.error(f"Image generation error: {e}")
         raise HTTPException(status_code=500, detail="Bildgenerierung fehlgeschlagen / Image generation failed")

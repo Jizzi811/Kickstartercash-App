@@ -97,6 +97,7 @@ export const translations = {
     chat_empty: "Stelle eine Frage zu Marketing, Verkauf, Branding oder Funnels.",
     chat_placeholder: "Nachricht schreiben…",
     chat_clear: "Verlauf löschen",
+    image_apply_logo: "Logo ins Bild integrieren",
     // campaign
     campaign_title: "Ein-Klick-Kampagne",
     campaign_sub: "Ein Thema – komplettes Kampagnenmaterial im Markenstil.",

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Image as ImageIcon, Loader2, Download } from "lucide-react";
+import { Image as ImageIcon, Loader2, Download, Stamp } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 import { PageTitle } from "@/components/PageTitle";
 import { IMAGE_STYLES } from "@/i18n";
@@ -12,6 +12,7 @@ export default function ImageGenerator() {
   const { t, lang, activeBrandId, activeBrand } = useApp();
   const [prompt, setPrompt] = useState("");
   const [style, setStyle] = useState("Luxuriös");
+  const [applyLogo, setApplyLogo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [image, setImage] = useState(null);
 
@@ -20,7 +21,7 @@ export default function ImageGenerator() {
     setLoading(true); setImage(null);
     try {
       const res = await axios.post(`${API}/generate/image`, {
-        prompt, style, brand_id: activeBrandId, language: lang,
+        prompt, style, brand_id: activeBrandId, language: lang, apply_logo: applyLogo,
       });
       setImage(res.data.image);
     } catch (e) {
@@ -70,6 +71,13 @@ export default function ImageGenerator() {
           </div>
           <div className="flex items-center justify-between border-t border-white/10 pt-4">
             <span className="text-xs text-zinc-500">Nano Banana · Gemini 2.5 Flash</span>
+            <button
+              data-testid="image-apply-logo-toggle"
+              onClick={() => setApplyLogo((v) => !v)}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs border transition-all ${applyLogo ? "bg-[#D4AF37] text-black border-[#D4AF37] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#D4AF37]/40"}`}
+            >
+              <Stamp size={13} /> {t("image_apply_logo")}
+            </button>
           </div>
           <button
             data-testid="image-generate-btn"

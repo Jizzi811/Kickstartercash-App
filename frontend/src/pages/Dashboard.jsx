@@ -36,14 +36,16 @@ export default function Dashboard() {
         <img src={BANNER_URL} alt="KickstarterCash" className="absolute inset-0 w-full h-full object-cover opacity-30" />
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-black/40" />
         <div className="relative px-7 md:px-12 py-12 md:py-16 max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#D4AF37]/30 text-[#D4AF37] text-xs tracking-[0.15em] uppercase mb-5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#D4AF37]/30 text-[#D4AF37] text-xs tracking-[0.15em] uppercase mb-7">
             <Sparkles size={13} /> {t("tagline")}
           </div>
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-light leading-[1.05] tracking-tight">
-            <span className="gold-text">{t("dash_hero_title")}</span>
-          </h1>
-          <p className="mt-5 text-zinc-400 text-base md:text-lg max-w-2xl leading-relaxed">{t("dash_hero_sub")}</p>
-          <div className="mt-7 flex items-center gap-3">
+          <img
+            src="/brand/logo-kt.png"
+            alt="KickstarterCash.club"
+            data-testid="hero-logo"
+            className="w-56 sm:w-64 md:w-72 h-auto drop-shadow-[0_8px_30px_rgba(212,175,55,0.25)]"
+          />
+          <div className="mt-8 flex items-center gap-3">
             <button
               data-testid="hero-start-social"
               onClick={() => navigate("/campaign")}
