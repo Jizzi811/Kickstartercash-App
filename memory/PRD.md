@@ -39,6 +39,11 @@ Web-App (nicht mobil), DE/EN umschaltbar, keine Auth.
 - P2: Funnel-Generator, Video-Creator, Markenwächter, Marketing-Score, Ideenmaschine, Thumbnail Creator, Werbekampagnen-Generator, Prompt-Optimierer (Backend /api/generate/optimize-prompt existiert), Markenbibliothek-Erweiterung
 - P2: Auth/Mitgliederbereich
 
+## Update (2026-06-27)
+- Bezahlmodelle entfernt (Claude/Nano Banana raus). Text: GPT-5.2 (OPENAI_API_KEY) + Gemini 2.5 Flash (GEMINI_API_KEY). Bild: Pollinations.ai (kostenlos, kein Key).
+- NEU: GPT Chat (/chat-gpt) & Gemini Chat (/chat-gemini) Reiter — interaktiver Chat via POST /api/chat. Verifiziert per curl (GPT & Gemini OK) + UI-Screenshot.
+- ENTFERNT: Landingpage-Generator (/landing) komplett (Nav, Route, Page, Dashboard-Karte) auf Userwunsch — funktionierte schlecht (Markenfarben/Buttons/Bilder/Design). i18n-Strings für Chat-Module (DE/EN) ergänzt (waren vorher rohe Keys).
+
 ## Next Tasks
-1. User: Universal Key aufladen, dann Text/Bild-Generierung via Testing-Agent verifizieren
-2. Danach nächste Module nach Priorität ergänzen
+1. P1: User muss Domain kickstartercash.club im Resend-Dashboard verifizieren (sonst Funnel-Mails nur an Testadresse).
+2. P2: Refactoring großer Komponenten (Funnel.jsx, Guardian.jsx, Campaign.jsx, server.py 909 Zeilen).

@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutGrid, Palette, Share2, ImageIcon, PenLine, BookOpen, ChevronDown, Zap, LayoutTemplate, CalendarDays, FolderDown, ShieldCheck, Rocket, Bot, Sparkles } from "lucide-react";
+import { LayoutGrid, Palette, Share2, ImageIcon, PenLine, BookOpen, ChevronDown, Zap, CalendarDays, FolderDown, ShieldCheck, Rocket, Bot, Sparkles } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { LOGO_URL } from "@/i18n";
 import {
@@ -14,7 +14,6 @@ const navItems = [
   { to: "/social", key: "nav_social", icon: Share2 },
   { to: "/image", key: "nav_image", icon: ImageIcon },
   { to: "/copy", key: "nav_copy", icon: PenLine },
-  { to: "/landing", key: "nav_landing", icon: LayoutTemplate },
   { to: "/funnel", key: "nav_funnel", icon: Rocket },
   { to: "/calendar", key: "nav_calendar", icon: CalendarDays },
   { to: "/guardian", key: "nav_guardian", icon: ShieldCheck },

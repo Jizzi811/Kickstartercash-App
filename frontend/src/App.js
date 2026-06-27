@@ -9,7 +9,6 @@ import BrandDesigner from "@/pages/BrandDesigner";
 import SocialMedia from "@/pages/SocialMedia";
 import ImageGenerator from "@/pages/ImageGenerator";
 import Copywriter from "@/pages/Copywriter";
-import Landingpage from "@/pages/Landingpage";
 import Funnel from "@/pages/Funnel";
 import ContentCalendar from "@/pages/ContentCalendar";
 import Guardian from "@/pages/Guardian";
@@ -31,7 +30,6 @@ function App() {
               <Route path="/social" element={<SocialMedia />} />
               <Route path="/image" element={<ImageGenerator />} />
               <Route path="/copy" element={<Copywriter />} />
-              <Route path="/landing" element={<Landingpage />} />
               <Route path="/funnel" element={<Funnel />} />
               <Route path="/calendar" element={<ContentCalendar />} />
               <Route path="/guardian" element={<Guardian />} />
