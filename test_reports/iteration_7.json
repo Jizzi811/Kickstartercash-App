@@ -1,0 +1,33 @@
+{
+  "summary": "Verified primary bug fix: creating a NEW brand and generating landing page with model=gpt now succeeds end-to-end. Both backend pytest (4/4 pass) and Playwright UI flow confirm the regression is resolved.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "verification_details": {
+    "backend_pytest": "4/4 pass in 43s - test_brand_appears_in_list, test_landingpage_gpt_with_new_brand, test_copy_gpt_with_new_brand, test_social_gpt_with_new_brand",
+    "default_model_in_header": "GPT-5.2 (confirmed on /brand and /landing)",
+    "new_brand_created": "TEST_FE_Tierarzt_13131 (id 10a0aee3-11e1-4821-87b3-9d1546f8fe65) via brand-new-btn -> brand-save-btn",
+    "active_brand_switch": "active-brand-trigger dropdown -> brand-option-<id> works; header reflects 'Aktive Marke: TEST_FE_Tierarzt...'",
+    "landing_generation": "POST /api/generate/landingpage with model=gpt returns 200; UI renders 4029-char result containing headline/subtitle/Vorteile/FAQ/SEO/Preise. NO 'Etwas ist schiefgelaufen' toast.",
+    "copy_generation": "POST /api/generate/copy with model=gpt returns 200; copy-result rendered",
+    "social_generation": "POST /api/generate/social with model=gpt returns 200; Facebook & LinkedIn posts rendered, brand-aware content (Tierarztpraxis, Welpenimpfung hashtags) confirmed",
+    "brand_context_in_output": "Generated social posts reference 'TEST_FE_Tierarzt_13131' brand name and tierarzt-themed hashtags - active brand context flowing through correctly"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_gpt_generation.py",
+    "/app/test_reports/pytest/pytest_gpt_generation.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is 862 lines - approaching the 700-line threshold for splitting into modules (brands.py, generation.py, funnel.py). Not blocking but worth refactoring.",
+    "_api_key_for(provider) only routes 'openai' to the user key - 'anthropic' (claude) still uses the exhausted Emergent key by design. Reviewer should confirm this is intentional (per agent_to_agent_context_note: yes, Claude path is known to fail until budget topped up).",
+    "Default fallback model in llm_text uses 'claude' (MODEL_MAP.get(model_choice, MODEL_MAP['claude'])) - if anyone passes an unknown model string it will hit the exhausted Emergent key. Consider defaulting to 'gpt' to align with the new frontend default."
+  ],
+  "updated_files": ["/app/backend/tests/test_gpt_generation.py"],
+  "success_rate": {"backend": "100% (4/4)", "frontend": "100% (3/3 generation flows + brand CRUD)"},
+  "test_credentials": "N/A (no auth)",
+  "seed_data_creation": "Created one persisted test brand 'TEST_FE_Tierarzt_13131' in MongoDB via UI for the flow; backend pytest brands are cleaned up in fixture teardown.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Bug fix verified. OPENAI_API_KEY route works. Do NOT test claude model or image (Nano Banana) - those go through exhausted Emergent key by design. data-testids used: brand-new-btn, brand-input-name/tone/imgstyle, brand-save-btn, brand-card-<id>, active-brand-trigger, brand-option-<id>, model-trigger (shows 'GPT-5.2'), landing-topic-input, landing-generate-btn, landing-result, copy-*, social-*. Note: 'platform-Instagram' testid exists but is button-style toggle (Facebook/LinkedIn were defaults).",
+  "rca of the issue": "Original bug ('Etwas ist schiefgelaufen' on new-brand + landingpage generation) was not brand-specific - it was caused by Emergent universal LLM key budget exhaustion (Max budget 1.0). Fix: added OPENAI_API_KEY in backend/.env and routed the 'openai' provider in _api_key_for() to that key. Frontend default model switched to 'gpt'. Verified: backend pytest 4/4 pass, UI shows GPT-5.2 default, full landing/copy/social generation succeeds with a freshly-created brand."
+}
