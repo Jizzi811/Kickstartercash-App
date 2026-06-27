@@ -43,7 +43,7 @@ function Stars({ score }) {
   return (
     <div className="flex gap-0.5">
       {[...Array(5)].map((_, i) => (
-        <Sparkles key={i} size={18} fill={i < filled ? "#D4AF37" : "none"} className={i < filled ? "text-[#D4AF37]" : "text-zinc-700"} />
+        <Sparkles key={`star-${i}`} size={18} fill={i < filled ? "#D4AF37" : "none"} className={i < filled ? "text-[#D4AF37]" : "text-zinc-700"} />
       ))}
     </div>
   );
@@ -137,7 +137,7 @@ export default function Guardian() {
                 const meta = statusMeta[c.status] || statusMeta.warn;
                 const Icon = meta.icon;
                 return (
-                  <div key={i} data-testid={`guardian-check-${i}`} className="flex items-start gap-3 p-2.5 rounded-sm" style={{ background: meta.bg }}>
+                  <div key={`check-${i}-${c.label || ""}`} data-testid={`guardian-check-${i}`} className="flex items-start gap-3 p-2.5 rounded-sm" style={{ background: meta.bg }}>
                     <Icon size={17} style={{ color: meta.color }} className="mt-0.5 shrink-0" />
                     <div>
                       <div className="text-sm text-white font-medium">{c.label}</div>
@@ -155,7 +155,7 @@ export default function Guardian() {
               <div className="text-xs tracking-[0.12em] uppercase text-[#D4AF37] mb-3 flex items-center gap-1.5"><TrendingUp size={13} /> {t("guardian_improvements")}</div>
               <ul className="space-y-2">
                 {(result.improvements || []).map((imp, i) => (
-                  <li key={i} className="text-sm text-zinc-300 flex gap-2"><span className="text-[#D4AF37]">→</span> {imp}</li>
+                  <li key={`imp-${i}-${String(imp).slice(0, 16)}`} className="text-sm text-zinc-300 flex gap-2"><span className="text-[#D4AF37]">→</span> {imp}</li>
                 ))}
               </ul>
             </div>
@@ -164,7 +164,7 @@ export default function Guardian() {
                 <div className="text-xs tracking-[0.12em] uppercase text-zinc-500 mb-3">{t("guardian_strengths")}</div>
                 <ul className="space-y-2">
                   {result.strengths.map((s, i) => (
-                    <li key={i} className="text-sm text-zinc-400 flex gap-2"><CheckCircle2 size={14} className="text-[#34D399] mt-0.5 shrink-0" /> {s}</li>
+                    <li key={`str-${i}-${String(s).slice(0, 16)}`} className="text-sm text-zinc-400 flex gap-2"><CheckCircle2 size={14} className="text-[#34D399] mt-0.5 shrink-0" /> {s}</li>
                   ))}
                 </ul>
               </div>

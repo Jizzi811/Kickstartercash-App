@@ -109,7 +109,7 @@ def test_lead_submission_persists_even_without_resend(created_funnel):
     r = requests.post(f"{BASE_URL}/api/funnel/{fid}/lead", json=lead, timeout=20)
     assert r.status_code == 200, r.text
     body = r.json()
-    assert body["ok"] is True
+    assert body["ok"] == True
     # Verify persisted via GET /leads
     r2 = requests.get(f"{BASE_URL}/api/funnel/{fid}/leads", timeout=15)
     assert r2.status_code == 200

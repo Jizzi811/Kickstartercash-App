@@ -37,7 +37,7 @@ class TestBrands:
         assert isinstance(brands, list) and len(brands) >= 1
         default = next((b for b in brands if b["id"] == DEFAULT_BRAND_ID), None)
         assert default is not None
-        assert default["is_default"] is True
+        assert default["is_default"] == True
         assert default["name"] == "KickstarterCash.club"
 
     def test_get_default_brand(self, session):
@@ -62,7 +62,7 @@ class TestBrands:
         assert data["name"] == payload["name"]
         assert data["slogan"] == payload["slogan"]
         assert data["primary_color"] == "#FF0000"
-        assert "id" in data and data["is_default"] is False
+        assert "id" in data and data["is_default"] == False
         TestBrands.created_id = data["id"]
 
         # Verify persistence

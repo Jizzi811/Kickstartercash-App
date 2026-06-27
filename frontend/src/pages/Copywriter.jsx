@@ -97,7 +97,7 @@ export default function Copywriter() {
                 <div className="text-xs tracking-[0.12em] uppercase text-zinc-500 mb-2">{t("variants")}</div>
                 <ul className="space-y-2">
                   {result.variants.map((v, i) => (
-                    <li key={i} className="text-sm text-zinc-300 flex gap-2">
+                    <li key={`var-${i}-${String(v).slice(0, 16)}`} className="text-sm text-zinc-300 flex gap-2">
                       <span className="text-[#D4AF37]">→</span> {v}
                     </li>
                   ))}

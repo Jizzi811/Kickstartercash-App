@@ -130,7 +130,7 @@ export default function Campaign() {
             <div className="text-xs tracking-[0.12em] uppercase text-[#D4AF37] mb-3">{t("campaign_posts")}</div>
             <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
               {(result.posts || []).map((p, i) => (
-                <div key={i} className="border-b border-white/5 pb-3 last:border-0">
+                <div key={`${p.platform}-${i}`} className="border-b border-white/5 pb-3 last:border-0">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-semibold text-[#D4AF37]">{p.platform}</span>
                     <CopyButton testid={`campaign-post-copy-${p.platform}`} text={`${p.caption}\n\n${(p.hashtags || []).map((h) => "#" + h).join(" ")}`} label="" copiedLabel={t("copied")} />
@@ -138,7 +138,7 @@ export default function Campaign() {
                   <p className="text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed">{p.caption}</p>
                   {p.hashtags?.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
-                      {p.hashtags.slice(0, 6).map((h, j) => <span key={j} className="text-[10px] text-[#D4AF37]/80 bg-[#D4AF37]/10 px-1.5 py-0.5 rounded">#{h}</span>)}
+                      {p.hashtags.slice(0, 6).map((h, j) => <span key={`${h}-${j}`} className="text-[10px] text-[#D4AF37]/80 bg-[#D4AF37]/10 px-1.5 py-0.5 rounded">#{h}</span>)}
                     </div>
                   )}
                 </div>

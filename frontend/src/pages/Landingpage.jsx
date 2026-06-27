@@ -117,7 +117,7 @@ export default function Landingpage() {
                 <h2 className="font-display text-2xl text-[#D4AF37] mb-5 text-center">{t("benefits")}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {(content.benefits || []).map((b, i) => (
-                    <div key={i} className="bg-black/40 border border-white/10 rounded-md p-5">
+                    <div key={`benefit-${b.title || i}`} className="bg-black/40 border border-white/10 rounded-md p-5">
                       <h3 className="text-white font-semibold mb-2">{b.title}</h3>
                       <p className="text-sm text-zinc-400">{b.text}</p>
                     </div>
@@ -130,7 +130,7 @@ export default function Landingpage() {
                   <h2 className="font-display text-2xl text-[#D4AF37] mb-5 text-center">{t("testimonials")}</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {content.testimonials.map((tm, i) => (
-                      <div key={i} className="bg-black/40 border border-white/10 rounded-md p-5">
+                      <div key={`tm-${tm.name || i}`} className="bg-black/40 border border-white/10 rounded-md p-5">
                         <p className="text-sm text-zinc-300 italic">"{tm.text}"</p>
                         <p className="text-xs text-[#D4AF37] mt-2">— {tm.name}</p>
                       </div>
@@ -144,7 +144,7 @@ export default function Landingpage() {
                   <h2 className="font-display text-2xl text-[#D4AF37] mb-5 text-center">{t("faq")}</h2>
                   <div className="max-w-2xl mx-auto divide-y divide-white/10">
                     {content.faq.map((f, i) => (
-                      <div key={i} className="py-4">
+                      <div key={`faq-${f.q || i}`} className="py-4">
                         <h4 className="text-white font-medium mb-1">{f.q}</h4>
                         <p className="text-sm text-zinc-400">{f.a}</p>
                       </div>
@@ -159,7 +159,7 @@ export default function Landingpage() {
                   <div className="text-4xl text-[#D4AF37] font-display my-3">{content.pricing.price}</div>
                   <ul className="text-left space-y-2 my-5">
                     {(content.pricing.features || []).map((f, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-zinc-300"><Check size={15} className="text-[#D4AF37] mt-0.5 shrink-0" /> {f}</li>
+                      <li key={`feat-${i}-${f.slice(0, 16)}`} className="flex items-start gap-2 text-sm text-zinc-300"><Check size={15} className="text-[#D4AF37] mt-0.5 shrink-0" /> {f}</li>
                     ))}
                   </ul>
                   <span className="inline-block bg-[#D4AF37] text-black px-6 py-2.5 rounded-sm font-bold">{content.pricing.cta || content.cta}</span>
@@ -172,7 +172,7 @@ export default function Landingpage() {
                   <p className="text-sm text-zinc-300"><strong className="text-white">{content.seo.title}</strong></p>
                   <p className="text-sm text-zinc-500 mt-1">{content.seo.description}</p>
                   <div className="flex flex-wrap gap-1.5 mt-2">
-                    {(content.seo.keywords || []).map((k, i) => <span key={i} className="text-[10px] text-[#D4AF37]/80 bg-[#D4AF37]/10 px-2 py-0.5 rounded">{k}</span>)}
+                    {(content.seo.keywords || []).map((k, i) => <span key={`kw-${i}-${k}`} className="text-[10px] text-[#D4AF37]/80 bg-[#D4AF37]/10 px-2 py-0.5 rounded">{k}</span>)}
                   </div>
                 </div>
               )}

@@ -90,7 +90,7 @@ export default function SocialMedia() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {posts.map((p, i) => (
             <motion.div
-              key={i}
+              key={`${p.platform}-${i}`}
               data-testid={`social-post-${p.platform}`}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -105,7 +105,7 @@ export default function SocialMedia() {
               {p.hashtags?.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   {p.hashtags.map((h, j) => (
-                    <span key={j} className="text-xs text-[#D4AF37]/80 bg-[#D4AF37]/10 px-2 py-0.5 rounded">#{h}</span>
+                    <span key={`${h}-${j}`} className="text-xs text-[#D4AF37]/80 bg-[#D4AF37]/10 px-2 py-0.5 rounded">#{h}</span>
                   ))}
                 </div>
               )}

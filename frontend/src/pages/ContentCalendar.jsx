@@ -100,7 +100,7 @@ export default function ContentCalendar() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {items.map((it, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
+              <motion.div key={`${it.day}-${it.platform}-${i}`} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
                 data-testid={`calendar-item-${i}`}
                 className="bg-[#0A0A0A] border border-white/10 rounded-md p-4 hover:border-[#D4AF37]/40 transition-colors">
                 <div className="flex items-center justify-between mb-2">
@@ -110,7 +110,7 @@ export default function ContentCalendar() {
                 <h3 className="text-white text-sm font-medium mb-1.5">{it.title}</h3>
                 <p className="text-xs text-zinc-400 leading-relaxed">{it.caption}</p>
                 <div className="flex flex-wrap gap-1 mt-2">
-                  {(it.hashtags || []).slice(0, 4).map((h, j) => <span key={j} className="text-[10px] text-[#D4AF37]/80 bg-[#D4AF37]/10 px-1.5 py-0.5 rounded">#{h}</span>)}
+                  {(it.hashtags || []).slice(0, 4).map((h, j) => <span key={`${h}-${j}`} className="text-[10px] text-[#D4AF37]/80 bg-[#D4AF37]/10 px-1.5 py-0.5 rounded">#{h}</span>)}
                 </div>
                 <div className="flex items-center gap-1.5 mt-2 text-xs text-zinc-500"><Clock size={12} /> {it.post_time}</div>
               </motion.div>

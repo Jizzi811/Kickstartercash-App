@@ -96,7 +96,7 @@ export default function BrandDesigner() {
                 {b.colors_preview}
                 <span className="flex gap-1.5 items-center mr-auto">
                   {[b.primary_color, b.secondary_color, b.accent_color].map((c, i) => (
-                    <span key={i} className="w-4 h-4 rounded-full border border-white/15" style={{ background: c }} />
+                    <span key={`${b.id}-color-${i}`} className="w-4 h-4 rounded-full border border-white/15" style={{ background: c }} />
                   ))}
                 </span>
                 {activeBrandId !== b.id && (
