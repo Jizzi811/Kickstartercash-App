@@ -30,6 +30,8 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
+POYO_API_KEY = os.environ.get('POYO_API_KEY', '')
+POYO_BASE = "https://api.poyo.ai"
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
 
@@ -113,6 +115,53 @@ async def pollinations_image(prompt: str, width: int = 1024, height: int = 1024)
         return None
 
     return await asyncio.to_thread(_fetch)
+
+
+async def poyo_nano_banana(prompt: str, size: str = "1:1") -> Optional[str]:
+    """Image generation via poyo.ai Nano Banana (Google Gemini 2.5 Flash Image)."""
+    if not POYO_API_KEY:
+        return None
+    auth = {"Authorization": f"Bearer {POYO_API_KEY}"}
+
+    def _submit():
+        import requests
+        r = requests.post(
+            f"{POYO_BASE}/api/generate/submit",
+            headers={**auth, "Content-Type": "application/json"},
+            json={"model": "nano-banana", "input": {"prompt": prompt[:5000], "size": size}},
+            timeout=30,
+        )
+        r.raise_for_status()
+        return (r.json().get("data") or {}).get("task_id")
+
+    def _status(task_id):
+        import requests
+        r = requests.get(f"{POYO_BASE}/api/generate/status/{task_id}", headers=auth, timeout=30)
+        r.raise_for_status()
+        return r.json().get("data") or {}
+
+    def _fetch_b64(url):
+        import requests
+        r = requests.get(url, timeout=60)
+        if r.ok and r.content:
+            ct = r.headers.get("content-type", "image/png")
+            return f"data:{ct};base64,{base64.b64encode(r.content).decode('utf-8')}"
+        return None
+
+    task_id = await asyncio.to_thread(_submit)
+    if not task_id:
+        return None
+    for _ in range(40):
+        await asyncio.sleep(3)
+        data = await asyncio.to_thread(_status, task_id)
+        status = data.get("status")
+        if status == "finished":
+            img = next((f["file_url"] for f in data.get("files", []) if f.get("file_type") == "image"), None)
+            return await asyncio.to_thread(_fetch_b64, img) if img else None
+        if status == "failed":
+            logger.error(f"Poyo nano-banana failed: {data.get('error_message')}")
+            return None
+    return None
 
 
 async def llm_image(prompt: str, reference_b64: Optional[str] = None) -> Optional[str]:
@@ -476,7 +525,7 @@ async def generate_image(req: ImageRequest):
     full_prompt = _build_image_prompt(brand, req.prompt, req.style)
 
     try:
-        image_url = await pollinations_image(full_prompt)
+        image_url = await poyo_nano_banana(full_prompt)
     except Exception as e:
         logger.error(f"Image generation error: {e}")
         raise HTTPException(status_code=500, detail="Bildgenerierung fehlgeschlagen / Image generation failed")
@@ -528,14 +577,11 @@ async def generate_campaign(req: CampaignRequest):
     )
     json_system = "You return strictly valid JSON and nothing else."
     image_prompt = _build_image_prompt(brand, req.topic, req.image_style)
-    reference_b64 = _fetch_logo_b64(brand) if req.apply_logo else None
-    if reference_b64:
-        image_prompt += " Tastefully integrate the provided brand logo into the composition."
 
     social_raw, copy_raw, image_res = await asyncio.gather(
         llm_text(req.model, json_system, social_user),
         llm_text(req.model, json_system, copy_user),
-        llm_image(image_prompt, reference_b64),
+        poyo_nano_banana(image_prompt),
         return_exceptions=True,
     )
 

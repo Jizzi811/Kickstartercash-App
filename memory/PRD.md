@@ -44,6 +44,11 @@ Web-App (nicht mobil), DE/EN umschaltbar, keine Auth.
 - NEU: GPT Chat (/chat-gpt) & Gemini Chat (/chat-gemini) Reiter — interaktiver Chat via POST /api/chat. Verifiziert per curl (GPT & Gemini OK) + UI-Screenshot.
 - ENTFERNT: Landingpage-Generator (/landing) komplett (Nav, Route, Page, Dashboard-Karte) auf Userwunsch — funktionierte schlecht (Markenfarben/Buttons/Bilder/Design). i18n-Strings für Chat-Module (DE/EN) ergänzt (waren vorher rohe Keys).
 
+## Update (2026-06-27) – Teil 2
+- Aktive-Marke-Auswahl bereinigt: alle Test-Marken aus DB gelöscht, nur Default "KickstarterCash.club" bleibt.
+- Bildgenerator + Ein-Klick-Kampagne nutzen jetzt **Nano Banana (Gemini 2.5 Flash Image) via poyo.ai** (POYO_API_KEY in backend/.env, async submit→poll, gibt base64-PNG zurück). Pollinations & Emergent-Nano-Banana ersetzt. Verifiziert per curl (base64 PNG, ~20s).
+- Hinweis: POYO_API_KEY muss bei Production-Redeploy ebenfalls gesetzt sein.
+
 ## Next Tasks
 1. P1: User muss Domain kickstartercash.club im Resend-Dashboard verifizieren (sonst Funnel-Mails nur an Testadresse).
 2. P2: Refactoring großer Komponenten (Funnel.jsx, Guardian.jsx, Campaign.jsx, server.py 909 Zeilen).

@@ -69,7 +69,7 @@ export default function ImageGenerator() {
             </div>
           </div>
           <div className="flex items-center justify-between border-t border-white/10 pt-4">
-            <span className="text-xs text-zinc-500">Pollinations.ai · kostenlos</span>
+            <span className="text-xs text-zinc-500">Nano Banana · Gemini 2.5 Flash</span>
           </div>
           <button
             data-testid="image-generate-btn"
