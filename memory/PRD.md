@@ -55,6 +55,9 @@ Web-App (nicht mobil), DE/EN umschaltbar, keine Auth.
 - Bildgenerator: Toggle "Logo ins Bild integrieren" (apply_logo) → poyo nano-banana-edit mit LOGO_URL als Referenz. 402-Fehler (kein Guthaben) wird sauber als Meldung ausgegeben.
 - BLOCKER: poyo.ai-Konto-Guthaben aufgebraucht → User muss aufladen, damit Bildgenerierung läuft.
 
+## Update (2026-06-27) – Teil 4
+- Bildgenerator: Seitenverhältnis-Auswahl (1:1, 16:9, 9:16) → ImageRequest.size an poyo nano-banana weitergereicht. UI verifiziert (Selector rendert). E2E-Generierung wegen poyo-Guthaben nicht testbar.
+
 ## Next Tasks
 1. P1: User muss Domain kickstartercash.club im Resend-Dashboard verifizieren (sonst Funnel-Mails nur an Testadresse).
 2. P2: Refactoring großer Komponenten (Funnel.jsx, Guardian.jsx, Campaign.jsx, server.py 909 Zeilen).

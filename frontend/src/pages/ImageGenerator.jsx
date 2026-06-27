@@ -12,6 +12,7 @@ export default function ImageGenerator() {
   const { t, lang, activeBrandId, activeBrand } = useApp();
   const [prompt, setPrompt] = useState("");
   const [style, setStyle] = useState("Luxuriös");
+  const [ratio, setRatio] = useState("1:1");
   const [applyLogo, setApplyLogo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [image, setImage] = useState(null);
@@ -21,7 +22,7 @@ export default function ImageGenerator() {
     setLoading(true); setImage(null);
     try {
       const res = await axios.post(`${API}/generate/image`, {
-        prompt, style, brand_id: activeBrandId, language: lang, apply_logo: applyLogo,
+        prompt, style, brand_id: activeBrandId, language: lang, apply_logo: applyLogo, size: ratio,
       });
       setImage(res.data.image);
     } catch (e) {
@@ -65,6 +66,25 @@ export default function ImageGenerator() {
                   className={`px-3.5 py-1.5 rounded-sm text-sm border transition-all ${style === s ? "bg-[#D4AF37] text-black border-[#D4AF37] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#D4AF37]/40"}`}
                 >
                   {s}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-xs tracking-[0.12em] uppercase text-zinc-500">{t("aspect_ratio")}</label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {[
+                { v: "1:1", label: "1:1", desc: t("ratio_square") },
+                { v: "16:9", label: "16:9", desc: t("ratio_landscape") },
+                { v: "9:16", label: "9:16", desc: t("ratio_portrait") },
+              ].map((r) => (
+                <button
+                  key={r.v}
+                  data-testid={`ratio-${r.v.replace(":", "x")}`}
+                  onClick={() => setRatio(r.v)}
+                  className={`px-3.5 py-1.5 rounded-sm text-sm border transition-all ${ratio === r.v ? "bg-[#D4AF37] text-black border-[#D4AF37] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#D4AF37]/40"}`}
+                >
+                  {r.label} <span className="opacity-60 text-xs">· {r.desc}</span>
                 </button>
               ))}
             </div>

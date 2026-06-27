@@ -256,6 +256,7 @@ class ImageRequest(BaseModel):
     brand_id: str
     language: str = "DE"
     apply_logo: bool = False
+    size: str = "1:1"
 
 
 class PromptOptimizeRequest(BaseModel):
@@ -540,7 +541,7 @@ async def generate_image(req: ImageRequest):
         image_urls = [LOGO_URL]
 
     try:
-        image_url = await poyo_nano_banana(full_prompt, image_urls=image_urls)
+        image_url = await poyo_nano_banana(full_prompt, size=req.size, image_urls=image_urls)
     except RuntimeError as e:
         raise HTTPException(status_code=402, detail=str(e))
     except Exception as e:
