@@ -7,7 +7,7 @@ MVP: Brand Designer + Social Media Maschine + KI Bildgenerator + KI Copywriter +
 Web-App (nicht mobil), DE/EN umschaltbar, keine Auth.
 
 ## User Choices
-- Text-Modelle: Claude Sonnet 4.5 + GPT-5.2 (umschaltbar) via Emergent Universal LLM Key
+- Text-Modelle: Claude Sonnet 4.5 + GPT-5.2 (umschaltbar). GPT läuft über eigenen OPENAI_API_KEY (kein Budget-Limit); Claude + Bild (Nano Banana) über Emergent Universal Key. Standardmodell: GPT.
 - Bild: Gemini Nano Banana (gemini-3.1-flash-image-preview)
 - Keine Authentifizierung
 - Branding: Schwarz/Gold, KT-Logo als Default-Marke "KickstarterCash.club"

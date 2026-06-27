@@ -61,7 +61,7 @@ def _api_key_for(provider: str) -> str:
 
 
 async def llm_text(model_choice: str, system_message: str, user_text: str) -> str:
-    provider, model = MODEL_MAP.get(model_choice, MODEL_MAP["claude"])
+    provider, model = MODEL_MAP.get(model_choice, MODEL_MAP["gpt"])
     chat = LlmChat(api_key=_api_key_for(provider), session_id=str(uuid.uuid4()), system_message=system_message)
     chat.with_model(provider, model)
     resp = await chat.send_message(UserMessage(text=user_text))
