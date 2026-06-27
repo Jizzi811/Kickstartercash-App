@@ -43,7 +43,6 @@ logger = logging.getLogger(__name__)
 # LLM helpers
 # ---------------------------------------------------------------------------
 MODEL_MAP = {
-    "claude": ("anthropic", "claude-sonnet-4-5-20250929"),
     "gpt": ("openai", "gpt-5.2"),
     "gemini": ("gemini", "gemini-2.5-flash"),
 }
@@ -91,6 +90,29 @@ def _extract_json(text: str):
         return json.loads(candidate[start:end + 1])
     except json.JSONDecodeError:
         return None
+
+
+import urllib.parse
+
+
+async def pollinations_image(prompt: str, width: int = 1024, height: int = 1024) -> Optional[str]:
+    """Free image generation via Pollinations.ai (no API key)."""
+    seed = uuid.uuid4().int % 1_000_000
+    enc = urllib.parse.quote(prompt, safe="")
+    url = (
+        f"https://image.pollinations.ai/prompt/{enc}"
+        f"?width={width}&height={height}&nologo=true&model=flux&seed={seed}"
+    )
+
+    def _fetch():
+        import requests
+        r = requests.get(url, timeout=120)
+        if r.ok and r.content and r.headers.get("content-type", "").startswith("image"):
+            b64 = base64.b64encode(r.content).decode("utf-8")
+            return f"data:{r.headers.get('content-type', 'image/jpeg')};base64,{b64}"
+        return None
+
+    return await asyncio.to_thread(_fetch)
 
 
 async def llm_image(prompt: str, reference_b64: Optional[str] = None) -> Optional[str]:
@@ -216,6 +238,13 @@ class AnalyzeRequest(BaseModel):
     content_type: str = "Text"
     brand_id: str
     model: str = "claude"
+    language: str = "DE"
+
+
+class ChatRequest(BaseModel):
+    message: str
+    history: List[dict] = []
+    model: str = "gpt"
     language: str = "DE"
 
 
@@ -445,12 +474,9 @@ async def generate_copy(req: CopyRequest):
 async def generate_image(req: ImageRequest):
     brand = await _get_brand_or_404(req.brand_id)
     full_prompt = _build_image_prompt(brand, req.prompt, req.style)
-    reference_b64 = _fetch_logo_b64(brand) if req.apply_logo else None
-    if reference_b64:
-        full_prompt += " Tastefully integrate the provided brand logo into the composition."
 
     try:
-        image_url = await llm_image(full_prompt, reference_b64)
+        image_url = await pollinations_image(full_prompt)
     except Exception as e:
         logger.error(f"Image generation error: {e}")
         raise HTTPException(status_code=500, detail="Bildgenerierung fehlgeschlagen / Image generation failed")
@@ -662,6 +688,24 @@ async def get_history(type: Optional[str] = None, limit: int = 50):
     query = {"type": type} if type else {}
     docs = await db.history.find(query, {"_id": 0}).sort("created_at", -1).to_list(limit)
     return docs
+
+
+@api_router.post("/chat")
+async def chat(req: ChatRequest):
+    lang = "Deutsch" if req.language == "DE" else "English"
+    system = (
+        "Du bist der KI-Marketing-Assistent von KickstarterCash.club – ein luxuriöser, "
+        "selbstbewusster und motivierender Experte für Marketing, Verkauf, Branding, "
+        "Funnels und digitale Produkte. Gib präzise, professionelle und konkret umsetzbare "
+        f"Antworten. Antworte immer auf {lang}."
+    )
+    convo = ""
+    for m in req.history[-12:]:
+        role = "User" if m.get("role") == "user" else "Assistant"
+        convo += f"{role}: {m.get('content', '')}\n"
+    convo += f"User: {req.message}\nAssistant:"
+    reply = await llm_text(req.model, system, convo)
+    return {"reply": reply.strip()}
 
 
 # ---------------------------------------------------------------------------

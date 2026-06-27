@@ -14,6 +14,8 @@ import Funnel from "@/pages/Funnel";
 import ContentCalendar from "@/pages/ContentCalendar";
 import Guardian from "@/pages/Guardian";
 import PromptLibrary from "@/pages/PromptLibrary";
+import GPTChat from "@/pages/GPTChat";
+import GeminiChat from "@/pages/GeminiChat";
 import ExportCenter from "@/pages/ExportCenter";
 
 function App() {
@@ -34,6 +36,8 @@ function App() {
               <Route path="/calendar" element={<ContentCalendar />} />
               <Route path="/guardian" element={<Guardian />} />
               <Route path="/prompts" element={<PromptLibrary />} />
+              <Route path="/chat-gpt" element={<GPTChat />} />
+              <Route path="/chat-gemini" element={<GeminiChat />} />
               <Route path="/export" element={<ExportCenter />} />
             </Routes>
           </Layout>

@@ -2,18 +2,16 @@ import React, { useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Image as ImageIcon, Loader2, Download, Stamp } from "lucide-react";
+import { Image as ImageIcon, Loader2, Download } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 import { PageTitle } from "@/components/PageTitle";
 import { IMAGE_STYLES } from "@/i18n";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 
 export default function ImageGenerator() {
   const { t, lang, activeBrandId, activeBrand } = useApp();
   const [prompt, setPrompt] = useState("");
   const [style, setStyle] = useState("Luxuriös");
-  const [applyLogo, setApplyLogo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [image, setImage] = useState(null);
 
@@ -22,7 +20,7 @@ export default function ImageGenerator() {
     setLoading(true); setImage(null);
     try {
       const res = await axios.post(`${API}/generate/image`, {
-        prompt, style, brand_id: activeBrandId, language: lang, apply_logo: applyLogo,
+        prompt, style, brand_id: activeBrandId, language: lang,
       });
       setImage(res.data.image);
     } catch (e) {
@@ -71,10 +69,7 @@ export default function ImageGenerator() {
             </div>
           </div>
           <div className="flex items-center justify-between border-t border-white/10 pt-4">
-            <div className="flex items-center gap-2 text-sm text-zinc-300">
-              <Stamp size={15} className="text-[#D4AF37]" /> {t("apply_logo")}
-            </div>
-            <Switch data-testid="image-logo-switch" checked={applyLogo} onCheckedChange={setApplyLogo} />
+            <span className="text-xs text-zinc-500">Pollinations.ai · kostenlos</span>
           </div>
           <button
             data-testid="image-generate-btn"
