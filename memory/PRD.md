@@ -58,6 +58,10 @@ Web-App (nicht mobil), DE/EN umschaltbar, keine Auth.
 ## Update (2026-06-27) – Teil 4
 - Bildgenerator: Seitenverhältnis-Auswahl (1:1, 16:9, 9:16) → ImageRequest.size an poyo nano-banana weitergereicht. UI verifiziert (Selector rendert). E2E-Generierung wegen poyo-Guthaben nicht testbar.
 
+## Update (2026-06-27) – Teil 5
+- SEO/Crawler-Fix in public/index.html: echter Titel, Meta-Description, Open-Graph- & Twitter-Tags (Logo als og:image), canonical, lang=de, robots. Plus statischer Fallback-Inhalt im #root (Produktbeschreibung + Modul-Liste), den JS-lose Clients (Crawler, Link-Previews, KI/web_fetch) lesen. React ersetzt den Fallback beim Mount. Verifiziert in Preview. Production-Redeploy nötig.
+- Header: "Aktive Marke"-Dropdown entfernt (nur noch Modell-Toggle + DE/EN).
+
 ## Next Tasks
 1. P1: User muss Domain kickstartercash.club im Resend-Dashboard verifizieren (sonst Funnel-Mails nur an Testadresse).
 2. P2: Refactoring großer Komponenten (Funnel.jsx, Guardian.jsx, Campaign.jsx, server.py 909 Zeilen).
