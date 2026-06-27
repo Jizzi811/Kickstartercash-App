@@ -1,0 +1,37 @@
+{
+  "summary": "Frontend-only smoke test for deployment-readiness asset-path change. Verified brand images (logo.png, banner.png) load from the new relative /brand/* public paths on Dashboard, /campaign and /funnel. No broken images, no console errors, DE/EN toggle works, 11 module cards rendered.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verification_details": {
+    "dashboard_images": [
+      {"src": "/brand/logo.png", "alt": "KickstarterCash", "naturalWidth": 2048, "naturalHeight": 1152, "status": "OK"},
+      {"src": "/brand/logo.png", "alt": "logo", "naturalWidth": 2048, "naturalHeight": 1152, "status": "OK"},
+      {"src": "/brand/banner.png", "alt": "KickstarterCash", "naturalWidth": 2048, "naturalHeight": 1152, "status": "OK"}
+    ],
+    "broken_images_on_dashboard": 0,
+    "GET_/brand/logo.png": "200 image/png",
+    "GET_/brand/banner.png": "200 image/png",
+    "logo_on_/campaign": "naturalWidth=2048 (OK)",
+    "logo_on_/funnel": "naturalWidth=2048 (OK)",
+    "module_cards_count": 11,
+    "de_en_toggle": "Works - hero changed from 'Alles im Corporate Design. Auf einen Klick.' (DE) to 'All in your corporate design. One click.' (EN)",
+    "console_errors": "None"
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Banner image is rendered as <img> (with alt='KickstarterCash') rather than as CSS background-image - this is fine but slightly different from the original test wording ('hero banner background image'). The banner.png is still loaded and visible. No action needed."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100%"},
+  "test_credentials": "N/A (no auth)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Asset paths now relative under /brand/* served from frontend public folder. All three relative URLs (logo.png, banner.png, skyline.jpg present in /app/frontend/public/brand/) are reachable. Dashboard, /campaign, /funnel all render logo correctly. No regressions detected.",
+  "rca of the issue": "N/A - no issues found."
+}
