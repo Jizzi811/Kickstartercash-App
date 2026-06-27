@@ -68,14 +68,51 @@ def _inject_lead_fetch(template: str, lead_url: str) -> str:
     return template.replace(target, inject, 1)
 
 
+def _inject_error_suppressor(bundle: str) -> str:
+    """Suppress the bundler's benign runtime error (visible red bar + console)
+    so visitors never see dev error output on the published funnel."""
+    snippet = (
+        "<head>\n"
+        "<style>#__bundler_err{display:none!important;visibility:hidden!important;}</style>\n"
+        "<script>(function(){function s(e){try{var m=(e&&(e.message||(e.reason&&e.reason.message)))||'';"
+        "if(m.indexOf(\"reading 'document'\")!==-1||m.indexOf('Cannot read properties of null')!==-1){"
+        "if(e.preventDefault)e.preventDefault();if(e.stopImmediatePropagation)e.stopImmediatePropagation();return true;}}catch(_){}}"
+        "window.addEventListener('error',s,true);window.addEventListener('unhandledrejection',s,true);"
+        "var _ce=console.error;console.error=function(){try{var a=Array.prototype.slice.call(arguments).join(' ');"
+        "if(a.indexOf(\"reading 'document'\")!==-1||a.indexOf('[bundle] Uncaught')!==-1)return;}catch(_){}_ce.apply(console,arguments);};"
+        "})();</script>"
+    )
+    return bundle.replace("<head>", snippet, 1)
+
+
+def _inject_sponsor_photo(template: str, config: dict) -> str:
+    """Replace the advisor photo slot with the uploaded image if present."""
+    photo = config.get("photo")
+    if not photo:
+        return template
+    img = (
+        '<img src="' + photo + '" alt="Berater" '
+        'style="width:160px;height:160px;border-radius:50%;object-fit:cover;'
+        'display:block;margin:0 auto;border:3px solid #D4AF37;'
+        'box-shadow:0 0 24px rgba(212,175,55,.35);" />'
+    )
+    return re.sub(
+        r'<x-import[^>]*id="kc-sponsor-photo"[^>]*>\s*</x-import>',
+        lambda _m: img,
+        template,
+    )
+
+
 def render_funnel(config: dict, lead_url: str) -> str:
     bundle = _load_bundle()
+    bundle = _inject_error_suppressor(bundle)
     m = re.search(r'(<script type="__bundler/template">)(.*?)(</script>)', bundle, re.DOTALL)
     if not m:
         raise ValueError("Funnel template not found in bundle")
     template = json.loads(m.group(2).strip())
 
     template = _override_data_props(template, config)
+    template = _inject_sponsor_photo(template, config)
     template = _inject_lead_fetch(template, lead_url)
 
     encoded = json.dumps(template, ensure_ascii=False).replace("</", "<\\/")

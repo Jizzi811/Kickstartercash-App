@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { Rocket, Loader2, ExternalLink, Copy, Check, Trash2, Pencil, Inbox, Plus } from "lucide-react";
+import { Rocket, Loader2, ExternalLink, Copy, Check, Trash2, Pencil, Inbox, Plus, Upload, X } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 import { PageTitle } from "@/components/PageTitle";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 
 const empty = {
   reflink: "", name: "", role: "", city: "", phone: "", whatsapp: "",
-  email: "", telegram: "", instagram: "", cta_text: "",
+  email: "", telegram: "", instagram: "", cta_text: "", photo: "",
 };
 
 const inputCls = "bg-black/40 border-white/10 focus:border-[#D4AF37] focus-visible:ring-[#D4AF37]/40 text-white";
@@ -33,6 +33,28 @@ export default function Funnel() {
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const pageUrl = (id) => `${API}/funnel/${id}/page`;
+
+  const onPhoto = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error(t("error_generic")); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 400;
+        let { width, height } = img;
+        if (width > height && width > max) { height = (height * max) / width; width = max; }
+        else if (height > max) { width = (width * max) / height; height = max; }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        set("photo", canvas.toDataURL("image/jpeg", 0.85));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const load = useCallback(async () => {
     const res = await axios.get(`${API}/funnel`);
@@ -104,6 +126,26 @@ export default function Funnel() {
             <Field label={t("funnel_instagram")}><Input data-testid="funnel-instagram" className={inputCls} value={form.instagram} onChange={(e) => set("instagram", e.target.value)} placeholder="@username" /></Field>
           </div>
           <Field label={t("funnel_cta")}><Input data-testid="funnel-cta" className={inputCls} value={form.cta_text} onChange={(e) => set("cta_text", e.target.value)} placeholder="Jetzt kostenlos teilnehmen" /></Field>
+
+          <Field label={t("funnel_photo")}>
+            <div className="flex items-center gap-4">
+              {form.photo ? (
+                <div className="relative">
+                  <img src={form.photo} alt="Berater" className="w-20 h-20 rounded-full object-cover border-2 border-[#D4AF37]" data-testid="funnel-photo-preview" />
+                  <button type="button" data-testid="funnel-photo-remove" onClick={() => set("photo", "")}
+                    className="absolute -top-1.5 -right-1.5 bg-black border border-white/20 rounded-full p-0.5 text-zinc-300 hover:text-red-400">
+                    <X size={13} />
+                  </button>
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-full border-2 border-dashed border-white/15 flex items-center justify-center text-zinc-600 text-[10px] text-center">{t("funnel_photo_ph")}</div>
+              )}
+              <label data-testid="funnel-photo-label" className="inline-flex items-center gap-2 cursor-pointer text-sm px-4 py-2.5 rounded-sm border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-colors">
+                <Upload size={15} /> {t("funnel_photo_btn")}
+                <input data-testid="funnel-photo-input" type="file" accept="image/*" className="hidden" onChange={onPhoto} />
+              </label>
+            </div>
+          </Field>
 
           <div className="flex gap-3 pt-1">
             <button data-testid="funnel-save-btn" disabled={saving} onClick={save}

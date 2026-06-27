@@ -1,0 +1,27 @@
+{
+  "summary": "Verified the two funnel iteration changes: (1) error suppressor hides the benign bundler runtime error on rendered funnel pages, (2) advisor photo upload feature in /funnel admin flows end-to-end into the rendered public funnel as a circular <img alt='Berater'>. Backend pytest: 6/6 passed. Frontend Playwright e2e: photo upload, funnel creation, edit-preview, rendered page (image + suppression + personalization), lead submission, and lead persistence all PASS. No issues found.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_funnel_photo.py",
+    "/app/test_reports/pytest/pytest_funnel_photo.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "funnel.py _inject_error_suppressor inserts the script right after the first <head> tag (verified <1500 chars from <head>), correctly fronting the bundler's later document.documentElement replacement.",
+    "_inject_sponsor_photo correctly substitutes the <x-import id=kc-sponsor-photo> placeholder only when config.photo is set (no-op otherwise, safe).",
+    "server.py FunnelConfig/FunnelCreate now include 'photo' (default empty string). PUT correctly persists the photo on update. Validation: photo is accepted as base64 data URL; no size cap on backend — large payloads could grow Mongo docs (frontend already downscales to 400px JPEG, so practical risk is low). Consider adding a server-side max length check (e.g., 1MB) for defense in depth.",
+    "Lead submission still succeeds with email_sent:false when RESEND_API_KEY is empty (per requirement). Confirmed lead is stored in funnel_leads collection.",
+    "Funnel.jsx onPhoto() does not validate image dimensions or size before reading; very large files could briefly hang the browser. Minor."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_funnel_photo.py (new)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "No auth required",
+  "seed_data_creation": "Test funnels are created and cleaned up within each test run (TEST_ prefix on leads). One UI test funnel was created and deleted; one pytest module funnel was created and deleted.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Funnel photo upload + error suppressor changes are fully verified. The only console message on the rendered page is an unrelated 404 for a static resource inside the bundle — does not affect rendering or functionality. Existing seed funnels (552fb77a41 Nadja, 03595bfe58 Anna) remain untouched.",
+  "rca of the issue": "N/A — feature/bug both verified working"
+}

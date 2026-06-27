@@ -219,6 +219,7 @@ class FunnelConfig(BaseModel):
     telegram: str = ""
     instagram: str = ""
     cta_text: str = ""
+    photo: str = ""
     impressum_url: str = ""
     datenschutz_url: str = ""
     countdown_enabled: bool = False
@@ -237,6 +238,7 @@ class FunnelCreate(BaseModel):
     telegram: str = ""
     instagram: str = ""
     cta_text: str = ""
+    photo: str = ""
     impressum_url: str = ""
     datenschutz_url: str = ""
     countdown_enabled: bool = False
