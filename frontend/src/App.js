@@ -5,7 +5,6 @@ import { AppProvider } from "@/context/AppContext";
 import { Layout } from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
 import Campaign from "@/pages/Campaign";
-import BrandDesigner from "@/pages/BrandDesigner";
 import SocialMedia from "@/pages/SocialMedia";
 import ImageGenerator from "@/pages/ImageGenerator";
 import Copywriter from "@/pages/Copywriter";
@@ -26,7 +25,6 @@ function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/campaign" element={<Campaign />} />
-              <Route path="/brand" element={<BrandDesigner />} />
               <Route path="/social" element={<SocialMedia />} />
               <Route path="/image" element={<ImageGenerator />} />
               <Route path="/copy" element={<Copywriter />} />

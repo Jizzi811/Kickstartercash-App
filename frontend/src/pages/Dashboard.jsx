@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Palette, Share2, ImageIcon, PenLine, BookOpen, ArrowRight, Sparkles, Zap, CalendarDays, FolderDown, ShieldCheck, Rocket, Bot } from "lucide-react";
+import { Share2, ImageIcon, PenLine, BookOpen, ArrowRight, Sparkles, Zap, CalendarDays, FolderDown, ShieldCheck, Rocket, Bot } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { BANNER_URL } from "@/i18n";
 
@@ -10,7 +10,6 @@ const modules = [
   { to: "/funnel", icon: Rocket, titleKey: "nav_funnel", descKey: "mod_funnel_desc", n: "★" },
   { to: "/chat-gpt", icon: Bot, titleKey: "nav_gptchat", descKey: "mod_gptchat_desc", n: "★" },
   { to: "/chat-gemini", icon: Sparkles, titleKey: "nav_geminichat", descKey: "mod_geminichat_desc", n: "★" },
-  { to: "/brand", icon: Palette, titleKey: "nav_brand", descKey: "mod_brand_desc", n: "01" },
   { to: "/social", icon: Share2, titleKey: "nav_social", descKey: "mod_social_desc", n: "02" },
   { to: "/image", icon: ImageIcon, titleKey: "nav_image", descKey: "mod_image_desc", n: "03" },
   { to: "/copy", icon: PenLine, titleKey: "nav_copy", descKey: "mod_copy_desc", n: "04" },

@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutGrid, Palette, Share2, ImageIcon, PenLine, BookOpen, ChevronDown, Zap, CalendarDays, FolderDown, ShieldCheck, Rocket, Bot, Sparkles } from "lucide-react";
+import { LayoutGrid, Share2, ImageIcon, PenLine, BookOpen, ChevronDown, Zap, CalendarDays, FolderDown, ShieldCheck, Rocket, Bot, Sparkles } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { LOGO_URL } from "@/i18n";
 import {
@@ -10,7 +10,6 @@ import {
 const navItems = [
   { to: "/", key: "nav_dashboard", icon: LayoutGrid, end: true },
   { to: "/campaign", key: "nav_campaign", icon: Zap },
-  { to: "/brand", key: "nav_brand", icon: Palette },
   { to: "/social", key: "nav_social", icon: Share2 },
   { to: "/image", key: "nav_image", icon: ImageIcon },
   { to: "/copy", key: "nav_copy", icon: PenLine },
