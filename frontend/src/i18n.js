@@ -1,6 +1,6 @@
-export const LOGO_URL = "https://customer-assets.emergentagent.com/job_5234ef58-250d-4475-b61a-24b76051aa69/artifacts/nwxii717_bloom-generated-1782456245045.png";
-export const BANNER_URL = "https://customer-assets.emergentagent.com/job_5234ef58-250d-4475-b61a-24b76051aa69/artifacts/8vt6lvfl_bloom-generated-1782369970582%20-%20Kopie.png";
-export const SKYLINE_URL = "https://customer-assets.emergentagent.com/job_5234ef58-250d-4475-b61a-24b76051aa69/artifacts/zcmf5h9h_ce7a80a2-113d-45b1-9547-6a38fd564528.jpg";
+export const LOGO_URL = "/brand/logo.png";
+export const BANNER_URL = "/brand/banner.png";
+export const SKYLINE_URL = "/brand/skyline.jpg";
 
 export const translations = {
   DE: {
