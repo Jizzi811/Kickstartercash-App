@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutGrid, Share2, ImageIcon, PenLine, BookOpen, ChevronDown, Zap, CalendarDays, FolderDown, ShieldCheck, Rocket, Bot, Sparkles, Cpu, Database } from "lucide-react";
+import { LayoutGrid, Share2, ImageIcon, PenLine, BookOpen, ChevronDown, Zap, CalendarDays, FolderDown, ShieldCheck, Rocket, Bot, Sparkles, Cpu, Database, Users } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { LOGO_URL } from "@/i18n";
 import {
@@ -22,6 +22,7 @@ const navItems = [
   { to: "/export", key: "nav_export", icon: FolderDown },
   { to: "/jarvjis", key: "nav_jarvjis", icon: Cpu },
   { to: "/knowledge", key: "nav_knowledge", icon: Database },
+  { to: "/specialists", key: "nav_specialists", icon: Users },
 ];
 
 export const Layout = ({ children }) => {

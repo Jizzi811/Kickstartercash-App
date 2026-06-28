@@ -17,6 +17,7 @@ import GeminiChat from "@/pages/GeminiChat";
 import ExportCenter from "@/pages/ExportCenter";
 import JarvjisAgent from "@/pages/JarvjisAgent";
 import KnowledgeBase from "@/pages/KnowledgeBase";
+import Specialists from "@/pages/Specialists";
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
               <Route path="/export" element={<ExportCenter />} />
               <Route path="/jarvjis" element={<JarvjisAgent />} />
               <Route path="/knowledge" element={<KnowledgeBase />} />
+              <Route path="/specialists" element={<Specialists />} />
             </Routes>
           </Layout>
         </BrowserRouter>
