@@ -197,25 +197,28 @@
     <button id="jrv-mic" title="Spracheingabe">🎙️</button>
     <button id="jrv-send">Senden</button>
   </div>
-  <div id="jrv-badge">Powered by KickstarterCash · n8n · Claude AI</div>
+  <div id="jrv-badge">Powered by KickstarterCash · Claude AI</div>
 </div>
 
 <script>
 /* ── Config ──────────────────────────────────────────────────────────── */
-const WEBHOOK_CEO = "https://nadjas.app.n8n.cloud/webhook/repal";
+// FastAPI Backend URL (deployed on Railway/Render)
+const BACKEND_URL = "https://kickstartercash-backend.up.railway.app";
 
-// URL deiner React-App (z.B. https://kickstartercash.club oder https://deine-app.netlify.app)
+// URL deiner React-App
 const APP_URL = "https://kickstartercash.club";
 
-const WEBHOOK_AGENTS = {
-  marketing:  "", // z.B. "https://nadjas.app.n8n.cloud/webhook/marketing"
-  design:     "",
-  video:      "",
-  sales:      "",
-  seo:        "",
-  automation: "",
-  social:     "",
-  analytics:  "",
+// Mapping: Orb-Department → Backend agent_id
+const DEPT_TO_AGENT_ID = {
+  marketing:  "marketing",
+  design:     "designer",
+  video:      "video",
+  sales:      "sales",
+  seo:        "seo",
+  automation: "automation",
+  social:     "social",
+  analytics:  "analytics",
+  ceo:        "ceo",
 };
 
 /* ── Agent Definitionen ─────────────────────────────────────────────── */
@@ -315,6 +318,7 @@ const micBtn   = document.getElementById('jrv-mic');
 const statusEl = document.getElementById('jrv-status');
 const logo     = document.getElementById('jrv-logo');
 const tagline  = document.getElementById('jrv-tagline');
+let chatHistory = []; // conversation history for context
 
 /* ── Panel ──────────────────────────────────────────────────────────── */
 let panelOpen = false, greeted = false;
@@ -477,27 +481,31 @@ async function send(forceDept) {
     await delay(300);
   }
 
-  // 3) Webhook-Aufruf
+  // 3) Backend-Aufruf
   const activeAgent = agent || AGENTS.ceo;
   setStatus(`${activeAgent.name} denkt nach …`, 'thinking');
   const thinkEl = addMsg('thinking', '', dept || 'ceo');
 
-  const webhookUrl = (dept && WEBHOOK_AGENTS[dept]) || WEBHOOK_CEO;
+  const agentId = DEPT_TO_AGENT_ID[dept || 'ceo'] || 'ceo';
 
   try {
-    const res = await fetch(webhookUrl, {
+    const res = await fetch(`${BACKEND_URL}/api/agents/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        chatInput: text,
-        department: dept || 'ceo',
-        agent: activeAgent.name,
-        agent_role: activeAgent.role || 'CEO Agent',
+        agent_id: agentId,
+        message: text,
+        language: "DE",
+        history: chatHistory.slice(-10),
+        model: "claude-opus-4-8",
+        use_knowledge: false,
       })
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const reply = data.reply || data.output || data.message || JSON.stringify(data);
+    chatHistory.push({ role: 'user', content: text });
+    chatHistory.push({ role: 'assistant', content: reply });
 
     thinkEl.remove();
     setStatus('Online', '');
