@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KickstarterCash Premium Black Card – 14-Tage Social Media Plan</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --gold: #D4AF37;
+    --gold-light: #F5D06A;
+    --gold-dark: #A0832A;
+    --bg: #08080C;
+    --bg2: #0E0E14;
+    --bg3: #14141E;
+    --border: rgba(212,175,55,0.2);
+    --text: #E8E8F0;
+    --muted: #8888A0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Manrope', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, #0a0a0f 0%, #111118 50%, #0a0a0f 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(20px);
+  }
+  .header-logo { height: 52px; }
+  .header-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .header-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 2px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── NAV DAYS ── */
+  .nav-days {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 20px 40px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 100px;
+    z-index: 99;
+  }
+  .day-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    background: transparent;
+  }
+  .day-pill:hover, .day-pill.active {
+    background: var(--gold);
+    color: #000;
+    border-color: var(--gold);
+    font-weight: 700;
+  }
+
+  /* ── MAIN ── */
+  .main { padding: 40px; max-width: 1400px; margin: 0 auto; }
+
+  /* ── DAY SECTION ── */
+  .day-section {
+    margin-bottom: 72px;
+    scroll-margin-top: 180px;
+  }
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .day-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #000;
+    background: var(--gold);
+    padding: 4px 12px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .day-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .day-theme {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  /* ── GRID ── */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+
+  /* ── IMAGE PANEL ── */
+  .image-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .image-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .tab-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+    padding: 10px 16px;
+    color: var(--muted);
+    background: none;
+    border: none;
+    border-right: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .tab-btn:hover, .tab-btn.active {
+    color: var(--gold);
+    background: rgba(212,175,55,0.08);
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .image-wrapper {
+    position: relative;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    max-height: 520px;
+    overflow: hidden;
+  }
+  .image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    max-height: 520px;
+    display: block;
+  }
+  .download-btn {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(0,0,0,0.75);
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    color: var(--gold);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    backdrop-filter: blur(4px);
+  }
+  .download-btn:hover {
+    background: var(--gold);
+    color: #000;
+  }
+  .no-image {
+    color: var(--muted);
+    font-size: 0.8rem;
+    padding: 60px 20px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── COPY PANEL ── */
+  .copy-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .copy-block-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    margin-bottom: 8px;
+  }
+  .copy-block {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .copy-btn {
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    background: rgba(212,175,55,0.1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .copy-btn:hover { background: var(--gold); color: #000; }
+  .copy-btn.copied { background: #1a3a1a; color: #4CAF50; border-color: #4CAF50; }
+
+  .tags-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--gold);
+    background: rgba(212,175,55,0.08);
+    border: 1px solid rgba(212,175,55,0.2);
+    border-radius: 20px;
+    padding: 4px 10px;
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--gold);
+    color: #000;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 12px 28px;
+    border-radius: 30px;
+    z-index: 9999;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── FOOTER ── */
+  .footer {
+    text-align: center;
+    padding: 40px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .footer a { color: var(--gold); text-decoration: none; }
+
+  @media (max-width: 900px) {
+    .content-grid { grid-template-columns: 1fr; }
+    .header { padding: 16px 20px; }
+    .nav-days { padding: 14px 20px; top: 86px; }
+    .main { padding: 20px; }
+    .day-theme { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <img src="assets/cards/logo_transparent.png" class="header-logo" alt="KickstarterCash.club">
+  <div>
+    <div class="header-title">KickstarterCash Premium Black Card</div>
+    <div class="header-sub">14-Tage Social Media Plan · Instagram · Facebook · LinkedIn</div>
+  </div>
+</header>
+
+<nav class="nav-days" id="navDays">
+  <!-- filled by JS -->
+</nav>
+
+<main class="main" id="mainContent">
+  <!-- filled by JS -->
+</main>
+
+<footer class="footer">
+  <p>KickstarterCash.club · <a href="https://portal.kickstartercash.club/kartendetails.php" target="_blank">Kartendetails & FAQ</a> · <a href="https://portal.kickstartercash.club/register.php" target="_blank">Jetzt registrieren</a></p>
+</footer>
+
+<div class="toast" id="toast">✓ Kopiert!</div>
+
+<script>
+const DAYS = [
+  {
+    id: 1, title: "Deine Premium Black Card", theme: "Awareness",
+    images: {
+      "IG 4:5": "assets/composed/tag01_ig.jpg",
+      "Story": "assets/composed/tag01_story.jpg",
+      "FB/LI": "assets/composed/tag01_fb.jpg",
+    },
+    hook: "🃏 Eine schwarze Karte. Unendliche Möglichkeiten.\n\nDas ist keine gewöhnliche Debitkarte – das ist dein Schlüssel zur finanziellen Freiheit.\n\nDie KickstarterCash Premium Black Card gibt dir:\n✅ Eigene IBAN ab Tag 1\n✅ Sofortige Verfügbarkeit\n✅ Multi-Währungskonto (EUR, CHF, USD, GBP)\n✅ SEPA & SWIFT bis €50.000\n\n14 Tage. Eine Karte. Dein neues Leben.\n\n👇 Link in Bio → kickstartercash.club",
+    hashtags: "#PremiumBlackCard #KickstarterCash #FinanzielleFreiheit #DebitKarte #BlackCard #Fintech #MulticurrencyCard #EigeneIBAN #Luxusfinanz #PremiumBanking"
+  },
+  {
+    id: 2, title: "Eigene IBAN – Sofort verfügbar", theme: "Feature",
+    images: {
+      "IG 4:5": "assets/composed/tag02_ig.jpg",
+      "Story": "assets/composed/tag02_story.jpg",
+    },
+    hook: "🏦 Deine eigene IBAN – nicht morgen. JETZT.\n\nViele warten Wochen auf ein Konto. Du nicht.\n\nMit der KickstarterCash Premium Black Card hast du:\n🔑 Eigene IBAN sofort nach Aktivierung\n📲 Vollständige Online-Kontrolle\n💳 Business & Private Debit – beides erhältlich\n🌐 Weltweit einsetzbar\n\nWas hält dich noch auf?\n\n👇 kickstartercash.club",
+    hashtags: "#EigeneIBAN #KickstarterCash #BlackCard #Debitkarte #BusinessKarte #PrivatKarte #Finanzfreiheit #Fintech #PremiumKarte #SofortVerfügbar"
+  },
+  {
+    id: 3, title: "Multi-Währungskonto", theme: "Feature",
+    images: {
+      "IG 4:5": "assets/composed/tag03_ig.jpg",
+    },
+    hook: "💱 EUR, CHF, USD, GBP – alles in einer Karte.\n\nSchluss mit Wechselkursproblemen.\nSchluss mit mehreren Konten.\nSchluss mit unnötigen Gebühren.\n\nDie KickstarterCash Black Card ist dein Multi-Währungs-Powerhouse:\n\n🇪🇺 Euro\n🇨🇭 Schweizer Franken\n🇺🇸 US-Dollar\n🇬🇧 Britisches Pfund\n\nEine Karte. Alle Währungen. Weltweit.\n\n🔗 kickstartercash.club",
+    hashtags: "#MultiCurrency #EUR #CHF #USD #GBP #KickstarterCash #BlackCard #WeltweitBezahlen #Devisenfreiheit #PremiumFinanz #Fintech"
+  },
+  {
+    id: 4, title: "SEPA & SWIFT bis €50.000", theme: "Transfer",
+    images: {
+      "IG 4:5": "assets/composed/tag04_ig.jpg",
+      "FB/LI": "assets/composed/tag04_fb.jpg",
+    },
+    hook: "💸 €50.000 international transferieren?\n\nKein Problem. Kein Stress. Kein Warteraum.\n\nMit der KickstarterCash Black Card sendest und empfängst du:\n\n📤 SEPA-Überweisungen in der Eurozone\n🌍 SWIFT-Transfers weltweit\n💰 Bis zu €50.000 pro Transfer\n⚡ Schnell. Sicher. Zuverlässig.\n\nDas ist Banking auf einem anderen Level.\n\n👉 kickstartercash.club",
+    hashtags: "#SEPA #SWIFT #InternationalerTransfer #KickstarterCash #PremiumBlackCard #Überweisung #Finanzfreiheit #BusinessBanking #50000 #GlobalBanking"
+  },
+  {
+    id: 5, title: "Business Debit Karte", theme: "Business",
+    images: {
+      "IG 4:5": "assets/composed/tag05_ig.jpg",
+    },
+    hook: "👔 Für Unternehmer. Von Anfang an.\n\nDu bist Selbstständiger, Unternehmer oder Freelancer?\n\nDann ist die KickstarterCash Business Debit Card dein idealer Begleiter:\n\n✅ Geschäftliche Zahlungen professionell abwickeln\n✅ Eigene Business-IBAN\n✅ Multi-Währung für internationale Geschäfte\n✅ SEPA & SWIFT für Lieferanten & Partner\n\nProfessionell von Tag 1.\n\n💼 kickstartercash.club",
+    hashtags: "#BusinessDebit #Selbstständig #Unternehmer #Freelancer #KickstarterCash #BusinessKarte #BusinessIBAN #Unternehmensfinanzen #Fintech #PremiumBusiness"
+  },
+  {
+    id: 6, title: "Preise & Membership", theme: "Angebot",
+    images: {
+      "IG 4:5": "assets/composed/tag06_ig.jpg",
+    },
+    hook: "💳 Premium muss nicht teuer sein.\n\nDie KickstarterCash Black Card gibt es in drei Varianten:\n\n🥈 Premium Black Card (ohne Membership) – €299\n🥇 Premium Black Card (mit Membership) – €385\n💎 Deluxe Black Card – €460\n\nJeder Plan beinhaltet:\n✅ Eigene IBAN\n✅ Multi-Währungskonto\n✅ SEPA & SWIFT\n✅ Weltweite Akzeptanz\n\nWelche Karte ist deine?\n\n👉 kickstartercash.club",
+    hashtags: "#KickstarterCash #BlackCard #Preise #Membership #PremiumKarte #DeluxeCard #Finanzfreiheit #WertFürGeld #Debitkarte #Premium"
+  },
+  {
+    id: 7, title: "Deluxe – Cashback & Exchange", theme: "Upgrade",
+    images: {
+      "IG 4:5": "assets/composed/tag07_ig.jpg",
+      "Story": "assets/composed/tag07_story.jpg",
+    },
+    hook: "💎 Das DELUXE-Upgrade: Cashback. Exchange. Alles.\n\nDie Deluxe Black Card ist für die gemacht, die mehr wollen:\n\n🔄 Exchange – Sofort-Währungstausch\n📊 DEX – Dezentraler Exchange\n🌐 WEX – World Exchange\n💰 Cashback – Bei jeder Zahlung\n\nAlles für nur €460.\n\nWenn du Premium liebst, wirst du Deluxe lieben.\n\n🔗 Mehr auf kickstartercash.club",
+    hashtags: "#DeluxeCard #Cashback #Exchange #DEX #WEX #KickstarterCash #BlackCard #DeluxeBlackCard #CryptoExchange #PremiumUpgrade"
+  },
+  {
+    id: 8, title: "Sicherheit & Vertrauen", theme: "Trust",
+    images: {
+      "IG 4:5": "assets/composed/tag08_ig.jpg",
+    },
+    hook: "🔒 Dein Geld. Deine Sicherheit. Deine Kontrolle.\n\nWir wissen: Bei Finanzen zählt Vertrauen.\n\nDeshalb bietet KickstarterCash:\n\n🛡️ Geprüfte europäische Infrastruktur\n🔐 Modernste Verschlüsselungstechnologie\n📋 Volle Transparenz & Compliance\n⚡ 24/7 Support\n🇪🇺 Nach EU-Standards\n\nDein Geld ist sicher. Dein Vertrauen verdient.\n\n👉 kickstartercash.club",
+    hashtags: "#Sicherheit #Trust #KickstarterCash #Fintech #Datenschutz #EUSicherheit #Compliance #PremiumBanking #BlackCard #Vertrauen"
+  },
+  {
+    id: 9, title: "Lifestyle & Private Debit", theme: "Lifestyle",
+    images: {
+      "IG 4:5": "assets/composed/tag09_ig.jpg",
+      "Story": "assets/composed/tag09_story.jpg",
+    },
+    hook: "✈️ Dein Leben. Deine Regeln. Deine Karte.\n\nDie Private Black Card ist für Menschen, die den Unterschied kennen.\n\nReise. Genieße. Lebe.\n\n🌍 Überall auf der Welt akzeptiert\n💴 Keine Währungsprobleme\n🎯 Sofortige Transaktionen\n🖤 Das Premium-Feeling bei jedem Einkauf\n\nDu verdienst das Beste.\n\n🔗 kickstartercash.club",
+    hashtags: "#PrivateDebit #Lifestyle #KickstarterCash #LuxusLeben #PremiumCard #Reisen #Finanzfreiheit #BlackCard #LuxusFinanz #PrivateBanking"
+  },
+  {
+    id: 10, title: "Community & Network", theme: "Community",
+    images: {
+      "IG 4:5": "assets/composed/tag10_ig.jpg",
+    },
+    hook: "🤝 Join the Network. Join KickstarterCash.\n\nDu bist nicht allein auf deinem Weg zur finanziellen Freiheit.\n\nUnsere Community besteht aus:\n\n💼 Unternehmern & Selbstständigen\n✈️ Digital Nomads & Weltreisenden\n📈 Investoren & Finanzprofis\n🌟 Menschen die mehr wollen\n\nGemeinsam sind wir stärker.\n\nBist du dabei?\n\n👉 kickstartercash.club",
+    hashtags: "#KickstarterCash #Community #Network #Fintech #FinanzielleFreiheit #JoinTheMovement #BlackCard #Unternehmer #DigitalNomad #Gemeinschaft"
+  },
+  {
+    id: 11, title: "FAQ & Kartendetails", theme: "Support",
+    images: {
+      "IG 4:5": "assets/composed/tag11_ig.jpg",
+    },
+    hook: "❓ Fragen zur Black Card? Wir haben Antworten.\n\nDie häufigsten Fragen:\n\n🔸 Wie lange dauert die Aktivierung? → Wenige Stunden\n🔸 Welche Währungen? → EUR, CHF, USD, GBP und mehr\n🔸 Ist die Karte weltweit gültig? → Ja, überall Mastercard akzeptiert wird\n🔸 Was kostet der Transfer? → Details auf unserer FAQ-Seite\n\n📋 Alle Details findest du hier:\n👉 portal.kickstartercash.club/kartendetails.php",
+    hashtags: "#FAQ #KickstarterCash #BlackCard #Kartendetails #Support #Hilfe #Aktivierung #Debitkarte #KarteBeantragen #Fintech"
+  },
+  {
+    id: 12, title: "Erfolgsgeschichten", theme: "Social Proof",
+    images: {
+      "IG 4:5": "assets/composed/tag12_ig.jpg",
+    },
+    hook: "⭐ Tausende vertrauen bereits auf die Black Card.\n\n\"Seit ich die KickstarterCash Black Card habe, zahle ich überall auf der Welt ohne Probleme.\" – M. aus München\n\n\"Die eigene IBAN war ein Game-Changer für mein Business.\" – T. aus Wien\n\n\"Endlich eine Karte die meinen Ansprüchen gerecht wird.\" – A. aus Zürich\n\nWerde auch du Teil der Erfolgsgeschichte.\n\n🔗 kickstartercash.club",
+    hashtags: "#Erfahrungsbericht #KickstarterCash #BlackCard #Bewertung #Kundenstimmen #Erfolg #Premium #FinanzielleFreiheit #Testimonial #Empfehlung"
+  },
+  {
+    id: 13, title: "Nur noch 2 Tage – Jetzt sichern", theme: "Urgency",
+    images: {
+      "IG 4:5": "assets/composed/tag13_ig.jpg",
+      "FB/LI": "assets/composed/tag13_fb.jpg",
+    },
+    hook: "⏰ NUR NOCH 2 TAGE bis zum Ende unserer Aktion!\n\nDeine Premium Black Card wartet auf dich – aber nicht ewig.\n\n🚨 Was du verpasst wenn du wartest:\n❌ Premium-Konditionen\n❌ Sofortige IBAN-Aktivierung\n❌ Multi-Währungskonto von Tag 1\n❌ SEPA & SWIFT bis €50.000\n\nHandle JETZT.\n\n👉 kickstartercash.club/register\n\n#JetztOderNie",
+    hashtags: "#JetztSichern #LimitiertesAngebot #KickstarterCash #BlackCard #NurNoch2Tage #Countdown #AktionEndet #PremiumKarte #Fintech #Jetzt"
+  },
+  {
+    id: 14, title: "Der Große Abschluss – Tag 14", theme: "Finale",
+    images: {
+      "IG 4:5": "assets/composed/tag14_ig.jpg",
+      "Story": "assets/composed/tag14_story.jpg",
+      "FB/LI": "assets/composed/tag14_fb.jpg",
+    },
+    hook: "🎯 14 Tage. 2 Karten. Eine Entscheidung.\n\nWir haben dir in den letzten 14 Tagen alles gezeigt:\n\n✅ Eigene IBAN\n✅ Multi-Währungskonto (EUR/CHF/USD/GBP)\n✅ SEPA & SWIFT bis €50.000\n✅ Business & Private Debit\n✅ Cashback & Exchange (Deluxe)\n✅ Weltweite Akzeptanz\n✅ Europäische Sicherheitsstandards\n\nJetzt liegt es an DIR.\n\nDeine finanzielle Freiheit beginnt mit einer Entscheidung.\n\n🔑 Klicke jetzt:\n👉 kickstartercash.club\n\nBis bald in der Premium-Welt! 🖤✨",
+    hashtags: "#Tag14 #KickstarterCash #BlackCard #FinanzielleFreiheit #JetztStarten #14TageChallenge #PremiumLeben #Finale #Registrieren #BlackCardFamily"
+  }
+];
+
+function buildNav() {
+  const nav = document.getElementById('navDays');
+  DAYS.forEach(d => {
+    const a = document.createElement('a');
+    a.className = 'day-pill';
+    a.href = '#day' + d.id;
+    a.textContent = 'TAG ' + d.id;
+    nav.appendChild(a);
+  });
+}
+
+function buildContent() {
+  const main = document.getElementById('mainContent');
+  DAYS.forEach(day => {
+    const sec = document.createElement('section');
+    sec.className = 'day-section';
+    sec.id = 'day' + day.id;
+
+    // Images HTML
+    const imgEntries = Object.entries(day.images);
+    const tabsHtml = imgEntries.map((e,i) =>
+      `<button class="tab-btn${i===0?' active':''}" onclick="switchTab(this,'tab-${day.id}-${i}')">${e[0]}</button>`
+    ).join('');
+    const tabContentsHtml = imgEntries.map((e,i) => `
+      <div class="tab-content${i===0?' active':''}" id="tab-${day.id}-${i}">
+        <div class="image-wrapper">
+          <img src="${e[1]}" alt="Tag ${day.id} - ${e[0]}" loading="lazy">
+          <a class="download-btn" href="${e[1]}" download="kickstartercash-tag${String(day.id).padStart(2,'0')}-${e[0].replace(/[^a-z0-9]/gi,'').toLowerCase()}.jpg">⬇ Download</a>
+        </div>
+      </div>
+    `).join('');
+
+    // Hashtag pills
+    const hashPills = day.hashtags.split(' ').map(t =>
+      `<span class="tag">${t}</span>`
+    ).join('');
+
+    sec.innerHTML = `
+      <div class="day-header">
+        <span class="day-badge">TAG ${day.id}</span>
+        <h2 class="day-title">${day.title}</h2>
+        <span class="day-theme">${day.theme}</span>
+      </div>
+      <div class="content-grid">
+        <div class="image-panel">
+          <div class="image-tabs">${tabsHtml}</div>
+          ${tabContentsHtml}
+        </div>
+        <div class="copy-panel">
+          <div>
+            <div class="copy-block-label">📝 Caption / Post-Text</div>
+            <div class="copy-block" id="hook-${day.id}">${escHtml(day.hook)}</div>
+            <button class="copy-btn" onclick="copyText('hook-${day.id}',this)">📋 Caption kopieren</button>
+          </div>
+          <div>
+            <div class="copy-block-label">🏷️ Hashtags</div>
+            <div class="tags-wrap">${hashPills}</div>
+            <div class="copy-block" id="tags-${day.id}" style="margin-top:8px;font-size:0.75rem;">${escHtml(day.hashtags)}</div>
+            <button class="copy-btn" onclick="copyText('tags-${day.id}',this)">📋 Hashtags kopieren</button>
+          </div>
+        </div>
+      </div>
+    `;
+    main.appendChild(sec);
+  });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function switchTab(btn, tabId) {
+  const panel = btn.closest('.image-panel');
+  panel.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  panel.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+function copyText(id, btn) {
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    btn.classList.add('copied');
+    btn.textContent = '✓ Kopiert!';
+    showToast();
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.textContent = btn.textContent.includes('Hashtag') ? '📋 Hashtags kopieren' : '📋 Caption kopieren';
+    }, 2000);
+  });
+}
+
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Active day pill on scroll
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id.replace('day','');
+      document.querySelectorAll('.day-pill').forEach(p => {
+        p.classList.toggle('active', p.href.endsWith('#day'+id));
+      });
+    }
+  });
+}, { threshold: 0.15, rootMargin: '-180px 0px -60% 0px' });
+
+buildNav();
+buildContent();
+document.querySelectorAll('.day-section').forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
