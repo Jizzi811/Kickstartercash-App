@@ -22,14 +22,24 @@ try:
 except ImportError:
     _HAS_EMERGENT = False
 import resend
-import funnel as funnel_renderer
+try:
+    import funnel as funnel_renderer
+    _HAS_FUNNEL = True
+except ImportError:
+    funnel_renderer = None
+    _HAS_FUNNEL = False
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+mongo_url = os.environ.get('MONGO_URL', '')
+try:
+    client = AsyncIOMotorClient(mongo_url, serverSelectionTimeoutMS=5000) if mongo_url else None
+    db = client[os.environ.get('DB_NAME', 'kickstartercash')] if client else None
+except Exception as _mongo_err:
+    logging.warning(f"MongoDB init failed: {_mongo_err}")
+    client = None
+    db = None
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
@@ -402,10 +412,16 @@ DEFAULT_BRAND = {
 
 @app.on_event("startup")
 async def seed_default_brand():
-    existing = await db.brands.find_one({"id": DEFAULT_BRAND["id"]})
-    if not existing:
-        await db.brands.insert_one({**DEFAULT_BRAND})
-        logger.info("Seeded default KickstarterCash brand")
+    if db is None:
+        logger.warning("No MONGO_URL set, skipping DB seed")
+        return
+    try:
+        existing = await db.brands.find_one({"id": DEFAULT_BRAND["id"]})
+        if not existing:
+            await db.brands.insert_one({**DEFAULT_BRAND})
+            logger.info("Seeded default KickstarterCash brand")
+    except Exception as e:
+        logger.error(f"DB seed failed: {e}")
 
 
 @api_router.get("/")
@@ -846,6 +862,8 @@ async def funnel_page(funnel_id: str, request: Request):
     if not doc:
         raise HTTPException(status_code=404, detail="Funnel not found")
     lead_url = f"/api/funnel/{funnel_id}/lead"
+    if not _HAS_FUNNEL:
+        raise HTTPException(status_code=503, detail="Funnel renderer not available")
     html_out = funnel_renderer.render_funnel(doc, lead_url)
     return Response(content=html_out, media_type="text/html")
 
@@ -2060,4 +2078,5 @@ app.add_middleware(
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
-    client.close()
+    if client:
+        client.close()
