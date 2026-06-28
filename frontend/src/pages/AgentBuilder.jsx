@@ -159,8 +159,14 @@ function AgentChatDrawer({ agent, onClose }) {
   const bottomRef = useRef();
 
   useEffect(() => {
+    const loadDocs = async () => {
+      try {
+        const res = await axios.get(`${API}/custom-agents/${agent.id}/documents`);
+        setDocs(res.data);
+      } catch {}
+    };
     loadDocs();
-  }, [agent.id]);
+  }, [agent.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -84,7 +84,7 @@ export function AgentChatPanel({ agentId, agentName, agentEmoji, color, tools = 
     } catch {
       setMessages((p) => [...p, { role: "assistant", content: "Fehler. Bitte erneut versuchen." }]);
     } finally { setLoading(false); }
-  }, [input, loading, toolLoading, messages, agentId, model, lang, useKb]);
+  }, [input, loading, toolLoading, agentId, model, lang, useKb]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const runTool = useCallback(async (tool) => {
     const context = input.trim() || "";
