@@ -199,62 +199,69 @@ body {
 .card-img {
   position: absolute;
   z-index: 3;
-  border-radius: 8px;
+  border-radius: 10px;
   filter:
-    drop-shadow(0 14px 40px rgba(0,0,0,0.80))
-    drop-shadow(0 0 22px rgba(201,168,76,0.20));
+    drop-shadow(0 8px 24px rgba(0,0,0,0.70))
+    drop-shadow(0 2px 8px rgba(0,0,0,0.50))
+    drop-shadow(0 0 16px rgba(201,168,76,0.15));
   pointer-events: none;
   user-select: none;
 }
 
-/* Einzelkarte – zentriert */
+/* Einzelkarte – unten mittig, leicht geneigt (Standard) */
 .card-center {
-  width: 72%;
-  left: 50%; top: 50%;
-  transform: translate(-50%, -50%) perspective(800px) rotateX(-5deg) rotateY(4deg);
+  width: 44%;
+  left: 50%; bottom: 10%;
+  transform: translateX(-50%) perspective(900px) rotateX(-6deg) rotateY(3deg);
 }
-/* Einzelkarte – unten links geneigt */
+/* Einzelkarte – unten rechts, elegant schwebend */
+.card-br {
+  width: 42%;
+  bottom: 8%; right: 6%;
+  transform: perspective(900px) rotateY(-10deg) rotateX(-4deg);
+}
+/* Einzelkarte – unten links */
 .card-bl {
-  width: 68%;
-  bottom: 10%; left: 5%;
-  transform: perspective(700px) rotateY(7deg) rotateX(-3deg);
+  width: 42%;
+  bottom: 8%; left: 6%;
+  transform: perspective(900px) rotateY(10deg) rotateX(-4deg);
 }
 /* Einzelkarte – rechte Seite für 16:9 Landscape */
 .card-right {
-  width: 42%;
-  right: 4%; top: 50%;
-  transform: translateY(-50%) perspective(700px) rotateY(-9deg) rotateX(-2deg);
+  width: 32%;
+  right: 5%; bottom: 12%;
+  transform: perspective(900px) rotateY(-12deg) rotateX(-3deg);
 }
-/* Beide Karten – Business oben links, Private unten rechts */
+/* Beide Karten – diagonal versetzt, überlappend */
 .card-biz-dual {
-  width: 57%;
-  top: 7%; left: 3%;
-  transform: perspective(700px) rotateY(11deg) rotateX(-6deg);
+  width: 40%;
+  bottom: 18%; left: 8%;
+  transform: perspective(900px) rotateY(12deg) rotateX(-5deg);
   z-index: 3;
 }
 .card-priv-dual {
-  width: 57%;
-  bottom: 5%; right: 2%;
-  transform: perspective(700px) rotateY(-11deg) rotateX(-3deg);
+  width: 40%;
+  bottom: 5%; right: 6%;
+  transform: perspective(900px) rotateY(-12deg) rotateX(-3deg);
   z-index: 2;
 }
-/* Story – Einzelkarte groß oben zentriert */
+/* Story – Einzelkarte mittig, elegant */
 .card-story-single {
-  width: 80%;
-  left: 50%; top: 26%;
-  transform: translateX(-50%) perspective(800px) rotateX(-7deg);
+  width: 62%;
+  left: 50%; top: 30%;
+  transform: translateX(-50%) perspective(900px) rotateX(-8deg) rotateY(2deg);
 }
-/* Story – Beide Karten gestapelt */
+/* Story – Beide Karten: leicht versetzt nebeneinander */
 .card-story-biz {
-  width: 76%;
-  left: 50%; top: 12%;
-  transform: translateX(-50%) perspective(700px) rotateY(9deg) rotateX(-5deg);
+  width: 56%;
+  left: 6%; top: 28%;
+  transform: perspective(900px) rotateY(10deg) rotateX(-6deg);
   z-index: 3;
 }
 .card-story-priv {
-  width: 76%;
-  left: 50%; top: 44%;
-  transform: translateX(-50%) perspective(700px) rotateY(-9deg) rotateX(-3deg);
+  width: 56%;
+  right: 6%; top: 44%;
+  transform: perspective(900px) rotateY(-10deg) rotateX(-4deg);
   z-index: 2;
 }
 
@@ -409,7 +416,7 @@ body {
       <div class="voverlay"></div>
       <img class="card-img card-biz-dual" src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business Debit">
       <img class="card-img card-priv-dual" src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private Debit">
-    </div>
+    </div><!-- Tag1: beide Karten – Launch braucht beide -->
     <div class="post-content">
       <div><div class="clabel">Caption</div>
       <div class="cap-text" id="c1">🚀 Es ist soweit – die KickstarterCash Premium Black Karte ist da.
@@ -531,7 +538,7 @@ Jetzt Mitglied werden → Link in Bio</div></div>
       <img class="bg" src="https://www.trybloom.ai/img/834c3c0c-cc44-47b0-8614-c0d9834cf6ea" alt="">
       <div class="voverlay"></div>
       <img class="card-img card-right" src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business Debit">
-    </div>
+    </div><!-- Tag3: nur Business-Karte, rechts positioniert -->
     <div class="post-content">
       <div><div class="clabel">Caption</div>
       <div class="cap-text" id="c3">Die Business-Welt braucht smarte Tools. 💼
@@ -574,7 +581,7 @@ Mehr erfahren → KickstarterCash.Club</div></div>
     <div class="post-visual ar-4-5">
       <img class="bg" src="https://www.trybloom.ai/img/9032ae99-076e-46e3-b3e8-34f3d1a845a2" alt="">
       <div class="voverlay"></div>
-      <img class="card-img card-bl" src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private Debit">
+      <img class="card-img card-br" src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private Debit">
     </div>
     <div class="post-content">
       <div><div class="clabel">Caption</div>
@@ -618,8 +625,7 @@ Du entscheidest – wir liefern.
     <div class="post-visual ar-1-1">
       <img class="bg" src="https://www.trybloom.ai/img/1b992cbb-f207-4e71-8e70-20692c1a2467" alt="">
       <div class="voverlay"></div>
-      <img class="card-img card-biz-dual" src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business Debit">
-      <img class="card-img card-priv-dual" src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private Debit">
+      <img class="card-img card-center" src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business Debit">
     </div>
     <div class="post-content">
       <div><div class="clabel">Caption</div>
@@ -706,8 +712,7 @@ exklusiv für Members.
         <div class="carousel-slide">
           <img class="bg" src="https://www.trybloom.ai/img/a135e6d6-a439-40f1-b28c-b2c6cbe3f234" alt="">
           <div class="voverlay"></div>
-          <img class="card-img card-biz-dual" src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business Debit">
-          <img class="card-img card-priv-dual" src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private Debit">
+          <img class="card-img card-bl" src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business Debit">
         </div>
         <div class="carousel-slide txt-slide ar-1-1">
           <div class="sn">FAQ 01</div><div class="si">🤔</div>
@@ -821,7 +826,7 @@ Was ist dir dein exklusives Banking wert?
     <div class="post-visual ar-16-9">
       <img class="bg" src="https://www.trybloom.ai/img/c04c9358-5330-4c9c-90d8-7a646a76481a" alt="">
       <div class="voverlay"></div>
-      <img class="card-img card-right" src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business Debit">
+      <img class="card-img card-br" src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business Debit">
     </div>
     <div class="post-content">
       <div><div class="clabel">Caption</div>
@@ -866,7 +871,7 @@ KickstarterCash.Club</div></div>
     <div class="post-visual ar-4-5">
       <img class="bg" src="https://www.trybloom.ai/img/5d96a7ce-3077-4b7b-b735-d4ce47d7b328" alt="">
       <div class="voverlay"></div>
-      <img class="card-img card-bl" src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private Debit">
+      <img class="card-img card-center" src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private Debit">
     </div>
     <div class="post-content">
       <div><div class="clabel">Caption</div>
@@ -976,7 +981,7 @@ Beide Optionen auf KickstarterCash.Club
     <div class="post-visual ar-4-5">
       <img class="bg" src="https://www.trybloom.ai/img/70b4de16-dda1-4bf6-a3ea-4e4109ea5bc2" alt="">
       <div class="voverlay"></div>
-      <img class="card-img card-bl" src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business Debit">
+      <img class="card-img card-br" src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business Debit">
     </div>
     <div class="post-content">
       <div><div class="clabel">Caption</div>
@@ -1021,8 +1026,7 @@ Erlebe es selbst.
     <div class="post-visual ar-9-16">
       <img class="bg" src="https://www.trybloom.ai/img/570d7e26-24be-4fc6-b92a-89ef418acd8f" alt="">
       <div class="voverlay"></div>
-      <img class="card-img card-story-biz" src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business Debit">
-      <img class="card-img card-story-priv" src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private Debit">
+      <img class="card-img card-story-single" src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private Debit">
     </div>
     <div class="post-content">
       <div><div class="clabel">Story Text</div>
