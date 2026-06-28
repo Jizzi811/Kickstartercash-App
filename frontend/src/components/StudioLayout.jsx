@@ -104,7 +104,7 @@ export function AgentChatPanel({ agentId, agentName, agentEmoji, color, tools = 
     } catch {
       setMessages((p) => [...p, { role: "assistant", content: "Tool-Fehler." }]);
     } finally { setToolLoading(null); }
-  }, [input, messages, agentId, model, lang]);
+  }, [input, agentId, model, lang]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex flex-col h-full">
