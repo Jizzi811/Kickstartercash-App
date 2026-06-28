@@ -960,6 +960,79 @@ async def get_prompts(category: Optional[str] = None, q: Optional[str] = None):
 # Specialist Agents – Phase 3
 # ---------------------------------------------------------------------------
 
+AGENT_TOOLS = {
+    "ceo": [
+        {"id": "delegate", "label": "Delegieren",     "label_en": "Delegate",        "icon": "GitBranch", "type": "llm",   "prompt_de": "Analysiere diese Aufgabe und erstelle einen detaillierten Delegationsplan: welcher Spezialist übernimmt was, in welcher Reihenfolge und mit welchem Ziel.", "prompt_en": "Analyze this task and create a detailed delegation plan: which specialist handles what, in what order and with what goal."},
+        {"id": "strategy", "label": "Strategie",      "label_en": "Strategy",        "icon": "Map",       "type": "llm",   "prompt_de": "Erstelle eine vollständige Marketing-Strategie für: ", "prompt_en": "Create a complete marketing strategy for: "},
+        {"id": "plan",     "label": "Aktionsplan",    "label_en": "Action Plan",     "icon": "ListChecks","type": "llm",   "prompt_de": "Erstelle einen konkreten 7-Schritte-Aktionsplan für: ", "prompt_en": "Create a concrete 7-step action plan for: "},
+        {"id": "swot",     "label": "SWOT-Analyse",   "label_en": "SWOT Analysis",   "icon": "BarChart2", "type": "llm",   "prompt_de": "Führe eine SWOT-Analyse durch für: ", "prompt_en": "Conduct a SWOT analysis for: "},
+    ],
+    "content": [
+        {"id": "hook",      "label": "Hook Generator", "label_en": "Hook Generator",  "icon": "Zap",       "type": "llm",   "prompt_de": "Schreibe 5 verschiedene Hooks (Aufmerksamkeitsfänger) für: ", "prompt_en": "Write 5 different hooks (attention grabbers) for: "},
+        {"id": "headline",  "label": "Headlines",      "label_en": "Headlines",       "icon": "Type",      "type": "llm",   "prompt_de": "Generiere 10 konvertierende Headlines für: ", "prompt_en": "Generate 10 converting headlines for: "},
+        {"id": "story",     "label": "Storytelling",   "label_en": "Storytelling",    "icon": "BookOpen",  "type": "llm",   "prompt_de": "Schreibe eine emotionale Story (Problem → Reise → Lösung) für: ", "prompt_en": "Write an emotional story (problem → journey → solution) for: "},
+        {"id": "email",     "label": "E-Mail",         "label_en": "Email",           "icon": "Mail",      "type": "llm",   "prompt_de": "Schreibe eine konvertierende Marketing-E-Mail für: ", "prompt_en": "Write a converting marketing email for: "},
+        {"id": "cta",       "label": "CTA-Texte",      "label_en": "CTA Copy",        "icon": "MousePointer","type": "llm", "prompt_de": "Erstelle 8 starke Call-to-Action Texte für: ", "prompt_en": "Create 8 strong call-to-action texts for: "},
+    ],
+    "designer": [
+        {"id": "gpt_image",  "label": "GPT Image",    "label_en": "GPT Image",       "icon": "Image",     "type": "image", "prompt_de": "Generiere ein hochwertiges Werbebild für: ", "prompt_en": "Generate a high-quality advertising image for: "},
+        {"id": "canva",      "label": "Canva Prompt",  "label_en": "Canva Prompt",    "icon": "Layout",    "type": "llm",   "prompt_de": "Erstelle eine detaillierte Canva-Design-Anleitung mit Farbcodes, Schriften, Layout und Elementen für: ", "prompt_en": "Create a detailed Canva design guide with color codes, fonts, layout and elements for: "},
+        {"id": "leonardo",   "label": "Leonardo",      "label_en": "Leonardo",        "icon": "Wand2",     "type": "llm",   "prompt_de": "Erstelle einen optimierten Leonardo.ai Prompt für ein professionelles Werbebild von: ", "prompt_en": "Create an optimized Leonardo.ai prompt for a professional advertising image of: "},
+        {"id": "flux",       "label": "Flux",          "label_en": "Flux",            "icon": "Sparkles",  "type": "llm",   "prompt_de": "Erstelle einen präzisen Flux-Bildgenerierungs-Prompt (photorealistisch, kommerziell) für: ", "prompt_en": "Create a precise Flux image generation prompt (photorealistic, commercial) for: "},
+        {"id": "ideogram",   "label": "Ideogram",      "label_en": "Ideogram",        "icon": "PenTool",   "type": "llm",   "prompt_de": "Erstelle einen Ideogram-Prompt mit Textelementen und Logo-Integration für: ", "prompt_en": "Create an Ideogram prompt with text elements and logo integration for: "},
+        {"id": "brand",      "label": "Brand-Guide",   "label_en": "Brand Guide",     "icon": "Palette",   "type": "llm",   "prompt_de": "Erstelle einen vollständigen Brand-Guide (Farben, Schriften, Do's & Don'ts) für: ", "prompt_en": "Create a complete brand guide (colors, fonts, do's & don'ts) for: "},
+    ],
+    "video": [
+        {"id": "script",    "label": "Script",         "label_en": "Script",          "icon": "FileText",  "type": "llm",   "prompt_de": "Schreibe ein vollständiges Video-Script (Hook, Story, CTA) für: ", "prompt_en": "Write a complete video script (hook, story, CTA) for: "},
+        {"id": "veo",       "label": "Veo Prompt",     "label_en": "Veo Prompt",      "icon": "Film",      "type": "llm",   "prompt_de": "Erstelle einen detaillierten Google Veo 3 Video-Prompt für: ", "prompt_en": "Create a detailed Google Veo 3 video prompt for: "},
+        {"id": "runway",    "label": "Runway ML",      "label_en": "Runway ML",       "icon": "Clapperboard","type": "llm", "prompt_de": "Erstelle einen Runway ML Gen-3 Prompt mit Camera-Bewegungen und Stil für: ", "prompt_en": "Create a Runway ML Gen-3 prompt with camera movements and style for: "},
+        {"id": "kling",     "label": "Kling",          "label_en": "Kling",           "icon": "Video",     "type": "llm",   "prompt_de": "Erstelle einen Kling AI Video-Prompt mit Motion-Beschreibung für: ", "prompt_en": "Create a Kling AI video prompt with motion description for: "},
+        {"id": "storyboard","label": "Storyboard",     "label_en": "Storyboard",      "icon": "Layers",    "type": "llm",   "prompt_de": "Erstelle ein detailliertes Shot-by-Shot Storyboard für: ", "prompt_en": "Create a detailed shot-by-shot storyboard for: "},
+        {"id": "reels",     "label": "Reels-Konzept",  "label_en": "Reels Concept",   "icon": "Play",      "type": "llm",   "prompt_de": "Entwickle 3 virale Instagram/TikTok Reels-Konzepte für: ", "prompt_en": "Develop 3 viral Instagram/TikTok Reels concepts for: "},
+    ],
+    "seo": [
+        {"id": "keywords",  "label": "Keywords",       "label_en": "Keywords",        "icon": "Search",    "type": "llm",   "prompt_de": "Erstelle eine Keyword-Recherche mit Short-Tail, Long-Tail und LSI-Keywords für: ", "prompt_en": "Create keyword research with short-tail, long-tail and LSI keywords for: "},
+        {"id": "meta",      "label": "Meta-Texte",     "label_en": "Meta Texts",      "icon": "Code",      "type": "llm",   "prompt_de": "Schreibe optimierte Meta-Title (60 Zeichen) und Meta-Description (155 Zeichen) für: ", "prompt_en": "Write optimized meta title (60 chars) and meta description (155 chars) for: "},
+        {"id": "audit",     "label": "SEO-Audit",      "label_en": "SEO Audit",       "icon": "ClipboardList","type": "llm","prompt_de": "Erstelle eine SEO-Audit-Checkliste und Optimierungsplan für: ", "prompt_en": "Create an SEO audit checklist and optimization plan for: "},
+        {"id": "schema",    "label": "Schema Markup",  "label_en": "Schema Markup",   "icon": "Braces",    "type": "llm",   "prompt_de": "Generiere JSON-LD Schema Markup (Organization, Product, FAQ) für: ", "prompt_en": "Generate JSON-LD schema markup (Organization, Product, FAQ) for: "},
+        {"id": "blog_seo",  "label": "SEO-Artikel",    "label_en": "SEO Article",     "icon": "FileEdit",  "type": "llm",   "prompt_de": "Schreibe einen vollständigen SEO-optimierten Blogartikel (H1, H2, H3, Keywords, 800+ Wörter) über: ", "prompt_en": "Write a complete SEO-optimized blog article (H1, H2, H3, keywords, 800+ words) about: "},
+    ],
+    "social": [
+        {"id": "post_pack", "label": "Post-Paket",     "label_en": "Post Package",    "icon": "Package",   "type": "llm",   "prompt_de": "Erstelle ein vollständiges Post-Paket (Caption, Hashtags, CTA, Bildidee) für alle Plattformen zu: ", "prompt_en": "Create a complete post package (caption, hashtags, CTA, image idea) for all platforms about: "},
+        {"id": "hashtags",  "label": "Hashtags",       "label_en": "Hashtags",        "icon": "Hash",      "type": "llm",   "prompt_de": "Generiere 30 relevante Hashtags (Mix aus groß/mittel/niche) für: ", "prompt_en": "Generate 30 relevant hashtags (mix of large/medium/niche) for: "},
+        {"id": "calendar",  "label": "Posting-Plan",   "label_en": "Posting Plan",    "icon": "Calendar",  "type": "llm",   "prompt_de": "Erstelle einen 2-Wochen-Social-Media-Posting-Kalender mit Themen und besten Zeiten für: ", "prompt_en": "Create a 2-week social media posting calendar with topics and best times for: "},
+        {"id": "bio",       "label": "Bio & Profil",   "label_en": "Bio & Profile",   "icon": "User",      "type": "llm",   "prompt_de": "Schreibe eine optimierte Social-Media-Bio für alle Plattformen für: ", "prompt_en": "Write an optimized social media bio for all platforms for: "},
+        {"id": "viral",     "label": "Viral-Konzept",  "label_en": "Viral Concept",   "icon": "TrendingUp","type": "llm",   "prompt_de": "Entwickle 5 virale Content-Ideen mit hohem Share-Potenzial für: ", "prompt_en": "Develop 5 viral content ideas with high share potential for: "},
+    ],
+    "sales": [
+        {"id": "script",    "label": "Sales-Script",   "label_en": "Sales Script",    "icon": "MessageSquare","type": "llm","prompt_de": "Schreibe ein vollständiges Verkaufsgespräch-Script (Opener, Bedarfsanalyse, Präsentation, Closing) für: ", "prompt_en": "Write a complete sales conversation script (opener, needs analysis, presentation, closing) for: "},
+        {"id": "objections","label": "Einwände",        "label_en": "Objections",      "icon": "ShieldCheck","type": "llm",  "prompt_de": "Liste die 10 häufigsten Einwände und perfekte Antworten darauf für: ", "prompt_en": "List the 10 most common objections and perfect responses for: "},
+        {"id": "offer",     "label": "Angebot",         "label_en": "Offer",           "icon": "Gift",      "type": "llm",   "prompt_de": "Entwickle ein unwiderstehliches Angebot mit Preis, Boni, Garantie und Knappheit für: ", "prompt_en": "Develop an irresistible offer with price, bonuses, guarantee and scarcity for: "},
+        {"id": "funnel",    "label": "Funnel-Map",      "label_en": "Funnel Map",      "icon": "GitMerge",  "type": "llm",   "prompt_de": "Erstelle eine komplette Funnel-Karte (Awareness → Interest → Desire → Action) für: ", "prompt_en": "Create a complete funnel map (Awareness → Interest → Desire → Action) for: "},
+        {"id": "followup",  "label": "Follow-up",       "label_en": "Follow-up",       "icon": "RefreshCw", "type": "llm",   "prompt_de": "Schreibe eine 5-teilige Follow-up-Sequenz für Interessenten von: ", "prompt_en": "Write a 5-part follow-up sequence for prospects of: "},
+    ],
+    "analytics": [
+        {"id": "kpis",      "label": "KPI-Dashboard",  "label_en": "KPI Dashboard",   "icon": "BarChart2", "type": "llm",   "prompt_de": "Definiere die wichtigsten KPIs, Zielwerte und Mess-Methoden für: ", "prompt_en": "Define the most important KPIs, target values and measurement methods for: "},
+        {"id": "report",    "label": "Report",          "label_en": "Report",          "icon": "FileBarChart","type": "llm", "prompt_de": "Erstelle eine Report-Vorlage und erkläre wie man die Daten für folgendes interpretiert: ", "prompt_en": "Create a report template and explain how to interpret the data for: "},
+        {"id": "ab_test",   "label": "A/B Test",        "label_en": "A/B Test",        "icon": "GitBranch", "type": "llm",   "prompt_de": "Entwickle einen A/B-Test-Plan mit Hypothese, Varianten und Erfolgskriterien für: ", "prompt_en": "Develop an A/B test plan with hypothesis, variants and success criteria for: "},
+        {"id": "growth",    "label": "Wachstums-Plan",  "label_en": "Growth Plan",     "icon": "TrendingUp","type": "llm",   "prompt_de": "Erstelle einen datengetriebenen Wachstumsplan für: ", "prompt_en": "Create a data-driven growth plan for: "},
+    ],
+    "automation": [
+        {"id": "n8n",       "label": "n8n Workflow",    "label_en": "n8n Workflow",    "icon": "Workflow",  "type": "llm",   "prompt_de": "Beschreibe einen vollständigen n8n-Workflow mit allen Nodes, Verbindungen und Konfigurationen für: ", "prompt_en": "Describe a complete n8n workflow with all nodes, connections and configurations for: "},
+        {"id": "email_seq", "label": "E-Mail-Sequenz",  "label_en": "Email Sequence",  "icon": "Mail",      "type": "llm",   "prompt_de": "Baue eine automatische 7-E-Mail-Onboarding-Sequenz für: ", "prompt_en": "Build an automatic 7-email onboarding sequence for: "},
+        {"id": "webhook",   "label": "Webhook",         "label_en": "Webhook",         "icon": "Webhook",   "type": "llm",   "prompt_de": "Erkläre wie man einen Webhook einrichtet und die Daten verarbeitet für: ", "prompt_en": "Explain how to set up a webhook and process the data for: "},
+        {"id": "zapier",    "label": "Zapier/Make",     "label_en": "Zapier/Make",     "icon": "Zap",       "type": "llm",   "prompt_de": "Erstelle einen Zapier oder Make-Automationsplan für: ", "prompt_en": "Create a Zapier or Make automation plan for: "},
+        {"id": "crm",       "label": "CRM-Flow",        "label_en": "CRM Flow",        "icon": "Users",     "type": "llm",   "prompt_de": "Entwirf einen CRM-Automations-Workflow für Lead-Management von: ", "prompt_en": "Design a CRM automation workflow for lead management of: "},
+    ],
+    "coding": [
+        {"id": "html",      "label": "Landingpage",     "label_en": "Landing Page",    "icon": "Globe",     "type": "llm",   "prompt_de": "Schreibe vollständigen HTML/CSS/JS Code für eine konvertierende Landingpage für: ", "prompt_en": "Write complete HTML/CSS/JS code for a converting landing page for: "},
+        {"id": "react",     "label": "React",           "label_en": "React",           "icon": "Code2",     "type": "llm",   "prompt_de": "Erstelle eine vollständige React-Komponente (TypeScript, Tailwind) für: ", "prompt_en": "Create a complete React component (TypeScript, Tailwind) for: "},
+        {"id": "api",       "label": "API / Webhook",   "label_en": "API / Webhook",   "icon": "Plug",      "type": "llm",   "prompt_de": "Schreibe den vollständigen Backend-Code (FastAPI/Express) für eine API-Integration mit: ", "prompt_en": "Write the complete backend code (FastAPI/Express) for an API integration with: "},
+        {"id": "n8n_node",  "label": "n8n Node",        "label_en": "n8n Node",        "icon": "Box",       "type": "llm",   "prompt_de": "Erstelle einen benutzerdefinierten n8n Node (JavaScript) für: ", "prompt_en": "Create a custom n8n node (JavaScript) for: "},
+        {"id": "php",       "label": "PHP Script",      "label_en": "PHP Script",      "icon": "Terminal",  "type": "llm",   "prompt_de": "Schreibe einen sicheren PHP-Script für: ", "prompt_en": "Write a secure PHP script for: "},
+    ],
+}
+
 AGENTS = {
     "ceo": {
         "id": "ceo",
@@ -1185,9 +1258,83 @@ class AgentChatRequest(BaseModel):
     use_knowledge: bool = True
 
 
+class AgentToolRunRequest(BaseModel):
+    agent_id: str
+    tool_id: str
+    context: str = ""
+    model: str = "gpt"
+    language: str = "DE"
+    brand_id: str = "kickstartercash"
+
+
 @api_router.get("/agents")
 async def list_agents():
-    return list(AGENTS.values())
+    result = []
+    for a in AGENTS.values():
+        entry = dict(a)
+        entry["tools"] = AGENT_TOOLS.get(a["id"], [])
+        result.append(entry)
+    return result
+
+
+@api_router.get("/agents/{agent_id}/tools")
+async def get_agent_tools(agent_id: str):
+    if agent_id not in AGENTS:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    return AGENT_TOOLS.get(agent_id, [])
+
+
+@api_router.post("/agents/tools/run")
+async def run_agent_tool(req: AgentToolRunRequest):
+    agent = AGENTS.get(req.agent_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    tools = AGENT_TOOLS.get(req.agent_id, [])
+    tool = next((t for t in tools if t["id"] == req.tool_id), None)
+    if not tool:
+        raise HTTPException(status_code=404, detail="Tool not found")
+
+    lang = req.language
+    tool_prompt = tool.get("prompt_de" if lang == "DE" else "prompt_en", "")
+    full_prompt = f"{tool_prompt}{req.context}".strip()
+
+    if tool["type"] == "image":
+        brand = await db.brands.find_one({"id": req.brand_id}, {"_id": 0})
+        if not brand:
+            brand = {"name": "KickstarterCash", "primary_color": "#D4AF37", "tone": "luxuriös"}
+        image_prompt = (
+            f"Professional advertising image for KickstarterCash.club. "
+            f"Style: luxurious, gold and black, premium. "
+            f"Subject: {req.context or 'KickstarterCash brand visual'}. "
+            f"Brand colors: gold (#D4AF37) and black. High quality, commercial photography style."
+        )
+        try:
+            image_url = await poyo_nano_banana(image_prompt, size="16:9")
+            if image_url:
+                return {
+                    "type": "image",
+                    "tool_label": tool["label"] if lang == "DE" else tool["label_en"],
+                    "image_url": image_url,
+                    "prompt_used": image_prompt,
+                }
+        except Exception as e:
+            logger.error(f"Tool image generation error: {e}")
+        return {"type": "error", "message": "Bildgenerierung fehlgeschlagen. Bitte prüfe das Poyo-Guthaben."}
+
+    personality = agent["personality_de"] if lang == "DE" else agent["personality_en"]
+    lang_label = "Deutsch" if lang == "DE" else "English"
+    system = (
+        f"{personality}\n\n"
+        f"Antworte immer auf {lang_label}. "
+        f"Du nutzt gerade das Tool: {tool['label'] if lang == 'DE' else tool['label_en']}. "
+        f"Sei präzise, strukturiert und sofort umsetzbar."
+    )
+    reply = await llm_text(req.model, system, full_prompt)
+    return {
+        "type": "text",
+        "tool_label": tool["label"] if lang == "DE" else tool["label_en"],
+        "reply": reply.strip(),
+    }
 
 
 @api_router.post("/agents/chat")
