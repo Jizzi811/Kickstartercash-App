@@ -134,6 +134,20 @@
   #jrv-send:active{transform:scale(.97)}
   #jrv-send:disabled,#jrv-mic:disabled{opacity:.35;cursor:not-allowed}
   #jrv-badge{text-align:center;font-size:.58rem;color:#2a2010;padding:0 14px 10px;letter-spacing:.06em}
+
+  /* Studio CTA Button */
+  .studio-cta{
+    display:flex;align-items:center;gap:10px;margin-top:10px;
+    padding:11px 14px;border-radius:12px;border:1px solid;
+    cursor:pointer;text-decoration:none;font-size:.82rem;font-weight:700;
+    transition:filter .2s,transform .1s;letter-spacing:.04em;
+    animation:msgIn .3s ease .1s both;
+  }
+  .studio-cta:hover{filter:brightness(1.15);transform:translateY(-1px)}
+  .studio-cta:active{transform:scale(.98)}
+  .studio-cta-icon{font-size:1.1rem;flex-shrink:0}
+  .studio-cta-text{flex:1}
+  .studio-cta-arrow{opacity:.6;font-size:.8rem}
 </style>
 </head>
 <body>
@@ -187,13 +201,11 @@
 </div>
 
 <script>
-/* ── Webhook Config ─────────────────────────────────────────────────────
-   Trage hier deine n8n Webhook-URLs ein.
-   WEBHOOK_CEO: Jarvjis analysiert & delegiert
-   WEBHOOK_AGENTS: Pro Abteilung ein eigener Webhook (optional)
-   Wenn kein Agent-Webhook gesetzt → wird WEBHOOK_CEO mit dept-Parameter genutzt
-──────────────────────────────────────────────────────────────────────── */
+/* ── Config ──────────────────────────────────────────────────────────── */
 const WEBHOOK_CEO = "https://nadjas.app.n8n.cloud/webhook/repal";
+
+// URL deiner React-App (z.B. https://kickstartercash.club oder https://deine-app.netlify.app)
+const APP_URL = "https://kickstartercash.club";
 
 const WEBHOOK_AGENTS = {
   marketing:  "", // z.B. "https://nadjas.app.n8n.cloud/webhook/marketing"
@@ -209,48 +221,56 @@ const WEBHOOK_AGENTS = {
 /* ── Agent Definitionen ─────────────────────────────────────────────── */
 const AGENTS = {
   ceo: {
-    name: "Kashbot",      emoji: "🤖", color: "#D4AF37",
+    name: "Kashbot", emoji: "🤖", color: "#D4AF37",
     greeting: "Hey, willkommen bei KickstarterCash! Ich bin Kashbot, dein CEO-Agent. Ich schau mir deine Anfrage an und schicke dich direkt zum richtigen Spezialisten. Stell mir einfach deine Frage oder wähl eine Abteilung oben!",
   },
   marketing: {
-    name: "Marco",        emoji: "🎯", color: "#D4AF37",
+    name: "Marco",   emoji: "🎯", color: "#D4AF37",
     role: "Marketing-Stratege",
     intro: "Ich bin Marco, dein Marketing-Spezialist. Ich übernehme!",
+    studio: { path: "/agents", label: "Im Agenten-Studio öffnen", desc: "Kampagnen, Content & Strategie direkt umsetzen" },
   },
   design: {
-    name: "Dina",         emoji: "🎨", color: "#C084FC",
+    name: "Dina",    emoji: "🎨", color: "#C084FC",
     role: "Creative Designer",
     intro: "Ich bin Dina, deine Design-Expertin. Lass uns kreativ werden!",
+    studio: { path: "/design", label: "Im Design Studio öffnen", desc: "Bilder, Logos & Grafiken direkt generieren" },
   },
   video: {
-    name: "Viktor",       emoji: "🎬", color: "#F472B6",
+    name: "Viktor",  emoji: "🎬", color: "#F472B6",
     role: "Video-Produzent",
     intro: "Ich bin Viktor, dein Video-Spezialist. Kamera ab!",
+    studio: { path: "/video", label: "Im Video Studio öffnen", desc: "Scripts, Storyboards & Video-Prompts erstellen" },
   },
   sales: {
-    name: "Sara",         emoji: "💰", color: "#34D399",
+    name: "Sara",    emoji: "💰", color: "#34D399",
     role: "Sales & Funnel Expertin",
     intro: "Ich bin Sara, deine Sales-Expertin. Lass uns deine Conversion steigern!",
+    studio: { path: "/agents", label: "Mit Sara im Studio arbeiten", desc: "Funnel, Angebote & Verkaufstexte optimieren" },
   },
   seo: {
-    name: "Simon",        emoji: "🌍", color: "#60A5FA",
+    name: "Simon",   emoji: "🌍", color: "#60A5FA",
     role: "SEO-Spezialist",
     intro: "Ich bin Simon, dein SEO-Experte. Lass uns dein Ranking verbessern!",
+    studio: { path: "/seo", label: "Im SEO Studio öffnen", desc: "Keywords, Meta-Texte & Audit direkt ausführen" },
   },
   automation: {
-    name: "Alex",         emoji: "⚡", color: "#FBBF24",
+    name: "Alex",    emoji: "⚡", color: "#FBBF24",
     role: "Automation-Architekt",
     intro: "Ich bin Alex, dein Automation-Experte. Lass uns Prozesse automatisieren!",
+    studio: { path: "/automation", label: "Im Automation Studio öffnen", desc: "n8n-Workflows, Webhooks & APIs bauen" },
   },
   social: {
-    name: "Sophia",       emoji: "📱", color: "#FB923C",
+    name: "Sophia",  emoji: "📱", color: "#FB923C",
     role: "Social Media Managerin",
     intro: "Ich bin Sophia, deine Social-Media-Expertin. Lass uns viral gehen!",
+    studio: { path: "/social", label: "Im Social Studio öffnen", desc: "Posts, Reels & Hashtags direkt erstellen" },
   },
   analytics: {
-    name: "Anton",        emoji: "📈", color: "#A78BFA",
+    name: "Anton",   emoji: "📈", color: "#A78BFA",
     role: "Analytics & Growth Experte",
     intro: "Ich bin Anton, dein Analytics-Experte. Lass uns die Zahlen sprechen lassen!",
+    studio: { path: "/analytics", label: "Im Analytics Studio öffnen", desc: "KPIs, Reports & Wachstumspläne erstellen" },
   },
 };
 
@@ -482,6 +502,7 @@ async function send(forceDept) {
     thinkEl.remove();
     setStatus('Online', '');
     addMsg('response', reply, dept || 'ceo', reply);
+    if (dept) setTimeout(() => addStudioButton(dept), 400);
     setTimeout(() => speak(reply), 80);
 
   } catch(err) {
@@ -496,6 +517,31 @@ async function send(forceDept) {
 
   sendBtn.disabled = false; micBtn.disabled = false;
   input.focus();
+}
+
+/* ── Studio CTA ──────────────────────────────────────────────────────── */
+function addStudioButton(dept) {
+  const agent = AGENTS[dept];
+  if (!agent || !agent.studio) return;
+  const s = agent.studio;
+  const url = APP_URL + s.path;
+
+  const el = document.createElement('a');
+  el.href = url;
+  el.target = '_blank';
+  el.rel = 'noopener noreferrer';
+  el.className = 'studio-cta';
+  el.style.cssText = `color:${agent.color};border-color:${agent.color}40;background:${agent.color}0d;align-self:flex-start;`;
+  el.innerHTML = `
+    <span class="studio-cta-icon">${agent.emoji}</span>
+    <span class="studio-cta-text">
+      <span style="display:block">${s.label}</span>
+      <span style="font-weight:400;font-size:.73rem;opacity:.6">${s.desc}</span>
+    </span>
+    <span class="studio-cta-arrow">→</span>
+  `;
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
