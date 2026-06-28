@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KickstarterCash – 14-Tage Social Media Plan</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --gold-dark: #8B6914;
+    --black: #0A0A0A;
+    --surface: #111111;
+    --surface2: #1A1A1A;
+    --surface3: #222222;
+    --border: #2A2A2A;
+    --text: #F0F0F0;
+    --text-muted: #888;
+    --green: #22C55E;
+    --blue: #3B82F6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--black); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0A0A0A 0%, #1A1A0A 50%, #0A0A0A 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header-logo { display: flex; align-items: center; gap: 16px; }
+  .header-logo img { height: 48px; object-fit: contain; }
+  .header-title h1 { font-size: 22px; font-weight: 700; color: var(--gold); letter-spacing: 0.05em; }
+  .header-title p { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .badge { background: linear-gradient(135deg, var(--gold-dark), var(--gold)); color: #000; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; }
+
+  /* CARDS PREVIEW */
+  .cards-section {
+    padding: 32px 40px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .cards-section h2 { font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px; }
+  .cards-grid { display: flex; gap: 24px; flex-wrap: wrap; }
+  .card-thumb {
+    flex: 1; min-width: 280px; max-width: 420px;
+    border-radius: 16px; overflow: hidden;
+    border: 1px solid var(--border);
+    position: relative;
+  }
+  .card-thumb img { width: 100%; display: block; }
+  .card-label {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.85));
+    padding: 20px 16px 12px;
+    font-size: 12px; color: var(--gold); font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;
+  }
+
+  /* FILTERS */
+  .filters {
+    padding: 20px 40px;
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .filter-label { font-size: 12px; color: var(--text-muted); margin-right: 4px; }
+  .filter-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text-muted); padding: 6px 14px; border-radius: 20px;
+    font-size: 12px; cursor: pointer; transition: all 0.2s;
+  }
+  .filter-btn:hover, .filter-btn.active { background: var(--gold); color: #000; border-color: var(--gold); font-weight: 600; }
+
+  /* MAIN GRID */
+  .main { padding: 32px 40px; }
+  .week-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--gold); font-weight: 700; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .week-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  /* POST CARD */
+  .post-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .post-card:hover { border-color: var(--gold-dark); transform: translateY(-2px); }
+
+  .post-header {
+    padding: 14px 16px 10px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .day-badge {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+    color: #000; font-weight: 800; font-size: 13px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .post-meta { flex: 1; }
+  .post-meta .date { font-size: 11px; color: var(--text-muted); }
+  .post-meta .title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .platform-icons { display: flex; gap: 6px; }
+  .platform-icon {
+    width: 26px; height: 26px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+  }
+  .pi-ig { background: linear-gradient(135deg, #833AB4, #FD1D1D, #F77737); color: #fff; }
+  .pi-fb { background: #1877F2; color: #fff; }
+  .pi-li { background: #0A66C2; color: #fff; }
+  .pi-tt { background: #000; color: #fff; border: 1px solid #333; }
+
+  /* FORMAT BADGE */
+  .format-tags { padding: 8px 16px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag {
+    font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 10px;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .tag-single { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
+  .tag-carousel { background: rgba(59,130,246,0.15); color: #93C5FD; border: 1px solid rgba(59,130,246,0.3); }
+  .tag-story { background: rgba(168,85,247,0.15); color: #D8B4FE; border: 1px solid rgba(168,85,247,0.3); }
+  .tag-business { background: rgba(34,197,94,0.15); color: #86EFAC; border: 1px solid rgba(34,197,94,0.3); }
+  .tag-private { background: rgba(251,146,60,0.15); color: #FED7AA; border: 1px solid rgba(251,146,60,0.3); }
+
+  /* POST VISUAL */
+  .post-visual { position: relative; background: var(--surface2); cursor: pointer; }
+  .post-visual-inner {
+    width: 100%; aspect-ratio: 1/1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #0D0D0D 0%, #1A1A0D 100%);
+  }
+  .post-visual-inner.story-ratio { aspect-ratio: 9/16; max-height: 280px; }
+  .post-visual-inner.wide-ratio { aspect-ratio: 16/9; }
+  .post-visual-inner.portrait-ratio { aspect-ratio: 4/5; }
+
+  .visual-card-img { max-width: 75%; max-height: 55%; object-fit: contain; border-radius: 10px; margin-bottom: 12px; filter: drop-shadow(0 8px 24px rgba(0,0,0,0.8)); }
+  .visual-text-top { font-size: 10px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px; }
+  .visual-headline { font-size: 15px; font-weight: 800; color: #fff; text-align: center; line-height: 1.3; max-width: 90%; }
+  .visual-subline { font-size: 10px; color: #aaa; text-align: center; margin-top: 6px; max-width: 85%; line-height: 1.4; }
+  .visual-cta { margin-top: 12px; background: linear-gradient(135deg, var(--gold-dark), var(--gold)); color: #000; font-size: 10px; font-weight: 700; padding: 6px 16px; border-radius: 20px; letter-spacing: 0.06em; }
+  .visual-logo { position: absolute; bottom: 10px; right: 12px; height: 20px; opacity: 0.7; object-fit: contain; }
+  .visual-geo { position: absolute; top: 0; right: 0; width: 120px; height: 120px; background: radial-gradient(circle at 80% 20%, rgba(201,168,76,0.08), transparent 70%); pointer-events: none; }
+
+  /* CAROUSEL SLIDES PREVIEW */
+  .carousel-preview { overflow: hidden; }
+  .carousel-slides { display: flex; gap: 0; transition: transform 0.3s ease; }
+  .carousel-slide {
+    min-width: 100%; aspect-ratio: 1/1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 28px; background: linear-gradient(135deg, #0D0D0D 0%, #1A1A0D 100%);
+    position: relative; overflow: hidden;
+  }
+  .carousel-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 16px; background: var(--surface2);
+  }
+  .carousel-arrow {
+    background: var(--surface3); border: 1px solid var(--border); color: var(--text);
+    width: 28px; height: 28px; border-radius: 8px; cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center; transition: background 0.2s;
+  }
+  .carousel-arrow:hover { background: var(--gold); color: #000; }
+  .carousel-dots { display: flex; gap: 4px; }
+  .carousel-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: background 0.2s; }
+  .carousel-dot.active { background: var(--gold); }
+
+  /* CAPTION */
+  .caption-section { padding: 14px 16px; border-top: 1px solid var(--border); }
+  .section-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; }
+  .caption-box {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; font-size: 13px; line-height: 1.6; color: var(--text);
+    position: relative; white-space: pre-wrap;
+  }
+  .copy-btn {
+    position: absolute; top: 8px; right: 8px;
+    background: var(--surface3); border: 1px solid var(--border);
+    color: var(--text-muted); padding: 4px 10px; border-radius: 6px;
+    font-size: 11px; cursor: pointer; transition: all 0.2s; font-weight: 600;
+  }
+  .copy-btn:hover { background: var(--gold); color: #000; border-color: var(--gold); }
+  .copy-btn.copied { background: var(--green); color: #000; border-color: var(--green); }
+
+  /* HASHTAGS */
+  .hashtag-section { padding: 0 16px 14px; }
+  .hashtag-box {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 14px; font-size: 12px; color: #60A5FA; line-height: 1.7;
+    position: relative;
+  }
+
+  /* DOWNLOAD */
+  .post-actions { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap; }
+  .action-btn {
+    flex: 1; min-width: 100px;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text-muted); padding: 8px 12px; border-radius: 8px;
+    font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    text-align: center;
+  }
+  .action-btn:hover { background: var(--surface3); color: var(--text); border-color: var(--gold-dark); }
+  .action-btn.primary { background: linear-gradient(135deg, var(--gold-dark), var(--gold)); color: #000; border-color: transparent; }
+  .action-btn.primary:hover { opacity: 0.9; }
+
+  /* SIZE INFO */
+  .size-info { font-size: 10px; color: var(--text-muted); padding: 4px 16px 8px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .size-badge { background: var(--surface3); padding: 2px 8px; border-radius: 6px; }
+
+  /* STATS BAR */
+  .stats-bar {
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex; gap: 40px; flex-wrap: wrap;
+  }
+  .stat { text-align: center; }
+  .stat-num { font-size: 28px; font-weight: 800; color: var(--gold); }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* SCROLL TOP */
+  .scroll-top {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--gold); color: #000; width: 44px; height: 44px;
+    border-radius: 12px; border: none; cursor: pointer; font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 20px rgba(201,168,76,0.4); transition: opacity 0.2s;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 80px; right: 24px; z-index: 9999;
+    background: var(--green); color: #000; padding: 10px 20px; border-radius: 10px;
+    font-size: 13px; font-weight: 700; opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  @media (max-width: 700px) {
+    .header, .cards-section, .filters, .main { padding-left: 16px; padding-right: 16px; }
+    .posts-grid { grid-template-columns: 1fr; }
+    .cards-grid { flex-direction: column; }
+    .stats-bar { padding: 16px; gap: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo">
+    <img src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="KickstarterCash Logo" onerror="this.style.display='none'">
+    <div class="header-title">
+      <h1>KICKSTARTERCASH.CLUB</h1>
+      <p>14-Tage Social Media Plan · Premium Black Cards</p>
+    </div>
+  </div>
+  <div class="badge">14 TAGE PLAN</div>
+</div>
+
+<!-- CARDS PREVIEW -->
+<div class="cards-section">
+  <h2>Karten-Assets (Original)</h2>
+  <div class="cards-grid">
+    <div class="card-thumb">
+      <img src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business Debit Card">
+      <div class="card-label">Business Debit · Premium Black Card</div>
+    </div>
+    <div class="card-thumb">
+      <img src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private Debit Card">
+      <div class="card-label">Private Debit · Premium Black Card</div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat"><div class="stat-num">14</div><div class="stat-label">Tage</div></div>
+  <div class="stat"><div class="stat-num">22</div><div class="stat-label">Posts gesamt</div></div>
+  <div class="stat"><div class="stat-num">6</div><div class="stat-label">Karussels</div></div>
+  <div class="stat"><div class="stat-num">4</div><div class="stat-label">Stories</div></div>
+  <div class="stat"><div class="stat-num">3</div><div class="stat-label">Plattformen</div></div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters">
+  <span class="filter-label">Filter:</span>
+  <button class="filter-btn active" onclick="filterPosts('all', this)">Alle</button>
+  <button class="filter-btn" onclick="filterPosts('ig', this)">Instagram</button>
+  <button class="filter-btn" onclick="filterPosts('fb', this)">Facebook</button>
+  <button class="filter-btn" onclick="filterPosts('li', this)">LinkedIn</button>
+  <button class="filter-btn" onclick="filterPosts('carousel', this)">Karussels</button>
+  <button class="filter-btn" onclick="filterPosts('story', this)">Stories</button>
+  <button class="filter-btn" onclick="filterPosts('business', this)">Business</button>
+  <button class="filter-btn" onclick="filterPosts('private', this)">Private</button>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+<!-- WOCHE 1 -->
+<div class="week-label">Woche 1 · Tag 1–7</div>
+<div class="posts-grid">
+
+<!-- TAG 1 -->
+<div class="post-card" data-tags="ig fb li single">
+  <div class="post-header">
+    <div class="day-badge">1</div>
+    <div class="post-meta">
+      <div class="date">Montag · Tag 1</div>
+      <div class="title">Launch – Die Premium Black Card</div>
+    </div>
+    <div class="platform-icons">
+      <div class="platform-icon pi-ig">IG</div>
+      <div class="platform-icon pi-fb">FB</div>
+      <div class="platform-icon pi-li">LI</div>
+    </div>
+  </div>
+  <div class="format-tags">
+    <span class="tag tag-single">Single Post</span>
+    <span class="tag tag-business">Business</span>
+    <span class="tag tag-private">Private</span>
+  </div>
+  <div class="post-visual">
+    <div class="post-visual-inner" id="visual-1">
+      <div class="visual-geo"></div>
+      <div class="visual-text-top">Neu bei KickstarterCash</div>
+      <img class="visual-card-img" src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business Debit Card">
+      <div class="visual-headline">Deine Premium Black Card ist da.</div>
+      <div class="visual-subline">Weltweit bezahlen · Eigene IBAN · Business & Private</div>
+      <div class="visual-cta">portal.kickstartercash.club</div>
+      <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+    </div>
+  </div>
+  <div class="size-info">
+    <span class="size-badge">IG: 1080×1080</span>
+    <span class="size-badge">FB: 1200×630</span>
+    <span class="size-badge">LI: 1200×627</span>
+  </div>
+  <div class="caption-section">
+    <div class="section-label">Caption</div>
+    <div class="caption-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+Schwarz. Stark. Weltweit. 🖤
+
+Wir stellen vor: Die <b>Premium Black Card</b> von KickstarterCash.Club – deine physische Debitkarte für ein Leben ohne Grenzen.
+
+✅ Eigene IBAN – persönlich auf deinen Namen
+✅ Weltweit bezahlen in mehreren Währungen
+✅ SEPA- & SWIFT-Überweisungen
+✅ Für Privat- und Businesskunden
+✅ Transferlimits bis 50.000 € pro Transaktion
+
+Jetzt als Premium Membership (inkl. Karte) für 385 € – oder als Einzelkarte ab 299 €.
+
+🔗 Alle Infos unter: portal.kickstartercash.club
+
+#kickstartercash #premiumblackcard #debitkarte #fintech #banking</div>
+  </div>
+  <div class="hashtag-section">
+    <div class="section-label">Hashtags</div>
+    <div class="hashtag-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+      #kickstartercash #kickstartercashclub #premiumblackcard #blackcard #debitkarte #fintech #onlinebanking #eigeneiban #weltweitbezahlen #banking #premium #exklusiv #businesskarte #privatkarte #financialfreedom #sepa #swift #multicurrency #internationalbanking #geldtransfer
+    </div>
+  </div>
+  <div class="post-actions">
+    <button class="action-btn primary" onclick="downloadVisual('visual-1', 'Tag1_Launch')">⬇ Bild herunterladen</button>
+  </div>
+</div>
+
+<!-- TAG 2 – CAROUSEL -->
+<div class="post-card" data-tags="ig carousel business private">
+  <div class="post-header">
+    <div class="day-badge">2</div>
+    <div class="post-meta">
+      <div class="date">Dienstag · Tag 2</div>
+      <div class="title">Features: IBAN & Multi-Currency</div>
+    </div>
+    <div class="platform-icons">
+      <div class="platform-icon pi-ig">IG</div>
+    </div>
+  </div>
+  <div class="format-tags">
+    <span class="tag tag-carousel">Karussell · 4 Slides</span>
+    <span class="tag tag-private">Private</span>
+    <span class="tag tag-business">Business</span>
+  </div>
+  <div class="carousel-preview">
+    <div class="carousel-slides" id="carousel-2">
+      <div class="carousel-slide">
+        <div class="visual-geo"></div>
+        <div class="visual-text-top">Slide 1 / 4</div>
+        <img class="visual-card-img" src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private Card" style="max-width:70%">
+        <div class="visual-headline">Deine eigene IBAN. Weltweit.</div>
+        <div class="visual-subline">Ein persönliches Konto – auf deinen Namen oder dein Unternehmen.</div>
+      </div>
+      <div class="carousel-slide">
+        <div class="visual-geo"></div>
+        <div class="visual-text-top">Slide 2 / 4</div>
+        <div style="font-size:40px;margin-bottom:12px">🌍</div>
+        <div class="visual-headline">Multi-Currency. Überall zuhause.</div>
+        <div class="visual-subline">Zahle in mehreren Währungen – ohne Umwege, ohne Stress.</div>
+        <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+      </div>
+      <div class="carousel-slide">
+        <div class="visual-geo"></div>
+        <div class="visual-text-top">Slide 3 / 4</div>
+        <div style="font-size:40px;margin-bottom:12px">⚡</div>
+        <div class="visual-headline">SEPA & SWIFT Überweisungen</div>
+        <div class="visual-subline">Sende und empfange Geld weltweit – schnell und sicher.</div>
+        <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+      </div>
+      <div class="carousel-slide">
+        <div class="visual-geo"></div>
+        <div class="visual-text-top">Slide 4 / 4</div>
+        <div class="visual-headline">Bereit für deine Premium Card?</div>
+        <div class="visual-subline">Ab 299 € · Mit Membership ab 385 €</div>
+        <div class="visual-cta">portal.kickstartercash.club</div>
+        <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+      </div>
+    </div>
+    <div class="carousel-nav">
+      <button class="carousel-arrow" onclick="prevSlide('carousel-2', 'dots-2')">‹</button>
+      <div class="carousel-dots" id="dots-2">
+        <div class="carousel-dot active"></div><div class="carousel-dot"></div><div class="carousel-dot"></div><div class="carousel-dot"></div>
+      </div>
+      <button class="carousel-arrow" onclick="nextSlide('carousel-2', 'dots-2')">›</button>
+    </div>
+  </div>
+  <div class="size-info"><span class="size-badge">IG Karussell: 1080×1080</span></div>
+  <div class="caption-section">
+    <div class="section-label">Caption</div>
+    <div class="caption-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+Wische für alle Features → 🖤
+
+Deine Premium Black Card bringt dir alles, was modernes Banking können muss:
+
+1️⃣ Deine persönliche IBAN – auf deinen Namen oder dein Unternehmen
+2️⃣ Multi-Currency – bezahle international ohne Extra-Kosten
+3️⃣ SEPA & SWIFT – weltweite Überweisungen, simpel & sicher
+4️⃣ Transferlimit bis 50.000 € pro Transaktion
+
+Für Privatkunden & Businesses gleichermaßen gemacht.
+
+👉 Jetzt sichern: portal.kickstartercash.club</div>
+  </div>
+  <div class="hashtag-section">
+    <div class="section-label">Hashtags</div>
+    <div class="hashtag-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+      #premiumblackcard #kickstartercash #debitkarte #iban #multicurrency #sepaüberweisung #swiftüberweisung #internationalbanking #fintech #banking #geldtransfer #weltweitverfügbar #blackcard #premium #financialfreedom #businessbanking #privatkonto
+    </div>
+  </div>
+  <div class="post-actions">
+    <button class="action-btn" onclick="alert('Tipp: Mache für jede Karussell-Slide einen Screenshot des jeweiligen Slide-Bereichs.')">💡 Slides exportieren</button>
+  </div>
+</div>
+
+<!-- TAG 3 – LINKEDIN BUSINESS -->
+<div class="post-card" data-tags="li single business">
+  <div class="post-header">
+    <div class="day-badge">3</div>
+    <div class="post-meta">
+      <div class="date">Mittwoch · Tag 3</div>
+      <div class="title">Business Card Spotlight</div>
+    </div>
+    <div class="platform-icons">
+      <div class="platform-icon pi-li">LI</div>
+    </div>
+  </div>
+  <div class="format-tags">
+    <span class="tag tag-single">Single Post</span>
+    <span class="tag tag-business">Business</span>
+  </div>
+  <div class="post-visual">
+    <div class="post-visual-inner wide-ratio" id="visual-3">
+      <div class="visual-geo"></div>
+      <div class="visual-text-top">Für Unternehmen & Selbstständige</div>
+      <img class="visual-card-img" src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business Debit" style="max-width:55%; max-height:60%">
+      <div class="visual-headline">Business Banking. Neu gedacht.</div>
+      <div class="visual-subline">Firmen-IBAN · SWIFT · Transferlimit 50.000 €</div>
+      <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+    </div>
+  </div>
+  <div class="size-info"><span class="size-badge">LinkedIn: 1200×627</span></div>
+  <div class="caption-section">
+    <div class="section-label">Caption</div>
+    <div class="caption-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+Modernes Business Banking für Unternehmer & Selbstständige 💼
+
+Die <b>Premium Business Debit Card</b> von KickstarterCash.Club wurde für diejenigen entwickelt, die international denken und handeln:
+
+→ Firmen-IBAN auf den Namen deines Unternehmens
+→ SEPA- & SWIFT-Überweisungen ohne Umwege
+→ Multi-Currency für internationale Geschäfte
+→ Transferlimit: bis zu 50.000 € pro Transaktion
+→ Vollständiges Online-Banking & Kartenmanagement
+→ Upgrade jederzeit auf die Deluxe Black Card möglich
+
+Das Upgrade zu smartem Business Banking beginnt mit einer Karte.
+
+🔗 portal.kickstartercash.club</div>
+  </div>
+  <div class="hashtag-section">
+    <div class="section-label">Hashtags</div>
+    <div class="hashtag-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+      #businessbanking #unternehmerkarte #businessdebit #kickstartercash #fintech #selbstständig #unternehmer #firmeniban #internationalebusiness #businesskarte #premiumbanking #swift #sepa #onlinebanking #businessfinance #kmu #startup
+    </div>
+  </div>
+  <div class="post-actions">
+    <button class="action-btn primary" onclick="downloadVisual('visual-3', 'Tag3_Business_LinkedIn')">⬇ Bild herunterladen</button>
+  </div>
+</div>
+
+<!-- TAG 4 – PRIVATE INSTAGRAM -->
+<div class="post-card" data-tags="ig single private">
+  <div class="post-header">
+    <div class="day-badge">4</div>
+    <div class="post-meta">
+      <div class="date">Donnerstag · Tag 4</div>
+      <div class="title">Private Card – Lifestyle</div>
+    </div>
+    <div class="platform-icons">
+      <div class="platform-icon pi-ig">IG</div>
+    </div>
+  </div>
+  <div class="format-tags">
+    <span class="tag tag-single">Single Post</span>
+    <span class="tag tag-private">Private</span>
+  </div>
+  <div class="post-visual">
+    <div class="post-visual-inner portrait-ratio" id="visual-4">
+      <div class="visual-geo"></div>
+      <div class="visual-text-top">Für Privatkunden</div>
+      <img class="visual-card-img" src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private Debit" style="max-width:70%">
+      <div class="visual-headline">Banking auf höchstem Niveau.</div>
+      <div class="visual-subline">Deine private IBAN. Weltweit. Zu jeder Zeit.</div>
+      <div class="visual-cta">Ab 299 € · Einzelkauf</div>
+      <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+    </div>
+  </div>
+  <div class="size-info"><span class="size-badge">IG Portrait: 1080×1350</span></div>
+  <div class="caption-section">
+    <div class="section-label">Caption</div>
+    <div class="caption-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+Dein Geld. Deine Regeln. Deine Karte. 🖤
+
+Die <b>Premium Private Debit Card</b> gibt dir die finanzielle Freiheit, die du verdienst:
+
+✨ Persönliche IBAN – nur auf deinen Namen
+🌍 Weltweit akzeptiert – in mehreren Währungen
+📲 Vollständiges Online-Banking auf einen Blick
+💸 Empfange & sende Geld weltweit
+🔒 Sicher, diskret, exklusiv
+
+Premium Membership inkl. Karte: 385 €
+Einzelkarte: 299 €
+
+Bereit für ein neues Banking-Erlebnis?
+👇 portal.kickstartercash.club</div>
+  </div>
+  <div class="hashtag-section">
+    <div class="section-label">Hashtags</div>
+    <div class="hashtag-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+      #privatebanking #premiumblackcard #kickstartercash #privatdebitkarte #eigeneiban #financialfreedom #weltweitbezahlen #luxurylifestyle #blackcard #exklusiv #banking #fintech #premiumlife #onlinebanking #modernbanking #debitkarte #geldfreiheit
+    </div>
+  </div>
+  <div class="post-actions">
+    <button class="action-btn primary" onclick="downloadVisual('visual-4', 'Tag4_Private_Instagram')">⬇ Bild herunterladen</button>
+  </div>
+</div>
+
+<!-- TAG 5 – SEPA SWIFT FACEBOOK -->
+<div class="post-card" data-tags="fb single business private">
+  <div class="post-header">
+    <div class="day-badge">5</div>
+    <div class="post-meta">
+      <div class="date">Freitag · Tag 5</div>
+      <div class="title">SEPA & SWIFT – Transfers weltweit</div>
+    </div>
+    <div class="platform-icons">
+      <div class="platform-icon pi-fb">FB</div>
+      <div class="platform-icon pi-ig">IG</div>
+    </div>
+  </div>
+  <div class="format-tags">
+    <span class="tag tag-single">Single Post</span>
+    <span class="tag tag-business">Business</span>
+    <span class="tag tag-private">Private</span>
+  </div>
+  <div class="post-visual">
+    <div class="post-visual-inner" id="visual-5">
+      <div class="visual-geo"></div>
+      <div style="font-size:36px;margin-bottom:10px">🌐</div>
+      <div class="visual-text-top">Weltweite Transfers</div>
+      <div class="visual-headline">SEPA. SWIFT. Weltweit.</div>
+      <div class="visual-subline">Bis zu 50.000 € pro Transaktion · Sicher & schnell</div>
+      <div style="display:flex;gap:16px;margin-top:14px">
+        <img src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business" style="width:42%;border-radius:8px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.8))">
+        <img src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private" style="width:42%;border-radius:8px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.8))">
+      </div>
+      <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+    </div>
+  </div>
+  <div class="size-info"><span class="size-badge">FB: 1200×630</span><span class="size-badge">IG: 1080×1080</span></div>
+  <div class="caption-section">
+    <div class="section-label">Caption</div>
+    <div class="caption-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+Geld senden. Weltweit. Ohne Kompromisse. 💸
+
+Mit der Premium Black Card von KickstarterCash.Club kannst du:
+
+🔁 SEPA-Überweisungen im EU-Raum
+🌍 SWIFT-Überweisungen international
+📥 Weltweiter Geldempfang
+📤 Weltweite Geldtransfers
+💰 Transferlimit: 50.000 € pro Einzahlung & Auszahlung
+
+Für Privat- und Businesskunden – eine Karte für alle Anforderungen.
+
+🔗 portal.kickstartercash.club</div>
+  </div>
+  <div class="hashtag-section">
+    <div class="section-label">Hashtags</div>
+    <div class="hashtag-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+      #geldtransfer #sepa #swift #internationalüberweisung #kickstartercash #premiumblackcard #weltweitüberweisung #fintech #banking #transferlimit #onlinebanking #blackcard #debitkarte #financialfreedom #internationalbanking #sicherüberweisung
+    </div>
+  </div>
+  <div class="post-actions">
+    <button class="action-btn primary" onclick="downloadVisual('visual-5', 'Tag5_Transfers')">⬇ Bild herunterladen</button>
+  </div>
+</div>
+
+<!-- TAG 6 – STORY -->
+<div class="post-card" data-tags="ig story private business">
+  <div class="post-header">
+    <div class="day-badge">6</div>
+    <div class="post-meta">
+      <div class="date">Samstag · Tag 6</div>
+      <div class="title">Story – „Deine Karte. Deine Freiheit."</div>
+    </div>
+    <div class="platform-icons">
+      <div class="platform-icon pi-ig">IG</div>
+    </div>
+  </div>
+  <div class="format-tags">
+    <span class="tag tag-story">Story</span>
+    <span class="tag tag-private">Private</span>
+  </div>
+  <div class="post-visual">
+    <div class="post-visual-inner story-ratio" id="visual-6" style="background: linear-gradient(180deg, #0A0A0A 0%, #1A1205 60%, #0A0A0A 100%);">
+      <div class="visual-geo"></div>
+      <img src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" style="height:30px;object-fit:contain;margin-bottom:20px;opacity:0.9" onerror="this.style.display='none'">
+      <img class="visual-card-img" src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private Card" style="max-width:80%">
+      <div class="visual-headline" style="font-size:18px;margin-top:16px">Deine Karte.<br>Deine Freiheit.</div>
+      <div class="visual-subline" style="margin-top:8px">Premium Black Card · Ab 299 €</div>
+      <div class="visual-cta" style="margin-top:16px">👆 Link in Bio</div>
+    </div>
+  </div>
+  <div class="size-info"><span class="size-badge">IG Story: 1080×1920</span></div>
+  <div class="caption-section">
+    <div class="section-label">Caption (Story-Text / Swipe Up)</div>
+    <div class="caption-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+🖤 Die Premium Black Card ist mehr als eine Zahlungskarte – sie ist ein Statement.
+
+Deine IBAN. Deine Regeln. Weltweiter Geldempfang & Transfer.
+
+👆 Swipe Up – oder Link in Bio für alle Infos!
+portal.kickstartercash.club</div>
+  </div>
+  <div class="hashtag-section">
+    <div class="section-label">Hashtags</div>
+    <div class="hashtag-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+      #kickstartercash #premiumblackcard #instagramstory #blackcard #financialfreedom #debitkarte #eigeneiban #weltweitbezahlen #premium #exklusiv
+    </div>
+  </div>
+  <div class="post-actions">
+    <button class="action-btn primary" onclick="downloadVisual('visual-6', 'Tag6_Story')">⬇ Bild herunterladen</button>
+  </div>
+</div>
+
+<!-- TAG 7 – FAQ CAROUSEL -->
+<div class="post-card" data-tags="ig fb carousel business private">
+  <div class="post-header">
+    <div class="day-badge">7</div>
+    <div class="post-meta">
+      <div class="date">Sonntag · Tag 7</div>
+      <div class="title">FAQ Karussell – Deine Fragen</div>
+    </div>
+    <div class="platform-icons">
+      <div class="platform-icon pi-ig">IG</div>
+      <div class="platform-icon pi-fb">FB</div>
+    </div>
+  </div>
+  <div class="format-tags">
+    <span class="tag tag-carousel">Karussell · 5 Slides</span>
+  </div>
+  <div class="carousel-preview">
+    <div class="carousel-slides" id="carousel-7">
+      <div class="carousel-slide">
+        <div class="visual-geo"></div>
+        <div class="visual-text-top">FAQ · Slide 1/5</div>
+        <img class="visual-card-img" src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business" style="max-width:65%">
+        <div class="visual-headline">Deine häufigsten Fragen – beantwortet.</div>
+      </div>
+      <div class="carousel-slide">
+        <div class="visual-geo"></div>
+        <div class="visual-text-top">FAQ · Slide 2/5</div>
+        <div style="font-size:28px;margin-bottom:10px">❓</div>
+        <div class="visual-headline" style="font-size:13px">Wer kann die Karte beantragen?</div>
+        <div class="visual-subline" style="font-size:11px;margin-top:8px">Sowohl Privatkunden als auch Unternehmen und Selbstständige können eine Premium Black Card erwerben – das Konto läuft auf deinen Namen oder dein Unternehmen.</div>
+        <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+      </div>
+      <div class="carousel-slide">
+        <div class="visual-geo"></div>
+        <div class="visual-text-top">FAQ · Slide 3/5</div>
+        <div style="font-size:28px;margin-bottom:10px">💸</div>
+        <div class="visual-headline" style="font-size:13px">Was kostet die Karte?</div>
+        <div class="visual-subline" style="font-size:11px;margin-top:8px">Premium Membership inkl. Karte: 385 €<br>Einzelkauf (ohne Membership): 299 €</div>
+        <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+      </div>
+      <div class="carousel-slide">
+        <div class="visual-geo"></div>
+        <div class="visual-text-top">FAQ · Slide 4/5</div>
+        <div style="font-size:28px;margin-bottom:10px">🌍</div>
+        <div class="visual-headline" style="font-size:13px">Wie hoch sind die Transferlimits?</div>
+        <div class="visual-subline" style="font-size:11px;margin-top:8px">Einmalige Einzahlung/Überweisung: bis 50.000 €<br>Einmalige Auszahlung: bis 50.000 €</div>
+        <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+      </div>
+      <div class="carousel-slide">
+        <div class="visual-geo"></div>
+        <div class="visual-text-top">FAQ · Slide 5/5</div>
+        <div class="visual-headline">Jetzt anmelden!</div>
+        <div class="visual-subline">Alle Infos & Anmeldung unter</div>
+        <div class="visual-cta">portal.kickstartercash.club</div>
+        <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+      </div>
+    </div>
+    <div class="carousel-nav">
+      <button class="carousel-arrow" onclick="prevSlide('carousel-7', 'dots-7')">‹</button>
+      <div class="carousel-dots" id="dots-7">
+        <div class="carousel-dot active"></div><div class="carousel-dot"></div><div class="carousel-dot"></div><div class="carousel-dot"></div><div class="carousel-dot"></div>
+      </div>
+      <button class="carousel-arrow" onclick="nextSlide('carousel-7', 'dots-7')">›</button>
+    </div>
+  </div>
+  <div class="size-info"><span class="size-badge">IG Karussell: 1080×1080</span></div>
+  <div class="caption-section">
+    <div class="section-label">Caption</div>
+    <div class="caption-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+Wir beantworten eure häufigsten Fragen! 👉 Wisch durch
+
+📋 FAQ zur Premium Black Card:
+
+✅ Für Privat- & Businesskunden verfügbar
+✅ Konto auf deinen Namen oder dein Unternehmen
+✅ Membership inkl. Karte: 385 € · Einzelkauf: 299 €
+✅ Transferlimit: bis 50.000 € pro Transaktion
+✅ Weltweite Nutzung in mehreren Währungen
+
+Noch Fragen? Kommentiere unten oder schreib uns direkt 💬
+
+🔗 portal.kickstartercash.club</div>
+  </div>
+  <div class="hashtag-section">
+    <div class="section-label">Hashtags</div>
+    <div class="hashtag-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+      #faq #kickstartercash #premiumblackcard #blackcard #debitkarte #fintech #banking #eigeneiban #transferlimit #multicurrency #onlinebanking #businesskarte #privatkarte #financialfreedom #premiumbanking
+    </div>
+  </div>
+</div>
+
+</div><!-- end week 1 grid -->
+
+<!-- WOCHE 2 -->
+<div class="week-label">Woche 2 · Tag 8–14</div>
+<div class="posts-grid">
+
+<!-- TAG 8 – PRICING -->
+<div class="post-card" data-tags="ig fb single business private">
+  <div class="post-header">
+    <div class="day-badge">8</div>
+    <div class="post-meta">
+      <div class="date">Montag · Tag 8</div>
+      <div class="title">Pricing – Was bekommst du?</div>
+    </div>
+    <div class="platform-icons">
+      <div class="platform-icon pi-ig">IG</div>
+      <div class="platform-icon pi-fb">FB</div>
+    </div>
+  </div>
+  <div class="format-tags">
+    <span class="tag tag-single">Single Post</span>
+    <span class="tag tag-business">Business</span>
+    <span class="tag tag-private">Private</span>
+  </div>
+  <div class="post-visual">
+    <div class="post-visual-inner" id="visual-8">
+      <div class="visual-geo"></div>
+      <div class="visual-text-top">Premium Membership · 385 €</div>
+      <div style="display:flex;gap:16px;margin-bottom:14px">
+        <img src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business" style="width:40%;border-radius:8px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.8))">
+        <img src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private" style="width:40%;border-radius:8px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.8))">
+      </div>
+      <div class="visual-headline">Membership. Oder Einzelkauf.</div>
+      <div style="display:flex;gap:20px;margin-top:10px">
+        <div style="text-align:center">
+          <div style="font-size:20px;font-weight:800;color:var(--gold)">385 €</div>
+          <div style="font-size:9px;color:#aaa">Membership inkl. Karte</div>
+        </div>
+        <div style="width:1px;background:var(--border)"></div>
+        <div style="text-align:center">
+          <div style="font-size:20px;font-weight:800;color:var(--gold)">299 €</div>
+          <div style="font-size:9px;color:#aaa">Einzelkauf</div>
+        </div>
+      </div>
+      <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+    </div>
+  </div>
+  <div class="size-info"><span class="size-badge">IG: 1080×1080</span><span class="size-badge">FB: 1200×630</span></div>
+  <div class="caption-section">
+    <div class="section-label">Caption</div>
+    <div class="caption-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+Transparente Preise. Keine versteckten Kosten. 🖤
+
+Die Premium Black Card von KickstarterCash.Club – hier ist alles, was du bekommst:
+
+💳 <b>Premium Membership (385 €)</b>
+→ Karte inklusive
+→ Eigene IBAN
+→ Multi-Currency
+→ SEPA & SWIFT Überweisungen
+→ Weltweiter Transfer & Empfang
+→ Online-Banking & Kartenmanagement
+→ Upgrade auf Deluxe möglich
+
+💳 <b>Einzelkarte (299 €)</b>
+→ Alle Features, ohne Membership
+
+Wähle das Paket, das zu dir passt.
+
+🔗 portal.kickstartercash.club</div>
+  </div>
+  <div class="hashtag-section">
+    <div class="section-label">Hashtags</div>
+    <div class="hashtag-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+      #premiumblackcard #kickstartercash #preise #membership #banking #fintech #blackcard #debitkarte #transparentpreise #onlinebanking #eigeneiban #multicurrency #sepa #swift #premiumbanking #financialfreedom #karte
+    </div>
+  </div>
+  <div class="post-actions">
+    <button class="action-btn primary" onclick="downloadVisual('visual-8', 'Tag8_Pricing')">⬇ Bild herunterladen</button>
+  </div>
+</div>
+
+<!-- TAG 9 – WELTWEITE TRANSFERS LINKEDIN -->
+<div class="post-card" data-tags="li single business">
+  <div class="post-header">
+    <div class="day-badge">9</div>
+    <div class="post-meta">
+      <div class="date">Dienstag · Tag 9</div>
+      <div class="title">LinkedIn – Weltweite Finanzen</div>
+    </div>
+    <div class="platform-icons">
+      <div class="platform-icon pi-li">LI</div>
+    </div>
+  </div>
+  <div class="format-tags">
+    <span class="tag tag-single">Single Post</span>
+    <span class="tag tag-business">Business</span>
+  </div>
+  <div class="post-visual">
+    <div class="post-visual-inner wide-ratio" id="visual-9">
+      <div class="visual-geo"></div>
+      <div style="font-size:32px;margin-bottom:8px">🌐</div>
+      <div class="visual-text-top">Internationale Transfers</div>
+      <div class="visual-headline">Keine Grenzen für dein Business.</div>
+      <div class="visual-subline">SEPA · SWIFT · Interne Transfers · bis 50.000 €</div>
+      <img src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business Card" style="max-width:40%;max-height:35%;object-fit:contain;border-radius:8px;margin-top:12px;filter:drop-shadow(0 4px 20px rgba(0,0,0,0.9))">
+      <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+    </div>
+  </div>
+  <div class="size-info"><span class="size-badge">LinkedIn: 1200×627</span></div>
+  <div class="caption-section">
+    <div class="section-label">Caption</div>
+    <div class="caption-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+Wenn dein Business keine Grenzen kennt, sollte dein Banking das auch nicht. 🌍
+
+Die Premium Business Debit Card von KickstarterCash.Club macht internationale Finanztransaktionen zum Kinderspiel:
+
+→ SEPA-Überweisungen im europäischen Raum
+→ SWIFT-Überweisungen weltweit
+→ Interne Transfers innerhalb des Systems
+→ Weltweiter Geldempfang & -versand
+→ Bis zu 50.000 € pro Transaktion
+→ Multi-Currency für internationale Geschäftspartner
+
+Kein kompliziertes Auslands-Banking mehr. Alles in einer Karte.
+
+💼 Jetzt informieren: portal.kickstartercash.club</div>
+  </div>
+  <div class="hashtag-section">
+    <div class="section-label">Hashtags</div>
+    <div class="hashtag-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+      #internationalebusiness #businessbanking #kickstartercash #weltweitüberweisung #swift #sepa #fintech #unternehmerkarte #businessdebit #multicurrency #premiumbanking #internationalfinance #businesskarte #kmu #selbstständig #startup #premiumblackcard
+    </div>
+  </div>
+  <div class="post-actions">
+    <button class="action-btn primary" onclick="downloadVisual('visual-9', 'Tag9_LinkedIn_Transfers')">⬇ Bild herunterladen</button>
+  </div>
+</div>
+
+<!-- TAG 10 – ONLINE BANKING -->
+<div class="post-card" data-tags="fb ig single business private">
+  <div class="post-header">
+    <div class="day-badge">10</div>
+    <div class="post-meta">
+      <div class="date">Mittwoch · Tag 10</div>
+      <div class="title">Online Banking & Kartenmanagement</div>
+    </div>
+    <div class="platform-icons">
+      <div class="platform-icon pi-fb">FB</div>
+      <div class="platform-icon pi-ig">IG</div>
+    </div>
+  </div>
+  <div class="format-tags">
+    <span class="tag tag-single">Single Post</span>
+    <span class="tag tag-private">Private</span>
+    <span class="tag tag-business">Business</span>
+  </div>
+  <div class="post-visual">
+    <div class="post-visual-inner" id="visual-10">
+      <div class="visual-geo"></div>
+      <div style="font-size:32px;margin-bottom:10px">📲</div>
+      <div class="visual-text-top">Online Banking</div>
+      <div class="visual-headline">Alles im Griff. Jederzeit.</div>
+      <div class="visual-subline">Vollständiges Online-Banking & Kartenmanagement – von überall auf der Welt.</div>
+      <div style="display:flex;gap:12px;margin-top:14px">
+        <img src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business" style="width:38%;border-radius:8px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.9))">
+        <img src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private" style="width:38%;border-radius:8px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.9))">
+      </div>
+      <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+    </div>
+  </div>
+  <div class="size-info"><span class="size-badge">FB: 1200×630</span><span class="size-badge">IG: 1080×1080</span></div>
+  <div class="caption-section">
+    <div class="section-label">Caption</div>
+    <div class="caption-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+Deine Finanzen. Immer unter Kontrolle. 📲
+
+Mit der Premium Black Card von KickstarterCash.Club hast du dein komplettes Banking in der Hand:
+
+✅ Vollständiges Online-Banking – 24/7 erreichbar
+✅ Kartenmanagement – aktivieren, sperren, verwalten
+✅ Kontoumsätze jederzeit abrufbar
+✅ Interne Transfers sofort & einfach
+✅ Weltweit verfügbar – Business oder Privat
+
+Banking, das zu deinem Leben passt – nicht umgekehrt.
+
+🔗 portal.kickstartercash.club</div>
+  </div>
+  <div class="hashtag-section">
+    <div class="section-label">Hashtags</div>
+    <div class="hashtag-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+      #onlinebanking #kartenmanagement #kickstartercash #premiumblackcard #digitalbanking #fintech #banking #blackcard #debitkarte #modernesbanking #financialcontrol #24h #weltweitverfügbar #eigeneiban #premiumlife
+    </div>
+  </div>
+  <div class="post-actions">
+    <button class="action-btn primary" onclick="downloadVisual('visual-10', 'Tag10_OnlineBanking')">⬇ Bild herunterladen</button>
+  </div>
+</div>
+
+<!-- TAG 11 – VERGLEICH CAROUSEL -->
+<div class="post-card" data-tags="ig carousel business private">
+  <div class="post-header">
+    <div class="day-badge">11</div>
+    <div class="post-meta">
+      <div class="date">Donnerstag · Tag 11</div>
+      <div class="title">Business vs. Private – Welche ist deine?</div>
+    </div>
+    <div class="platform-icons">
+      <div class="platform-icon pi-ig">IG</div>
+      <div class="platform-icon pi-fb">FB</div>
+    </div>
+  </div>
+  <div class="format-tags">
+    <span class="tag tag-carousel">Karussell · 3 Slides</span>
+    <span class="tag tag-business">Business</span>
+    <span class="tag tag-private">Private</span>
+  </div>
+  <div class="carousel-preview">
+    <div class="carousel-slides" id="carousel-11">
+      <div class="carousel-slide">
+        <div class="visual-geo"></div>
+        <div class="visual-text-top">Slide 1/3 · Vergleich</div>
+        <div style="display:flex;gap:16px;margin-bottom:12px">
+          <img src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business" style="width:42%;border-radius:8px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.8))">
+          <img src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private" style="width:42%;border-radius:8px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.8))">
+        </div>
+        <div class="visual-headline">Business oder Private?<br>Du entscheidest.</div>
+      </div>
+      <div class="carousel-slide">
+        <div class="visual-geo"></div>
+        <div class="visual-text-top">Slide 2/3 · Business Debit</div>
+        <img src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business" style="max-width:65%;border-radius:8px;object-fit:contain;filter:drop-shadow(0 4px 20px rgba(0,0,0,0.9));margin-bottom:10px">
+        <div class="visual-headline" style="font-size:13px">Business Debit</div>
+        <div class="visual-subline" style="font-size:10px;margin-top:6px">Konto auf Unternehmensname · Firmen-IBAN · Ideal für Selbstständige & Unternehmen</div>
+        <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+      </div>
+      <div class="carousel-slide">
+        <div class="visual-geo"></div>
+        <div class="visual-text-top">Slide 3/3 · Private Debit</div>
+        <img src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private" style="max-width:65%;border-radius:8px;object-fit:contain;filter:drop-shadow(0 4px 20px rgba(0,0,0,0.9));margin-bottom:10px">
+        <div class="visual-headline" style="font-size:13px">Private Debit</div>
+        <div class="visual-subline" style="font-size:10px;margin-top:6px">Persönliche IBAN · Ideal für Privatpersonen · Weltweite Nutzung in mehreren Währungen</div>
+        <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+      </div>
+    </div>
+    <div class="carousel-nav">
+      <button class="carousel-arrow" onclick="prevSlide('carousel-11', 'dots-11')">‹</button>
+      <div class="carousel-dots" id="dots-11">
+        <div class="carousel-dot active"></div><div class="carousel-dot"></div><div class="carousel-dot"></div>
+      </div>
+      <button class="carousel-arrow" onclick="nextSlide('carousel-11', 'dots-11')">›</button>
+    </div>
+  </div>
+  <div class="size-info"><span class="size-badge">IG Karussell: 1080×1080</span></div>
+  <div class="caption-section">
+    <div class="section-label">Caption</div>
+    <div class="caption-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+Business oder Private – was passt zu dir? 👉 Wisch durch
+
+Beide Karten. Gleiche Premium-Qualität. Ein Unterschied:
+
+💼 <b>Business Debit</b>
+→ Konto auf deinen Unternehmensnamen
+→ Ideal für Selbstständige & GmbHs
+→ Firmenzahlungen weltweit
+
+🖤 <b>Private Debit</b>
+→ Persönliche IBAN auf deinen Namen
+→ Für alle Privatpersonen
+→ Weltweit in mehreren Währungen
+
+Beide: 385 € (Membership) · 299 € (Einzelkauf)
+
+👇 Welche wählst du? Kommentiere unten!
+🔗 portal.kickstartercash.club</div>
+  </div>
+  <div class="hashtag-section">
+    <div class="section-label">Hashtags</div>
+    <div class="hashtag-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+      #businessvsPrivate #kickstartercash #premiumblackcard #businessdebit #privatedebit #blackcard #fintech #debitkarte #banking #businesskarte #privatbanking #eigeneiban #multicurrency #financialfreedom #weltweit #premiumbanking
+    </div>
+  </div>
+</div>
+
+<!-- TAG 12 – UPGRADE TEASER -->
+<div class="post-card" data-tags="ig single business private">
+  <div class="post-header">
+    <div class="day-badge">12</div>
+    <div class="post-meta">
+      <div class="date">Freitag · Tag 12</div>
+      <div class="title">Upgrade möglich – Teaser Deluxe</div>
+    </div>
+    <div class="platform-icons">
+      <div class="platform-icon pi-ig">IG</div>
+      <div class="platform-icon pi-li">LI</div>
+    </div>
+  </div>
+  <div class="format-tags">
+    <span class="tag tag-single">Single Post</span>
+    <span class="tag tag-business">Business</span>
+    <span class="tag tag-private">Private</span>
+  </div>
+  <div class="post-visual">
+    <div class="post-visual-inner" id="visual-12">
+      <div class="visual-geo"></div>
+      <div class="visual-text-top">Schon Premium? Dann kommt das nächste Level.</div>
+      <div style="display:flex;gap:16px;align-items:center;margin-bottom:10px">
+        <img src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private" style="width:40%;border-radius:8px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.9));opacity:0.7">
+        <div style="font-size:20px;color:var(--gold)">→</div>
+        <div style="width:40%;height:60px;border:2px dashed var(--gold-dark);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--gold);text-align:center;padding:4px">DELUXE<br>BLACK CARD<br>Coming Soon</div>
+      </div>
+      <div class="visual-headline" style="font-size:14px">Das Upgrade wartet auf dich.</div>
+      <div class="visual-subline">Exchange · DEX · WEX · Cashback · 460 €</div>
+      <img class="visual-logo" src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" onerror="this.style.display='none'">
+    </div>
+  </div>
+  <div class="size-info"><span class="size-badge">IG: 1080×1080</span><span class="size-badge">LI: 1200×627</span></div>
+  <div class="caption-section">
+    <div class="section-label">Caption</div>
+    <div class="caption-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+Du hast die Premium Black Card? Das Upgrade wartet. ⬆️
+
+Mit der Premium Black Card ist der nächste Schritt nur eine Entscheidung weit entfernt: das Upgrade auf die <b>Deluxe Black Card</b>.
+
+🔓 Was dich erwartet:
+→ Alle Premium-Features inklusive
+→ Exchange-Funktion
+→ DEX & WEX
+→ Cashback-System
+→ Noch mehr Möglichkeiten für dein Finanzleben
+
+Upgrade jederzeit möglich. Ab 460 €.
+
+Erfahre mehr: portal.kickstartercash.club/kartendetails.php</div>
+  </div>
+  <div class="hashtag-section">
+    <div class="section-label">Hashtags</div>
+    <div class="hashtag-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+      #upgrade #deluxeblackcard #kickstartercash #premiumblackcard #cashback #exchange #dex #fintech #blackcard #nextlevel #banking #premiumupgrade #financialfreedom #debitkarte #wex #premiumbanking
+    </div>
+  </div>
+  <div class="post-actions">
+    <button class="action-btn primary" onclick="downloadVisual('visual-12', 'Tag12_Upgrade_Teaser')">⬇ Bild herunterladen</button>
+  </div>
+</div>
+
+<!-- TAG 13 – STORY LIFESTYLE -->
+<div class="post-card" data-tags="ig story private business">
+  <div class="post-header">
+    <div class="day-badge">13</div>
+    <div class="post-meta">
+      <div class="date">Samstag · Tag 13</div>
+      <div class="title">Story – Exklusivität beginnt hier</div>
+    </div>
+    <div class="platform-icons">
+      <div class="platform-icon pi-ig">IG</div>
+    </div>
+  </div>
+  <div class="format-tags">
+    <span class="tag tag-story">Story</span>
+    <span class="tag tag-private">Private</span>
+  </div>
+  <div class="post-visual">
+    <div class="post-visual-inner story-ratio" id="visual-13" style="background: linear-gradient(180deg, #0A0A0A 0%, #0D0D08 50%, #0A0A0A 100%);">
+      <div class="visual-geo"></div>
+      <div style="font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:0.2em;margin-bottom:20px">Exklusivität beginnt mit deiner Membership</div>
+      <img src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business" style="max-width:75%;border-radius:12px;object-fit:contain;filter:drop-shadow(0 12px 32px rgba(201,168,76,0.2))">
+      <div style="font-size:16px;font-weight:800;color:#fff;text-align:center;margin-top:18px;line-height:1.3">Mehr als eine Karte.<br>Ein Statement.</div>
+      <div style="font-size:10px;color:#aaa;text-align:center;margin-top:8px">KickstarterCash.Club · Premium Membership</div>
+      <div class="visual-cta" style="margin-top:14px">👆 Link in Bio</div>
+    </div>
+  </div>
+  <div class="size-info"><span class="size-badge">IG Story: 1080×1920</span></div>
+  <div class="caption-section">
+    <div class="section-label">Caption (Story)</div>
+    <div class="caption-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+Exklusivität beginnt mit deiner Membership. 🖤
+
+Keine gewöhnliche Karte. Keine gewöhnliche Bank.
+KickstarterCash.Club – für die, die mehr wollen.
+
+👆 Swipe Up für alle Infos!
+portal.kickstartercash.club</div>
+  </div>
+  <div class="hashtag-section">
+    <div class="section-label">Hashtags</div>
+    <div class="hashtag-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+      #kickstartercash #premiumblackcard #exklusiv #membership #blackcard #statement #fintech #premium #luxurybanking #financialfreedom #banking #debitkarte
+    </div>
+  </div>
+  <div class="post-actions">
+    <button class="action-btn primary" onclick="downloadVisual('visual-13', 'Tag13_Story_Lifestyle')">⬇ Bild herunterladen</button>
+  </div>
+</div>
+
+<!-- TAG 14 – FINALER CTA -->
+<div class="post-card" data-tags="ig fb li single business private">
+  <div class="post-header">
+    <div class="day-badge">14</div>
+    <div class="post-meta">
+      <div class="date">Sonntag · Tag 14</div>
+      <div class="title">Finaler CTA – Jetzt bestellen!</div>
+    </div>
+    <div class="platform-icons">
+      <div class="platform-icon pi-ig">IG</div>
+      <div class="platform-icon pi-fb">FB</div>
+      <div class="platform-icon pi-li">LI</div>
+    </div>
+  </div>
+  <div class="format-tags">
+    <span class="tag tag-single">Single Post</span>
+    <span class="tag tag-business">Business</span>
+    <span class="tag tag-private">Private</span>
+  </div>
+  <div class="post-visual">
+    <div class="post-visual-inner" id="visual-14">
+      <div class="visual-geo"></div>
+      <img src="https://www.trybloom.ai/img/91733ae8-cf6d-4057-a2aa-a7aa73f56e7c" alt="Logo" style="height:28px;object-fit:contain;margin-bottom:14px;opacity:0.9" onerror="this.style.display='none'">
+      <div style="display:flex;gap:14px;margin-bottom:12px">
+        <img src="https://www.trybloom.ai/img/ed0c73f5-dee7-4f7f-8fbc-8a11ff566fe9" alt="Business" style="width:40%;border-radius:8px;object-fit:contain;filter:drop-shadow(0 6px 20px rgba(201,168,76,0.25))">
+        <img src="https://www.trybloom.ai/img/ebf3e79e-c993-44aa-b35a-167c9972b89d" alt="Private" style="width:40%;border-radius:8px;object-fit:contain;filter:drop-shadow(0 6px 20px rgba(201,168,76,0.25))">
+      </div>
+      <div class="visual-headline">Deine Premium Black Card wartet.</div>
+      <div class="visual-subline">Ab 299 € · Membership ab 385 €</div>
+      <div class="visual-cta" style="font-size:11px;padding:8px 24px;margin-top:12px">👉 Jetzt bestellen</div>
+    </div>
+  </div>
+  <div class="size-info">
+    <span class="size-badge">IG: 1080×1080</span>
+    <span class="size-badge">FB: 1200×630</span>
+    <span class="size-badge">LI: 1200×627</span>
+  </div>
+  <div class="caption-section">
+    <div class="section-label">Caption</div>
+    <div class="caption-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+14 Tage. Eine klare Botschaft. 🖤
+
+Die Premium Black Card von KickstarterCash.Club ist mehr als Banking – sie ist der erste Schritt in eine neue finanzielle Freiheit.
+
+✅ Eigene IBAN – persönlich oder auf dein Unternehmen
+✅ Weltweite Nutzung in mehreren Währungen
+✅ SEPA & SWIFT ohne Aufwand
+✅ Online-Banking & Kartenmanagement
+✅ Transferlimit bis 50.000 € pro Transaktion
+✅ Upgrade auf Deluxe Black Card jederzeit möglich
+
+Business Debit · Private Debit – du hast die Wahl.
+
+💳 Einzelkarte: 299 €
+💎 Membership inkl. Karte: 385 €
+
+Bereit? ➡️ portal.kickstartercash.club
+
+#kickstartercash #premiumblackcard #blackcard #jetztsichern</div>
+  </div>
+  <div class="hashtag-section">
+    <div class="section-label">Hashtags</div>
+    <div class="hashtag-box">
+      <button class="copy-btn" onclick="copyText(this)">Kopieren</button>
+      #kickstartercash #kickstartercashclub #premiumblackcard #blackcard #debitkarte #jetztsichern #fintech #banking #eigeneiban #multicurrency #financialfreedom #sepa #swift #onlinebanking #businessdebit #privatedebit #membership #premium #exklusiv #weltweitbezahlen #premiumlife #blackcardlife #modernbanking #luxurybanking #debitcard
+    </div>
+  </div>
+  <div class="post-actions">
+    <button class="action-btn primary" onclick="downloadVisual('visual-14', 'Tag14_FinalCTA')">⬇ Bild herunterladen</button>
+  </div>
+</div>
+
+</div><!-- end week 2 grid -->
+</div><!-- end main -->
+
+<!-- TOAST -->
+<div class="toast" id="toast">✓ Kopiert!</div>
+
+<!-- SCROLL TOP -->
+<button class="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+// COPY FUNCTION
+function copyText(btn) {
+  const box = btn.parentElement;
+  const text = box.textContent.replace('Kopieren','').replace('Kopiert!','').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Kopiert!';
+    btn.classList.add('copied');
+    showToast('Kopiert!');
+    setTimeout(() => { btn.textContent = 'Kopieren'; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    btn.textContent = '✓ Kopiert!'; btn.classList.add('copied');
+    showToast('Kopiert!');
+    setTimeout(() => { btn.textContent = 'Kopieren'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = '✓ ' + msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// CAROUSEL
+const carouselState = {};
+function getSlides(id) { return document.getElementById(id).querySelectorAll('.carousel-slide, [class*="carousel-slide"]'); }
+function initCarousel(id) { if (!carouselState[id]) carouselState[id] = 0; }
+
+function nextSlide(carId, dotId) {
+  initCarousel(carId);
+  const container = document.getElementById(carId);
+  const slides = container.children;
+  const total = slides.length;
+  carouselState[carId] = (carouselState[carId] + 1) % total;
+  container.style.transform = `translateX(-${carouselState[carId] * 100}%)`;
+  updateDots(dotId, carouselState[carId], total);
+}
+
+function prevSlide(carId, dotId) {
+  initCarousel(carId);
+  const container = document.getElementById(carId);
+  const slides = container.children;
+  const total = slides.length;
+  carouselState[carId] = (carouselState[carId] - 1 + total) % total;
+  container.style.transform = `translateX(-${carouselState[carId] * 100}%)`;
+  updateDots(dotId, carouselState[carId], total);
+}
+
+function updateDots(dotId, active, total) {
+  const dots = document.getElementById(dotId).children;
+  for (let i = 0; i < dots.length; i++) {
+    dots[i].classList.toggle('active', i === active);
+  }
+}
+
+// DOWNLOAD
+function downloadVisual(id, filename) {
+  const el = document.getElementById(id);
+  if (!el) { alert('Element nicht gefunden'); return; }
+  showToast('Wird exportiert...');
+  html2canvas(el, {
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: '#0A0A0A',
+    logging: false
+  }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = filename + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('Download gestartet!');
+  }).catch(e => {
+    alert('Export-Fehler: ' + e.message + '\nTipp: Öffne die Datei lokal im Browser.');
+  });
+}
+
+// FILTER
+function filterPosts(tag, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.post-card').forEach(card => {
+    if (tag === 'all') { card.style.display = ''; return; }
+    const tags = card.dataset.tags || '';
+    card.style.display = tags.includes(tag) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>
