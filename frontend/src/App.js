@@ -16,6 +16,7 @@ import GPTChat from "@/pages/GPTChat";
 import GeminiChat from "@/pages/GeminiChat";
 import ExportCenter from "@/pages/ExportCenter";
 import JarvjisAgent from "@/pages/JarvjisAgent";
+import KnowledgeBase from "@/pages/KnowledgeBase";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
               <Route path="/chat-gemini" element={<GeminiChat />} />
               <Route path="/export" element={<ExportCenter />} />
               <Route path="/jarvjis" element={<JarvjisAgent />} />
+              <Route path="/knowledge" element={<KnowledgeBase />} />
             </Routes>
           </Layout>
         </BrowserRouter>

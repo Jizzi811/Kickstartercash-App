@@ -956,6 +956,113 @@ async def get_prompts(category: Optional[str] = None, q: Optional[str] = None):
     return {"categories": PROMPT_CATEGORIES, "prompts": items}
 
 
+# ---------------------------------------------------------------------------
+# Knowledge Base
+# ---------------------------------------------------------------------------
+
+KB_CATEGORIES = [
+    "Produkte", "Exclusive Cards", "FAQs", "PDFs & Schulung",
+    "Corporate Design", "Texte & Landingpages", "Blogartikel", "Marketingstrategien",
+]
+
+
+class KbEntry(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    category: str
+    title: str
+    content: str
+    tags: List[str] = []
+    created_at: str = Field(default_factory=_now_iso)
+    updated_at: str = Field(default_factory=_now_iso)
+
+
+class KbEntryCreate(BaseModel):
+    category: str
+    title: str
+    content: str
+    tags: List[str] = []
+
+
+class KbEntryUpdate(BaseModel):
+    category: Optional[str] = None
+    title: Optional[str] = None
+    content: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+
+class KbSearchRequest(BaseModel):
+    query: str
+    category: Optional[str] = None
+    model: str = "gpt"
+
+
+@api_router.get("/knowledge")
+async def list_knowledge(category: Optional[str] = None, q: Optional[str] = None):
+    filt: dict = {}
+    if category and category != "Alle":
+        filt["category"] = category
+    docs = await db.knowledge.find(filt, {"_id": 0}).to_list(2000)
+    docs.sort(key=lambda d: d.get("created_at", ""), reverse=True)
+    if q:
+        ql = q.lower()
+        docs = [d for d in docs if ql in d.get("title", "").lower()
+                or ql in d.get("content", "").lower()
+                or any(ql in t.lower() for t in d.get("tags", []))]
+    return {"categories": KB_CATEGORIES, "entries": docs}
+
+
+@api_router.post("/knowledge", response_model=KbEntry)
+async def create_knowledge(payload: KbEntryCreate):
+    entry = KbEntry(**payload.model_dump())
+    await db.knowledge.insert_one(entry.model_dump())
+    return entry
+
+
+@api_router.put("/knowledge/{entry_id}", response_model=KbEntry)
+async def update_knowledge(entry_id: str, payload: KbEntryUpdate):
+    doc = await db.knowledge.find_one({"id": entry_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    updates["updated_at"] = _now_iso()
+    await db.knowledge.update_one({"id": entry_id}, {"$set": updates})
+    doc.update(updates)
+    return doc
+
+
+@api_router.delete("/knowledge/{entry_id}")
+async def delete_knowledge(entry_id: str):
+    result = await db.knowledge.delete_one({"id": entry_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    return {"ok": True}
+
+
+@api_router.post("/knowledge/search")
+async def search_knowledge(payload: KbSearchRequest):
+    filt: dict = {}
+    if payload.category and payload.category != "Alle":
+        filt["category"] = payload.category
+    docs = await db.knowledge.find(filt, {"_id": 0}).to_list(2000)
+    if not docs:
+        return {"answer": "Die Wissensdatenbank ist noch leer. Bitte zuerst Einträge hinzufügen.", "sources": []}
+    context = "\n\n".join(
+        f"[{d['category']}] {d['title']}:\n{d['content']}" for d in docs[:30]
+    )
+    system = (
+        "Du bist Jarvjis, der KI-Agent von KickstarterCash. "
+        "Beantworte Fragen ausschließlich auf Basis der folgenden Wissensdatenbank. "
+        "Halluziniere nichts. Zitiere die Quelle (Titel) wenn möglich.\n\n"
+        f"WISSENSDATENBANK:\n{context}"
+    )
+    answer = await llm_text(payload.model, system, payload.query)
+    relevant = [d for d in docs if any(
+        w in d["title"].lower() or w in d["content"].lower()
+        for w in payload.query.lower().split()
+    )][:3]
+    return {"answer": answer, "sources": [{"title": d["title"], "category": d["category"]} for d in relevant]}
+
+
 app.include_router(api_router)
 
 app.add_middleware(
