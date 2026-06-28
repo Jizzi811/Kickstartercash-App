@@ -58,8 +58,8 @@ const MODULES = [
   {
     to: "/knowledge", icon: Database, emoji: "📚",
     labelDE: "Wissensdatenbank", labelEN: "Knowledge Base",
-    descDE: "Produkte, FAQs, Corporate Design – Jarvjis echtes Wissen.",
-    descEN: "Products, FAQs, corporate design – Jarvjis real knowledge.",
+    descDE: "Produkte, FAQs, Corporate Design – Kashbot echtes Wissen.",
+    descEN: "Products, FAQs, corporate design – Kashbot real knowledge.",
     color: "#60A5FA",
   },
 ];
@@ -77,14 +77,14 @@ export default function Dashboard() {
         transition={{ duration: 0.5 }}
         className="relative overflow-hidden rounded-sm border border-white/8"
       >
-        <img src={BANNER_URL} alt="Jarvjis" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+        <img src={BANNER_URL} alt="Kashbot" className="absolute inset-0 w-full h-full object-cover opacity-20" />
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
         <div className="relative px-8 md:px-14 py-12 md:py-16 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#D4AF37]/30 text-[#D4AF37] text-[10px] tracking-[0.2em] uppercase mb-6">
             <Sparkles size={11} /> AI Agent System
           </div>
           <h1 className="font-display text-3xl md:text-4xl text-white mb-3 leading-tight">
-            JARVJIS<br />
+            KASHBOT<br />
             <span className="text-[#D4AF37]">KickstarterCash</span>
           </h1>
           <p className="text-sm text-zinc-400 mb-8 leading-relaxed">
@@ -99,7 +99,7 @@ export default function Dashboard() {
             </button>
             <button onClick={() => navigate("/jarvjis")}
               className="inline-flex items-center gap-2 border border-white/15 text-zinc-300 px-6 py-3 rounded-sm text-sm hover:border-[#D4AF37]/40 hover:text-[#D4AF37] transition-colors">
-              🎯 {lang === "DE" ? "CEO Jarvjis" : "CEO Jarvjis"}
+              🎯 {lang === "DE" ? "CEO Kashbot" : "CEO Kashbot"}
             </button>
             <span className="text-xs text-zinc-600">
               {lang === "DE" ? "Marke:" : "Brand:"} <span className="text-[#D4AF37]">{activeBrand?.name}</span>
