@@ -11,7 +11,7 @@ export const useApp = () => useContext(AppContext);
 
 export const AppProvider = ({ children }) => {
   const [lang, setLang] = useState(() => localStorage.getItem("kc_lang") || "DE");
-  const [model, setModel] = useState(() => localStorage.getItem("kc_model") || "gpt");
+  const [model, setModel] = useState(() => localStorage.getItem("kc_model") || "claude-sonnet-4-6");
   const [brands, setBrands] = useState([]);
   const [activeBrandId, setActiveBrandId] = useState(() => localStorage.getItem("kc_brand") || "kickstartercash");
 

@@ -1636,7 +1636,7 @@ class AgentChatRequest(BaseModel):
     agent_id: str
     message: str
     history: list = []
-    model: str = "gpt"
+    model: str = "claude-sonnet-4-6"
     language: str = "DE"
     use_knowledge: bool = True
 
@@ -1731,11 +1731,14 @@ async def agent_chat(req: AgentChatRequest):
     lang_label = "Deutsch" if lang == "DE" else "English"
 
     kb_context = ""
-    if req.use_knowledge:
-        docs = await db.knowledge.find({}, {"_id": 0, "title": 1, "content": 1, "category": 1}).to_list(40)
-        if docs:
-            kb_context = "\n\nWISSENSDATENBANK (nutze diese als Grundlage, halluziniere nicht):\n"
-            kb_context += "\n".join(f"[{d['category']}] {d['title']}: {d['content'][:400]}" for d in docs[:20])
+    if req.use_knowledge and db is not None:
+        try:
+            docs = await db.knowledge.find({}, {"_id": 0, "title": 1, "content": 1, "category": 1}).to_list(40)
+            if docs:
+                kb_context = "\n\nWISSENSDATENBANK (nutze diese als Grundlage, halluziniere nicht):\n"
+                kb_context += "\n".join(f"[{d['category']}] {d['title']}: {d['content'][:400]}" for d in docs[:20])
+        except Exception:
+            pass
 
     system = (
         f"{personality}\n\n"
