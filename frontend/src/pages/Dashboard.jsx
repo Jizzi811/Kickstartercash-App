@@ -1,11 +1,12 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Share2, ImageIcon, PenLine, BookOpen, ArrowRight, Sparkles, Zap, CalendarDays, FolderDown, ShieldCheck, Rocket, Bot } from "lucide-react";
+import { Share2, ImageIcon, PenLine, BookOpen, ArrowRight, Sparkles, Zap, CalendarDays, FolderDown, ShieldCheck, Rocket, Bot, Cpu } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { BANNER_URL } from "@/i18n";
 
 const modules = [
+  { to: "/jarvjis", icon: Cpu, titleKey: "nav_jarvjis", descKey: "mod_jarvjis_desc", n: "★" },
   { to: "/campaign", icon: Zap, titleKey: "nav_campaign", descKey: "mod_campaign_desc", n: "★" },
   { to: "/funnel", icon: Rocket, titleKey: "nav_funnel", descKey: "mod_funnel_desc", n: "★" },
   { to: "/chat-gpt", icon: Bot, titleKey: "nav_gptchat", descKey: "mod_gptchat_desc", n: "★" },
