@@ -31,6 +31,7 @@ import GPTChat from "@/pages/GPTChat";
 import GeminiChat from "@/pages/GeminiChat";
 import ExportCenter from "@/pages/ExportCenter";
 import Campaign from "@/pages/Campaign";
+import AgentBuilder from "@/pages/AgentBuilder";
 
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
 
               {/* Jarvjis CEO Orb – bleibt */}
               <Route path="/jarvjis" element={<JarvjisAgent />} />
+              <Route path="/builder" element={<AgentBuilder />} />
 
               {/* Legacy routes – still accessible */}
               <Route path="/image" element={<ImageGenerator />} />

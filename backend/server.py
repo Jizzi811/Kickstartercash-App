@@ -1479,6 +1479,206 @@ async def search_knowledge(payload: KbSearchRequest):
     return {"answer": answer, "sources": [{"title": d["title"], "category": d["category"]} for d in relevant]}
 
 
+# ---------------------------------------------------------------------------
+# Phase 6 – Custom Agent Builder
+# ---------------------------------------------------------------------------
+
+class CustomAgent(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    emoji: str = "🤖"
+    role: str
+    personality: str
+    color: str = "#D4AF37"
+    category: str = ""
+    created_at: str = Field(default_factory=_now_iso)
+    updated_at: str = Field(default_factory=_now_iso)
+
+
+class CustomAgentCreate(BaseModel):
+    name: str
+    emoji: str = "🤖"
+    role: str
+    personality: str
+    color: str = "#D4AF37"
+    category: str = ""
+
+
+class CustomAgentUpdate(BaseModel):
+    name: Optional[str] = None
+    emoji: Optional[str] = None
+    role: Optional[str] = None
+    personality: Optional[str] = None
+    color: Optional[str] = None
+    category: Optional[str] = None
+
+
+class CustomAgentChatRequest(BaseModel):
+    message: str
+    history: list = []
+    model: str = "gpt"
+    language: str = "DE"
+
+
+class AgentBuilderRequest(BaseModel):
+    description: str
+    model: str = "gpt"
+    language: str = "DE"
+
+
+@api_router.get("/custom-agents")
+async def list_custom_agents():
+    docs = await db.custom_agents.find({}, {"_id": 0}).to_list(200)
+    docs.sort(key=lambda d: d.get("created_at", ""), reverse=True)
+    for agent in docs:
+        doc_count = await db.custom_agent_docs.count_documents({"agent_id": agent["id"]})
+        agent["doc_count"] = doc_count
+    return docs
+
+
+@api_router.post("/custom-agents", response_model=CustomAgent)
+async def create_custom_agent(payload: CustomAgentCreate):
+    agent = CustomAgent(**payload.model_dump())
+    await db.custom_agents.insert_one(agent.model_dump())
+    return agent
+
+
+@api_router.put("/custom-agents/{agent_id}", response_model=CustomAgent)
+async def update_custom_agent(agent_id: str, payload: CustomAgentUpdate):
+    doc = await db.custom_agents.find_one({"id": agent_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    updates["updated_at"] = _now_iso()
+    await db.custom_agents.update_one({"id": agent_id}, {"$set": updates})
+    doc.update(updates)
+    return doc
+
+
+@api_router.delete("/custom-agents/{agent_id}")
+async def delete_custom_agent(agent_id: str):
+    await db.custom_agents.delete_one({"id": agent_id})
+    await db.custom_agent_docs.delete_many({"agent_id": agent_id})
+    return {"ok": True}
+
+
+@api_router.post("/custom-agents/{agent_id}/documents")
+async def upload_document(agent_id: str, request: Request):
+    from fastapi import UploadFile, File
+    agent = await db.custom_agents.find_one({"id": agent_id}, {"_id": 0})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    form = await request.form()
+    file = form.get("file")
+    if not file:
+        raise HTTPException(status_code=400, detail="No file provided")
+
+    filename = getattr(file, "filename", "document.txt")
+    content_bytes = await file.read()
+
+    # Extract text content
+    ext = filename.lower().rsplit(".", 1)[-1] if "." in filename else "txt"
+    try:
+        if ext in ("txt", "md", "csv", "json", "html", "xml"):
+            content_text = content_bytes.decode("utf-8", errors="ignore")
+        elif ext == "pdf":
+            try:
+                import io
+                import pypdf
+                reader = pypdf.PdfReader(io.BytesIO(content_bytes))
+                content_text = "\n".join(p.extract_text() or "" for p in reader.pages)
+            except Exception:
+                content_text = content_bytes.decode("utf-8", errors="ignore")
+        else:
+            content_text = content_bytes.decode("utf-8", errors="ignore")
+    except Exception:
+        content_text = "[Binärdatei – Inhalt nicht lesbar]"
+
+    doc = {
+        "id": str(uuid.uuid4()),
+        "agent_id": agent_id,
+        "filename": filename,
+        "content": content_text[:50000],  # cap at 50k chars
+        "size": len(content_bytes),
+        "ext": ext,
+        "created_at": _now_iso(),
+    }
+    await db.custom_agent_docs.insert_one({**doc})
+    doc.pop("_id", None)
+    return doc
+
+
+@api_router.get("/custom-agents/{agent_id}/documents")
+async def list_documents(agent_id: str):
+    docs = await db.custom_agent_docs.find(
+        {"agent_id": agent_id}, {"_id": 0, "content": 0}
+    ).to_list(100)
+    return docs
+
+
+@api_router.delete("/custom-agents/{agent_id}/documents/{doc_id}")
+async def delete_document(agent_id: str, doc_id: str):
+    await db.custom_agent_docs.delete_one({"id": doc_id, "agent_id": agent_id})
+    return {"ok": True}
+
+
+@api_router.post("/custom-agents/{agent_id}/chat")
+async def custom_agent_chat(agent_id: str, req: CustomAgentChatRequest):
+    agent = await db.custom_agents.find_one({"id": agent_id}, {"_id": 0})
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    # Load documents as knowledge context
+    docs = await db.custom_agent_docs.find(
+        {"agent_id": agent_id}, {"_id": 0, "filename": 1, "content": 1}
+    ).to_list(20)
+
+    doc_context = ""
+    if docs:
+        doc_context = "\n\nDOKUMENTE & WISSEN (nutze diese als einzige Quelle, halluziniere nicht):\n"
+        for d in docs:
+            doc_context += f"\n--- {d['filename']} ---\n{d['content'][:3000]}\n"
+
+    lang_label = "Deutsch" if req.language == "DE" else "English"
+    system = (
+        f"Du bist {agent['name']}, ein spezialisierter KI-Agent.\n"
+        f"Deine Rolle: {agent['role']}\n"
+        f"Deine Persönlichkeit: {agent['personality']}\n\n"
+        f"Antworte immer auf {lang_label}. "
+        f"Sei präzise, hilfreich und bleibe in deiner Rolle."
+        f"{doc_context}"
+    )
+
+    convo = ""
+    for m in req.history[-10:]:
+        role = "User" if m.get("role") == "user" else "Assistant"
+        convo += f"{role}: {m.get('content', '')}\n"
+    convo += f"User: {req.message}\nAssistant:"
+
+    reply = await llm_text(req.model, system, convo)
+    return {"reply": reply.strip()}
+
+
+# Phase 7 – Agent Builder (natural language → workflow plan)
+@api_router.post("/agent-builder/generate")
+async def generate_agent_workflow(req: AgentBuilderRequest):
+    lang_label = "Deutsch" if req.language == "DE" else "English"
+    system = (
+        "Du bist ein KI-Architekten-Assistent für das Jarvjis Agent-System. "
+        "Wenn ein Benutzer einen Workflow beschreibt, antwortest du mit:\n"
+        "1. **Agent-Konfiguration**: Name, Persönlichkeit, Rolle des zu erstellenden Agenten\n"
+        "2. **Workflow-Schritte**: Nummerierte Schritt-für-Schritt Automatisierung\n"
+        "3. **Benötigte Tools**: Welche Tools/APIs/Zugänge benötigt werden\n"
+        "4. **n8n-Workflow-Struktur**: Welche n8n-Nodes in welcher Reihenfolge\n"
+        "5. **Fehlende API-Zugänge**: Was der Nutzer noch einrichten muss\n"
+        "6. **Einrichtungszeit**: Geschätzte Zeit für die Einrichtung\n\n"
+        f"Antworte strukturiert auf {lang_label}. Sei konkret und technisch präzise."
+    )
+    reply = await llm_text(req.model, system, req.description)
+    return {"plan": reply.strip()}
+
+
 app.include_router(api_router)
 
 app.add_middleware(
