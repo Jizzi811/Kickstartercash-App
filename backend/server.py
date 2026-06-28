@@ -15,7 +15,12 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+import anthropic
+try:
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    _HAS_EMERGENT = True
+except ImportError:
+    _HAS_EMERGENT = False
 import resend
 import funnel as funnel_renderer
 
@@ -25,13 +30,16 @@ load_dotenv(ROOT_DIR / '.env')
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
-EMERGENT_LLM_KEY = os.environ['EMERGENT_LLM_KEY']
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
 POYO_API_KEY = os.environ.get('POYO_API_KEY', '')
 POYO_BASE = "https://api.poyo.ai"
+
+_anthropic_client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
 LOGO_URL = "https://customer-assets.emergentagent.com/job_5234ef58-250d-4475-b61a-24b76051aa69/artifacts/y4lzk2ct_WhatsApp%20Image%202026-06-24%20at%2010.55.48.jpeg"
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
@@ -48,6 +56,11 @@ logger = logging.getLogger(__name__)
 MODEL_MAP = {
     "gpt": ("openai", "gpt-5.2"),
     "gemini": ("gemini", "gemini-2.5-flash"),
+    # Claude models — routed directly via Anthropic SDK
+    "claude-opus-4-8": ("anthropic", "claude-opus-4-8"),
+    "claude-sonnet-4-6": ("anthropic", "claude-sonnet-4-6"),
+    "claude-haiku-4-5": ("anthropic", "claude-haiku-4-5-20251001"),
+    "claude": ("anthropic", "claude-sonnet-4-6"),
 }
 IMAGE_MODEL = "gemini-3.1-flash-image-preview"
 
@@ -67,6 +80,20 @@ def _api_key_for(provider: str) -> str:
 
 async def llm_text(model_choice: str, system_message: str, user_text: str) -> str:
     provider, model = MODEL_MAP.get(model_choice, MODEL_MAP["gpt"])
+
+    # Route Claude models directly through Anthropic SDK
+    if provider == "anthropic" and _anthropic_client:
+        msg = await _anthropic_client.messages.create(
+            model=model,
+            max_tokens=4096,
+            system=system_message,
+            messages=[{"role": "user", "content": user_text}],
+        )
+        return msg.content[0].text
+
+    # Fallback: Emergent universal gateway for OpenAI / Gemini
+    if not _HAS_EMERGENT:
+        raise HTTPException(status_code=503, detail="LLM backend not configured")
     chat = LlmChat(api_key=_api_key_for(provider), session_id=str(uuid.uuid4()), system_message=system_message)
     chat.with_model(provider, model)
     resp = await chat.send_message(UserMessage(text=user_text))
@@ -2015,6 +2042,10 @@ async def generate_agent_workflow(req: AgentBuilderRequest):
     reply = await llm_text(req.model, system, req.description)
     return {"plan": reply.strip()}
 
+
+@api_router.get("/health")
+async def health():
+    return {"status": "ok", "llm": "anthropic" if _anthropic_client else "emergent"}
 
 app.include_router(api_router)
 
