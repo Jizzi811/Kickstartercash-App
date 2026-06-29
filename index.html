@@ -557,5 +557,217 @@ function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 sendBtn.addEventListener('click', () => send());
 input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 </script>
+
+<!-- ═══════════════════════════════════════════════════════
+     KASH — Sales & Support Floating Widget
+     ═══════════════════════════════════════════════════════ -->
+<style>
+  /* Floating Button */
+  #kash-btn{
+    position:fixed;bottom:24px;right:24px;z-index:999;
+    width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;
+    background:linear-gradient(135deg,#D4AF37,#B8972E);
+    box-shadow:0 0 28px rgba(212,175,55,.5),0 8px 32px rgba(0,0,0,.6);
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .2s,box-shadow .2s;
+    animation:kashPulse 3s ease-in-out infinite;
+  }
+  #kash-btn:hover{transform:scale(1.08);box-shadow:0 0 40px rgba(212,175,55,.7),0 12px 40px rgba(0,0,0,.7)}
+  #kash-btn svg{width:24px;height:24px;fill:none;stroke:#1a1206;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  @keyframes kashPulse{0%,100%{box-shadow:0 0 28px rgba(212,175,55,.5),0 8px 32px rgba(0,0,0,.6)}50%{box-shadow:0 0 48px rgba(212,175,55,.75),0 8px 32px rgba(0,0,0,.6)}}
+  #kash-btn .kash-ring{position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(212,175,55,.25);animation:kashRing 2.5s ease-in-out infinite}
+  @keyframes kashRing{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.15);opacity:0}}
+
+  /* Panel */
+  #kash-panel{
+    position:fixed;bottom:92px;right:24px;z-index:998;
+    width:340px;max-width:calc(100vw - 32px);
+    height:480px;max-height:calc(100vh - 110px);
+    background:#0a0806;border:1px solid rgba(212,175,55,.2);border-radius:16px;
+    box-shadow:0 0 60px rgba(212,175,55,.1),0 24px 64px rgba(0,0,0,.85);
+    display:none;flex-direction:column;overflow:hidden;
+    font-family:-apple-system,'Segoe UI',system-ui,sans-serif;
+  }
+  #kash-panel.open{display:flex;animation:kashPanelIn .25s cubic-bezier(.34,1.4,.64,1)}
+  @keyframes kashPanelIn{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
+
+  /* Panel header */
+  #kash-head{
+    display:flex;align-items:center;gap:10px;padding:12px 14px;
+    background:linear-gradient(135deg,rgba(212,175,55,.08),transparent);
+    border-bottom:1px solid rgba(212,175,55,.15);flex-shrink:0;
+  }
+  #kash-avatar{
+    width:32px;height:32px;border-radius:50%;flex-shrink:0;
+    background:linear-gradient(135deg,#D4AF37,#B8972E);
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:900;color:#1a1206;font-family:Georgia,serif;
+  }
+  #kash-head-text{flex:1}
+  #kash-head-name{font-size:.8rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;background:linear-gradient(135deg,#F6DC8E,#D4AF37);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  #kash-head-sub{font-size:.6rem;color:#5a5040;letter-spacing:.08em;display:flex;align-items:center;gap:4px;margin-top:1px}
+  #kash-head-sub::before{content:"";width:5px;height:5px;border-radius:50%;background:#4ade80;box-shadow:0 0 5px #4ade8088;flex-shrink:0}
+  #kash-close-btn{background:none;border:none;cursor:pointer;color:#5a5040;font-size:.95rem;padding:4px 6px;border-radius:6px;line-height:1;transition:color .15s}
+  #kash-close-btn:hover{color:#D4AF37}
+
+  /* Messages */
+  #kash-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}
+  #kash-msgs::-webkit-scrollbar{width:3px}
+  #kash-msgs::-webkit-scrollbar-thumb{background:#3a2c10;border-radius:3px}
+  .km{max-width:82%;font-size:.82rem;line-height:1.55;border-radius:12px;padding:9px 12px;animation:kmIn .18s ease}
+  @keyframes kmIn{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+  .km.user{align-self:flex-end;background:linear-gradient(135deg,#D4AF37,#C49B2D);color:#1a1206;font-weight:600;border-bottom-right-radius:3px}
+  .km.bot{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#C9BB9B;border-bottom-left-radius:3px}
+  .km.error{align-self:flex-start;background:#1e0a0a;border:1px solid #5c1a1a;color:#f08080;border-bottom-left-radius:3px}
+
+  /* Typing dots */
+  .kash-typing{display:inline-flex;gap:3px;align-items:center;padding:10px 12px}
+  .kash-typing span{width:6px;height:6px;border-radius:50%;background:#D4AF37;opacity:.4;animation:kdt .8s ease-in-out infinite}
+  .kash-typing span:nth-child(2){animation-delay:.15s}
+  .kash-typing span:nth-child(3){animation-delay:.3s}
+  @keyframes kdt{0%,60%,100%{transform:scale(.8);opacity:.3}30%{transform:scale(1.2);opacity:1}}
+
+  /* Suggestions */
+  #kash-suggestions{padding:0 14px 10px;display:flex;flex-direction:column;gap:5px}
+  #kash-suggestions p{font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:#3a2c10;margin-bottom:2px}
+  .ks-chip{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:6px 10px;font-size:.75rem;color:#7d745f;cursor:pointer;text-align:left;transition:all .15s;font-family:inherit}
+  .ks-chip:hover{border-color:rgba(212,175,55,.35);background:rgba(212,175,55,.06);color:#C9BB9B}
+
+  /* Input */
+  #kash-foot{padding:10px 12px 12px;border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;display:flex;gap:7px;align-items:flex-end}
+  #kash-input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:9px 12px;color:#F3ECDD;font-size:.82rem;outline:none;resize:none;max-height:90px;font-family:inherit;line-height:1.45;transition:border-color .15s}
+  #kash-input:focus{border-color:rgba(212,175,55,.5)}
+  #kash-input::placeholder{color:#3a2c10}
+  #kash-send{background:linear-gradient(135deg,#D4AF37,#B8972E);border:none;border-radius:10px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:filter .15s;padding:0}
+  #kash-send:hover{filter:brightness(1.15)}
+  #kash-send:disabled{opacity:.4;cursor:not-allowed}
+  #kash-send svg{width:16px;height:16px;fill:none;stroke:#1a1206;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+</style>
+
+<!-- Floating Button -->
+<button id="kash-btn" aria-label="KASH Chat öffnen">
+  <div class="kash-ring"></div>
+  <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+</button>
+
+<!-- Chat Panel -->
+<div id="kash-panel" role="dialog" aria-modal="true">
+  <div id="kash-head">
+    <div id="kash-avatar">K</div>
+    <div id="kash-head-text">
+      <div id="kash-head-name">KASH</div>
+      <div id="kash-head-sub">Sales &amp; Support · Online</div>
+    </div>
+    <button id="kash-close-btn" title="Schließen">✕</button>
+  </div>
+  <div id="kash-msgs"></div>
+  <div id="kash-suggestions">
+    <p>Schnellfragen</p>
+    <button class="ks-chip">Was kann KickstarterCash für mich tun?</button>
+    <button class="ks-chip">Welche KI-Tools sind enthalten?</button>
+    <button class="ks-chip">Was kostet die Mitgliedschaft?</button>
+    <button class="ks-chip">Wie starte ich mit dem System?</button>
+  </div>
+  <div id="kash-foot">
+    <textarea id="kash-input" rows="1" placeholder="Nachricht schreiben…"></textarea>
+    <button id="kash-send" disabled>
+      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const BACKEND = (window.REACT_APP_BACKEND_URL || '').replace(/\/$/, '');
+  const API_URL = BACKEND ? BACKEND + '/api/homepage/chat' : '/api/homepage/chat';
+
+  const btn    = document.getElementById('kash-btn');
+  const panel  = document.getElementById('kash-panel');
+  const msgs   = document.getElementById('kash-msgs');
+  const input  = document.getElementById('kash-input');
+  const sendB  = document.getElementById('kash-send');
+  const closeB = document.getElementById('kash-close-btn');
+  const suggs  = document.getElementById('kash-suggestions');
+
+  let history = [];
+  let loading = false;
+  let greeted = false;
+
+  function togglePanel(){
+    const isOpen = panel.classList.toggle('open');
+    btn.setAttribute('aria-expanded', isOpen);
+    if(isOpen && !greeted){ greet(); greeted = true; }
+    if(isOpen) setTimeout(()=>input.focus(),120);
+  }
+
+  function greet(){
+    addMsg('bot','Willkommen bei KickstarterCash ✦ Ich bin KASH, dein persönlicher Assistent. Wie kann ich dir heute helfen – hast du Fragen zu unseren Tools oder möchtest du mehr erfahren?');
+  }
+
+  function addMsg(role, text){
+    const d = document.createElement('div');
+    d.className = 'km ' + role;
+    d.textContent = text;
+    msgs.appendChild(d);
+    msgs.scrollTop = msgs.scrollHeight;
+    return d;
+  }
+
+  function showTyping(){
+    const d = document.createElement('div');
+    d.className = 'km bot';
+    d.id = 'kash-typing';
+    d.innerHTML = '<div class="kash-typing"><span></span><span></span><span></span></div>';
+    msgs.appendChild(d);
+    msgs.scrollTop = msgs.scrollHeight;
+    return d;
+  }
+
+  async function send(text){
+    const msg = (text || input.value).trim();
+    if(!msg || loading) return;
+    suggs.style.display = 'none';
+    history.push({role:'user', content: msg});
+    addMsg('user', msg);
+    input.value = '';
+    input.style.height = '';
+    sendB.disabled = true;
+    loading = true;
+
+    const typing = showTyping();
+    try{
+      const res = await fetch(API_URL, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({message: msg, history: history.slice(-10), language:'DE', model:'gpt'})
+      });
+      const data = await res.json();
+      typing.remove();
+      const reply = data.reply || '⚠️ Keine Antwort erhalten.';
+      history.push({role:'assistant', content: reply});
+      addMsg('bot', reply);
+    } catch(e){
+      typing.remove();
+      addMsg('error','⚠️ Verbindungsfehler. Bitte versuche es erneut.');
+    } finally{
+      loading = false;
+      sendB.disabled = !input.value.trim();
+    }
+  }
+
+  btn.addEventListener('click', togglePanel);
+  closeB.addEventListener('click', togglePanel);
+  sendB.addEventListener('click', ()=> send());
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }});
+  input.addEventListener('input', function(){
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 90) + 'px';
+    sendB.disabled = !this.value.trim() || loading;
+  });
+  document.querySelectorAll('.ks-chip').forEach(c=>{
+    c.addEventListener('click', ()=> send(c.textContent));
+  });
+})();
+</script>
 </body>
 </html>
