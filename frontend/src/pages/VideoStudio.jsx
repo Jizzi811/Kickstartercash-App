@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { Film, Copy, Check, Loader2, Sparkles, Play, Download } from "lucide-react";
+import { Film, Copy, Check, Loader2, Sparkles, Play, Download, GalleryHorizontal } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 import { AgentChatPanel } from "@/components/StudioLayout";
 
@@ -92,7 +92,7 @@ function VeoPanel({ lang }) {
     for (let i = 0; i < 30; i++) {
       await new Promise(r => setTimeout(r, 6000));
       try {
-        const res = await axios.get(`${BACKEND}/api/video/veo/status?operation=${encodeURIComponent(opName)}`);
+        const res = await axios.get(`${BACKEND}/api/video/veo/status?operation=${encodeURIComponent(opName)}&prompt=${encodeURIComponent(prompt)}`);
         if (res.data.video_url) {
           setVideoUrl(res.data.video_url);
           setStatus("");
@@ -214,6 +214,49 @@ function RemotionPanel({ lang }) {
   );
 }
 
+// ── Video Gallery Panel ──────────────────────────────────────────────────────
+function GalleryPanel({ lang }) {
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios.get(`${BACKEND}/api/video/gallery`)
+      .then(r => setVideos(r.data.videos || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-zinc-500" /></div>;
+  if (!videos.length) return (
+    <div className="bg-[#0A0A0A] border border-white/8 rounded-sm p-8 text-center">
+      <GalleryHorizontal size={32} className="mx-auto mb-3 text-zinc-600" />
+      <p className="text-sm text-zinc-500">{lang === "DE" ? "Noch keine Videos generiert" : "No videos generated yet"}</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-zinc-500">{videos.length} {lang === "DE" ? "Videos gespeichert" : "videos saved"}</p>
+      <div className="grid grid-cols-1 gap-4">
+        {videos.map((v, i) => (
+          <div key={i} className="bg-[#0A0A0A] border border-white/8 rounded-sm overflow-hidden">
+            <video src={v.video_url} controls className="w-full" />
+            <div className="px-4 py-3 space-y-1">
+              {v.prompt && <p className="text-xs text-zinc-400 line-clamp-2">{v.prompt}</p>}
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-zinc-600">{v.type?.toUpperCase()} · {v.created_at?.slice(0, 10)}</span>
+                <a href={v.video_url} download className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white">
+                  <Download size={12} /> {lang === "DE" ? "Download" : "Download"}
+                </a>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Export ──────────────────────────────────────────────────────────────
 export default function VideoStudio() {
   const { lang, model } = useApp();
@@ -239,6 +282,7 @@ export default function VideoStudio() {
     { id: "ai", label: "🎥 Veo KI-Video" },
     { id: "remotion", label: "✨ Branded Templates" },
     { id: "prompts", label: "📝 Prompts & Scripts" },
+    { id: "gallery", label: "🎞️ Galerie" },
   ];
 
   return (
@@ -269,6 +313,7 @@ export default function VideoStudio() {
         <div className="lg:col-span-3 space-y-5">
           {tab === "ai" && <VeoPanel lang={lang} />}
           {tab === "remotion" && <RemotionPanel lang={lang} />}
+          {tab === "gallery" && <GalleryPanel lang={lang} />}
           {tab === "prompts" && (
             <div className="space-y-4">
               <div className="bg-[#0A0A0A] border border-white/8 rounded-sm p-5 space-y-3">

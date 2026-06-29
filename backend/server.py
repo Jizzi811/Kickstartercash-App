@@ -2117,7 +2117,7 @@ async def generate_veo_video(req: VeoRequest):
 
 
 @api_router.get("/video/veo/status")
-async def check_veo_status(operation: str):
+async def check_veo_status(operation: str, prompt: str = ""):
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="GEMINI_API_KEY nicht gesetzt")
     try:
@@ -2129,10 +2129,30 @@ async def check_veo_status(operation: str):
                     videos = data.get("response", {}).get("generateVideoResponse", {}).get("generatedSamples", [])
                     if videos:
                         video_uri = videos[0].get("video", {}).get("uri", "")
+                        # Save to gallery
+                        if db is not None:
+                            await db.video_gallery.insert_one({
+                                "type": "veo",
+                                "video_url": video_uri,
+                                "prompt": prompt,
+                                "created_at": datetime.utcnow().isoformat(),
+                            })
                         return {"video_url": video_uri, "done": True}
                 return {"done": False, "status": "processing"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_router.get("/video/gallery")
+async def get_video_gallery():
+    if db is None:
+        return {"videos": []}
+    try:
+        cursor = db.video_gallery.find({}, {"_id": 0}).sort("created_at", -1).limit(50)
+        videos = await cursor.to_list(length=50)
+        return {"videos": videos}
+    except Exception as e:
+        return {"videos": []}
 
 
 # ---------------------------------------------------------------------------
