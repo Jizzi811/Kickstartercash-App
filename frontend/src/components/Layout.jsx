@@ -131,13 +131,14 @@ export const Layout = ({ children }) => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-white/8 hover:border-[#D4AF37]/40 text-xs transition-colors text-zinc-400">
-                  {model === "gemini" ? "Gemini 2.5" : "GPT-5.2"}
+                  {model === "gemini" ? "Gemini 2.5" : model === "grok" ? "Grok 3" : "GPT-5.2"}
                   <ChevronDown size={12} className="text-zinc-600" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-[#0A0A0A] border-white/10 text-white">
                 <DropdownMenuItem onClick={() => setModel("gpt")} className="text-sm cursor-pointer focus:bg-[#D4AF37]/10">GPT-5.2</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setModel("gemini")} className="text-sm cursor-pointer focus:bg-[#D4AF37]/10">Gemini 2.5 Flash</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setModel("grok")} className="text-sm cursor-pointer focus:bg-[#D4AF37]/10">Grok 3 (xAI)</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 

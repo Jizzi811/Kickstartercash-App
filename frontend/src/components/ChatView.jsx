@@ -11,6 +11,7 @@ export const ChatView = ({ model, title, subtitle, icon, accent }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [grokExtraData, setGrokExtraData] = useState(null);
   const endRef = useRef(null);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
@@ -23,7 +24,10 @@ export const ChatView = ({ model, title, subtitle, icon, accent }) => {
     setInput("");
     setLoading(true);
     try {
-      const res = await axios.post(`${API}/chat`, { message: text, history, model, language: lang });
+      const payload = { message: text, history, model, language: lang };
+      if (model === "grok" && grokExtraData) payload.grok_extra_data = grokExtraData;
+      const res = await axios.post(`${API}/chat`, payload);
+      if (res.data.grok_extra_data) setGrokExtraData(res.data.grok_extra_data);
       setMessages((prev) => [...prev, { role: "assistant", content: res.data.reply, id: Date.now() + 1 }]);
     } catch (e) {
       toast.error(t("error_generic"));
@@ -40,7 +44,7 @@ export const ChatView = ({ model, title, subtitle, icon, accent }) => {
       <div className="flex items-center justify-between">
         <PageTitle title={title} subtitle={subtitle} icon={icon} />
         {messages.length > 0 && (
-          <button data-testid="chat-clear-btn" onClick={() => setMessages([])}
+          <button data-testid="chat-clear-btn" onClick={() => { setMessages([]); setGrokExtraData(null); }}
             className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-sm border border-white/10 text-zinc-400 hover:text-red-400 hover:border-red-400/50">
             <Trash2 size={13} /> {t("chat_clear")}
           </button>
