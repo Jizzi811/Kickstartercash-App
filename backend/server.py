@@ -1799,10 +1799,15 @@ class KbSearchRequest(BaseModel):
 
 @api_router.get("/knowledge")
 async def list_knowledge(category: Optional[str] = None, q: Optional[str] = None):
+    if db is None:
+        return {"categories": KB_CATEGORIES, "entries": []}
     filt: dict = {}
     if category and category != "Alle":
         filt["category"] = category
-    docs = await db.knowledge.find(filt, {"_id": 0}).to_list(2000)
+    try:
+        docs = await db.knowledge.find(filt, {"_id": 0}).to_list(2000)
+    except Exception:
+        return {"categories": KB_CATEGORIES, "entries": []}
     docs.sort(key=lambda d: d.get("created_at", ""), reverse=True)
     if q:
         ql = q.lower()
@@ -1814,6 +1819,8 @@ async def list_knowledge(category: Optional[str] = None, q: Optional[str] = None
 
 @api_router.post("/knowledge", response_model=KbEntry)
 async def create_knowledge(payload: KbEntryCreate):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
     entry = KbEntry(**payload.model_dump())
     await db.knowledge.insert_one(entry.model_dump())
     return entry
@@ -1821,6 +1828,8 @@ async def create_knowledge(payload: KbEntryCreate):
 
 @api_router.put("/knowledge/{entry_id}", response_model=KbEntry)
 async def update_knowledge(entry_id: str, payload: KbEntryUpdate):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
     doc = await db.knowledge.find_one({"id": entry_id}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Entry not found")
@@ -1833,6 +1842,8 @@ async def update_knowledge(entry_id: str, payload: KbEntryUpdate):
 
 @api_router.delete("/knowledge/{entry_id}")
 async def delete_knowledge(entry_id: str):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
     result = await db.knowledge.delete_one({"id": entry_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Entry not found")
