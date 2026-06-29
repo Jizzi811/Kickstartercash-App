@@ -374,8 +374,8 @@ class ArenaChatRequest(BaseModel):
     model: str = "gpt"
     language: str = "DE"
     history: List[dict] = []
-    file_data: Optional[str] = None   # base64-encoded file
-    file_mime: Optional[str] = None   # e.g. "image/jpeg", "application/pdf"
+    file_data: Optional[str] = None
+    file_mime: Optional[str] = None
     file_name: Optional[str] = None
     grok_extra_data: Optional[dict] = None
 
