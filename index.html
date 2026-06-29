@@ -678,8 +678,7 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 
 <script>
 (function(){
-  const BACKEND = (window.REACT_APP_BACKEND_URL || '').replace(/\/$/, '');
-  const API_URL = BACKEND ? BACKEND + '/api/homepage/chat' : '/api/homepage/chat';
+  const API_URL = 'https://kickstartercash-app-production.up.railway.app/api/homepage/chat';
 
   const btn    = document.getElementById('kash-btn');
   const panel  = document.getElementById('kash-panel');
