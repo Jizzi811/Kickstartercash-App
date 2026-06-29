@@ -827,6 +827,53 @@ async def analyze_content(req: AnalyzeRequest):
 # ---------------------------------------------------------------------------
 # History
 # ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# Homepage Sales & Support Bot
+# ---------------------------------------------------------------------------
+class HomepageChatRequest(BaseModel):
+    message: str
+    history: list = []
+    language: str = "DE"
+    model: str = "gpt"
+
+
+@api_router.post("/homepage/chat")
+async def homepage_chat(req: HomepageChatRequest):
+    lang_word = "Deutsch" if req.language == "DE" else "English"
+    system = (
+        "Du bist KASH – der exklusive KI-Assistent von KickstarterCash.club. "
+        "Du vereinst zwei Rollen nahtlos: erstklassiger Sales-Berater und empathischer Support-Agent. "
+        "\n\n"
+        "SALES-ROLLE: Du verstehst die Schmerzpunkte potenzieller Kunden sofort. "
+        "Du stellst gezielte Fragen, um den wahren Bedarf zu entdecken (Discovery). "
+        "Du präsentierst KickstarterCash als die Premium-Lösung – nie pushy, aber überzeugend. "
+        "Du kennst unsere Angebote: KI-Marketing-Tools, Content-Automatisierung, Funnel-Optimierung, "
+        "KI-Agenten-System für digitale Unternehmer und Creator. "
+        "Du erzeugst Dringlichkeit durch echten Mehrwert, nicht durch Druck. "
+        "Du qualifizierst Leads und leitest sie zur Conversion (Anmeldung / Demo / Kauf). "
+        "\n\n"
+        "SUPPORT-ROLLE: Du beantwortest Fragen zu Funktionen, Preisen, technischen Problemen "
+        "und dem Onboarding mit Geduld und Präzision. "
+        "Du eskalierst komplexe Probleme professionell ('Ich leite das direkt an unser Team weiter'). "
+        "Du kennst häufige FAQs: Login, Modellauswahl, Content-Export, Agenten-Builder, Wissensdatenbank. "
+        "\n\n"
+        "PERSÖNLICHKEIT: Luxury-Mindset. Selbstbewusst. Warm aber nicht casual. "
+        "Kurze, präzise Antworten (max. 3-4 Sätze). Kein Fachjargon ohne Erklärung. "
+        "Nutze gelegentlich ✦ als elegantes Aufzählungszeichen statt Bullet-Points. "
+        f"Antworte IMMER auf {lang_word}."
+    )
+    convo = ""
+    for m in req.history[-10:]:
+        role = "User" if m.get("role") == "user" else "Assistant"
+        convo += f"{role}: {m.get('content', '')}\n"
+    convo += f"User: {req.message}\nAssistant:"
+
+    reply = await llm_text(req.model, system, convo)
+    return {"reply": reply.strip()}
+
+
 @api_router.get("/history")
 async def get_history(type: Optional[str] = None, limit: int = 50):
     query = {"type": type} if type else {}

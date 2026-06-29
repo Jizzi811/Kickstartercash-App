@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { LOGO_URL } from "@/i18n";
+import { SalesSupportWidget } from "@/components/SalesSupportWidget";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -162,6 +163,8 @@ export const Layout = ({ children }) => {
           {children}
         </main>
       </div>
+
+      <SalesSupportWidget />
     </div>
   );
 };
