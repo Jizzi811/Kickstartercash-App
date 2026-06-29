@@ -211,7 +211,7 @@ export default function JarvjisAgent() {
             <Cpu size={20} className="text-[#D4AF37]" />
           </div>
           <h1 className="font-display text-2xl text-white">
-            {lang === "DE" ? "Jarvjis — KI Agent System" : "Jarvjis — AI Agent System"}
+            {lang === "DE" ? "Kashbot — KI Agent System" : "Kashbot — AI Agent System"}
           </h1>
         </div>
         <p className="text-sm text-zinc-500 ml-13">
@@ -256,7 +256,7 @@ export default function JarvjisAgent() {
             </div>
             <Bot size={22} className="text-[#D4AF37]" />
             <div>
-              <div className="text-base font-semibold text-[#D4AF37]">Jarvjis Agent</div>
+              <div className="text-base font-semibold text-[#D4AF37]">Kashbot Agent</div>
               <div className="text-[11px] text-zinc-400">
                 {lang === "DE" ? "Orchestrator & Entscheider" : "Orchestrator & Decision Maker"}
               </div>
@@ -428,7 +428,7 @@ export default function JarvjisAgent() {
           <div className={`w-2 h-2 rounded-full ${isThinking ? "bg-yellow-400 animate-pulse" : "bg-emerald-400"}`} />
           <span className="text-xs text-zinc-400">
             {isThinking
-              ? (lang === "DE" ? "Jarvjis analysiert die Aufgabe…" : "Jarvjis is analyzing the task…")
+              ? (lang === "DE" ? "Kashbot analysiert die Aufgabe…" : "Kashbot is analyzing the task…")
               : (lang === "DE" ? "Aufgabe delegiert & in Bearbeitung" : "Task delegated & in progress")}
           </span>
           <span className="ml-auto text-xs text-zinc-600 truncate max-w-[200px]">{activeTask}</span>

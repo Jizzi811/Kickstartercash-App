@@ -198,10 +198,10 @@ export default function KnowledgeBase() {
             <div className="w-10 h-10 rounded-sm bg-[#D4AF37]/10 flex items-center justify-center">
               <Database size={20} className="text-[#D4AF37]" />
             </div>
-            <h1 className="font-display text-2xl text-white">Jarvjis Wissensdatenbank</h1>
+            <h1 className="font-display text-2xl text-white">Kashbot Wissensdatenbank</h1>
           </div>
           <p className="text-sm text-zinc-500 ml-13">
-            Alles, was Jarvjis über KickstarterCash wissen muss — kein Halluzinieren, nur echtes Wissen.
+            Alles, was Kashbot über KickstarterCash wissen muss — kein Halluzinieren, nur echtes Wissen.
           </p>
         </div>
         <button
@@ -247,7 +247,7 @@ export default function KnowledgeBase() {
       <div className="bg-[#0A0A0A] border border-[#D4AF37]/20 rounded-sm p-5">
         <div className="flex items-center gap-2 mb-3">
           <Bot size={16} className="text-[#D4AF37]" />
-          <span className="text-sm font-semibold text-[#D4AF37]">Jarvjis fragen</span>
+          <span className="text-sm font-semibold text-[#D4AF37]">Kashbot fragen</span>
           <span className="text-[10px] text-zinc-600 ml-1">— antwortet nur aus deiner Wissensdatenbank</span>
         </div>
         <div className="flex gap-2">
@@ -277,7 +277,7 @@ export default function KnowledgeBase() {
             {aiLoading ? (
               <div className="flex items-center gap-2 text-zinc-400 text-sm">
                 <Loader2 size={14} className="animate-spin text-[#D4AF37]" />
-                Jarvjis durchsucht die Wissensdatenbank…
+                Kashbot durchsucht die Wissensdatenbank…
               </div>
             ) : (
               <>

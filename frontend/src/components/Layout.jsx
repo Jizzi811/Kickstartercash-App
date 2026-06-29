@@ -37,9 +37,9 @@ export const Layout = ({ children }) => {
           className="flex items-center gap-3 px-5 py-5 cursor-pointer border-b border-white/8"
           onClick={() => navigate("/")}
         >
-          <img src={LOGO_URL} alt="Jarvjis" className="w-9 h-9 object-contain" />
+          <img src={LOGO_URL} alt="Kashbot" className="w-9 h-9 object-contain" />
           <div className="leading-tight">
-            <div className="text-[13px] font-bold text-[#D4AF37] tracking-wide">JARVJIS</div>
+            <div className="text-[13px] font-bold text-[#D4AF37] tracking-wide">KASHBOT</div>
             <div className="text-[9px] tracking-[0.2em] uppercase text-zinc-600">KickstarterCash</div>
           </div>
         </div>
@@ -78,8 +78,8 @@ export const Layout = ({ children }) => {
           <aside className="absolute left-0 top-0 h-full w-64 bg-[#080808] border-r border-white/8 flex flex-col z-50">
             <div className="flex items-center justify-between px-5 py-5 border-b border-white/8">
               <div className="flex items-center gap-3">
-                <img src={LOGO_URL} alt="Jarvjis" className="w-8 h-8 object-contain" />
-                <span className="text-sm font-bold text-[#D4AF37]">JARVJIS</span>
+                <img src={LOGO_URL} alt="Kashbot" className="w-8 h-8 object-contain" />
+                <span className="text-sm font-bold text-[#D4AF37]">KASHBOT</span>
               </div>
               <button onClick={() => setMobileOpen(false)} className="text-zinc-500 hover:text-white">
                 <X size={18} />
