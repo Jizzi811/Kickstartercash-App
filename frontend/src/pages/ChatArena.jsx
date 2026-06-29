@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Loader2, Trash2, Paperclip, X, Bot, Sparkles, Zap, LayoutGrid,
-  Image as ImageIcon, FileText, ChevronDown
+  FileText
 } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 import { PageTitle } from "@/components/PageTitle";
