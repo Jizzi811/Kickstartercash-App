@@ -30,6 +30,7 @@ import PromptLibrary from "@/pages/PromptLibrary";
 import GPTChat from "@/pages/GPTChat";
 import GeminiChat from "@/pages/GeminiChat";
 import GrokChat from "@/pages/GrokChat";
+import ChatArena from "@/pages/ChatArena";
 import ExportCenter from "@/pages/ExportCenter";
 import Campaign from "@/pages/Campaign";
 import AgentBuilder from "@/pages/AgentBuilder";
@@ -66,6 +67,7 @@ function App() {
               <Route path="/chat-gpt" element={<GPTChat />} />
               <Route path="/chat-gemini" element={<GeminiChat />} />
               <Route path="/chat-grok" element={<GrokChat />} />
+              <Route path="/arena" element={<ChatArena />} />
               <Route path="/export" element={<ExportCenter />} />
               <Route path="/campaign" element={<Campaign />} />
               <Route path="/specialists" element={<Specialists />} />

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
-  Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X,
+  Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, Swords,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { LOGO_URL } from "@/i18n";
@@ -21,6 +21,7 @@ const NAV = [
   { to: "/automation", icon: Zap,        labelDE: "Automationen",     labelEN: "Automations" },
   { to: "/knowledge",  icon: Database,   labelDE: "Wissensdatenbank", labelEN: "Knowledge Base" },
   { to: "/builder",   icon: Wrench,     labelDE: "Eigene Agenten",   labelEN: "Custom Agents" },
+  { to: "/arena",     icon: Swords,     labelDE: "Chat Arena",       labelEN: "Chat Arena" },
 ];
 
 export const Layout = ({ children }) => {
