@@ -2143,6 +2143,27 @@ async def check_veo_status(operation: str, prompt: str = ""):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@api_router.get("/video/download")
+async def download_video(url: str):
+    """Proxy video download to bypass cross-origin restrictions."""
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                if resp.status != 200:
+                    raise HTTPException(status_code=502, detail="Video nicht erreichbar")
+                content = await resp.read()
+                from starlette.responses import Response
+                return Response(
+                    content=content,
+                    media_type="video/mp4",
+                    headers={"Content-Disposition": "attachment; filename=kashbot-video.mp4"}
+                )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @api_router.get("/video/gallery")
 async def get_video_gallery():
     if db is None:

@@ -134,7 +134,7 @@ function VeoPanel({ lang }) {
       {videoUrl && (
         <div className="space-y-2">
           <video src={videoUrl} controls className="w-full rounded-sm border border-white/8" />
-          <a href={videoUrl} download className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white">
+          <a href={`${BACKEND}/api/video/download?url=${encodeURIComponent(videoUrl)}`} download="kashbot-video.mp4" className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white">
             <Download size={12} /> Video herunterladen
           </a>
         </div>
@@ -205,7 +205,7 @@ function RemotionPanel({ lang }) {
       {videoUrl && (
         <div className="space-y-2">
           <video src={videoUrl} controls className="w-full rounded-sm border border-white/8" />
-          <a href={videoUrl} download className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white">
+          <a href={`${BACKEND}/api/video/download?url=${encodeURIComponent(videoUrl)}`} download="kashbot-video.mp4" className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white">
             <Download size={12} /> Video herunterladen
           </a>
         </div>
@@ -245,8 +245,8 @@ function GalleryPanel({ lang }) {
               {v.prompt && <p className="text-xs text-zinc-400 line-clamp-2">{v.prompt}</p>}
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-zinc-600">{v.type?.toUpperCase()} · {v.created_at?.slice(0, 10)}</span>
-                <a href={v.video_url} download className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white">
-                  <Download size={12} /> {lang === "DE" ? "Download" : "Download"}
+                <a href={`${BACKEND}/api/video/download?url=${encodeURIComponent(v.video_url)}`} download="kashbot-video.mp4" className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white">
+                  <Download size={12} /> Download
                 </a>
               </div>
             </div>
