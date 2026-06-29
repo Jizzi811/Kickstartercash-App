@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Send, Loader2, Trash2, Paperclip, X, Bot, Sparkles, Zap, Brain,
+  Send, Loader2, Trash2, Paperclip, X, Bot, Sparkles, Zap, LayoutGrid,
   Image as ImageIcon, FileText, ChevronDown
 } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
@@ -32,7 +32,7 @@ const MODELS = [
     id: "claude-sonnet-4-6",
     label: "Claude Sonnet",
     provider: "Anthropic",
-    icon: Brain,
+    icon: LayoutGrid,
     accent: "#D4AF37",
     vision: true,
     description: "Präzise & kontextreich",
@@ -181,7 +181,7 @@ export default function ChatArena() {
         <PageTitle
           title={t("nav_arena")}
           subtitle={t("arena_sub")}
-          icon={Brain}
+          icon={LayoutGrid}
         />
         {messages.length > 0 && (
           <button onClick={clearChat}
