@@ -2079,6 +2079,94 @@ async def generate_agent_workflow(req: AgentBuilderRequest):
 async def health():
     return {"status": "ok", "llm": "anthropic" if _anthropic_client else "emergent"}
 
+
+# ---------------------------------------------------------------------------
+# Video Generation – Veo 2 (Google Gemini)
+# ---------------------------------------------------------------------------
+
+class VeoRequest(BaseModel):
+    prompt: str
+    aspect_ratio: str = "16:9"
+
+@api_router.post("/video/veo")
+async def generate_veo_video(req: VeoRequest):
+    if not GEMINI_API_KEY:
+        raise HTTPException(status_code=503, detail="GEMINI_API_KEY nicht gesetzt")
+    try:
+        async with aiohttp.ClientSession() as session:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/veo-2.0-generate-001:predictLongRunning?key={GEMINI_API_KEY}"
+            payload = {
+                "model": "models/veo-2.0-generate-001",
+                "instances": [{"prompt": req.prompt}],
+                "parameters": {
+                    "aspectRatio": req.aspect_ratio,
+                    "durationSeconds": 8,
+                    "numberOfVideos": 1,
+                }
+            }
+            async with session.post(url, json=payload) as resp:
+                data = await resp.json()
+                if resp.status != 200:
+                    raise HTTPException(status_code=502, detail=data.get("error", {}).get("message", "Veo Fehler"))
+                op_name = data.get("name", "")
+                return {"operation_name": op_name, "status": "processing"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_router.get("/video/veo/status")
+async def check_veo_status(operation: str):
+    if not GEMINI_API_KEY:
+        raise HTTPException(status_code=503, detail="GEMINI_API_KEY nicht gesetzt")
+    try:
+        async with aiohttp.ClientSession() as session:
+            url = f"https://generativelanguage.googleapis.com/v1beta/{operation}?key={GEMINI_API_KEY}"
+            async with session.get(url) as resp:
+                data = await resp.json()
+                if data.get("done"):
+                    videos = data.get("response", {}).get("generateVideoResponse", {}).get("generatedSamples", [])
+                    if videos:
+                        video_uri = videos[0].get("video", {}).get("uri", "")
+                        return {"video_url": video_uri, "done": True}
+                return {"done": False, "status": "processing"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# Video Generation – Remotion (branded templates via Lambda or local)
+# ---------------------------------------------------------------------------
+
+class RemotionRequest(BaseModel):
+    template: str
+    text: str = ""
+    lang: str = "DE"
+
+@api_router.post("/video/remotion")
+async def render_remotion_video(req: RemotionRequest):
+    # Remotion Lambda rendering — returns a placeholder until Lambda is configured
+    # In production: call @remotion/lambda renderMediaOnLambda
+    templates = {
+        "product_showcase": "KickstarterCash Product Showcase",
+        "countdown": "KickstarterCash Countdown",
+        "testimonial": "KickstarterCash Testimonial",
+        "intro": "KickstarterCash Brand Intro",
+    }
+    if req.template not in templates:
+        raise HTTPException(status_code=400, detail="Unbekanntes Template")
+
+    # Generate a video script/storyboard via LLM as fallback
+    system = f"Du bist ein Video-Editor für KickstarterCash. Erstelle ein detailliertes Remotion-Animations-Script für: {templates[req.template]}. Text: {req.text}"
+    script = await llm_text("claude-sonnet-4-6", system, f"Erstelle ein Remotion-Script für das Template '{req.template}' mit dem Text: {req.text}")
+    return {
+        "status": "script_ready",
+        "template": req.template,
+        "script": script,
+        "message": "Remotion Lambda-Rendering wird konfiguriert. Script ist bereit."
+    }
+
 app.include_router(api_router)
 
 app.add_middleware(
