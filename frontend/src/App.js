@@ -29,6 +29,7 @@ import Guardian from "@/pages/Guardian";
 import PromptLibrary from "@/pages/PromptLibrary";
 import GPTChat from "@/pages/GPTChat";
 import GeminiChat from "@/pages/GeminiChat";
+import GrokChat from "@/pages/GrokChat";
 import ExportCenter from "@/pages/ExportCenter";
 import Campaign from "@/pages/Campaign";
 import AgentBuilder from "@/pages/AgentBuilder";
@@ -64,6 +65,7 @@ function App() {
               <Route path="/prompts" element={<PromptLibrary />} />
               <Route path="/chat-gpt" element={<GPTChat />} />
               <Route path="/chat-gemini" element={<GeminiChat />} />
+              <Route path="/chat-grok" element={<GrokChat />} />
               <Route path="/export" element={<ExportCenter />} />
               <Route path="/campaign" element={<Campaign />} />
               <Route path="/specialists" element={<Specialists />} />

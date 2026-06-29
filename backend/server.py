@@ -21,6 +21,13 @@ try:
     _HAS_EMERGENT = True
 except ImportError:
     _HAS_EMERGENT = False
+try:
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent))
+    from grok_core import Grok as GrokClient
+    _HAS_GROK = True
+except Exception:
+    _HAS_GROK = False
 import resend
 try:
     import funnel as funnel_renderer
@@ -71,6 +78,11 @@ MODEL_MAP = {
     "claude-sonnet-4-6": ("anthropic", "claude-sonnet-4-6"),
     "claude-haiku-4-5": ("anthropic", "claude-haiku-4-5-20251001"),
     "claude": ("anthropic", "claude-sonnet-4-6"),
+    # Grok (xAI) — routed via unofficial wrapper (no API key needed)
+    "grok": ("grok", "grok-3-fast"),
+    "grok-3-fast": ("grok", "grok-3-fast"),
+    "grok-3-auto": ("grok", "grok-3-auto"),
+    "grok-4": ("grok", "grok-4"),
 }
 IMAGE_MODEL = "gemini-3.1-flash-image-preview"
 
@@ -88,8 +100,21 @@ def _api_key_for(provider: str) -> str:
     return EMERGENT_LLM_KEY
 
 
-async def llm_text(model_choice: str, system_message: str, user_text: str) -> str:
+async def llm_text(model_choice: str, system_message: str, user_text: str, grok_extra_data: dict = None) -> str:
     provider, model = MODEL_MAP.get(model_choice, MODEL_MAP["gpt"])
+
+    # Route Grok via unofficial wrapper
+    if provider == "grok":
+        if not _HAS_GROK:
+            raise HTTPException(status_code=503, detail="Grok wrapper not available")
+        prompt = f"{system_message}\n\n{user_text}" if system_message else user_text
+        result = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: GrokClient(model).start_convo(prompt, grok_extra_data)
+        )
+        if "error" in result:
+            raise HTTPException(status_code=502, detail=str(result["error"]))
+        return result.get("response", "")
 
     # Route Claude models directly through Anthropic SDK
     if provider == "anthropic" and _anthropic_client:
@@ -341,6 +366,7 @@ class ChatRequest(BaseModel):
     history: List[dict] = []
     model: str = "gpt"
     language: str = "DE"
+    grok_extra_data: Optional[dict] = None
 
 
 class FunnelConfig(BaseModel):
@@ -811,6 +837,21 @@ async def chat(req: ChatRequest):
         role = "User" if m.get("role") == "user" else "Assistant"
         convo += f"{role}: {m.get('content', '')}\n"
     convo += f"User: {req.message}\nAssistant:"
+
+    provider, _ = MODEL_MAP.get(req.model, MODEL_MAP["gpt"])
+    if provider == "grok":
+        if not _HAS_GROK:
+            raise HTTPException(status_code=503, detail="Grok wrapper not installed (pip install curl_cffi coincurve beautifulsoup4)")
+        grok_model = MODEL_MAP.get(req.model, ("grok", "grok-3-fast"))[1]
+        full_prompt = f"{system}\n\n{convo}"
+        result = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: GrokClient(grok_model).start_convo(full_prompt, req.grok_extra_data)
+        )
+        if "error" in result:
+            raise HTTPException(status_code=502, detail=str(result["error"]))
+        return {"reply": (result.get("response") or "").strip(), "grok_extra_data": result.get("extra_data")}
+
     reply = await llm_text(req.model, system, convo)
     return {"reply": reply.strip()}
 
