@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -130,12 +130,12 @@ export default function ChatArena() {
     setFile(await readFile(f));
   };
 
-  const onDrop = useCallback(async (e) => {
+  const onDrop = async (e) => {
     e.preventDefault();
     setDragging(false);
     const f = e.dataTransfer.files[0];
     if (f) await handleFileInput(f);
-  }, []);
+  };
 
   const send = async () => {
     const text = input.trim();
