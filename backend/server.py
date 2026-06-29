@@ -369,6 +369,17 @@ class ChatRequest(BaseModel):
     grok_extra_data: Optional[dict] = None
 
 
+class ArenaChatRequest(BaseModel):
+    message: str
+    model: str = "gpt"
+    language: str = "DE"
+    history: List[dict] = []
+    file_data: Optional[str] = None
+    file_mime: Optional[str] = None
+    file_name: Optional[str] = None
+    grok_extra_data: Optional[dict] = None
+
+
 class FunnelConfig(BaseModel):
     id: str = Field(default_factory=lambda: uuid.uuid4().hex[:10])
     reflink: str
@@ -854,6 +865,82 @@ async def chat(req: ChatRequest):
 
     reply = await llm_text(req.model, system, convo)
     return {"reply": reply.strip()}
+
+
+# ---------------------------------------------------------------------------
+# Chat Arena — multi-model chat with file/image upload
+# ---------------------------------------------------------------------------
+@api_router.post("/arena/chat")
+async def arena_chat(req: ArenaChatRequest):
+    lang = "Deutsch" if req.language == "DE" else "English"
+    system = (
+        "Du bist ein intelligenter KI-Assistent von KickstarterCash.club. "
+        "Beantworte Fragen präzise und hilfreich. "
+        f"Antworte immer auf {'Deutsch' if req.language == 'DE' else 'English'}."
+    )
+
+    convo_parts = []
+    for m in req.history[-10:]:
+        role = "User" if m.get("role") == "user" else "Assistant"
+        convo_parts.append(f"{role}: {m.get('content', '')}")
+    convo_parts.append(f"User: {req.message}")
+    convo = "\n".join(convo_parts) + "\nAssistant:"
+
+    provider, model = MODEL_MAP.get(req.model, MODEL_MAP["gpt"])
+    has_file = bool(req.file_data and req.file_mime)
+    is_image = has_file and req.file_mime.startswith("image/")
+
+    # ── Grok (text only) ────────────────────────────────────────────────────
+    if provider == "grok":
+        if not _HAS_GROK:
+            raise HTTPException(status_code=503, detail="Grok wrapper nicht installiert")
+        note = "\n[Hinweis: Grok unterstützt in dieser Integration keinen Datei-Upload.]" if has_file else ""
+        result = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: GrokClient(model).start_convo(f"{system}\n\n{convo}{note}", req.grok_extra_data)
+        )
+        if "error" in result:
+            raise HTTPException(status_code=502, detail=str(result["error"]))
+        return {"reply": (result.get("response") or "").strip(), "grok_extra_data": result.get("extra_data")}
+
+    # ── Claude (vision via Anthropic SDK) ────────────────────────────────────
+    if provider == "anthropic" and _anthropic_client:
+        user_content = []
+        if is_image:
+            user_content.append({
+                "type": "image",
+                "source": {"type": "base64", "media_type": req.file_mime, "data": req.file_data}
+            })
+        elif has_file:
+            user_content.append({"type": "text", "text": f"[Datei: {req.file_name}]\n"})
+        user_content.append({"type": "text", "text": convo})
+        msg = await _anthropic_client.messages.create(
+            model=model, max_tokens=4096, system=system,
+            messages=[{"role": "user", "content": user_content}]
+        )
+        return {"reply": msg.content[0].text.strip()}
+
+    # ── OpenAI / Gemini via Emergent ─────────────────────────────────────────
+    if not _HAS_EMERGENT:
+        raise HTTPException(status_code=503, detail="LLM backend nicht konfiguriert")
+
+    from emergentintegrations.llm.chat import ImageContent
+    api_key = _api_key_for(provider)
+    chat = LlmChat(api_key=api_key, session_id=str(uuid.uuid4()), system_message=system)
+    chat.with_model(provider, model)
+
+    if is_image:
+        from emergentintegrations.llm.chat import UserMessage as UM
+        user_msg = UM(text=convo, file_contents=[ImageContent(req.file_data)])
+    else:
+        if has_file:
+            convo = f"[Datei: {req.file_name}]\n{convo}"
+        from emergentintegrations.llm.chat import UserMessage as UM
+        user_msg = UM(text=convo)
+
+    resp = await chat.send_message(user_msg)
+    reply_text = resp if isinstance(resp, str) else getattr(resp, "content", str(resp))
+    return {"reply": reply_text.strip()}
 
 
 # ---------------------------------------------------------------------------
