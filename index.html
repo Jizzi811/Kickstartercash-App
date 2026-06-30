@@ -47,6 +47,16 @@
   .title{letter-spacing:.5em;font-size:14px;margin-top:32px;opacity:.9;z-index:1;background:linear-gradient(135deg,#FBE9A6,#EBCB72);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 12px rgba(235,203,114,.6));font-weight:700}
   .subtitle{font-size:11px;letter-spacing:.3em;opacity:.45;margin-top:8px;text-transform:uppercase;color:#C9BB9B;z-index:1}
   .hint{font-size:11px;opacity:.28;margin-top:18px;letter-spacing:.08em;color:#9f937c;z-index:1;animation:blink 3s ease-in-out infinite}
+  #webinar-strip{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);z-index:40;animation:fadeUp .8s ease .6s both}
+  @keyframes fadeUp{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+  #webinar-link{display:flex;align-items:center;gap:12px;padding:11px 20px;border-radius:50px;text-decoration:none;background:rgba(10,8,4,.75);border:1px solid rgba(212,175,55,.3);backdrop-filter:blur(12px);transition:border-color .2s,box-shadow .2s;white-space:nowrap}
+  #webinar-link:hover{border-color:rgba(212,175,55,.7);box-shadow:0 0 20px rgba(212,175,55,.15)}
+  #webinar-icon{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8972E);display:flex;align-items:center;justify-content:center;font-size:10px;color:#1a1206;font-weight:900;flex-shrink:0;line-height:1;padding-left:2px}
+  #webinar-text{display:flex;flex-direction:column;gap:1px}
+  #webinar-label{font-size:.7rem;font-weight:700;letter-spacing:.1em;color:#D4AF37}
+  #webinar-sub{font-size:.62rem;color:#6b5c3a;letter-spacing:.03em}
+  #webinar-arrow{font-size:.9rem;color:rgba(212,175,55,.4);transition:transform .2s}
+  #webinar-link:hover #webinar-arrow{transform:translateX(3px);color:rgba(212,175,55,.8)}
   @keyframes blink{0%,100%{opacity:.28}50%{opacity:.5}}
 
   /* Backdrop */
@@ -165,6 +175,18 @@
 <div class="title">K &middot; A &middot; S &middot; H &middot; B &middot; O &middot; T</div>
 <div class="subtitle">KickstarterCash · KI-Agent System</div>
 <div class="hint">&#x25BA; Orb anklicken zum Starten</div>
+
+<!-- Webinar CTA -->
+<div id="webinar-strip">
+  <a href="webinar.html" target="_blank" id="webinar-link">
+    <span id="webinar-icon">▶</span>
+    <span id="webinar-text">
+      <span id="webinar-label">WEBINAR ANSEHEN</span>
+      <span id="webinar-sub">KickstarterCash · Vollständige Präsentation</span>
+    </span>
+    <span id="webinar-arrow">→</span>
+  </a>
+</div>
 
 <div id="jrv-backdrop"></div>
 
