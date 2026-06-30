@@ -5,6 +5,8 @@ import uuid
 import base64
 import asyncio
 import logging
+import time
+from collections import defaultdict
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import List, Optional
@@ -100,23 +102,47 @@ def _api_key_for(provider: str) -> str:
     return EMERGENT_LLM_KEY
 
 
-async def llm_text(model_choice: str, system_message: str, user_text: str, grok_extra_data: dict = None) -> str:
-    provider, model = MODEL_MAP.get(model_choice, MODEL_MAP["gpt"])
+# ---------------------------------------------------------------------------
+# Circuit Breaker — per-provider failure tracking
+# ---------------------------------------------------------------------------
+_cb_failures: dict = defaultdict(int)
+_cb_open_until: dict = defaultdict(float)
+_CB_THRESHOLD = 3       # failures before opening
+_CB_COOLDOWN = 60.0     # seconds before retry
 
-    # Route Grok via unofficial wrapper
+
+def _cb_is_open(provider: str) -> bool:
+    if _cb_open_until[provider] > time.monotonic():
+        return True
+    return False
+
+
+def _cb_record_failure(provider: str):
+    _cb_failures[provider] += 1
+    if _cb_failures[provider] >= _CB_THRESHOLD:
+        _cb_open_until[provider] = time.monotonic() + _CB_COOLDOWN
+        logger.warning(f"Circuit breaker OPEN for provider: {provider}")
+
+
+def _cb_record_success(provider: str):
+    _cb_failures[provider] = 0
+    _cb_open_until[provider] = 0.0
+
+
+async def _llm_single(provider: str, model: str, system_message: str, user_text: str, grok_extra_data: dict = None) -> str:
+    """Call one specific provider/model. Raises on failure."""
     if provider == "grok":
         if not _HAS_GROK:
-            raise HTTPException(status_code=503, detail="Grok wrapper not available")
+            raise RuntimeError("Grok wrapper not installed")
         prompt = f"{system_message}\n\n{user_text}" if system_message else user_text
         result = await asyncio.get_event_loop().run_in_executor(
             None,
             lambda: GrokClient(model).start_convo(prompt, grok_extra_data)
         )
         if "error" in result:
-            raise HTTPException(status_code=502, detail=str(result["error"]))
+            raise RuntimeError(str(result["error"]))
         return result.get("response", "")
 
-    # Route Claude models directly through Anthropic SDK
     if provider == "anthropic" and _anthropic_client:
         msg = await _anthropic_client.messages.create(
             model=model,
@@ -126,15 +152,59 @@ async def llm_text(model_choice: str, system_message: str, user_text: str, grok_
         )
         return msg.content[0].text
 
-    # Fallback: Emergent universal gateway for OpenAI / Gemini
     if not _HAS_EMERGENT:
-        raise HTTPException(status_code=503, detail="LLM backend not configured")
+        raise RuntimeError("Emergent LLM backend not configured")
     chat = LlmChat(api_key=_api_key_for(provider), session_id=str(uuid.uuid4()), system_message=system_message)
     chat.with_model(provider, model)
     resp = await chat.send_message(UserMessage(text=user_text))
     if isinstance(resp, str):
         return resp
     return getattr(resp, "content", str(resp))
+
+
+# Fallback chain: if requested provider is unavailable, try these in order
+_FALLBACK_CHAIN = [
+    ("gemini", "gemini-2.5-flash"),
+    ("anthropic", "claude-sonnet-4-6"),
+    ("openai", "gpt-5.2"),
+]
+
+
+async def llm_text(model_choice: str, system_message: str, user_text: str, grok_extra_data: dict = None) -> str:
+    provider, model = MODEL_MAP.get(model_choice, MODEL_MAP["gpt"])
+
+    # Try requested provider first (skip if circuit breaker open)
+    if not _cb_is_open(provider):
+        try:
+            result = await asyncio.wait_for(
+                _llm_single(provider, model, system_message, user_text, grok_extra_data),
+                timeout=30.0
+            )
+            _cb_record_success(provider)
+            return result
+        except Exception as e:
+            _cb_record_failure(provider)
+            logger.warning(f"LLM provider '{provider}' failed: {e}. Trying fallback chain.")
+
+    # Fallback chain
+    for fb_provider, fb_model in _FALLBACK_CHAIN:
+        if fb_provider == provider:
+            continue
+        if _cb_is_open(fb_provider):
+            continue
+        try:
+            result = await asyncio.wait_for(
+                _llm_single(fb_provider, fb_model, system_message, user_text),
+                timeout=30.0
+            )
+            _cb_record_success(fb_provider)
+            logger.info(f"Fallback to '{fb_provider}' succeeded.")
+            return result
+        except Exception as e:
+            _cb_record_failure(fb_provider)
+            logger.warning(f"Fallback '{fb_provider}' also failed: {e}")
+
+    raise HTTPException(status_code=503, detail="All LLM providers unavailable. Please try again shortly.")
 
 
 def _extract_json(text: str):
@@ -832,46 +902,115 @@ async def analyze_content(req: AnalyzeRequest):
 # ---------------------------------------------------------------------------
 # Homepage Sales & Support Bot
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Rate limiter — simple in-memory sliding window (per IP)
+# ---------------------------------------------------------------------------
+_rate_store: dict = defaultdict(list)
+_RATE_LIMIT = 20        # max requests
+_RATE_WINDOW = 60.0     # per N seconds
+
+
+def _check_rate_limit(ip: str) -> bool:
+    """Returns True if request is allowed."""
+    now = time.monotonic()
+    window = _rate_store[ip]
+    # evict old entries
+    _rate_store[ip] = [t for t in window if now - t < _RATE_WINDOW]
+    if len(_rate_store[ip]) >= _RATE_LIMIT:
+        return False
+    _rate_store[ip].append(now)
+    return True
+
+
 class HomepageChatRequest(BaseModel):
     message: str
     history: list = []
     language: str = "DE"
-    model: str = "gpt"
+    model: str = "gemini"
+    session_id: str = ""
+
+
+KASH_SYSTEM = (
+    "Du bist KASH – der exklusive KI-Assistent von KickstarterCash.club. "
+    "Du vereinst zwei Rollen nahtlos: erstklassiger Sales-Berater und empathischer Support-Agent. "
+    "\n\n"
+    "SALES-ROLLE: Du verstehst die Schmerzpunkte potenzieller Kunden sofort. "
+    "Du stellst gezielte Fragen, um den wahren Bedarf zu entdecken (Discovery). "
+    "Du präsentierst KickstarterCash als die Premium-Lösung – nie pushy, aber überzeugend. "
+    "Du kennst unsere Angebote: KI-Marketing-Tools, Content-Automatisierung, Funnel-Optimierung, "
+    "KI-Agenten-System für digitale Unternehmer und Creator. "
+    "Du erzeugst Dringlichkeit durch echten Mehrwert, nicht durch Druck. "
+    "Du qualifizierst Leads und leitest sie zur Conversion (Anmeldung / Demo / Kauf). "
+    "\n\n"
+    "SUPPORT-ROLLE: Du beantwortest Fragen zu Funktionen, Preisen, technischen Problemen "
+    "und dem Onboarding mit Geduld und Präzision. "
+    "Du eskalierst komplexe Probleme professionell: 'Ich leite das direkt an unser Team weiter'. "
+    "Du kennst häufige FAQs: Login, Modellauswahl, Content-Export, Agenten-Builder, Wissensdatenbank. "
+    "\n\n"
+    "PERSÖNLICHKEIT: Luxury-Mindset. Selbstbewusst. Warm aber nicht casual. "
+    "Kurze, präzise Antworten (max. 3-4 Sätze). Kein Fachjargon ohne Erklärung. "
+    "Nutze gelegentlich ✦ als elegantes Aufzählungszeichen statt Bullet-Points."
+)
 
 
 @api_router.post("/homepage/chat")
-async def homepage_chat(req: HomepageChatRequest):
+async def homepage_chat(req: HomepageChatRequest, request: Request):
+    # Rate limiting
+    client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown")
+    client_ip = client_ip.split(",")[0].strip()
+    if not _check_rate_limit(client_ip):
+        raise HTTPException(status_code=429, detail="Zu viele Anfragen. Bitte warte kurz. / Too many requests.")
+
+    # Validate input
+    message = req.message.strip()[:2000]
+    if not message:
+        raise HTTPException(status_code=400, detail="Nachricht darf nicht leer sein.")
+
     lang_word = "Deutsch" if req.language == "DE" else "English"
-    system = (
-        "Du bist KASH – der exklusive KI-Assistent von KickstarterCash.club. "
-        "Du vereinst zwei Rollen nahtlos: erstklassiger Sales-Berater und empathischer Support-Agent. "
-        "\n\n"
-        "SALES-ROLLE: Du verstehst die Schmerzpunkte potenzieller Kunden sofort. "
-        "Du stellst gezielte Fragen, um den wahren Bedarf zu entdecken (Discovery). "
-        "Du präsentierst KickstarterCash als die Premium-Lösung – nie pushy, aber überzeugend. "
-        "Du kennst unsere Angebote: KI-Marketing-Tools, Content-Automatisierung, Funnel-Optimierung, "
-        "KI-Agenten-System für digitale Unternehmer und Creator. "
-        "Du erzeugst Dringlichkeit durch echten Mehrwert, nicht durch Druck. "
-        "Du qualifizierst Leads und leitest sie zur Conversion (Anmeldung / Demo / Kauf). "
-        "\n\n"
-        "SUPPORT-ROLLE: Du beantwortest Fragen zu Funktionen, Preisen, technischen Problemen "
-        "und dem Onboarding mit Geduld und Präzision. "
-        "Du eskalierst komplexe Probleme professionell ('Ich leite das direkt an unser Team weiter'). "
-        "Du kennst häufige FAQs: Login, Modellauswahl, Content-Export, Agenten-Builder, Wissensdatenbank. "
-        "\n\n"
-        "PERSÖNLICHKEIT: Luxury-Mindset. Selbstbewusst. Warm aber nicht casual. "
-        "Kurze, präzise Antworten (max. 3-4 Sätze). Kein Fachjargon ohne Erklärung. "
-        "Nutze gelegentlich ✦ als elegantes Aufzählungszeichen statt Bullet-Points. "
-        f"Antworte IMMER auf {lang_word}."
-    )
+    system = KASH_SYSTEM + f"\nAntworte IMMER auf {lang_word}."
+
     convo = ""
     for m in req.history[-10:]:
         role = "User" if m.get("role") == "user" else "Assistant"
         convo += f"{role}: {m.get('content', '')}\n"
-    convo += f"User: {req.message}\nAssistant:"
+    convo += f"User: {message}\nAssistant:"
 
-    reply = await llm_text(req.model, system, convo)
-    return {"reply": reply.strip()}
+    # Use gemini as reliable default, honour caller preference as hint
+    model_hint = req.model if req.model in MODEL_MAP else "gemini"
+    # Never use grok on homepage (unavailable on Railway)
+    if MODEL_MAP.get(model_hint, ("",))[0] == "grok":
+        model_hint = "gemini"
+
+    reply = await llm_text(model_hint, system, convo)
+    reply = reply.strip()
+
+    # Lead tracking — fire-and-forget, never blocks the response
+    session_id = req.session_id or str(uuid.uuid4())
+    if db is not None:
+        try:
+            asyncio.ensure_future(db.kash_leads.insert_one({
+                "session_id": session_id,
+                "ip": client_ip,
+                "language": req.language,
+                "user_message": message,
+                "kash_reply": reply,
+                "turn": len(req.history) // 2 + 1,
+                "created_at": _now_iso(),
+            }))
+        except Exception as e:
+            logger.warning(f"Lead tracking write failed (non-critical): {e}")
+
+    return {"reply": reply, "session_id": session_id}
+
+
+@api_router.get("/homepage/leads")
+async def get_kash_leads(limit: int = 50, skip: int = 0):
+    """Admin endpoint: view KASH lead conversations."""
+    if db is None:
+        return {"leads": [], "total": 0}
+    total = await db.kash_leads.count_documents({})
+    docs = await db.kash_leads.find({}, {"_id": 0}).sort("created_at", -1).skip(skip).to_list(min(limit, 100))
+    return {"leads": docs, "total": total}
 
 
 @api_router.get("/history")

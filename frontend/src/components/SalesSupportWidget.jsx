@@ -26,6 +26,7 @@ export function SalesSupportWidget() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [sessionId] = useState(() => crypto.randomUUID());
   const endRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -56,11 +57,13 @@ export function SalesSupportWidget() {
     setInput("");
     setLoading(true);
     try {
+      const effectiveModel = model === "grok" ? "gemini" : model;
       const res = await axios.post(`${API}/homepage/chat`, {
         message: msg,
         history,
         language: lang,
-        model,
+        model: effectiveModel,
+        session_id: sessionId,
       });
       setMessages((prev) => [...prev, {
         role: "assistant",
