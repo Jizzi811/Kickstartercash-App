@@ -1,0 +1,16 @@
+{
+  "name": "kickstartercash-countdown",
+  "version": "1.0.0",
+  "description": "KickstarterCash.Club 5-minute countdown video",
+  "scripts": {
+    "start": "remotion studio",
+    "build": "remotion render CountdownVideo out/countdown_5min.mp4 --codec=h264"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.290",
+    "remotion": "4.0.290"
+  },
+  "remotion": {
+    "entryPoint": "src/index.ts"
+  }
+}
