@@ -55,6 +55,8 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
+# Comma-separated list of emails that receive KASH chat reports
+REPORT_EMAILS: list[str] = [e.strip() for e in os.environ.get('KASH_REPORT_EMAILS', '').split(',') if e.strip()]
 POYO_API_KEY = os.environ.get('POYO_API_KEY', '')
 POYO_BASE = "https://api.poyo.ai"
 
@@ -541,6 +543,27 @@ async def seed_default_brand():
             logger.info("Seeded default Kickstartercash.Club brand")
     except Exception as e:
         logger.error(f"DB seed failed: {e}")
+    # Start daily KASH report scheduler
+    asyncio.ensure_future(_kash_daily_report_scheduler())
+
+
+async def _kash_daily_report_scheduler():
+    """Sends KASH daily report every day at 20:00 UTC."""
+    while True:
+        now = datetime.now(timezone.utc)
+        # Next 20:00 UTC
+        target = now.replace(hour=20, minute=0, second=0, microsecond=0)
+        if now >= target:
+            target = target.replace(day=target.day + 1)
+        wait_secs = (target - now).total_seconds()
+        logger.info(f"KASH daily report scheduled in {wait_secs/3600:.1f}h")
+        await asyncio.sleep(wait_secs)
+        try:
+            await send_kash_daily_report()
+            logger.info("KASH daily report sent successfully")
+        except Exception as e:
+            logger.error(f"KASH daily report failed: {e}")
+        await asyncio.sleep(60)  # prevent double-fire
 
 
 @api_router.get("/")
@@ -1428,6 +1451,9 @@ async def homepage_chat(req: HomepageChatRequest, request: Request):
 
     session_id = req.session_id or str(uuid.uuid4())
 
+    # Detect hot signals in user message
+    signals = _detect_kash_signals(message)
+
     # Persist conversation turn + captured lead (fire-and-forget)
     if db is not None:
         try:
@@ -1439,6 +1465,7 @@ async def homepage_chat(req: HomepageChatRequest, request: Request):
                 "kash_reply": clean_reply,
                 "turn": len(req.history) // 2 + 1,
                 "created_at": _now_iso(),
+                "signals": signals,
             }
             if captured_lead:
                 doc["lead_name"] = captured_lead.get("name", "")
@@ -1449,10 +1476,279 @@ async def homepage_chat(req: HomepageChatRequest, request: Request):
         except Exception as e:
             logger.warning(f"Lead tracking write failed (non-critical): {e}")
 
+    # Send notification email for qualified leads or hot signals
+    if REPORT_EMAILS and RESEND_API_KEY:
+        if captured_lead or signals:
+            asyncio.ensure_future(_send_kash_alert(
+                session_id=session_id,
+                history=req.history,
+                user_message=message,
+                kash_reply=clean_reply,
+                captured_lead=captured_lead,
+                signals=signals,
+            ))
+
     response = {"reply": clean_reply, "session_id": session_id}
     if captured_lead:
         response["lead_captured"] = True
     return response
+
+
+# ── KASH Signal Detection ────────────────────────────────────────────────────
+
+_HOT_SIGNALS = {
+    "termin": "🗓️ Terminwunsch",
+    "gespräch": "🗓️ Terminwunsch",
+    "call": "🗓️ Terminwunsch",
+    "meeting": "🗓️ Terminwunsch",
+    "buchen": "🗓️ Terminwunsch",
+    "preis": "💰 Preisanfrage",
+    "kosten": "💰 Preisanfrage",
+    "wie viel": "💰 Preisanfrage",
+    "wieviel": "💰 Preisanfrage",
+    "kaufen": "🛒 Kaufinteresse",
+    "bestellen": "🛒 Kaufinteresse",
+    "mitglied": "🛒 Kaufinteresse",
+    "beitreten": "🛒 Kaufinteresse",
+    "anmelden": "🛒 Kaufinteresse",
+    "karte": "💳 Kartenanfrage",
+    "card": "💳 Kartenanfrage",
+    "schwarze": "💳 Kartenanfrage",
+    "black": "💳 Kartenanfrage",
+    "affiliate": "🤝 Affiliate-Interesse",
+    "partner": "🤝 Affiliate-Interesse",
+    "provision": "🤝 Affiliate-Interesse",
+    "kontakt": "📞 Kontaktwunsch",
+    "telefon": "📞 Kontaktwunsch",
+    "whatsapp": "📞 Kontaktwunsch",
+    "email": "📞 Kontaktwunsch",
+    "investition": "💎 Investitionsanfrage",
+    "invest": "💎 Investitionsanfrage",
+    "rendite": "💎 Investitionsanfrage",
+}
+
+def _detect_kash_signals(message: str) -> list[str]:
+    msg_lower = message.lower()
+    found = {}
+    for keyword, label in _HOT_SIGNALS.items():
+        if keyword in msg_lower and label not in found.values():
+            found[keyword] = label
+    return list(found.values())
+
+
+# ── KASH Email Alert ─────────────────────────────────────────────────────────
+
+async def _send_kash_alert(
+    session_id: str,
+    history: list,
+    user_message: str,
+    kash_reply: str,
+    captured_lead: dict | None,
+    signals: list[str],
+):
+    """Send immediate alert email when KASH detects a hot lead or signal."""
+    if not REPORT_EMAILS or not RESEND_API_KEY:
+        return
+    try:
+        lead_info = ""
+        if captured_lead:
+            name = captured_lead.get("name", "—")
+            email = captured_lead.get("email", "—")
+            interest = captured_lead.get("interest", "—")
+            lead_info = f"""
+            <div style="background:#0f3d0f;border:1px solid #22c55e;border-radius:8px;padding:16px;margin-bottom:16px;">
+              <b style="color:#22c55e">✅ Qualifizierter Lead erfasst</b><br>
+              <table style="margin-top:8px;font-size:14px">
+                <tr><td style="color:#aaa;padding-right:12px">Name:</td><td style="color:#fff">{name}</td></tr>
+                <tr><td style="color:#aaa;padding-right:12px">E-Mail:</td><td style="color:#fff">{email}</td></tr>
+                <tr><td style="color:#aaa;padding-right:12px">Interesse:</td><td style="color:#fff">{interest}</td></tr>
+              </table>
+            </div>"""
+
+        signal_badges = "".join(
+            f'<span style="background:#1a1a2e;border:1px solid #D4AF37;color:#D4AF37;padding:3px 10px;border-radius:20px;font-size:12px;margin-right:6px">{s}</span>'
+            for s in signals
+        ) if signals else '<span style="color:#666">Keine</span>'
+
+        chat_html = ""
+        for m in history[-10:]:
+            role = m.get("role", "")
+            content = m.get("content", "")
+            if role == "user":
+                chat_html += f'<div style="margin:8px 0"><span style="color:#aaa;font-size:11px">👤 Nutzer</span><div style="background:#1a1a1a;border-left:3px solid #666;padding:8px 12px;margin-top:4px;color:#ddd;font-size:13px">{content}</div></div>'
+            else:
+                chat_html += f'<div style="margin:8px 0"><span style="color:#D4AF37;font-size:11px">🤖 KASH</span><div style="background:#1a1a1a;border-left:3px solid #D4AF37;padding:8px 12px;margin-top:4px;color:#ddd;font-size:13px">{content}</div></div>'
+        # Add the current turn
+        chat_html += f'<div style="margin:8px 0"><span style="color:#aaa;font-size:11px">👤 Nutzer</span><div style="background:#1a1a1a;border-left:3px solid #666;padding:8px 12px;margin-top:4px;color:#ddd;font-size:13px">{user_message}</div></div>'
+        chat_html += f'<div style="margin:8px 0"><span style="color:#D4AF37;font-size:11px">🤖 KASH</span><div style="background:#1a1a1a;border-left:3px solid #D4AF37;padding:8px 12px;margin-top:4px;color:#ddd;font-size:13px">{kash_reply}</div></div>'
+
+        subject_parts = []
+        if captured_lead:
+            subject_parts.append(f"🔥 Neuer Lead: {captured_lead.get('name', captured_lead.get('email', ''))}")
+        if signals:
+            subject_parts.append(" · ".join(signals[:2]))
+        subject = " | ".join(subject_parts) if subject_parts else "🤖 KASH – Neue Aktivität"
+
+        html = f"""<!DOCTYPE html>
+<html><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;padding:24px;max-width:680px;margin:0 auto">
+  <div style="border-bottom:2px solid #D4AF37;padding-bottom:12px;margin-bottom:20px">
+    <span style="color:#D4AF37;font-size:22px;font-weight:bold">KASH</span>
+    <span style="color:#666;font-size:13px;margin-left:8px">Kickstartercash.Club · Chat-Benachrichtigung</span>
+    <span style="float:right;color:#555;font-size:11px">{_now_iso()[:16].replace("T"," ")} UTC</span>
+  </div>
+
+  {lead_info}
+
+  <div style="margin-bottom:16px">
+    <b style="color:#aaa;font-size:11px;text-transform:uppercase;letter-spacing:.1em">Erkannte Signale</b><br>
+    <div style="margin-top:8px">{signal_badges}</div>
+  </div>
+
+  <div style="margin-bottom:16px">
+    <b style="color:#aaa;font-size:11px;text-transform:uppercase;letter-spacing:.1em">Chat-Verlauf</b>
+    <div style="margin-top:8px;border:1px solid #222;border-radius:6px;padding:12px">{chat_html}</div>
+  </div>
+
+  <div style="border-top:1px solid #222;margin-top:20px;padding-top:12px;color:#555;font-size:11px">
+    Session-ID: {session_id} · Automatisch von Kickstartercash.Club KASH-System gesendet
+  </div>
+</body></html>"""
+
+        params = {
+            "from": SENDER_EMAIL,
+            "to": REPORT_EMAILS,
+            "subject": subject,
+            "html": html,
+        }
+        await asyncio.to_thread(resend.Emails.send, params)
+        logger.info(f"KASH alert sent for session {session_id} → {REPORT_EMAILS}")
+    except Exception as e:
+        logger.error(f"KASH alert email failed: {e}")
+
+
+# ── KASH Daily Report ────────────────────────────────────────────────────────
+
+@api_router.post("/kash/daily-report")
+async def send_kash_daily_report():
+    """Generate and email a daily digest of all KASH conversations."""
+    if not REPORT_EMAILS or not RESEND_API_KEY:
+        raise HTTPException(status_code=400, detail="KASH_REPORT_EMAILS or RESEND_API_KEY not configured")
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+
+    from datetime import timedelta
+    since = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    docs = await db.kash_leads.find(
+        {"created_at": {"$gte": since}}, {"_id": 0}
+    ).sort("created_at", 1).to_list(500)
+
+    if not docs:
+        return {"ok": True, "message": "Keine Gespräche in den letzten 24h"}
+
+    # Group by session
+    sessions: dict[str, list] = {}
+    for d in docs:
+        sid = d.get("session_id", "unknown")
+        sessions.setdefault(sid, []).append(d)
+
+    total_turns = len(docs)
+    leads = [d for d in docs if d.get("is_qualified_lead")]
+    hot_signals = [d for d in docs if d.get("signals")]
+
+    # Build AI analysis via LLM
+    sample_turns = docs[:20]
+    sample_text = "\n".join(f"User: {d['user_message']}\nKASH: {d['kash_reply']}" for d in sample_turns)
+    analysis = ""
+    try:
+        analysis = await llm_text("claude-sonnet-4-6",
+            "Du bist ein Business-Analyst. Analysiere diese KASH-Chatgespräche und erstelle:\n"
+            "1. Häufigste Themen/Fragen\n2. Was gut lief\n3. Was KASH besser beantworten könnte\n"
+            "4. Top 3 Verbesserungsvorschläge für den Bot\n5. Wichtigste Leads/Signale\n"
+            "Antworte auf Deutsch, strukturiert, max 400 Wörter.",
+            sample_text
+        )
+    except Exception as e:
+        analysis = f"KI-Analyse nicht verfügbar: {e}"
+
+    # Build sessions HTML
+    sessions_html = ""
+    for sid, turns in list(sessions.items())[:20]:
+        lead_tag = ""
+        for t in turns:
+            if t.get("is_qualified_lead"):
+                name = t.get("lead_name", "")
+                email = t.get("lead_email", "")
+                lead_tag = f'<span style="background:#22c55e20;border:1px solid #22c55e;color:#22c55e;padding:2px 8px;border-radius:10px;font-size:11px">Lead: {name} {email}</span>'
+                break
+        signal_tags = ""
+        all_signals = list({s for t in turns for s in t.get("signals", [])})
+        for s in all_signals:
+            signal_tags += f'<span style="background:#D4AF3720;border:1px solid #D4AF37;color:#D4AF37;padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px">{s}</span>'
+
+        turns_html = ""
+        for t in turns:
+            turns_html += f'<div style="margin:4px 0"><span style="color:#666;font-size:11px">👤</span> <span style="color:#ccc;font-size:12px">{t["user_message"][:200]}</span></div>'
+            turns_html += f'<div style="margin:4px 0 10px 0"><span style="color:#D4AF37;font-size:11px">🤖</span> <span style="color:#999;font-size:12px">{t["kash_reply"][:200]}</span></div>'
+
+        sessions_html += f"""
+        <div style="border:1px solid #222;border-radius:6px;padding:12px;margin-bottom:12px">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+            <span style="color:#555;font-size:11px">{turns[0].get("created_at","")[:16].replace("T"," ")} · {len(turns)} Nachrichten</span>
+            {lead_tag}{signal_tags}
+          </div>
+          {turns_html}
+        </div>"""
+
+    analysis_html = analysis.replace("\n", "<br>")
+
+    html = f"""<!DOCTYPE html>
+<html><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;padding:24px;max-width:720px;margin:0 auto">
+  <div style="border-bottom:2px solid #D4AF37;padding-bottom:12px;margin-bottom:24px">
+    <span style="color:#D4AF37;font-size:24px;font-weight:bold">KASH</span>
+    <span style="color:#666;font-size:14px;margin-left:8px">Tagesbericht · {_now_iso()[:10]}</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px">
+    <div style="background:#111;border:1px solid #222;border-radius:8px;padding:16px;text-align:center">
+      <div style="font-size:32px;font-weight:bold;color:#D4AF37">{len(sessions)}</div>
+      <div style="color:#666;font-size:12px">Gespräche</div>
+    </div>
+    <div style="background:#111;border:1px solid #222;border-radius:8px;padding:16px;text-align:center">
+      <div style="font-size:32px;font-weight:bold;color:#22c55e">{len(set(d.get("session_id") for d in leads))}</div>
+      <div style="color:#666;font-size:12px">Qualifizierte Leads</div>
+    </div>
+    <div style="background:#111;border:1px solid #222;border-radius:8px;padding:16px;text-align:center">
+      <div style="font-size:32px;font-weight:bold;color:#f59e0b">{len(hot_signals)}</div>
+      <div style="color:#666;font-size:12px">Heiße Signale</div>
+    </div>
+  </div>
+
+  <div style="background:#111;border:1px solid #D4AF3740;border-radius:8px;padding:16px;margin-bottom:24px">
+    <b style="color:#D4AF37;font-size:13px">🧠 KI-Analyse & Verbesserungsvorschläge</b>
+    <div style="margin-top:12px;color:#ccc;font-size:13px;line-height:1.7">{analysis_html}</div>
+  </div>
+
+  <div>
+    <b style="color:#aaa;font-size:11px;text-transform:uppercase;letter-spacing:.1em">Gespräche (letzte 24h)</b>
+    <div style="margin-top:12px">{sessions_html}</div>
+  </div>
+
+  <div style="border-top:1px solid #222;margin-top:24px;padding-top:12px;color:#444;font-size:11px">
+    Automatischer Tagesbericht · Kickstartercash.Club KASH-System
+  </div>
+</body></html>"""
+
+    params = {
+        "from": SENDER_EMAIL,
+        "to": REPORT_EMAILS,
+        "subject": f"📊 KASH Tagesbericht {_now_iso()[:10]} · {len(sessions)} Gespräche · {len(set(d.get('session_id') for d in leads))} Leads",
+        "html": html,
+    }
+    try:
+        await asyncio.to_thread(resend.Emails.send, params)
+        return {"ok": True, "sessions": len(sessions), "leads": len(leads), "recipients": REPORT_EMAILS}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 class LeadCaptureRequest(BaseModel):
