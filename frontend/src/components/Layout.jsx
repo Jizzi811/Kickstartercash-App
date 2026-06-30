@@ -3,7 +3,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare,
-  Music, Mail, Linkedin, Network, Workflow, Search,
+  Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { LOGO_URL } from "@/i18n";
@@ -24,6 +24,7 @@ const NAV = [
   { to: "/analytics",  icon: BarChart2,  labelDE: "Analytics",        labelEN: "Analytics" },
   { to: "/automation", icon: Zap,        labelDE: "Automationen",     labelEN: "Automations" },
   { to: "/knowledge",  icon: Database,   labelDE: "Wissensdatenbank", labelEN: "Knowledge Base" },
+  { to: "/tickets",    icon: Ticket,     labelDE: "Tickets",          labelEN: "Tickets" },
   { to: "/builder",    icon: Wrench,     labelDE: "Eigene Agenten",   labelEN: "Custom Agents" },
   { to: "/arena",      icon: MessageSquare, labelDE: "Chat Arena",    labelEN: "Chat Arena" },
   { to: "/tiktok",     icon: Music,      labelDE: "TikTok Studio",    labelEN: "TikTok Studio" },
@@ -44,6 +45,7 @@ const PAGE_NAMES = {
   "/analytics": "Analytics",
   "/automation": "Automationen",
   "/knowledge": "Wissensdatenbank",
+  "/tickets": "Tickets",
   "/builder": "Eigene Agenten",
   "/arena": "Chat Arena",
   "/jarvjis": "CEO Kashbot",

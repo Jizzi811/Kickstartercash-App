@@ -3313,6 +3313,125 @@ async def render_remotion_video(req: RemotionRequest):
         "message": "Remotion Lambda-Rendering wird konfiguriert. Script ist bereit."
     }
 
+# ── Ticket System ────────────────────────────────────────────────────────────
+
+class TicketCreate(BaseModel):
+    title: str
+    description: str
+    category: str = "support"          # support | sales | general
+    priority: str = "medium"           # low | medium | high | urgent
+    name: str = ""
+    email: str = ""
+    phone: str = ""
+    source: str = "studio"             # studio | widget | homepage
+    language: str = "DE"
+
+class TicketUpdate(BaseModel):
+    status: str = None                 # open | in_progress | resolved | closed
+    priority: str = None
+    assigned_to: str = None
+    note: str = None
+
+@api_router.post("/tickets")
+async def create_ticket(req: TicketCreate):
+    if db is None:
+        raise HTTPException(status_code=503, detail="DB not available")
+    ticket_id = str(uuid.uuid4())[:8].upper()
+    doc = {
+        "ticket_id": ticket_id,
+        "title": req.title.strip(),
+        "description": req.description.strip(),
+        "category": req.category,
+        "priority": req.priority,
+        "status": "open",
+        "name": req.name.strip(),
+        "email": req.email.strip().lower(),
+        "phone": req.phone.strip(),
+        "source": req.source,
+        "language": req.language,
+        "assigned_to": "",
+        "notes": [],
+        "created_at": _now_iso(),
+        "updated_at": _now_iso(),
+    }
+    await db.tickets.insert_one(doc)
+    return {k: v for k, v in doc.items() if k != "_id"}
+
+@api_router.get("/tickets")
+async def list_tickets(
+    status: str = None,
+    category: str = None,
+    priority: str = None,
+    limit: int = 100,
+    skip: int = 0,
+):
+    if db is None:
+        return {"tickets": [], "total": 0}
+    filt = {}
+    if status:
+        filt["status"] = status
+    if category:
+        filt["category"] = category
+    if priority:
+        filt["priority"] = priority
+    total = await db.tickets.count_documents(filt)
+    docs = await db.tickets.find(filt, {"_id": 0}).sort("created_at", -1).skip(skip).to_list(min(limit, 200))
+    return {"tickets": docs, "total": total}
+
+@api_router.get("/tickets/{ticket_id}")
+async def get_ticket(ticket_id: str):
+    if db is None:
+        raise HTTPException(status_code=503, detail="DB not available")
+    doc = await db.tickets.find_one({"ticket_id": ticket_id.upper()}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return doc
+
+@api_router.patch("/tickets/{ticket_id}")
+async def update_ticket(ticket_id: str, req: TicketUpdate):
+    if db is None:
+        raise HTTPException(status_code=503, detail="DB not available")
+    updates = {"updated_at": _now_iso()}
+    if req.status:
+        updates["status"] = req.status
+    if req.priority:
+        updates["priority"] = req.priority
+    if req.assigned_to is not None:
+        updates["assigned_to"] = req.assigned_to
+    result = await db.tickets.update_one({"ticket_id": ticket_id.upper()}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    if req.note:
+        await db.tickets.update_one(
+            {"ticket_id": ticket_id.upper()},
+            {"$push": {"notes": {"text": req.note, "created_at": _now_iso()}}},
+        )
+    doc = await db.tickets.find_one({"ticket_id": ticket_id.upper()}, {"_id": 0})
+    return doc
+
+@api_router.delete("/tickets/{ticket_id}")
+async def delete_ticket(ticket_id: str):
+    if db is None:
+        raise HTTPException(status_code=503, detail="DB not available")
+    result = await db.tickets.delete_one({"ticket_id": ticket_id.upper()})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return {"ok": True}
+
+@api_router.get("/tickets/stats/summary")
+async def ticket_stats():
+    if db is None:
+        return {}
+    pipeline = [{"$group": {"_id": "$status", "count": {"$sum": 1}}}]
+    rows = await db.tickets.aggregate(pipeline).to_list(20)
+    by_status = {r["_id"]: r["count"] for r in rows}
+    pipeline2 = [{"$group": {"_id": "$priority", "count": {"$sum": 1}}}]
+    rows2 = await db.tickets.aggregate(pipeline2).to_list(20)
+    by_priority = {r["_id"]: r["count"] for r in rows2}
+    total = await db.tickets.count_documents({})
+    return {"total": total, "by_status": by_status, "by_priority": by_priority}
+
+
 app.include_router(api_router)
 
 app.add_middleware(

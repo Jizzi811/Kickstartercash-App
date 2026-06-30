@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, X, Send, Loader2, Minimize2, Sparkles } from "lucide-react";
+import { MessageCircle, X, Send, Loader2, Sparkles, Ticket } from "lucide-react";
 import { API } from "@/context/AppContext";
 import { useApp } from "@/context/AppContext";
 
@@ -109,6 +109,83 @@ function ChatParticles() {
   );
 }
 
+function TicketQuickModal({ onClose, lang, prefill }) {
+  const [title, setTitle] = useState(prefill || "");
+  const [desc, setDesc] = useState("");
+  const [cat, setCat] = useState("support");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(null);
+
+  const submit = async () => {
+    if (!title.trim()) return;
+    setLoading(true);
+    try {
+      const res = await axios.post(`${API}/tickets`, {
+        title, description: desc || title, category: cat,
+        priority: "medium", name, email, source: "widget", language: lang,
+      });
+      setDone(res.data.ticket_id);
+    } catch { /* silent */ }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.75)", padding: "16px" }}>
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+        style={{ width: "100%", maxWidth: "360px", background: "#0D0D0D", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "12px", overflow: "hidden" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Ticket size={14} style={{ color: "#D4AF37" }} />
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "#fff" }}>
+              {lang === "DE" ? "Support-Ticket erstellen" : "Create Support Ticket"}
+            </span>
+          </div>
+          <button onClick={onClose} style={{ color: "#71717a", background: "none", border: "none", cursor: "pointer" }}><X size={14} /></button>
+        </div>
+        {done ? (
+          <div style={{ padding: "24px", textAlign: "center" }}>
+            <div style={{ fontSize: "2rem", marginBottom: "8px" }}>✅</div>
+            <p style={{ color: "#34D399", fontSize: "14px", fontWeight: 600 }}>
+              {lang === "DE" ? `Ticket #${done} erstellt!` : `Ticket #${done} created!`}
+            </p>
+            <p style={{ color: "#71717a", fontSize: "12px", marginTop: "4px" }}>
+              {lang === "DE" ? "Wir melden uns bald bei dir." : "We'll get back to you soon."}
+            </p>
+            <button onClick={onClose} style={{ marginTop: "16px", padding: "8px 20px", background: "linear-gradient(135deg,#D4AF37,#B8972E)", borderRadius: "6px", color: "#000", fontSize: "13px", fontWeight: 600, border: "none", cursor: "pointer" }}>OK</button>
+          </div>
+        ) : (
+          <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+            <select value={cat} onChange={(e) => setCat(e.target.value)}
+              style={{ background: "#000", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "8px 10px", color: "#fff", fontSize: "13px", outline: "none" }}>
+              <option value="support">{lang === "DE" ? "Support" : "Support"}</option>
+              <option value="sales">{lang === "DE" ? "Sales / Vertrieb" : "Sales"}</option>
+              <option value="general">{lang === "DE" ? "Allgemein" : "General"}</option>
+            </select>
+            <input value={title} onChange={(e) => setTitle(e.target.value)}
+              placeholder={lang === "DE" ? "Titel / Problem *" : "Title / Issue *"}
+              style={{ background: "#000", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "8px 10px", color: "#fff", fontSize: "13px", outline: "none" }} />
+            <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={3}
+              placeholder={lang === "DE" ? "Beschreibung (optional)…" : "Description (optional)…"}
+              style={{ background: "#000", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "8px 10px", color: "#fff", fontSize: "13px", outline: "none", resize: "none" }} />
+            <input value={name} onChange={(e) => setName(e.target.value)}
+              placeholder={lang === "DE" ? "Dein Name" : "Your name"}
+              style={{ background: "#000", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "8px 10px", color: "#fff", fontSize: "13px", outline: "none" }} />
+            <input value={email} onChange={(e) => setEmail(e.target.value)}
+              placeholder={lang === "DE" ? "E-Mail (für Rückfragen)" : "Email (for follow-up)"}
+              style={{ background: "#000", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "8px 10px", color: "#fff", fontSize: "13px", outline: "none" }} />
+            <button onClick={submit} disabled={loading || !title.trim()}
+              style={{ padding: "9px 16px", background: "linear-gradient(135deg,#D4AF37,#B8972E)", borderRadius: "6px", color: "#000", fontSize: "13px", fontWeight: 600, border: "none", cursor: "pointer", opacity: (!title.trim() || loading) ? 0.5 : 1 }}>
+              {loading ? "…" : (lang === "DE" ? "Ticket erstellen" : "Create Ticket")}
+            </button>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  );
+}
+
 export function SalesSupportWidget() {
   const { lang, model } = useApp();
   const [open, setOpen] = useState(false);
@@ -117,6 +194,7 @@ export function SalesSupportWidget() {
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [sessionId] = useState(() => crypto.randomUUID());
+  const [showTicketModal, setShowTicketModal] = useState(false);
   // Effekt B — Reactions
   const [reactions, setReactions] = useState({});
   // Effekt C — Typewriter IDs
@@ -242,6 +320,16 @@ export function SalesSupportWidget() {
       </AnimatePresence>
 
       {/* Chat Panel */}
+      <AnimatePresence>
+        {showTicketModal && (
+          <TicketQuickModal
+            lang={lang}
+            prefill={messages.filter((m) => m.role === "user").slice(-1)[0]?.content || ""}
+            onClose={() => setShowTicketModal(false)}
+          />
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {open && (
           <motion.div
@@ -466,6 +554,19 @@ export function SalesSupportWidget() {
 
               <div ref={endRef} style={{ position: "relative", zIndex: 1 }} />
             </div>
+
+            {/* Ticket CTA — erscheint nach 2+ Nachrichten */}
+            {messages.length >= 3 && !loading && (
+              <div style={{ padding: "4px 12px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                <button onClick={() => setShowTicketModal(true)}
+                  style={{ width: "100%", padding: "6px 12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", background: "rgba(212,175,55,0.07)", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "6px", color: "#D4AF37", fontSize: "11px", cursor: "pointer", transition: "all 0.15s" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(212,175,55,0.14)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(212,175,55,0.07)"; }}>
+                  <Ticket size={11} />
+                  {lang === "DE" ? "Support-Ticket erstellen" : "Create support ticket"}
+                </button>
+              </div>
+            )}
 
             {/* Input */}
             <div
