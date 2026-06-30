@@ -769,6 +769,14 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
       const reply = data.reply || '⚠️ Keine Antwort erhalten.';
       history.push({role:'assistant', content: reply});
       addMsg('bot', reply);
+      // Show gold success badge when KASH captured a lead
+      if(data.lead_captured){
+        const badge = document.createElement('div');
+        badge.style.cssText = 'margin:8px auto;padding:8px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.08em;text-align:center;color:#000;background:linear-gradient(135deg,#D4AF37,#B8972E);animation:msgIn .3s ease';
+        badge.textContent = '✦ LEAD ERFASST – Unser Team meldet sich bald!';
+        msgs.appendChild(badge);
+        msgs.scrollTop = msgs.scrollHeight;
+      }
     } catch(e){
       typing.remove();
       addMsg('error', `⚠️ Netzwerkfehler: ${e.message}. Ist Railway online?`);
