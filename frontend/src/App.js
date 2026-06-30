@@ -25,6 +25,11 @@ import EmailStudio from "@/pages/EmailStudio";
 import LinkedInStudio from "@/pages/LinkedInStudio";
 import OrchestratorStudio from "@/pages/OrchestratorStudio";
 import WorkflowStudio from "@/pages/WorkflowStudio";
+import FinanceCFOStudio from "@/pages/FinanceCFOStudio";
+import FinanceAnalystStudio from "@/pages/FinanceAnalystStudio";
+import FinanceFPAStudio from "@/pages/FinanceFPAStudio";
+import FinanceBookkeeperStudio from "@/pages/FinanceBookkeeperStudio";
+import FinanceTaxStudio from "@/pages/FinanceTaxStudio";
 
 // Existing tools (kept for legacy routes)
 import SocialMedia from "@/pages/SocialMedia";
@@ -74,6 +79,11 @@ function App() {
               <Route path="/linkedin" element={<LinkedInStudio />} />
               <Route path="/orchestrator" element={<OrchestratorStudio />} />
               <Route path="/workflow-architect" element={<WorkflowStudio />} />
+              <Route path="/finance-cfo" element={<FinanceCFOStudio />} />
+              <Route path="/finance-analyst" element={<FinanceAnalystStudio />} />
+              <Route path="/finance-fpa" element={<FinanceFPAStudio />} />
+              <Route path="/finance-bookkeeper" element={<FinanceBookkeeperStudio />} />
+              <Route path="/finance-tax" element={<FinanceTaxStudio />} />
 
               {/* Legacy routes – still accessible */}
               <Route path="/image" element={<ImageGenerator />} />
