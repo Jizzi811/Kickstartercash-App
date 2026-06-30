@@ -4,6 +4,7 @@ import {
   LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
+  TrendingUp, BookOpen, FileText,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { LOGO_URL } from "@/i18n";
@@ -33,6 +34,11 @@ const NAV = [
   { to: "/linkedin",   icon: Linkedin,   labelDE: "LinkedIn Studio",  labelEN: "LinkedIn Studio" },
   { to: "/orchestrator", icon: Network,  labelDE: "Orchestrator",     labelEN: "Orchestrator" },
   { to: "/workflow-architect", icon: Workflow, labelDE: "Workflow Architect", labelEN: "Workflow Architect" },
+  { to: "/finance-cfo", icon: TrendingUp, labelDE: "CFO Studio", labelEN: "CFO Studio" },
+  { to: "/finance-analyst", icon: BarChart2, labelDE: "Financial Analyst", labelEN: "Financial Analyst" },
+  { to: "/finance-fpa", icon: TrendingUp, labelDE: "FP&A Studio", labelEN: "FP&A Studio" },
+  { to: "/finance-bookkeeper", icon: BookOpen, labelDE: "Buchhaltung", labelEN: "Bookkeeper" },
+  { to: "/finance-tax", icon: FileText, labelDE: "Tax Studio", labelEN: "Tax Studio" },
 ];
 
 const PAGE_NAMES = {
@@ -55,6 +61,11 @@ const PAGE_NAMES = {
   "/linkedin": "LinkedIn Studio",
   "/orchestrator": "Orchestrator",
   "/workflow-architect": "Workflow Architect",
+  "/finance-cfo": "CFO Studio",
+  "/finance-analyst": "Financial Analyst",
+  "/finance-fpa": "FP&A Studio",
+  "/finance-bookkeeper": "Buchhaltung",
+  "/finance-tax": "Tax Studio",
 };
 
 // ── Page-enter particles ──────────────────────────────────────────────────────

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Bot, TrendingUp, Palette, Video, ShoppingCart, Search, Zap, Headphones,
   ChevronDown, ArrowDown, User, Cpu, GitBranch, Crown, Music, Mail, Linkedin,
-  Network, Workflow,
+  Network, Workflow, BarChart2, BookOpen, FileText,
 } from "lucide-react";
 
 const DEPARTMENTS = [
@@ -124,6 +124,51 @@ const DEPARTMENTS = [
     descDE: "Prozessdesign, SOPs & Automatisierungs-Architektur",
     descEN: "Process design, SOPs & automation architecture",
   },
+  {
+    id: "cfo",
+    icon: TrendingUp,
+    labelDE: "CFO",
+    labelEN: "CFO",
+    color: "#10B981",
+    descDE: "Kapitalallokation, Treasury, M&A & Investor Relations",
+    descEN: "Capital allocation, treasury, M&A & investor relations",
+  },
+  {
+    id: "financial_analyst",
+    icon: BarChart2,
+    labelDE: "Finanzanalyse",
+    labelEN: "Financial Analysis",
+    color: "#3B82F6",
+    descDE: "Finanzmodelle, DCF-Bewertung & Szenarioanalysen",
+    descEN: "Financial models, DCF valuation & scenario analysis",
+  },
+  {
+    id: "fpa",
+    icon: TrendingUp,
+    labelDE: "FP&A",
+    labelEN: "FP&A",
+    color: "#6366F1",
+    descDE: "Budgetplanung, Rolling Forecast & KPI-Governance",
+    descEN: "Budget planning, rolling forecast & KPI governance",
+  },
+  {
+    id: "bookkeeper",
+    icon: BookOpen,
+    labelDE: "Buchhaltung",
+    labelEN: "Bookkeeping",
+    color: "#059669",
+    descDE: "Buchführung, Monatsabschluss & Compliance",
+    descEN: "Bookkeeping, month-end close & compliance",
+  },
+  {
+    id: "tax",
+    icon: FileText,
+    labelDE: "Steuer",
+    labelEN: "Tax",
+    color: "#F59E0B",
+    descDE: "Steueroptimierung, int. Steuerplanung & Compliance",
+    descEN: "Tax optimization, international planning & compliance",
+  },
 ];
 
 const TASKS_DE = {
@@ -204,6 +249,36 @@ const TASKS_DE = {
     "SOP für Karten-Onboarding erstellen",
     "Content-Produktions-Workflow designen",
     "Affiliate-Tracking-Prozess aufbauen",
+  ],
+  cfo: [
+    "Kapitalallokation für Q3 optimieren",
+    "Cashflow-Prognose für 12 Monate erstellen",
+    "M&A-Due-Diligence-Framework aufsetzen",
+    "Boardbericht strukturieren & vorbereiten",
+  ],
+  financial_analyst: [
+    "DCF-Bewertungsmodell aufbauen",
+    "Szenarioanalyse (Best/Base/Worst) erstellen",
+    "Finanzmodell für Investorpräsentation",
+    "KPI-Dashboard für Management definieren",
+  ],
+  fpa: [
+    "Jahresbudget-Struktur entwickeln",
+    "Rolling Forecast (13 Wochen) erstellen",
+    "Varianzanalyse Q2 Plan vs. Ist",
+    "OpEx-Optimierungspotenziale identifizieren",
+  ],
+  bookkeeper: [
+    "Monatsabschluss-Checkliste erstellen",
+    "Kontenabstimmungsprozess optimieren",
+    "Interne Kontrollen implementieren",
+    "Audit-Vorbereitung koordinieren",
+  ],
+  tax: [
+    "Steueroptimierungsstrategie entwickeln",
+    "Internationale Steuerstruktur analysieren",
+    "Transfer-Pricing-Dokumentation erstellen",
+    "Jahressteuerplanung durchführen",
   ],
 };
 
@@ -286,6 +361,36 @@ const TASKS_EN = {
     "Design content production workflow",
     "Build affiliate tracking process",
   ],
+  cfo: [
+    "Optimize capital allocation for Q3",
+    "Create 12-month cash flow forecast",
+    "Set up M&A due diligence framework",
+    "Structure and prepare board report",
+  ],
+  financial_analyst: [
+    "Build DCF valuation model",
+    "Create scenario analysis (Best/Base/Worst)",
+    "Financial model for investor presentation",
+    "Define KPI dashboard for management",
+  ],
+  fpa: [
+    "Develop annual budget structure",
+    "Create rolling forecast (13 weeks)",
+    "Variance analysis Q2 plan vs. actual",
+    "Identify OpEx optimization opportunities",
+  ],
+  bookkeeper: [
+    "Create month-end close checklist",
+    "Optimize account reconciliation process",
+    "Implement internal controls",
+    "Coordinate audit preparation",
+  ],
+  tax: [
+    "Develop tax optimization strategy",
+    "Analyze international tax structure",
+    "Create transfer pricing documentation",
+    "Conduct annual tax planning",
+  ],
 };
 
 export default function JarvjisAgent() {
@@ -311,6 +416,11 @@ export default function JarvjisAgent() {
     linkedin: "Exzellent. Leon übernimmt LinkedIn. Hochwertiger Content für maximale organische Reichweite und Lead-Generierung.",
     orchestrator: "Perfekt. Orion koordiniert alle Agenten. Der optimale Multi-Agenten-Workflow wird jetzt entworfen und ausgeführt.",
     workflow: "Verstanden. Wren kartografiert den Prozess. Ein skalierbarer, effizienter Workflow mit SOP wird entwickelt.",
+    cfo: "Verstanden. Carl übernimmt die Finanzstrategie. Kapitalallokation, Cashflow und strategische Planung werden analysiert.",
+    financial_analyst: "Exzellent. Fiona startet die Analyse. Finanzmodell, DCF-Bewertung und Szenarien werden detailliert ausgearbeitet.",
+    fpa: "Notiert. Felix beginnt mit der FP&A-Arbeit. Budget, Forecast und Varianzanalyse werden präzise durchgeführt.",
+    bookkeeper: "Klar. Bianca übernimmt die Buchhaltung. Alle Bücher werden auf höchstem Compliance-Niveau geführt.",
+    tax: "Verstanden. Tobias entwickelt die Steuerstrategie. Legale Optimierung und internationale Planung werden umgesetzt.",
   };
 
   const ceoResponsesEN = {
@@ -327,6 +437,11 @@ export default function JarvjisAgent() {
     linkedin: "Excellent. Leon takes LinkedIn. High-quality content for maximum organic reach and lead generation.",
     orchestrator: "Perfect. Orion coordinates all agents. The optimal multi-agent workflow is being designed and executed.",
     workflow: "Understood. Wren maps the process. A scalable, efficient workflow with SOP will be delivered.",
+    cfo: "Understood. Carl takes over the financial strategy. Capital allocation, cash flow and strategic planning will be analyzed.",
+    financial_analyst: "Excellent. Fiona starts the analysis. Financial model, DCF valuation and scenarios will be detailed.",
+    fpa: "Noted. Felix begins the FP&A work. Budget, forecast and variance analysis will be executed precisely.",
+    bookkeeper: "Clear. Bianca handles the bookkeeping. All books will be maintained at the highest compliance level.",
+    tax: "Understood. Tobias develops the tax strategy. Legal optimization and international planning will be executed.",
   };
 
   const handleTaskSelect = (dept, task) => {
@@ -378,7 +493,7 @@ export default function JarvjisAgent() {
               {lang === "DE" ? "Dein CEO-Assistent" : "Your CEO Assistant"}
             </h1>
             <p style={{ fontSize: "13px", color: "#71717a", marginTop: "4px", marginBottom: 0 }}>
-              {lang === "DE" ? "Delegiere Aufgaben an 13 KI-Spezialisten" : "Delegate tasks to 13 AI specialists"}
+              {lang === "DE" ? "Delegiere Aufgaben an 18 KI-Spezialisten" : "Delegate tasks to 18 AI specialists"}
             </p>
           </div>
         </div>

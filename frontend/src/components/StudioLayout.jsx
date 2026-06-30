@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { Send, Loader2, Copy, Check, Bot, Database, Wrench, X, Trash2, ExternalLink } from "lucide-react";
+import { Send, Loader2, Copy, Check, Bot, Database, Wrench, X, Trash2, ExternalLink, Paperclip, Download, FileText } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 
 export function ToolCard({ tool, color, onRun, isRunning, disabled }) {
@@ -44,6 +44,173 @@ export function ToolCard({ tool, color, onRun, isRunning, disabled }) {
       </div>
       <p className="text-[11px] text-zinc-600 leading-relaxed">{tool.desc}</p>
     </button>
+  );
+}
+
+const generatePDF = async (content, title) => {
+  const { jsPDF } = await import("jspdf");
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  const contentW = pageW - margin * 2;
+
+  // Header bar
+  doc.setFillColor(212, 175, 55);
+  doc.rect(0, 0, pageW, 18, "F");
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.text("KickstarterCash.club", margin, 12);
+
+  // Title
+  doc.setTextColor(212, 175, 55);
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text(title || "Studio Export", margin, 34);
+
+  // Date
+  doc.setTextColor(150, 150, 150);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.text(new Date().toLocaleDateString("de-DE", { year: "numeric", month: "long", day: "numeric" }), pageW - margin, 34, { align: "right" });
+
+  // Divider
+  doc.setDrawColor(212, 175, 55);
+  doc.setLineWidth(0.3);
+  doc.line(margin, 38, pageW - margin, 38);
+
+  // Content
+  doc.setTextColor(30, 30, 30);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+
+  const lines = doc.splitTextToSize(content, contentW);
+  let y = 46;
+  const lineH = 5.5;
+
+  for (const line of lines) {
+    if (y + lineH > pageH - margin) {
+      doc.addPage();
+      // mini header on new page
+      doc.setFillColor(212, 175, 55);
+      doc.rect(0, 0, pageW, 8, "F");
+      y = 16;
+      doc.setTextColor(30, 30, 30);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+    }
+    if (line.startsWith("---") || line.startsWith("===")) {
+      doc.setDrawColor(212, 175, 55, 0.4);
+      doc.setLineWidth(0.2);
+      doc.line(margin, y, pageW - margin, y);
+      y += 3;
+    } else if (line.startsWith("[") && line.includes("]")) {
+      doc.setTextColor(212, 175, 55);
+      doc.setFont("helvetica", "bold");
+      doc.text(line, margin, y);
+      doc.setTextColor(30, 30, 30);
+      doc.setFont("helvetica", "normal");
+      y += lineH;
+    } else {
+      doc.text(line, margin, y);
+      y += lineH;
+    }
+  }
+
+  // Footer
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let p = 1; p <= pageCount; p++) {
+    doc.setPage(p);
+    doc.setTextColor(150, 150, 150);
+    doc.setFontSize(7);
+    doc.text(`KickstarterCash.club — Seite ${p} von ${pageCount}`, pageW / 2, pageH - 10, { align: "center" });
+  }
+
+  doc.save(`kickstartercash-export-${Date.now()}.pdf`);
+};
+
+export function StudioContextArea({ color, context, setContext, label, labelEN, placeholder, placeholderEN, title }) {
+  const lang = localStorage.getItem("kc_lang") || "DE";
+  const fileRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleFile = async (file) => {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { alert("Max 10 MB"); return; }
+    setUploading(true);
+    try {
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = () => setUploadedFile({ name: file.name, type: "image", url: reader.result });
+        reader.readAsDataURL(file);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const text = e.target.result;
+          if (typeof text === "string") {
+            setContext((p) => p + (p ? "\n\n" : "") + `[${file.name}]\n${text.slice(0, 3000)}`);
+          }
+          setUploadedFile({ name: file.name, type: "file" });
+        };
+        reader.readAsText(file);
+      }
+    } finally { setUploading(false); }
+  };
+
+  const downloadPDF = async () => {
+    if (!context.trim()) return;
+    setDownloading(true);
+    try { await generatePDF(context, title || "Studio Export"); }
+    catch (e) { console.error(e); }
+    finally { setDownloading(false); }
+  };
+
+  return (
+    <div className="border border-white/8 rounded-sm p-5 space-y-3" style={{ background: `${color}08` }}>
+      <div className="flex items-center justify-between">
+        <label className="block text-xs uppercase tracking-widest" style={{ color }}>
+          {lang === "DE" ? (label || "Kontext") : (labelEN || "Context")}
+        </label>
+        <div className="flex items-center gap-2">
+          {uploadedFile && (
+            <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 bg-white/5 border border-white/10 rounded-sm px-2 py-1">
+              <FileText size={10} />
+              <span className="truncate max-w-[120px]">{uploadedFile.name}</span>
+              <button onClick={() => setUploadedFile(null)} className="text-zinc-600 hover:text-red-400">
+                <X size={9} />
+              </button>
+            </div>
+          )}
+          <input ref={fileRef} type="file" accept="image/*,.pdf,.txt,.md,.csv,.json,.docx,.xlsx" className="hidden"
+            onChange={(e) => handleFile(e.target.files[0])} />
+          <button onClick={() => fileRef.current?.click()} disabled={uploading}
+            title={lang === "DE" ? "Datei / Bild hochladen" : "Upload file / image"}
+            className="flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-sm border border-white/10 text-zinc-500 hover:text-white hover:border-white/25 transition-colors disabled:opacity-40">
+            {uploading ? <Loader2 size={11} className="animate-spin" /> : <Paperclip size={11} />}
+            {lang === "DE" ? "Upload" : "Upload"}
+          </button>
+          <button onClick={downloadPDF} disabled={!context.trim() || downloading}
+            title={lang === "DE" ? "Als PDF herunterladen" : "Download as PDF"}
+            className="flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-sm border transition-colors disabled:opacity-40"
+            style={{ borderColor: context.trim() ? `${color}40` : "rgba(255,255,255,0.1)", color: context.trim() ? color : "#555" }}>
+            {downloading ? <Loader2 size={11} className="animate-spin" /> : <Download size={11} />}
+            PDF
+          </button>
+        </div>
+      </div>
+      {uploadedFile?.type === "image" && (
+        <img src={uploadedFile.url} alt="upload" className="max-h-32 rounded-sm object-contain border border-white/10" />
+      )}
+      <textarea value={context} onChange={(e) => setContext(e.target.value)} rows={4}
+        placeholder={lang === "DE" ? (placeholder || "Kontext eingeben…") : (placeholderEN || "Enter context…")}
+        className="w-full bg-black border border-white/8 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none"
+        onFocus={(e) => { e.target.style.borderColor = `${color}50`; }}
+        onBlur={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; }} />
+    </div>
   );
 }
 

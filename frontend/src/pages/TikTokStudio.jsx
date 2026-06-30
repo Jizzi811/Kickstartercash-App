@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { toast } from "sonner";
-import { Music, Loader2 } from "lucide-react";
+import { Music } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
-import { AgentChatPanel, ToolCard } from "@/components/StudioLayout";
+import { AgentChatPanel, ToolCard, StudioContextArea } from "@/components/StudioLayout";
 import { PageHeader } from "@/components/PageHeader";
 
 const COLOR = "#FF2D55";
@@ -49,18 +49,10 @@ export default function TikTokStudio() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3 space-y-5">
-          <div className="border border-white/8 rounded-sm p-5 space-y-4" style={{ background: "rgba(255,45,85,0.03)" }}>
-            <label className="block text-xs uppercase tracking-widest" style={{ color: COLOR }}>
-              {lang === "DE" ? "Thema / Kontext" : "Topic / Context"}
-            </label>
-            <textarea value={context} onChange={(e) => setContext(e.target.value)} rows={4}
-              placeholder={lang === "DE"
-                ? "z.B. KickstarterCash Cashback-Karte – finanzielle Freiheit für Unternehmer…"
-                : "e.g. KickstarterCash cashback card – financial freedom for entrepreneurs…"}
-              className="w-full bg-black border border-white/8 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none"
-              onFocus={(e) => { e.target.style.borderColor = `${COLOR}50`; }}
-              onBlur={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; }} />
-          </div>
+          <StudioContextArea color={COLOR} context={context} setContext={setContext}
+            label="Thema / Kontext" labelEN="Topic / Context" title="TikTok Studio"
+            placeholder="z.B. KickstarterCash Cashback-Karte – finanzielle Freiheit für Unternehmer…"
+            placeholderEN="e.g. KickstarterCash cashback card – financial freedom for entrepreneurs…" />
           <div>
             <p className="text-[10px] text-zinc-700 uppercase tracking-widest mb-3">
               {lang === "DE" ? "Tools — Kontext eingeben, dann klicken" : "Tools — enter context above, then click"}
