@@ -8,6 +8,7 @@ import {
   Easing,
 } from 'remotion';
 
+
 const FPS = 30;
 const TOTAL_SECONDS = 300;
 
@@ -59,6 +60,15 @@ export const CountdownVideo: React.FC = () => {
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden', background: '#000' }}>
+
+      <style>{`
+        @font-face {
+          font-family: 'Poppins';
+          src: url('/Poppins-Medium.woff2') format('woff2');
+          font-weight: 500;
+          font-style: normal;
+        }
+      `}</style>
 
       {/* Audio */}
       <Audio src={staticFile('music.mp3')} />
@@ -163,29 +173,32 @@ export const CountdownVideo: React.FC = () => {
           fontWeight: 900,
           fontSize: 160,
           lineHeight: 1,
-          color: '#000000',
+          color: '#ffffff',
+          WebkitTextStroke: '3px #c8940a',
           textShadow: [
-            '0 0 40px rgba(255,200,50,0.9)',
-            '0 0 80px rgba(255,180,20,0.6)',
-            '0 0 120px rgba(255,160,0,0.3)',
-            '2px 2px 0 rgba(255,200,50,0.4)',
+            '0 0 30px rgba(255,200,50,1)',
+            '0 0 60px rgba(255,180,20,0.7)',
+            '0 0 100px rgba(255,160,0,0.4)',
+            '4px 4px 0 rgba(180,120,0,0.5)',
           ].join(', '),
           letterSpacing: '0.05em',
         }}>
           {countdownText}
         </div>
         <div style={{
-          fontFamily: 'Arial, sans-serif',
-          fontWeight: 400,
-          fontSize: 28,
-          color: '#000000',
-          letterSpacing: '0.25em',
-          textTransform: 'uppercase',
-          marginTop: 8,
-          textShadow: '0 0 20px rgba(255,200,50,0.8), 0 0 40px rgba(255,180,20,0.4)',
-          opacity: 0.85,
+          fontFamily: '"Poppins", "Segoe UI", Arial, sans-serif',
+          fontWeight: 500,
+          fontSize: 32,
+          background: 'linear-gradient(90deg, #ffffff 0%, #ffd700 40%, #ffb800 60%, #ffffff 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          letterSpacing: '0.15em',
+          marginTop: 16,
+          textShadow: 'none',
+          filter: 'drop-shadow(0 0 12px rgba(255,200,50,0.9)) drop-shadow(0 0 24px rgba(255,180,20,0.5))',
         }}>
-          Webinar startet in
+          Wir starten in Kürze
         </div>
       </div>
 
