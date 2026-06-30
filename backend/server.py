@@ -1138,6 +1138,56 @@ EMPFEHLUNG durch KASH:
 - Web3 + USD-Banking + Blockchain-Ökosystem + Provision verdienen → Valygo Premium (3.703,70 AED)
 
 ═══════════════════════════════════════
+KARTENLÖSUNG 5: REDOTPAY KARTE (Physisch & Virtuell)
+═══════════════════════════════════════
+Partner: RedotPay (Fintech, keine Bank — Wallet von lizenzierten Finanzinstituten)
+Nutzer weltweit: über 7 Millionen
+Apple Pay: ✓ (in Safari unterstützt)
+Google Pay / Google Wallet: ✓
+
+PHYSISCHE REDOTPAY KARTE:
+- Keine Jahresgebühren
+- Weltweit bei über 130 Millionen Händlern akzeptiert
+- Geldautomaten-Abhebung weltweit möglich
+- Stablecoin-basiert (USDC, USDT)
+- Kontaktloses Bezahlen (Tap & Swipe)
+- Beantragung: per RedotPay-App → KYC → Karte beantragen
+
+VIRTUELLE REDOTPAY KARTE:
+- Sofort einsatzbereit (innerhalb Minuten)
+- Für Online-Einkäufe, Abonnements, Reisen
+- Sofortige Transaktionsaufzeichnungen
+- Kontaktloses Bezahlen
+- Verknüpfbar mit Apple Pay & Google Wallet
+
+AUFLADEN / EINZAHLEN:
+- On-Chain: BTC, ETH, USDT und mehr (direkt über Blockchain)
+- Drittanbieter-Wallets: Binance, PayPal und andere
+- Traditionelle Banküberweisung: lokal oder international (in Landeswährung)
+
+GELD SENDEN (Global Payout):
+- Krypto → Landeswährung senden (THB, PHP, BRL, EUR, GBP, USD etc.)
+- Sofortüberweisungen in Ländern mit lokalem Netzwerk (Pix, SPEI etc.)
+- SWIFT: 1–3 Werktage
+- Transparente Gebühren, kein versteckter Spread
+- Empfänger erhält Landeswährung direkt auf Bankkonto oder E-Wallet
+
+MULTIWÄHRUNGS-WALLET:
+- EUR, GBP, USD + Krypto in einer Wallet
+- Eigene Kontodaten pro Währung
+- Verwaltung vollständig per App
+
+EARN (Zinsen auf Krypto):
+- Aktuell USDC & USDT unterstützt
+- Flexible Laufzeit (kein Lock-in)
+- 24/7 Zugriff
+- Prämien können direkt mit RedotPay-Karte ausgegeben werden
+- Nur in ausgewählten Regionen verfügbar (Risiko: Kapitalverlust möglich)
+
+EMPFEHLUNG:
+- Krypto im Alltag ausgeben + Apple Pay + keine Jahresgebühr → RedotPay (ideal für Krypto-Nutzer)
+
+═══════════════════════════════════════
 LEAD-CAPTURE-PROTOKOLL
 ═══════════════════════════════════════
 Wenn ein Kunde echtes Kaufinteresse zeigt (fragt nach Preis, Bestellung, nächsten Schritten,
