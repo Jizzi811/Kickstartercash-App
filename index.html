@@ -1228,6 +1228,14 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
       const reply = data.reply || '⚠️ Keine Antwort erhalten.';
       history.push({role:'assistant', content: reply});
       addMsg('bot', reply);
+      // Show gold success badge when KASH captured a lead
+      if(data.lead_captured){
+        const badge = document.createElement('div');
+        badge.style.cssText = 'margin:8px auto;padding:8px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.08em;text-align:center;color:#000;background:linear-gradient(135deg,#D4AF37,#B8972E);animation:msgIn .3s ease';
+        badge.textContent = '✦ LEAD ERFASST – Unser Team meldet sich bald!';
+        msgs.appendChild(badge);
+        msgs.scrollTop = msgs.scrollHeight;
+      }
     } catch(e){
       typing.remove();
       addMsg('error', `⚠️ Netzwerkfehler: ${e.message}. Ist Railway online?`);
@@ -1249,6 +1257,442 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
   document.querySelectorAll('.ks-chip').forEach(c=>{
     c.addEventListener('click', ()=> send(c.textContent));
   });
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════
+     WHIMSY LAYER — Cursor Trail, Parallax, Typewriter,
+     Scroll Reveal, Button Ripple, Easter Egg
+     ═══════════════════════════════════════════════════════ -->
+<style>
+/* ── Cursor Trail ──────────────────────────────────────────────────── */
+.cursor-trail {
+  position: fixed;
+  pointer-events: none;
+  border-radius: 50%;
+  z-index: 9999;
+  mix-blend-mode: screen;
+  transform: translate(-50%, -50%);
+  animation: trailFade var(--trail-dur, 0.8s) ease-out forwards;
+}
+@keyframes trailFade {
+  0%   { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0;   transform: translate(-50%, -50%) scale(0.1); }
+}
+
+/* ── Floating Background Particles ────────────────────────────────── */
+.bg-particle {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(circle, rgba(212,175,55,0.6) 0%, transparent 70%);
+  animation: bgFloat var(--bp-dur, 12s) ease-in-out infinite;
+  animation-delay: var(--bp-delay, 0s);
+}
+@keyframes bgFloat {
+  0%   { transform: translateY(0px) translateX(0px) scale(1);     opacity: 0; }
+  15%  { opacity: var(--bp-opacity, 0.25); }
+  50%  { transform: translateY(-40px) translateX(15px) scale(1.15); opacity: var(--bp-opacity, 0.25); }
+  85%  { opacity: var(--bp-opacity, 0.25); }
+  100% { transform: translateY(0px) translateX(0px) scale(1);     opacity: 0; }
+}
+
+/* ── Scroll Reveal ─────────────────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.23,1,0.32,1),
+              transform 0.7s cubic-bezier(0.23,1,0.32,1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Button Ripple ─────────────────────────────────────────────────── */
+.ripple-wave {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 220, 100, 0.45);
+  transform: scale(0);
+  pointer-events: none;
+  animation: rippleExpand 0.65s ease-out forwards;
+}
+@keyframes rippleExpand {
+  to { transform: scale(4); opacity: 0; }
+}
+
+/* ── Easter Egg Overlay ────────────────────────────────────────────── */
+#kash-easter-egg {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(212,175,55,0.18) 0%,
+    rgba(0,0,0,0.88) 70%);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 18px;
+  backdrop-filter: blur(6px);
+  animation: eggFadeIn 0.4s ease;
+}
+#kash-easter-egg.show {
+  display: flex;
+}
+@keyframes eggFadeIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+#kash-easter-egg .egg-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.6rem, 5vw, 2.8rem);
+  font-weight: 700;
+  background: linear-gradient(135deg, #FBE9A6, #EBCB72, #D4AF37);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  letter-spacing: 0.06em;
+  animation: eggGlow 2s ease-in-out infinite;
+}
+@keyframes eggGlow {
+  0%, 100% { filter: drop-shadow(0 0 12px rgba(212,175,55,0.5)); }
+  50%       { filter: drop-shadow(0 0 32px rgba(251,233,166,0.9)); }
+}
+#kash-easter-egg .egg-sub {
+  font-size: 1rem;
+  color: #C9BB9B;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  text-align: center;
+}
+#kash-easter-egg .egg-orb {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #FBE9A6, #F6DC8E 25%, #D9A93F 60%, #B07F2A 100%);
+  box-shadow: 0 0 60px 20px rgba(217,169,63,0.7), 0 0 120px 40px rgba(176,127,42,0.4);
+  animation: eggOrbSpin 3s ease-in-out infinite;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.4rem;
+}
+@keyframes eggOrbSpin {
+  0%   { transform: scale(1) rotate(0deg); }
+  50%  { transform: scale(1.12) rotate(180deg); }
+  100% { transform: scale(1) rotate(360deg); }
+}
+#kash-easter-egg .egg-close {
+  margin-top: 12px;
+  background: none;
+  border: 1px solid rgba(212,175,55,0.4);
+  border-radius: 24px;
+  padding: 10px 32px;
+  color: #EBCB72;
+  font-size: 0.82rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.25s, border-color 0.25s;
+  font-family: inherit;
+}
+#kash-easter-egg .egg-close:hover {
+  background: rgba(212,175,55,0.12);
+  border-color: rgba(212,175,55,0.8);
+}
+.egg-confetti {
+  position: fixed;
+  pointer-events: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  z-index: 10001;
+  animation: confettiFall var(--cf-dur, 2.5s) ease-in forwards;
+}
+@keyframes confettiFall {
+  0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* ── Typewriter cursor ─────────────────────────────────────────────── */
+.tw-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: #EBCB72;
+  margin-left: 3px;
+  vertical-align: middle;
+  animation: twBlink 0.75s step-end infinite;
+}
+@keyframes twBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+</style>
+
+<!-- Easter Egg Overlay -->
+<div id="kash-easter-egg" role="dialog" aria-modal="true" aria-label="Geheimes KASH-Easter-Egg">
+  <div class="egg-orb" aria-hidden="true">K</div>
+  <div class="egg-title">Du hast KASH entdeckt!</div>
+  <div class="egg-sub">Geheimwissen freigeschaltet &middot; Level&nbsp;Gold</div>
+  <button class="egg-close" id="egg-close-btn">Weiter zur Magie</button>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════
+   WHIMSY ENGINE — vanilla JS, rAF-driven, no libs
+   ════════════════════════════════════════════════════════ */
+(function() {
+  'use strict';
+
+  /* ── 1. Floating Background Particles ──────────────────────────── */
+  var BG_PARTICLES = [
+    { x:'12%', y:'22%', size:180, opacity:0.12, dur:14, delay:0   },
+    { x:'78%', y:'18%', size:140, opacity:0.10, dur:18, delay:3   },
+    { x:'88%', y:'62%', size:100, opacity:0.15, dur:11, delay:1.5 },
+    { x:'8%',  y:'68%', size:120, opacity:0.10, dur:16, delay:5   },
+    { x:'50%', y:'85%', size:160, opacity:0.08, dur:20, delay:2   },
+    { x:'35%', y:'10%', size: 80, opacity:0.14, dur:13, delay:7   },
+    { x:'65%', y:'45%', size: 60, opacity:0.18, dur: 9, delay:4   }
+  ];
+  BG_PARTICLES.forEach(function(p) {
+    var el = document.createElement('div');
+    el.className = 'bg-particle';
+    el.style.cssText =
+      'left:' + p.x + ';top:' + p.y + ';' +
+      'width:' + p.size + 'px;height:' + p.size + 'px;' +
+      '--bp-dur:' + p.dur + 's;' +
+      '--bp-delay:' + p.delay + 's;' +
+      '--bp-opacity:' + p.opacity + ';';
+    document.body.appendChild(el);
+  });
+
+  /* ── 2. Cursor Trail ─────────────────────────────────────────────── */
+  var trailColors = [
+    'rgba(251,233,166,VAL)', 'rgba(212,175,55,VAL)',
+    'rgba(235,203,114,VAL)', 'rgba(246,220,142,VAL)'
+  ];
+  var trailSizes  = [6, 4, 8, 3, 5];
+  var trailIdx    = 0;
+  var lastTrailX  = -999, lastTrailY = -999;
+  var MIN_DIST    = 12;
+
+  function spawnTrailDot(x, y) {
+    var size  = trailSizes[trailIdx % trailSizes.length];
+    var color = trailColors[trailIdx % trailColors.length]
+                  .replace('VAL', (0.5 + Math.random() * 0.3).toFixed(2));
+    var dur   = (0.6 + Math.random() * 0.5).toFixed(2);
+    trailIdx++;
+    var dot = document.createElement('div');
+    dot.className = 'cursor-trail';
+    dot.style.cssText =
+      'left:' + x + 'px;top:' + y + 'px;' +
+      'width:' + size + 'px;height:' + size + 'px;' +
+      'background:' + color + ';' +
+      'box-shadow:0 0 ' + (size * 2) + 'px ' + color + ';' +
+      '--trail-dur:' + dur + 's;';
+    document.body.appendChild(dot);
+    setTimeout(function() { if (dot.parentNode) dot.parentNode.removeChild(dot); }, dur * 1000 + 50);
+  }
+
+  document.addEventListener('mousemove', function(e) {
+    var dx = e.clientX - lastTrailX;
+    var dy = e.clientY - lastTrailY;
+    if (dx*dx + dy*dy < MIN_DIST*MIN_DIST) return;
+    lastTrailX = e.clientX;
+    lastTrailY = e.clientY;
+    spawnTrailDot(e.clientX, e.clientY);
+  });
+
+  /* ── 3. Orb Parallax on Mouse Move ──────────────────────────────── */
+  var orbEl    = document.getElementById('orb');
+  var stageEl  = document.getElementById('stage');
+  var targetX  = 0, targetY = 0, currentX = 0, currentY = 0;
+  var ringsEl  = stageEl ? Array.prototype.slice.call(stageEl.querySelectorAll('.ring')) : [];
+
+  document.addEventListener('mousemove', function(e) {
+    var cx = window.innerWidth  / 2;
+    var cy = window.innerHeight / 2;
+    targetX = ((e.clientX - cx) / cx) * 18;
+    targetY = ((e.clientY - cy) / cy) * 18;
+  });
+
+  (function animateParallax() {
+    currentX += (targetX - currentX) * 0.06;
+    currentY += (targetY - currentY) * 0.06;
+    if (orbEl) {
+      orbEl.style.transform = 'translate(' + currentX.toFixed(2) + 'px,' + currentY.toFixed(2) + 'px)';
+    }
+    ringsEl.forEach(function(r, i) {
+      var factor = (i + 1) * 0.35;
+      r.style.marginLeft = (-currentX * factor).toFixed(2) + 'px';
+      r.style.marginTop  = (-currentY * factor).toFixed(2) + 'px';
+    });
+    requestAnimationFrame(animateParallax);
+  })();
+
+  /* ── 4. Scroll Reveal (IntersectionObserver) ─────────────────────── */
+  ['.title', '.subtitle', '.hint'].forEach(function(sel) {
+    document.querySelectorAll(sel).forEach(function(el) {
+      el.classList.add('reveal');
+    });
+  });
+  if (stageEl) stageEl.classList.add('reveal');
+
+  var revealObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.reveal').forEach(function(el) {
+    revealObserver.observe(el);
+  });
+
+  /* ── 5. Typewriter Effect on .title ─────────────────────────────── */
+  var titleEl = document.querySelector('.title');
+  if (titleEl) {
+    var originalText = titleEl.textContent;
+    titleEl.textContent = '';
+    var cursor = document.createElement('span');
+    cursor.className = 'tw-cursor';
+    cursor.setAttribute('aria-hidden', 'true');
+    titleEl.appendChild(cursor);
+    var charIdx  = 0;
+    var typeDelay = 65;
+
+    function typeNextChar() {
+      if (charIdx < originalText.length) {
+        var textNode = document.createTextNode(originalText[charIdx]);
+        titleEl.insertBefore(textNode, cursor);
+        charIdx++;
+        setTimeout(typeNextChar, typeDelay + Math.random() * 40);
+      } else {
+        setTimeout(function() {
+          cursor.style.animation = 'none';
+          cursor.style.transition = 'opacity 0.4s';
+          cursor.style.opacity = '0';
+        }, 1800);
+      }
+    }
+
+    var twObserver = new IntersectionObserver(function(entries) {
+      if (entries[0].isIntersecting) {
+        setTimeout(typeNextChar, 350);
+        twObserver.disconnect();
+      }
+    }, { threshold: 0.5 });
+    twObserver.observe(titleEl);
+  }
+
+  /* ── 6. Button Ripple Effect ─────────────────────────────────────── */
+  function addRipple(e) {
+    var btn = e.currentTarget;
+    var prev = window.getComputedStyle(btn).position;
+    if (prev === 'static') btn.style.position = 'relative';
+    btn.style.overflow = 'hidden';
+    var rect = btn.getBoundingClientRect();
+    var x    = e.clientX - rect.left;
+    var y    = e.clientY - rect.top;
+    var size = Math.max(rect.width, rect.height) * 1.8;
+    var wave = document.createElement('span');
+    wave.className = 'ripple-wave';
+    wave.style.cssText =
+      'width:'  + size + 'px;height:' + size + 'px;' +
+      'left:'   + (x - size/2) + 'px;' +
+      'top:'    + (y - size/2) + 'px;';
+    btn.appendChild(wave);
+    setTimeout(function() { if (wave.parentNode) wave.parentNode.removeChild(wave); }, 700);
+  }
+
+  document.querySelectorAll('#jrv-send, #jrv-mic, .dept-pill').forEach(function(btn) {
+    btn.addEventListener('click', addRipple);
+  });
+
+  /* ── 7. Easter Egg — triple-click on Orb ────────────────────────── */
+  var eggOverlay    = document.getElementById('kash-easter-egg');
+  var eggCloseBtn   = document.getElementById('egg-close-btn');
+  var orbClickCount = 0;
+  var orbClickTimer = null;
+  var eggTriggered  = false;
+  var CONFETTI_COLORS = ['#D4AF37','#FBE9A6','#EBCB72','#F6DC8E','#B07F2A','#fff','#FFD700'];
+
+  function spawnConfetti() {
+    for (var i = 0; i < 60; i++) {
+      (function(idx) {
+        setTimeout(function() {
+          var c = document.createElement('div');
+          c.className = 'egg-confetti';
+          var color = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+          var left  = Math.random() * 100;
+          var dur   = (1.8 + Math.random() * 1.5).toFixed(2);
+          c.style.cssText =
+            'left:' + left + 'vw;top:-10px;' +
+            'background:' + color + ';' +
+            'border-radius:' + (Math.random() > 0.5 ? '50%' : '2px') + ';' +
+            '--cf-dur:' + dur + 's;';
+          document.body.appendChild(c);
+          setTimeout(function() { if (c.parentNode) c.parentNode.removeChild(c); }, dur * 1000 + 100);
+        }, idx * 35);
+      })(i);
+    }
+  }
+
+  function showEasterEgg() {
+    if (eggTriggered) return;
+    eggTriggered = true;
+    if (eggOverlay) eggOverlay.classList.add('show');
+    spawnConfetti();
+    document.addEventListener('keydown', function escHandler(e) {
+      if (e.key === 'Escape') {
+        hideEasterEgg();
+        document.removeEventListener('keydown', escHandler);
+      }
+    });
+  }
+
+  function hideEasterEgg() {
+    if (eggOverlay) eggOverlay.classList.remove('show');
+    eggTriggered = false;
+  }
+
+  if (orbEl) {
+    orbEl.addEventListener('click', function() {
+      orbClickCount++;
+      clearTimeout(orbClickTimer);
+      orbClickTimer = setTimeout(function() { orbClickCount = 0; }, 1200);
+      if (orbClickCount >= 3) {
+        orbClickCount = 0;
+        setTimeout(showEasterEgg, 180);
+      }
+    });
+  }
+
+  if (eggCloseBtn) {
+    eggCloseBtn.addEventListener('click', hideEasterEgg);
+  }
+  if (eggOverlay) {
+    eggOverlay.addEventListener('click', function(e) {
+      if (e.target === eggOverlay) hideEasterEgg();
+    });
+  }
+
+  /* ── 8. Orb hover — pause breathe animation ─────────────────────── */
+  if (orbEl) {
+    orbEl.addEventListener('mouseenter', function() {
+      orbEl.style.animationPlayState = 'paused';
+    });
+    orbEl.addEventListener('mouseleave', function() {
+      orbEl.style.animationPlayState = 'running';
+    });
+  }
+
 })();
 </script>
 </body>
