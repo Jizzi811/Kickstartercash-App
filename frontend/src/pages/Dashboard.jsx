@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import axios from "axios";
+import { useApp, API } from "@/context/AppContext";
 import {
   ArrowRight, Sparkles, Bot, Palette, Film, Smartphone,
   Globe, BarChart2, Zap, Database, Wrench, MessageSquare,
   TrendingUp, Users, FileText, Cpu, Crown, ChevronRight,
   Star, Activity, Clock, Layers,
 } from "lucide-react";
-import { useApp } from "@/context/AppContext";
+
 
 /* ─── animation variants ─────────────────────────────────────────── */
 const fadeUp = (delay = 0) => ({
@@ -254,11 +256,65 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [hovered, setHovered] = useState(null);
   const [tick, setTick] = useState(0);
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 3000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    axios.get(`${API}/stats`).then(r => setStats(r.data)).catch(() => {});
+  }, []);
+
+  const fmt = (n) => n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n ?? 0);
+
+  const liveKpis = stats ? [
+    {
+      icon: Bot,
+      labelDE: "KI-Agenten",
+      labelEN: "AI Agents",
+      value: String(stats.agents),
+      subDE: "Aktiv & einsatzbereit",
+      subEN: "Active & ready",
+      color: "#D4AF37",
+      trend: stats.custom_agents > 0 ? `+${stats.custom_agents}` : "Live",
+      sparkPath: "M0,20 C10,18 20,8 30,10 C40,12 50,4 60,6 C70,8 80,2 90,0",
+    },
+    {
+      icon: Cpu,
+      labelDE: "Generierte Assets",
+      labelEN: "Generated Assets",
+      value: fmt(stats.assets_this_week),
+      subDE: "Diese Woche",
+      subEN: "This week",
+      color: "#C084FC",
+      trend: stats.assets_growth_pct >= 0 ? `+${stats.assets_growth_pct}%` : `${stats.assets_growth_pct}%`,
+      sparkPath: "M0,20 C15,16 25,12 40,8 C55,4 65,10 80,6 C85,4 88,2 90,0",
+    },
+    {
+      icon: Users,
+      labelDE: "Leads",
+      labelEN: "Leads",
+      value: fmt(stats.leads_qualified),
+      subDE: "Qualifizierte Kontakte",
+      subEN: "Qualified contacts",
+      color: "#34D399",
+      trend: stats.tickets_open > 0 ? `${stats.tickets_open} offen` : "Live",
+      sparkPath: "M0,20 C10,17 20,14 35,10 C50,6 60,8 75,4 C82,2 87,1 90,0",
+    },
+    {
+      icon: FileText,
+      labelDE: "Gespräche",
+      labelEN: "Sessions",
+      value: fmt(stats.sessions_total),
+      subDE: "KASH Chat-Sessions",
+      subEN: "KASH chat sessions",
+      color: "#F472B6",
+      trend: `${stats.knowledge_docs} KB-Docs`,
+      sparkPath: "M0,18 C12,16 22,20 36,14 C50,8 62,12 76,6 C84,3 88,1 90,0",
+    },
+  ] : KPI_CARDS;
 
   const greetDE = () => {
     const h = new Date().getHours();
@@ -437,7 +493,7 @@ export default function Dashboard() {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-            {KPI_CARDS.map((card, i) => {
+            {liveKpis.map((card, i) => {
               const Icon = card.icon;
               return (
                 <motion.div
