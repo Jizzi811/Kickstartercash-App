@@ -18,6 +18,7 @@ import VideoStudio from "@/pages/VideoStudio";
 import SeoStudio from "@/pages/SeoStudio";
 import AnalyticsStudio from "@/pages/AnalyticsStudio";
 import AutomationStudio from "@/pages/AutomationStudio";
+import TicketSystem from "@/pages/TicketSystem";
 import TikTokStudio from "@/pages/TikTokStudio";
 import SeoSpecialistStudio from "@/pages/SeoSpecialistStudio";
 import EmailStudio from "@/pages/EmailStudio";
@@ -62,6 +63,9 @@ function App() {
               {/* Jarvjis CEO Orb – bleibt */}
               <Route path="/jarvjis" element={<JarvjisAgent />} />
               <Route path="/builder" element={<AgentBuilder />} />
+
+              {/* Ticket System */}
+              <Route path="/tickets" element={<TicketSystem />} />
 
               {/* New marketing specialist agents */}
               <Route path="/tiktok" element={<TikTokStudio />} />
