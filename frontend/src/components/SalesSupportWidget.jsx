@@ -137,7 +137,7 @@ export function SalesSupportWidget() {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [open]);
+  }, [open, lang, messages.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
