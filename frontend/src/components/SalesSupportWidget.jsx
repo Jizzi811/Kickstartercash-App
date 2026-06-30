@@ -549,6 +549,51 @@ export function SalesSupportWidget() {
                       {s}
                     </button>
                   ))}
+
+                  {/* Human-contact option */}
+                  <div style={{ paddingTop: "4px", borderTop: "1px solid rgba(255,255,255,0.05)", marginTop: "8px" }}>
+                    <p className="text-[10px] text-zinc-700 uppercase tracking-widest px-1 mb-2">
+                      {lang === "DE" ? "Oder direkt zum Team" : "Or contact the team"}
+                    </p>
+                    <button
+                      onClick={() => setShowTicketModal(true)}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "9px 12px",
+                        background: "rgba(212,175,55,0.06)",
+                        border: "1px solid rgba(212,175,55,0.18)",
+                        borderRadius: "8px",
+                        color: "#A89040",
+                        fontSize: "12px",
+                        cursor: "pointer",
+                        transition: "all 0.15s",
+                        textAlign: "left",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(212,175,55,0.12)";
+                        e.currentTarget.style.borderColor = "rgba(212,175,55,0.35)";
+                        e.currentTarget.style.color = "#D4AF37";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(212,175,55,0.06)";
+                        e.currentTarget.style.borderColor = "rgba(212,175,55,0.18)";
+                        e.currentTarget.style.color = "#A89040";
+                      }}
+                    >
+                      <Ticket size={13} style={{ flexShrink: 0 }} />
+                      <div>
+                        <div style={{ fontWeight: 600, lineHeight: 1.3 }}>
+                          {lang === "DE" ? "Mit einem Menschen verbinden" : "Connect with a human"}
+                        </div>
+                        <div style={{ fontSize: "10px", opacity: 0.7, marginTop: "1px" }}>
+                          {lang === "DE" ? "Ticket erstellen — wir melden uns persönlich" : "Create a ticket — we'll reach out personally"}
+                        </div>
+                      </div>
+                    </button>
+                  </div>
                 </motion.div>
               )}
 
