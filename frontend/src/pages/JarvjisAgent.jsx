@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Bot, TrendingUp, Palette, Video, ShoppingCart, Search, Zap, Headphones,
-  ChevronDown, ArrowDown, User, Cpu, GitBranch, Crown,
+  ChevronDown, ArrowDown, User, Cpu, GitBranch, Crown, Music, Mail, Linkedin,
+  Network, Workflow,
 } from "lucide-react";
 
 const DEPARTMENTS = [
@@ -69,6 +70,60 @@ const DEPARTMENTS = [
     descDE: "Kundenkommunikation, FAQs & Community",
     descEN: "Customer communication, FAQs & community",
   },
+  {
+    id: "tiktok",
+    icon: Music,
+    labelDE: "TikTok",
+    labelEN: "TikTok",
+    color: "#FF2D55",
+    descDE: "Viral-Content, Hooks, Skripte & Hashtag-Strategie",
+    descEN: "Viral content, hooks, scripts & hashtag strategy",
+  },
+  {
+    id: "seo_specialist",
+    icon: Search,
+    labelDE: "SEO Specialist",
+    labelEN: "SEO Specialist",
+    color: "#34D399",
+    descDE: "On-Page, Technisches SEO, GEO & Keyword-Strategie",
+    descEN: "On-page, technical SEO, GEO & keyword strategy",
+  },
+  {
+    id: "email",
+    icon: Mail,
+    labelDE: "E-Mail Marketing",
+    labelEN: "Email Marketing",
+    color: "#FBBF24",
+    descDE: "Newsletter, Sequenzen, CRM & Deliverability",
+    descEN: "Newsletter, sequences, CRM & deliverability",
+  },
+  {
+    id: "linkedin",
+    icon: Linkedin,
+    labelDE: "LinkedIn",
+    labelEN: "LinkedIn",
+    color: "#0A66C2",
+    descDE: "Posts, Karussell, Personal Branding & Lead-Gen",
+    descEN: "Posts, carousels, personal branding & lead gen",
+  },
+  {
+    id: "orchestrator",
+    icon: Network,
+    labelDE: "Orchestrator",
+    labelEN: "Orchestrator",
+    color: "#8B5CF6",
+    descDE: "Multi-Agenten-Koordination & Workflow-Design",
+    descEN: "Multi-agent coordination & workflow design",
+  },
+  {
+    id: "workflow",
+    icon: Workflow,
+    labelDE: "Workflow",
+    labelEN: "Workflow",
+    color: "#F97316",
+    descDE: "Prozessdesign, SOPs & Automatisierungs-Architektur",
+    descEN: "Process design, SOPs & automation architecture",
+  },
 ];
 
 const TASKS_DE = {
@@ -113,6 +168,42 @@ const TASKS_DE = {
     "Onboarding-Checkliste entwickeln",
     "Community-Guidelines schreiben",
     "Support-Template-Antworten vorbereiten",
+  ],
+  tiktok: [
+    "Viralen TikTok-Hook entwickeln (0-3 Sek.)",
+    "Vollständiges TikTok-Skript mit Szenen schreiben",
+    "Trending Sounds & Hashtag-Strategie erstellen",
+    "Content-Serie für 30 Tage planen",
+  ],
+  seo_specialist: [
+    "Keyword-Recherche mit Suchvolumen & KD",
+    "Technisches SEO-Audit durchführen",
+    "GEO-Optimierung für ChatGPT & Gemini",
+    "Backlink-Strategie & Content-Cluster planen",
+  ],
+  email: [
+    "Willkommens-E-Mail-Serie (5 Mails) schreiben",
+    "Re-Engagement-Kampagne für Inaktive erstellen",
+    "Betreffzeilen A/B-Test-Varianten entwickeln",
+    "VIP-Member-Onboarding-Sequenz aufbauen",
+  ],
+  linkedin: [
+    "Viralen LinkedIn-Post mit Hook schreiben",
+    "Karussell-Präsentation (10 Slides) erstellen",
+    "Thought-Leadership-Artikel verfassen",
+    "LinkedIn-Profil-Optimierung durchführen",
+  ],
+  orchestrator: [
+    "Komplexe Aufgabe auf alle Agenten verteilen",
+    "Multi-Agenten-Workflow für Kampagne entwerfen",
+    "Content-Pipeline koordinieren (Idee → Live)",
+    "Parallele Agenten-Ausführung planen",
+  ],
+  workflow: [
+    "Lead-to-Sale-Workflow kartografieren",
+    "SOP für Karten-Onboarding erstellen",
+    "Content-Produktions-Workflow designen",
+    "Affiliate-Tracking-Prozess aufbauen",
   ],
 };
 
@@ -159,6 +250,42 @@ const TASKS_EN = {
     "Write community guidelines",
     "Prepare support template responses",
   ],
+  tiktok: [
+    "Develop viral TikTok hook (0-3 sec)",
+    "Write full TikTok script with scenes",
+    "Create trending sounds & hashtag strategy",
+    "Plan 30-day content series",
+  ],
+  seo_specialist: [
+    "Keyword research with volume & KD",
+    "Conduct technical SEO audit",
+    "GEO optimization for ChatGPT & Gemini",
+    "Plan backlink strategy & content clusters",
+  ],
+  email: [
+    "Write welcome email series (5 emails)",
+    "Create re-engagement campaign for inactive users",
+    "Develop subject line A/B test variants",
+    "Build VIP member onboarding sequence",
+  ],
+  linkedin: [
+    "Write viral LinkedIn post with hook",
+    "Create carousel presentation (10 slides)",
+    "Write thought leadership article",
+    "Optimize LinkedIn profile",
+  ],
+  orchestrator: [
+    "Distribute complex task across all agents",
+    "Design multi-agent workflow for campaign",
+    "Coordinate content pipeline (idea → live)",
+    "Plan parallel agent execution",
+  ],
+  workflow: [
+    "Map lead-to-sale workflow",
+    "Create SOP for card onboarding",
+    "Design content production workflow",
+    "Build affiliate tracking process",
+  ],
 };
 
 export default function JarvjisAgent() {
@@ -178,6 +305,12 @@ export default function JarvjisAgent() {
     seo: "Verstanden. SEO-Analyse läuft. Keywords werden identifiziert und eine Ranking-Strategie wird entwickelt.",
     automation: "Gut. Automation-Workflow wird konfiguriert. Alle Prozesse werden optimiert für maximale Effizienz.",
     support: "Notiert. Support-Inhalte werden erstellt. Kundenbetreuung auf höchstem Niveau wird sichergestellt.",
+    tiktok: "Perfekt. Tia übernimmt. TikTok-Content mit maximalem Viralitätspotenzial wird jetzt entwickelt — Hook, Skript, Hashtags, alles.",
+    seo_specialist: "Verstanden. Sofia startet die SEO-Analyse. Keywords, technisches Audit und GEO-Optimierung laufen parallel.",
+    email: "Notiert. Emma erstellt die E-Mail-Sequenz. Personalisierung, Segmentierung und Deliverability werden sichergestellt.",
+    linkedin: "Exzellent. Leon übernimmt LinkedIn. Hochwertiger Content für maximale organische Reichweite und Lead-Generierung.",
+    orchestrator: "Perfekt. Orion koordiniert alle Agenten. Der optimale Multi-Agenten-Workflow wird jetzt entworfen und ausgeführt.",
+    workflow: "Verstanden. Wren kartografiert den Prozess. Ein skalierbarer, effizienter Workflow mit SOP wird entwickelt.",
   };
 
   const ceoResponsesEN = {
@@ -188,6 +321,12 @@ export default function JarvjisAgent() {
     seo: "Understood. SEO analysis running. Keywords will be identified and a ranking strategy will be developed.",
     automation: "Good. Automation workflow is being configured. All processes will be optimized for maximum efficiency.",
     support: "Noted. Support content will be created. Top-level customer care will be ensured.",
+    tiktok: "Perfect. Tia is on it. TikTok content with maximum virality potential — hook, script, hashtags, everything.",
+    seo_specialist: "Understood. Sofia starts the SEO analysis. Keywords, technical audit and GEO optimization run in parallel.",
+    email: "Noted. Emma is crafting the email sequence. Personalization, segmentation and deliverability guaranteed.",
+    linkedin: "Excellent. Leon takes LinkedIn. High-quality content for maximum organic reach and lead generation.",
+    orchestrator: "Perfect. Orion coordinates all agents. The optimal multi-agent workflow is being designed and executed.",
+    workflow: "Understood. Wren maps the process. A scalable, efficient workflow with SOP will be delivered.",
   };
 
   const handleTaskSelect = (dept, task) => {
@@ -239,7 +378,7 @@ export default function JarvjisAgent() {
               {lang === "DE" ? "Dein CEO-Assistent" : "Your CEO Assistant"}
             </h1>
             <p style={{ fontSize: "13px", color: "#71717a", marginTop: "4px", marginBottom: 0 }}>
-              {lang === "DE" ? "Delegiere Aufgaben an 7 KI-Spezialisten" : "Delegate tasks to 7 AI specialists"}
+              {lang === "DE" ? "Delegiere Aufgaben an 13 KI-Spezialisten" : "Delegate tasks to 13 AI specialists"}
             </p>
           </div>
         </div>

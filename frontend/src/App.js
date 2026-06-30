@@ -18,6 +18,12 @@ import VideoStudio from "@/pages/VideoStudio";
 import SeoStudio from "@/pages/SeoStudio";
 import AnalyticsStudio from "@/pages/AnalyticsStudio";
 import AutomationStudio from "@/pages/AutomationStudio";
+import TikTokStudio from "@/pages/TikTokStudio";
+import SeoSpecialistStudio from "@/pages/SeoSpecialistStudio";
+import EmailStudio from "@/pages/EmailStudio";
+import LinkedInStudio from "@/pages/LinkedInStudio";
+import OrchestratorStudio from "@/pages/OrchestratorStudio";
+import WorkflowStudio from "@/pages/WorkflowStudio";
 
 // Existing tools (kept for legacy routes)
 import SocialMedia from "@/pages/SocialMedia";
@@ -56,6 +62,14 @@ function App() {
               {/* Jarvjis CEO Orb – bleibt */}
               <Route path="/jarvjis" element={<JarvjisAgent />} />
               <Route path="/builder" element={<AgentBuilder />} />
+
+              {/* New marketing specialist agents */}
+              <Route path="/tiktok" element={<TikTokStudio />} />
+              <Route path="/seo-specialist" element={<SeoSpecialistStudio />} />
+              <Route path="/email" element={<EmailStudio />} />
+              <Route path="/linkedin" element={<LinkedInStudio />} />
+              <Route path="/orchestrator" element={<OrchestratorStudio />} />
+              <Route path="/workflow-architect" element={<WorkflowStudio />} />
 
               {/* Legacy routes – still accessible */}
               <Route path="/image" element={<ImageGenerator />} />

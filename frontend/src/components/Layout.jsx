@@ -3,6 +3,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare,
+  Music, Mail, Linkedin, Network, Workflow, Search,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { LOGO_URL } from "@/i18n";
@@ -25,6 +26,12 @@ const NAV = [
   { to: "/knowledge",  icon: Database,   labelDE: "Wissensdatenbank", labelEN: "Knowledge Base" },
   { to: "/builder",    icon: Wrench,     labelDE: "Eigene Agenten",   labelEN: "Custom Agents" },
   { to: "/arena",      icon: MessageSquare, labelDE: "Chat Arena",    labelEN: "Chat Arena" },
+  { to: "/tiktok",     icon: Music,      labelDE: "TikTok Studio",    labelEN: "TikTok Studio" },
+  { to: "/seo-specialist", icon: Search, labelDE: "SEO Specialist",   labelEN: "SEO Specialist" },
+  { to: "/email",      icon: Mail,       labelDE: "E-Mail Marketing",  labelEN: "Email Marketing" },
+  { to: "/linkedin",   icon: Linkedin,   labelDE: "LinkedIn Studio",  labelEN: "LinkedIn Studio" },
+  { to: "/orchestrator", icon: Network,  labelDE: "Orchestrator",     labelEN: "Orchestrator" },
+  { to: "/workflow-architect", icon: Workflow, labelDE: "Workflow Architect", labelEN: "Workflow Architect" },
 ];
 
 const PAGE_NAMES = {
@@ -40,6 +47,12 @@ const PAGE_NAMES = {
   "/builder": "Eigene Agenten",
   "/arena": "Chat Arena",
   "/jarvjis": "CEO Kashbot",
+  "/tiktok": "TikTok Studio",
+  "/seo-specialist": "SEO Specialist",
+  "/email": "E-Mail Marketing",
+  "/linkedin": "LinkedIn Studio",
+  "/orchestrator": "Orchestrator",
+  "/workflow-architect": "Workflow Architect",
 };
 
 // ── Page-enter particles ──────────────────────────────────────────────────────
