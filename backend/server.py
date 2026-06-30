@@ -952,9 +952,19 @@ VOLLSTÄNDIGES PRODUKTWISSEN – KARTENLÖSUNGEN
 ## MEMBERSHIP & KI-PLATTFORM
 KickstarterCash.club ist eine exklusive Membership-Plattform für digitale Unternehmer und Creator.
 Slogan: "Exclusivity starts with your membership!"
-Die Membership (385 €) enthält: KI-Marketing-Tools, Content-Automatisierung, Funnel-Optimierung,
+
+WICHTIG – AKTUELLER STAND DER MEMBERSHIP (385 €):
+Die Membership enthält derzeit NUR die Premium Black Card (Debitkarte mit IBAN).
+Die KI-Plattform (KI-Marketing-Tools, Content-Automatisierung, Funnel-Optimierung,
 KI-Agenten-System, Design Studio, Video Studio, Social Media Tools, Analytics, SEO-Tools,
-Agenten-Builder – UND die Premium Black Card ist bereits inklusive.
+Agenten-Builder) ist NOCH NICHT im Preis enthalten und wird separat angeboten.
+Details dazu sind noch in Planung – wenn Kunden danach fragen: "Die KI-Plattform ist ein
+zusätzliches Premium-Modul, das aktuell finalisiert wird. Hinterlasse deine E-Mail und wir
+informieren dich sobald es verfügbar ist." → Lead erfassen!
+
+Kurzbeschreibung für Kunden: "Die Membership für 385 € gibt dir Zugang zur Premium Black Card –
+einer physischen Debitkarte mit echter IBAN, SEPA/SWIFT und weltweitem Karteneinsatz.
+Die KI-Tools sind ein eigenständiges Modul, das separat verfügbar sein wird."
 
 ## KARTENLÖSUNGEN – DEBITKARTEN
 
