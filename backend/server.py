@@ -2422,6 +2422,18 @@ async def homepage_ping():
     return {"pong": True, "ts": _now_iso()}
 
 
+@api_router.get("/homepage/test-kash")
+async def test_kash():
+    """GET endpoint to verify Claude call works end-to-end."""
+    try:
+        reply = await _llm_single("anthropic", "claude-haiku-4-5-20251001",
+                                  "You are KASH, a helpful assistant.",
+                                  "Say exactly: KASH is working!")
+        return {"ok": True, "reply": reply}
+    except Exception as e:
+        return {"ok": False, "error": str(e), "type": type(e).__name__}
+
+
 # ---------------------------------------------------------------------------
 # Video Generation – Veo 2 (Google Gemini)
 # ---------------------------------------------------------------------------
