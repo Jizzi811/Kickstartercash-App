@@ -3,6 +3,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Share2, Loader2, Hash, Megaphone, Image as ImgIcon } from "lucide-react";
+import { StudioContextArea } from "@/components/StudioLayout";
 import { useApp, API } from "@/context/AppContext";
 import { PageTitle } from "@/components/PageTitle";
 import { PageHeader } from "@/components/PageHeader";
@@ -16,6 +17,7 @@ export default function SocialMedia() {
   const [selected, setSelected] = useState(["Instagram", "Facebook", "LinkedIn", "TikTok"]);
   const [loading, setLoading] = useState(false);
   const [posts, setPosts] = useState([]);
+  const [refContext, setRefContext] = useState("");
 
   const toggle = (p) => setSelected((s) => s.includes(p) ? s.filter((x) => x !== p) : [...s, p]);
 
@@ -25,7 +27,7 @@ export default function SocialMedia() {
     setLoading(true); setPosts([]);
     try {
       const res = await axios.post(`${API}/generate/social`, {
-        topic, platforms: selected, brand_id: activeBrandId, model, language: lang,
+        topic: topic + (refContext ? `\n\n${refContext}` : ""), platforms: selected, brand_id: activeBrandId, model, language: lang,
       });
       setPosts(res.data.posts || []);
       if (!res.data.posts?.length) toast.error(t("error_generic"));
@@ -71,6 +73,16 @@ export default function SocialMedia() {
             ))}
           </div>
         </div>
+        <StudioContextArea
+          color="#FBBF24"
+          context={refContext}
+          setContext={setRefContext}
+          label="Referenz / Datei hochladen"
+          labelEN="Reference / Upload file"
+          placeholder="Zusätzliche Infos, Bilder, Markenrichtlinien…"
+          placeholderEN="Additional info, images, brand guidelines…"
+          title="Social Media Export"
+        />
         <div className="flex items-center justify-between flex-wrap gap-3">
           <span className="text-xs text-zinc-500">{t("activeBrand")}: <span className="text-[#D4AF37]">{activeBrand?.name}</span></span>
           <button
