@@ -377,6 +377,23 @@ export function SalesSupportWidget() {
               </div>
               <div className="flex items-center gap-1.5">
                 <button
+                  onClick={() => setShowTicketModal(true)}
+                  title={lang === "DE" ? "Support-Ticket erstellen" : "Create support ticket"}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "5px",
+                    padding: "4px 8px", borderRadius: "6px",
+                    background: "rgba(212,175,55,0.1)",
+                    border: "1px solid rgba(212,175,55,0.25)",
+                    color: "#D4AF37", fontSize: "11px", cursor: "pointer",
+                    transition: "all 0.15s", whiteSpace: "nowrap",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(212,175,55,0.2)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(212,175,55,0.1)"; }}
+                >
+                  <Ticket size={11} />
+                  <span>{lang === "DE" ? "Ticket" : "Ticket"}</span>
+                </button>
+                <button
                   onClick={() => {
                     setMessages([]);
                     setShowSuggestions(true);
