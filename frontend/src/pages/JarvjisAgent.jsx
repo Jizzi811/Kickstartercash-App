@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Bot, TrendingUp, Palette, Video, ShoppingCart, Search, Zap, Headphones,
-  ChevronDown, ArrowDown, User, Cpu, GitBranch,
+  ChevronDown, ArrowDown, User, Cpu, GitBranch, Crown,
 } from "lucide-react";
 
 const DEPARTMENTS = [
@@ -202,24 +202,48 @@ export default function JarvjisAgent() {
     }, 1800);
   };
 
+  const activeDeptObj = DEPARTMENTS.find((d) => d.id === activeDept);
+  const activeDeptColor = activeDeptObj ? activeDeptObj.color : "#D4AF37";
+
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-sm bg-[#D4AF37]/10 flex items-center justify-center">
-            <Cpu size={20} className="text-[#D4AF37]" />
+
+      {/* Premium Hero Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        style={{
+          position: "relative",
+          overflow: "hidden",
+          borderRadius: "8px",
+          padding: "32px",
+          marginBottom: "8px",
+          background: "linear-gradient(135deg, rgba(212,175,55,0.07) 0%, rgba(8,8,8,0) 60%)",
+          border: "1px solid rgba(212,175,55,0.15)",
+        }}
+      >
+        {/* Ambient glow */}
+        <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "200px", height: "200px", borderRadius: "50%", background: "radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
+
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          {/* Animated Crown Orb */}
+          <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "linear-gradient(135deg, #D4AF37, #B8972E)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 30px rgba(212,175,55,0.4)", flexShrink: 0 }}>
+            <Crown size={26} style={{ color: "#050505" }} />
           </div>
-          <h1 className="font-display text-2xl text-white">
-            {lang === "DE" ? "Kashbot — KI Agent System" : "Kashbot — AI Agent System"}
-          </h1>
+          <div>
+            <div style={{ fontSize: "10px", letterSpacing: "0.3em", textTransform: "uppercase", color: "#D4AF37", marginBottom: "4px" }}>
+              KI-Agentur · CEO Modus
+            </div>
+            <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 700, color: "#fff", margin: 0 }}>
+              {lang === "DE" ? "Dein CEO-Assistent" : "Your CEO Assistant"}
+            </h1>
+            <p style={{ fontSize: "13px", color: "#71717a", marginTop: "4px", marginBottom: 0 }}>
+              {lang === "DE" ? "Delegiere Aufgaben an 7 KI-Spezialisten" : "Delegate tasks to 7 AI specialists"}
+            </p>
+          </div>
         </div>
-        <p className="text-sm text-zinc-500 ml-13">
-          {lang === "DE"
-            ? "Dein intelligentes Multi-Agenten-System für KickstarterCash. Wähle eine Abteilung und delegiere Aufgaben."
-            : "Your intelligent multi-agent system for KickstarterCash. Select a department and delegate tasks."}
-        </p>
-      </div>
+      </motion.div>
 
       {/* Workflow Diagram */}
       <div className="flex flex-col items-center gap-0">
@@ -261,30 +285,7 @@ export default function JarvjisAgent() {
                 {lang === "DE" ? "Orchestrator & Entscheider" : "Orchestrator & Decision Maker"}
               </div>
             </div>
-            {isThinking && (
-              <div className="absolute right-4 flex gap-1">
-                {[0, 1, 2].map((i) => (
-                  <motion.div
-                    key={i}
-                    className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]"
-                    animate={{ opacity: [0.3, 1, 0.3] }}
-                    transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }}
-                  />
-                ))}
-              </div>
-            )}
           </div>
-
-          {/* CEO Response */}
-          {ceoResponse && (
-            <motion.div
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-3 max-w-sm px-4 py-2.5 bg-[#D4AF37]/5 border border-[#D4AF37]/20 rounded-sm text-xs text-zinc-300 text-center italic"
-            >
-              "{ceoResponse}"
-            </motion.div>
-          )}
 
           <div className="flex flex-col items-center py-1">
             <div className="w-px h-5 bg-white/20" />
@@ -305,16 +306,15 @@ export default function JarvjisAgent() {
           <div className="w-px h-5 bg-white/20" />
         </motion.div>
 
-        {/* Department Grid */}
+        {/* Department Cards — Premium Grid */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           className="w-full"
         >
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mt-2">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "12px", marginTop: "8px" }}>
             {DEPARTMENTS.map((dept, i) => {
-              const Icon = dept.icon;
               const isActive = activeDept === dept.id;
               return (
                 <motion.button
@@ -322,32 +322,28 @@ export default function JarvjisAgent() {
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 + i * 0.05 }}
+                  whileHover={{ y: -2 }}
                   onClick={() => setActiveDept(isActive ? null : dept.id)}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-sm border transition-all duration-200 ${
-                    isActive
-                      ? "border-opacity-80 bg-opacity-10"
-                      : "border-white/8 bg-[#0A0A0A] hover:border-white/20"
-                  }`}
-                  style={
-                    isActive
-                      ? { borderColor: dept.color, backgroundColor: `${dept.color}15` }
-                      : {}
-                  }
+                  style={{
+                    background: isActive ? `${dept.color}12` : "rgba(255,255,255,0.02)",
+                    border: `1px solid ${isActive ? dept.color + "50" : "rgba(255,255,255,0.07)"}`,
+                    borderRadius: "8px",
+                    padding: "16px",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    boxShadow: isActive ? `0 0 20px ${dept.color}18` : "none",
+                  }}
                 >
-                  <div
-                    className="w-9 h-9 rounded-sm flex items-center justify-center"
-                    style={{ backgroundColor: `${dept.color}20` }}
-                  >
-                    <Icon size={18} style={{ color: dept.color }} />
+                  <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: `${dept.color}18`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
+                    <dept.icon size={18} style={{ color: dept.color }} />
                   </div>
-                  <span className="text-xs font-medium text-zinc-300 text-center leading-tight">
+                  <div style={{ fontSize: "13px", fontWeight: 600, color: "#e4e4e7", marginBottom: "4px" }}>
                     {lang === "DE" ? dept.labelDE : dept.labelEN}
-                  </span>
-                  <ChevronDown
-                    size={12}
-                    className="text-zinc-600 transition-transform duration-200"
-                    style={{ transform: isActive ? "rotate(180deg)" : "rotate(0deg)" }}
-                  />
+                  </div>
+                  <div style={{ fontSize: "11px", color: "#52525b", lineHeight: 1.4 }}>
+                    {lang === "DE" ? dept.descDE : dept.descEN}
+                  </div>
                 </motion.button>
               );
             })}
@@ -355,81 +351,123 @@ export default function JarvjisAgent() {
         </motion.div>
       </div>
 
-      {/* Task Panel */}
+      {/* Task Pills — Active Department */}
       {activeDept && (
         <motion.div
           key={activeDept}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="border border-white/10 rounded-sm bg-[#0A0A0A] overflow-hidden"
+          style={{
+            border: `1px solid ${activeDeptColor}25`,
+            borderRadius: "10px",
+            background: "rgba(255,255,255,0.015)",
+            padding: "20px",
+          }}
         >
-          {(() => {
-            const dept = DEPARTMENTS.find((d) => d.id === activeDept);
-            const Icon = dept.icon;
-            return (
-              <>
-                <div
-                  className="flex items-center gap-3 px-6 py-4 border-b border-white/8"
-                  style={{ borderLeftColor: dept.color, borderLeftWidth: 3 }}
-                >
-                  <Icon size={18} style={{ color: dept.color }} />
-                  <div>
-                    <div className="text-sm font-semibold text-white">
-                      {lang === "DE" ? dept.labelDE : dept.labelEN}
-                    </div>
-                    <div className="text-[11px] text-zinc-500">
-                      {lang === "DE" ? dept.descDE : dept.descEN}
-                    </div>
-                  </div>
-                  <div className="ml-auto text-[10px] text-zinc-600 uppercase tracking-widest">
-                    {lang === "DE" ? "Aufgabe wählen" : "Select task"}
-                  </div>
-                </div>
-                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {tasks[activeDept].map((task, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleTaskSelect(activeDept, task)}
-                      className={`text-left px-4 py-3 rounded-sm border text-sm transition-all duration-200 ${
-                        activeTask === task && !isThinking
-                          ? "text-white"
-                          : "border-white/8 text-zinc-400 hover:border-white/20 hover:text-white bg-black/20"
-                      }`}
-                      style={
-                        activeTask === task && !isThinking
-                          ? { borderColor: dept.color, backgroundColor: `${dept.color}12`, color: "white" }
-                          : {}
-                      }
-                    >
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: dept.color }}
-                        />
-                        {task}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </>
-            );
-          })()}
+          {/* Dept header */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px", paddingBottom: "16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            {activeDeptObj && (
+              <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: `${activeDeptColor}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <activeDeptObj.icon size={16} style={{ color: activeDeptColor }} />
+              </div>
+            )}
+            <div>
+              <div style={{ fontSize: "13px", fontWeight: 600, color: "#e4e4e7" }}>
+                {activeDeptObj && (lang === "DE" ? activeDeptObj.labelDE : activeDeptObj.labelEN)}
+              </div>
+              <div style={{ fontSize: "11px", color: "#52525b" }}>
+                {activeDeptObj && (lang === "DE" ? activeDeptObj.descDE : activeDeptObj.descEN)}
+              </div>
+            </div>
+            <div style={{ marginLeft: "auto", fontSize: "10px", color: "#3f3f46", textTransform: "uppercase", letterSpacing: "0.15em" }}>
+              {lang === "DE" ? "Aufgabe wählen" : "Select task"}
+            </div>
+          </div>
+
+          {/* Task Pills */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "16px" }}
+          >
+            {tasks[activeDept]?.map((task) => (
+              <button
+                key={task}
+                onClick={() => handleTaskSelect(activeDept, task)}
+                style={{
+                  background: activeTask === task ? `${activeDeptColor}18` : "rgba(255,255,255,0.03)",
+                  border: `1px solid ${activeTask === task ? activeDeptColor + "40" : "rgba(255,255,255,0.08)"}`,
+                  borderRadius: "20px",
+                  padding: "7px 14px",
+                  fontSize: "12px",
+                  color: activeTask === task ? "#e4e4e7" : "#71717a",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                }}
+              >
+                {task}
+              </button>
+            ))}
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Thinking Indicator */}
+      {isThinking && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          style={{ display: "flex", alignItems: "center", gap: "12px", padding: "16px 20px", borderRadius: "12px", background: "rgba(212,175,55,0.04)", border: "1px solid rgba(212,175,55,0.12)" }}
+        >
+          <div style={{ display: "flex", gap: "5px" }}>
+            {[0, 1, 2].map((i) => (
+              <motion.div
+                key={i}
+                style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#D4AF37" }}
+                animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.1, 0.8] }}
+                transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }}
+              />
+            ))}
+          </div>
+          <span style={{ fontSize: "13px", color: "#71717a" }}>
+            {lang === "DE" ? "CEO analysiert die Aufgabe…" : "CEO is analyzing the task…"}
+          </span>
+        </motion.div>
+      )}
+
+      {/* CEO Response Box */}
+      {ceoResponse && !isThinking && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          style={{
+            padding: "20px",
+            borderRadius: "12px",
+            background: "linear-gradient(135deg, rgba(212,175,55,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+            border: "1px solid rgba(212,175,55,0.2)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+            <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "linear-gradient(135deg, #D4AF37, #B8972E)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Crown size={13} style={{ color: "#050505" }} />
+            </div>
+            <span style={{ fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#D4AF37" }}>CEO Response</span>
+          </div>
+          <p style={{ fontSize: "14px", color: "#d4d4d8", lineHeight: 1.7, margin: 0 }}>{ceoResponse}</p>
         </motion.div>
       )}
 
       {/* Active task status */}
-      {activeTask && (
+      {activeTask && !isThinking && ceoResponse && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="flex items-center gap-3 px-5 py-3 bg-[#0A0A0A] border border-white/8 rounded-sm"
         >
-          <div className={`w-2 h-2 rounded-full ${isThinking ? "bg-yellow-400 animate-pulse" : "bg-emerald-400"}`} />
+          <div className="w-2 h-2 rounded-full bg-emerald-400" />
           <span className="text-xs text-zinc-400">
-            {isThinking
-              ? (lang === "DE" ? "Kashbot analysiert die Aufgabe…" : "Kashbot is analyzing the task…")
-              : (lang === "DE" ? "Aufgabe delegiert & in Bearbeitung" : "Task delegated & in progress")}
+            {lang === "DE" ? "Aufgabe delegiert & in Bearbeitung" : "Task delegated & in progress"}
           </span>
           <span className="ml-auto text-xs text-zinc-600 truncate max-w-[200px]">{activeTask}</span>
         </motion.div>
