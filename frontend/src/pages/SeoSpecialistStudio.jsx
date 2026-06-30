@@ -4,7 +4,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
-import { AgentChatPanel, ToolCard } from "@/components/StudioLayout";
+import { AgentChatPanel, ToolCard, StudioContextArea } from "@/components/StudioLayout";
 import { PageHeader } from "@/components/PageHeader";
 
 const COLOR = "#34D399";
@@ -49,18 +49,10 @@ export default function SeoSpecialistStudio() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3 space-y-5">
-          <div className="border border-white/8 rounded-sm p-5 space-y-4" style={{ background: "rgba(52,211,153,0.03)" }}>
-            <label className="block text-xs uppercase tracking-widest" style={{ color: COLOR }}>
-              {lang === "DE" ? "Website / Thema / Keyword" : "Website / Topic / Keyword"}
-            </label>
-            <textarea value={context} onChange={(e) => setContext(e.target.value)} rows={4}
-              placeholder={lang === "DE"
-                ? "z.B. kickstartercash.club – Cashback-Karten, Passive Einnahmen, Finanzielle Freiheit…"
-                : "e.g. kickstartercash.club – cashback cards, passive income, financial freedom…"}
-              className="w-full bg-black border border-white/8 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none"
-              onFocus={(e) => { e.target.style.borderColor = `${COLOR}50`; }}
-              onBlur={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; }} />
-          </div>
+          <StudioContextArea color={COLOR} context={context} setContext={setContext}
+            label="Website / Thema / Keyword" labelEN="Website / Topic / Keyword" title="Seo Specialist Studio"
+            placeholder="Website / Thema / Keyword"
+            placeholderEN="Website / Topic / Keyword" />
           <div>
             <p className="text-[10px] text-zinc-700 uppercase tracking-widest mb-3">
               {lang === "DE" ? "Tools — Kontext eingeben, dann klicken" : "Tools — enter context above, then click"}
