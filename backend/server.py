@@ -1195,8 +1195,15 @@ EARN (Zinsen auf Krypto):
 - Prämien können direkt mit RedotPay-Karte ausgegeben werden
 - Nur in ausgewählten Regionen verfügbar (Risiko: Kapitalverlust möglich)
 
+PREISE REDOTPAY (KickstarterCash Portal):
+- Member-Preis: 150,00 EUR (VIP Promo-Code erforderlich — Member erhalten diesen automatisch)
+- Regulärer Preis: 180,00 EUR
+- Member spart: 30,00 EUR
+- Sponsor Bonus für Empfehlung: +25,00 EUR
+- Kein Promo-Code nötig für Aurum Card, aber für Redotpay VIP-Code notwendig
+
 EMPFEHLUNG:
-- Krypto im Alltag ausgeben + Apple Pay + keine Jahresgebühr → RedotPay (ideal für Krypto-Nutzer)
+- Krypto im Alltag ausgeben + Apple Pay + keine Jahresgebühr → RedotPay (150€ Member-Preis)
 
 ═══════════════════════════════════════
 KARTENLÖSUNG 6: AURUM CARDS (Neo-Bank + Visa Business)
@@ -1258,10 +1265,81 @@ AURUM ÖKOSYSTEM (Zusatzprodukte):
 - AURUM Exchange: eigene Krypto-Börse
 - AURUM Token: eigener Token auf Polygon (100M Gesamtangebot)
 
+PREISE AURUM (KickstarterCash Portal):
+- Member-Preis: 265,00 EUR (kein Promo-Code nötig)
+- Regulärer Preis: 320,00 EUR
+- Member spart: 55,00 EUR
+- Sponsor Bonus für Empfehlung: +20,00 EUR
+
 EMPFEHLUNG:
 - Sofort starten ohne KYC + günstig → Aurum Nova (33 USDT)
 - Business + hohe Limits + Provisionen verdienen → Aurum Infinity (249 USDT, 100k$/Monat)
 - KI-Trading + Karte kombinieren → Aurum Ecosystem (EX-AI Bot + Infinity Card)
+
+═══════════════════════════════════════
+KARTENLÖSUNG 7: GLOBALE WHITE KRYPTO PAYMENT CARD
+═══════════════════════════════════════
+Kategorie: EIGENE CARDS | KRYPTO
+Besonderheit: Komplett dezentral — kein KYC, kein Name, keine Adresse erforderlich
+
+FEATURES:
+- Apple Pay & Google Pay: ✓
+- Kontaktlos bezahlen: ✓
+- Komplett anonym — keine persönlichen Daten notwendig
+- Sofortige Nutzung nach Erhalt
+- Krypto direkt als Zahlungsmittel
+
+PREISE (KickstarterCash Portal):
+- Member-Preis: 470,00 EUR (VIP Promo-Code spart 80 EUR)
+- Regulärer Preis: 550,00 EUR
+- Member spart: 80,00 EUR
+- Sponsor Bonus für Empfehlung: +40,00 EUR
+
+EMPFEHLUNG:
+- Maximale Privatsphäre + kein KYC + Apple/Google Pay → Globale White Card
+
+═══════════════════════════════════════
+KARTENLÖSUNG 8: WEFI CARD (Platinum Business)
+═══════════════════════════════════════
+Kategorie: PARTNERCARDS | KRYPTO
+Typ: Platinum Business Card
+
+FEATURES:
+- Kostenloses Geld abheben (keine Abhebungsgebühren)
+- Apple Pay & Google Pay: ✓
+- Kontaktlos bezahlen: ✓
+- Business-Karte für Unternehmer
+
+PREISE (KickstarterCash Portal):
+- Member-Preis: 100,00 EUR
+- Regulärer Preis: 110,00 EUR
+- Member spart: 10,00 EUR
+- Sponsor Bonus für Empfehlung: +10,00 EUR
+
+EMPFEHLUNG:
+- Günstigster Einstieg + kostenlose Abhebungen + Business-Feature → Wefi Card
+
+═══════════════════════════════════════
+KARTENLÖSUNG 9: ALPHATOPAY KRYPTOCARD
+═══════════════════════════════════════
+Kategorie: EIGENE CARDS | KRYPTO
+Besonderheit: Kein KYC erforderlich
+
+FEATURES:
+- Kostenloses Geld abheben (keine Abhebungsgebühren)
+- Apple Pay & Google Pay: ✓
+- Kontaktlos bezahlen: ✓
+- Kein KYC — anonym nutzbar
+- VIP Promo-Code spart $100
+
+PREISE (KickstarterCash Portal):
+- Member-Preis: 350,00 EUR (VIP Promo-Code spart $100)
+- Regulärer Preis: 450,00 EUR
+- Member spart: 100,00 EUR
+- Sponsor Bonus für Empfehlung: +35,00 EUR
+
+EMPFEHLUNG:
+- Kein KYC + kostenlose Abhebungen + großer Promo-Rabatt → Alphatopay Kryptocard
 
 ═══════════════════════════════════════
 WEBINAR & PRÄSENTATION
