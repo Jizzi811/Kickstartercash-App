@@ -22,7 +22,7 @@ const KPI_CARDS = [
     icon: Bot,
     labelDE: "KI-Agenten",
     labelEN: "AI Agents",
-    value: "10",
+    value: "17",
     subDE: "Aktiv & einsatzbereit",
     subEN: "Active & ready",
     color: "#D4AF37",
@@ -71,8 +71,8 @@ const QUICK_ACTIONS = [
     icon: Bot,
     labelDE: "Agenten",
     labelEN: "Agents",
-    descDE: "10 KI-Spezialisten starten",
-    descEN: "Launch 10 AI specialists",
+    descDE: "17 KI-Spezialisten starten",
+    descEN: "Launch 17 AI specialists",
     color: "#D4AF37",
     featured: true,
   },
@@ -353,8 +353,8 @@ export default function Dashboard() {
                   </h1>
                   <p className="text-sm md:text-base text-zinc-400 leading-relaxed mb-8">
                     {lang === "DE"
-                      ? "10 spezialisierte KI-Agenten arbeiten für dich – mit echten Tools, deiner Wissensdatenbank und ohne Halluzinieren."
-                      : "10 specialized AI agents work for you – with real tools, your knowledge base, and zero hallucinations."}
+                      ? "17 spezialisierte KI-Agenten arbeiten für dich – mit echten Tools, deiner Wissensdatenbank und ohne Halluzinieren."
+                      : "17 specialized AI agents work for you – with real tools, your knowledge base, and zero hallucinations."}
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <button
@@ -390,7 +390,7 @@ export default function Dashboard() {
                 {/* hero stats strip with vertical dividers */}
                 <div className="flex gap-0 flex-wrap">
                   {[
-                    { numDE: "10", numEN: "10", labelDE: "Agenten", labelEN: "Agents" },
+                    { numDE: "17", numEN: "17", labelDE: "Agenten", labelEN: "Agents" },
                     { numDE: "8", numEN: "8", labelDE: "Module", labelEN: "Modules" },
                     { numDE: "∞", numEN: "∞", labelDE: "Möglichkeiten", labelEN: "Possibilities" },
                   ].map((s, idx) => (
