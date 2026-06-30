@@ -2391,7 +2391,23 @@ async def generate_agent_workflow(req: AgentBuilderRequest):
 
 @api_router.get("/health")
 async def health():
-    return {"status": "ok", "llm": "anthropic" if _anthropic_client else "emergent"}
+    return {
+        "status": "ok",
+        "llm": "anthropic" if _anthropic_client else "emergent",
+        "has_grok": _HAS_GROK,
+        "has_emergent": _HAS_EMERGENT,
+        "has_gemini_key": bool(GEMINI_API_KEY),
+        "has_openai_key": bool(OPENAI_API_KEY),
+        "has_anthropic_key": bool(ANTHROPIC_API_KEY),
+        "has_emergent_key": bool(EMERGENT_LLM_KEY),
+        "cb_status": {p: ("OPEN" if _cb_is_open(p) else "closed") for p in ["grok","gemini","openai","anthropic"]},
+    }
+
+
+@api_router.get("/homepage/ping")
+async def homepage_ping():
+    """Instant liveness check — no LLM call."""
+    return {"pong": True, "ts": _now_iso()}
 
 
 # ---------------------------------------------------------------------------

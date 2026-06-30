@@ -678,7 +678,9 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 
 <script>
 (function(){
-  const API_URL = 'https://kickstartercash-app-production.up.railway.app/api/homepage/chat';
+  const API_URL  = 'https://kickstartercash-app-production.up.railway.app/api/homepage/chat';
+  const PING_URL = 'https://kickstartercash-app-production.up.railway.app/api/homepage/ping';
+  const HEALTH_URL = 'https://kickstartercash-app-production.up.railway.app/api/health';
 
   const btn    = document.getElementById('kash-btn');
   const panel  = document.getElementById('kash-panel');
@@ -692,6 +694,21 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
   let loading = false;
   let greeted = false;
   const sessionId = crypto.randomUUID();
+
+  let backendOk = null;
+  async function pingBackend(){
+    try{
+      const r = await fetch(HEALTH_URL, {signal: AbortSignal.timeout(5000)});
+      const d = await r.json();
+      backendOk = true;
+      console.log('[KASH] Backend health:', d);
+    } catch(e){
+      backendOk = false;
+      console.error('[KASH] Backend unreachable:', e.message);
+    }
+  }
+  // Ping on page load so we know quickly
+  pingBackend();
 
   function togglePanel(){
     const isOpen = panel.classList.toggle('open');
@@ -741,15 +758,20 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({message: msg, history: history.slice(-10), language:'DE', model:'gemini', session_id: sessionId})
       });
-      const data = await res.json();
+      let data = {};
+      try { data = await res.json(); } catch(_){}
       typing.remove();
-      if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+      if (!res.ok) {
+        const errMsg = data.detail || `Server-Fehler ${res.status}`;
+        addMsg('error', `⚠️ ${errMsg}`);
+        return;
+      }
       const reply = data.reply || '⚠️ Keine Antwort erhalten.';
       history.push({role:'assistant', content: reply});
       addMsg('bot', reply);
     } catch(e){
       typing.remove();
-      addMsg('error','⚠️ Verbindungsfehler. Bitte versuche es erneut.');
+      addMsg('error', `⚠️ Netzwerkfehler: ${e.message}. Ist Railway online?`);
     } finally{
       loading = false;
       sendB.disabled = !input.value.trim();
