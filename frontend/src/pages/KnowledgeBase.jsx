@@ -76,7 +76,7 @@ function EntryModal({ entry, categories, onSave, onClose }) {
             <input
               value={form.title}
               onChange={(e) => set("title", e.target.value)}
-              placeholder="z.B. Kickstarcash.Club Produkt-Übersicht"
+              placeholder="z.B. Kickstartercash.Club Produkt-Übersicht"
               className="w-full bg-black border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#D4AF37]/50"
             />
           </div>
@@ -197,7 +197,7 @@ export default function KnowledgeBase() {
           icon={Database}
           color="#60A5FA"
           title="Kashbot Wissensdatenbank"
-          subtitle="Alles, was Kashbot über Kickstarcash.Club wissen muss — kein Halluzinieren, nur echtes Wissen."
+          subtitle="Alles, was Kashbot über Kickstartercash.Club wissen muss — kein Halluzinieren, nur echtes Wissen."
           badge="Knowledge"
         />
         <button

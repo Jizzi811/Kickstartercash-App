@@ -164,8 +164,8 @@ const FEED = [
   {
     icon: Star,
     color: "#D4AF37",
-    textDE: "Kickstarcash.Club-System gestartet",
-    textEN: "Kickstarcash.Club system launched",
+    textDE: "Kickstartercash.Club-System gestartet",
+    textEN: "Kickstartercash.Club system launched",
     timeDE: "Gerade eben",
     timeEN: "Just now",
   },
@@ -348,7 +348,7 @@ export default function Dashboard() {
                         backgroundClip: "text",
                       }}
                     >
-                      {activeBrand?.name || "Kickstarcash.Club"}
+                      {activeBrand?.name || "Kickstartercash.Club"}
                     </span>
                   </h1>
                   <p className="text-sm md:text-base text-zinc-400 leading-relaxed mb-8">

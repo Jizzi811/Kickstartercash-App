@@ -158,7 +158,7 @@ export const translations = {
     guardian_loadlast: "Letzten Werbetext laden",
     // funnel
     funnel_title: "Verkaufs-Funnel",
-    funnel_sub: "Dein persönlicher Profi-Funnel im Kickstarcash.Club-Design – einsatzbereit in 1 Minute.",
+    funnel_sub: "Dein persönlicher Profi-Funnel im Kickstartercash.Club-Design – einsatzbereit in 1 Minute.",
     funnel_intro: "Trage deine Daten ein. Der Funnel ist für alle Member identisch – nur dein Reflink und deine Kontaktdaten werden eingesetzt. Die gelben Buttons führen zu deinem Reflink, „Jetzt unverbindlich anfragen\" sendet dir eine E-Mail mit den Kontaktdaten des Interessenten.",
     funnel_new: "Neuen Funnel erstellen",
     funnel_reflink: "Dein Reflink",
@@ -331,7 +331,7 @@ export const translations = {
     guardian_strengths: "Strengths",
     guardian_loadlast: "Load last ad copy",
     funnel_title: "Sales Funnel",
-    funnel_sub: "Your personal pro funnel in Kickstarcash.Club design – ready in 1 minute.",
+    funnel_sub: "Your personal pro funnel in Kickstartercash.Club design – ready in 1 minute.",
     funnel_intro: "Enter your details. The funnel is identical for all members – only your reflink and contact details are inserted. The yellow buttons lead to your reflink; 'Request now' sends you an email with the prospect's contact details.",
     funnel_new: "Create new funnel",
     funnel_reflink: "Your reflink",

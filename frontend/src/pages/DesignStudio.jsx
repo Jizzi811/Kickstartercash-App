@@ -99,8 +99,8 @@ export default function DesignStudio() {
               setContext={setPrompt}
               label="Prompt / Beschreibung"
               labelEN="Prompt / Description"
-              placeholder="z.B. Luxuriöses Kickstarcash.Club Werbebanner, Gold & Schwarz, moderner Business-Stil…"
-              placeholderEN="e.g. Luxurious Kickstarcash.Club advertising banner, gold & black, modern business style…"
+              placeholder="z.B. Luxuriöses Kickstartercash.Club Werbebanner, Gold & Schwarz, moderner Business-Stil…"
+              placeholderEN="e.g. Luxurious Kickstartercash.Club advertising banner, gold & black, modern business style…"
               title="Design Studio"
             />
             <div className="flex items-center gap-3">

@@ -16,7 +16,7 @@ DEFAULT_BRAND_ID = "kickstartercash"
 
 SAMPLE_CONTENT = (
     "TEST_Guardian Exklusives Membership-Programm fuer ambitionierte Unternehmer. "
-    "Werde Teil unserer Kickstarcash.Club Community und sichere dir den Zugang zu "
+    "Werde Teil unserer Kickstartercash.Club Community und sichere dir den Zugang zu "
     "Premium-Tools, persoenlichem Coaching und einem inspirierenden Netzwerk."
 )
 

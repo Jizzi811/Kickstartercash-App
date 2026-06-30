@@ -5,14 +5,14 @@ import { MessageCircle, X, Send, Loader2, Sparkles, Ticket, Trash2 } from "lucid
 import { API, useApp } from "@/context/AppContext";
 
 const SUGGESTIONS_DE = [
-  "Was kann Kickstarcash.Club für mich tun?",
+  "Was kann Kickstartercash.Club für mich tun?",
   "Welche KI-Tools sind enthalten?",
   "Wie funktioniert der Agenten-Builder?",
   "Was kostet die Mitgliedschaft?",
 ];
 
 const SUGGESTIONS_EN = [
-  "What can Kickstarcash.Club do for me?",
+  "What can Kickstartercash.Club do for me?",
   "Which AI tools are included?",
   "How does the agent builder work?",
   "What does the membership cost?",
@@ -314,8 +314,8 @@ export function SalesSupportWidget() {
                       maxWidth: "calc(100% - 36px)",
                     }}>
                       {lang === "DE"
-                        ? "Willkommen bei Kickstarcash.Club ✦ Ich bin KASH. Wie kann ich dir helfen?"
-                        : "Welcome to Kickstarcash.Club ✦ I'm KASH. How can I help you?"}
+                        ? "Willkommen bei Kickstartercash.Club ✦ Ich bin KASH. Wie kann ich dir helfen?"
+                        : "Welcome to Kickstartercash.Club ✦ I'm KASH. How can I help you?"}
                     </div>
                   </div>
 

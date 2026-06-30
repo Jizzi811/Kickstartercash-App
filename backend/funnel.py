@@ -1,4 +1,4 @@
-"""Renders the Kickstarcash.Club funnel bundle with per-member personalization.
+"""Renders the Kickstartercash.Club funnel bundle with per-member personalization.
 
 The uploaded bundle is a self-contained "DC" page: a bundler loader + a 28MB
 asset manifest + an HTML template. The template's data binding is driven by a

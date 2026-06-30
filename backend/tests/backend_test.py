@@ -38,7 +38,7 @@ class TestBrands:
         default = next((b for b in brands if b["id"] == DEFAULT_BRAND_ID), None)
         assert default is not None
         assert default["is_default"] == True
-        assert default["name"] == "Kickstarcash.Club.club"
+        assert default["name"] == "Kickstartercash.Club.club"
 
     def test_get_default_brand(self, session):
         r = session.get(f"{API}/brands/{DEFAULT_BRAND_ID}", timeout=15)
