@@ -412,8 +412,8 @@ export default function Specialists() {
         </div>
         <p className="text-sm text-zinc-500">
           {lang === "DE"
-            ? "10 KI-Agenten mit eigener Persönlichkeit, spezialisierten Tools & KB-Zugriff."
-            : "10 AI agents with their own personality, specialized tools & KB access."}
+            ? "17 KI-Agenten mit eigener Persönlichkeit, spezialisierten Tools & KB-Zugriff."
+            : "17 AI agents with their own personality, specialized tools & KB access."}
         </p>
       </div>
 

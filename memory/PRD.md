@@ -1,7 +1,7 @@
 # PRD – Kickstarter Content Maschine
 
 ## Original Problem Statement
-KI-Marketing-Betriebssystem im Branding von Kickstartercash.Club.club (Schwarz/Gold, KT-Logo).
+KI-Marketing-Betriebssystem im Branding von Kickstartercash.Club (Schwarz/Gold, KT-Logo).
 Mitglieder hinterlegen ihr Branding einmal, die KI erzeugt konsistente Inhalte für alle Kanäle.
 MVP: Brand Designer + Social Media Maschine + KI Bildgenerator + KI Copywriter + Prompt Bibliothek.
 Web-App (nicht mobil), DE/EN umschaltbar, keine Auth.
@@ -10,7 +10,7 @@ Web-App (nicht mobil), DE/EN umschaltbar, keine Auth.
 - Text-Modelle: Claude Sonnet 4.5 + GPT-5.2 (umschaltbar). GPT läuft über eigenen OPENAI_API_KEY (kein Budget-Limit); Claude + Bild (Nano Banana) über Emergent Universal Key. Standardmodell: GPT.
 - Bild: Gemini Nano Banana (gemini-3.1-flash-image-preview)
 - Keine Authentifizierung
-- Branding: Schwarz/Gold, KT-Logo als Default-Marke "Kickstartercash.Club.club"
+- Branding: Schwarz/Gold, KT-Logo als Default-Marke "Kickstartercash.Club"
 - Sprache: DE Standard, EN umschaltbar
 
 ## Architecture
@@ -45,7 +45,7 @@ Web-App (nicht mobil), DE/EN umschaltbar, keine Auth.
 - ENTFERNT: Landingpage-Generator (/landing) komplett (Nav, Route, Page, Dashboard-Karte) auf Userwunsch — funktionierte schlecht (Markenfarben/Buttons/Bilder/Design). i18n-Strings für Chat-Module (DE/EN) ergänzt (waren vorher rohe Keys).
 
 ## Update (2026-06-27) – Teil 2
-- Aktive-Marke-Auswahl bereinigt: alle Test-Marken aus DB gelöscht, nur Default "Kickstartercash.Club.club" bleibt.
+- Aktive-Marke-Auswahl bereinigt: alle Test-Marken aus DB gelöscht, nur Default "Kickstartercash.Club" bleibt.
 - Bildgenerator + Ein-Klick-Kampagne nutzen jetzt **Nano Banana (Gemini 2.5 Flash Image) via poyo.ai** (POYO_API_KEY in backend/.env, async submit→poll, gibt base64-PNG zurück). Pollinations & Emergent-Nano-Banana ersetzt. Verifiziert per curl (base64 PNG, ~20s).
 - Hinweis: POYO_API_KEY muss bei Production-Redeploy ebenfalls gesetzt sein.
 
