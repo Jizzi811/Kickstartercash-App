@@ -105,9 +105,6 @@ export function SalesSupportWidget() {
             }}
           >
             <MessageCircle size={22} className="text-black" />
-            {/* Pulse ring */}
-            <span className="absolute inset-0 rounded-full animate-ping opacity-20"
-              style={{ background: "#D4AF37" }} />
           </motion.button>
         )}
       </AnimatePresence>
@@ -119,7 +116,7 @@ export function SalesSupportWidget() {
             initial={{ opacity: 0, y: 40, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 280, damping: 24 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
             className="fixed bottom-6 right-6 z-50 w-[360px] max-w-[calc(100vw-24px)] flex flex-col rounded-xl overflow-hidden"
             style={{
               height: "520px",
