@@ -19,7 +19,7 @@ const TOOLS = [
   { id: "wf_funnel", label: "Funnel-Workflow", label_en: "Funnel Workflow", emoji: "🔽", type: "llm",
     desc: "Lead-to-Sale-Workflow mit allen Touchpoints & Automationen." },
   { id: "wf_onboarding", label: "Onboarding-Prozess", label_en: "Onboarding Process", emoji: "🚀", type: "llm",
-    desc: "Neukunden-Onboarding-Workflow für KickstarterCash." },
+    desc: "Neukunden-Onboarding-Workflow für Kickstarcash.Club." },
   { id: "wf_kpis", label: "Prozess-KPIs", label_en: "Process KPIs", emoji: "📊", type: "llm",
     desc: "Definiert messbare KPIs für jeden Prozessschritt." },
 ];

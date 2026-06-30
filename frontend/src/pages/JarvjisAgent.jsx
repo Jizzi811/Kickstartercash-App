@@ -404,7 +404,7 @@ export default function JarvjisAgent() {
 
   const ceoResponsesDE = {
     marketing: "Verstanden. Ich delegiere diese Aufgabe an das Marketing-Team. Strategie wird analysiert und ein detaillierter Aktionsplan wird entwickelt.",
-    design: "Klar. Das Design-Team übernimmt. Alle Materialien werden im Corporate Design von KickstarterCash erstellt.",
+    design: "Klar. Das Design-Team übernimmt. Alle Materialien werden im Corporate Design von Kickstarcash.Club erstellt.",
     video: "Ausgezeichnet. Video-Produktion wird gestartet. Das Team erstellt professionelle Inhalte für maximale Reichweite.",
     sales: "Perfekt. Sales-Optimierung beginnt jetzt. Der Funnel wird auf höchste Conversion-Rate ausgerichtet.",
     seo: "Verstanden. SEO-Analyse läuft. Keywords werden identifiziert und eine Ranking-Strategie wird entwickelt.",
@@ -425,7 +425,7 @@ export default function JarvjisAgent() {
 
   const ceoResponsesEN = {
     marketing: "Understood. Delegating to the marketing team. Strategy is being analyzed and a detailed action plan will be developed.",
-    design: "Clear. Design team is taking over. All materials will be created in KickstarterCash corporate design.",
+    design: "Clear. Design team is taking over. All materials will be created in Kickstarcash.Club corporate design.",
     video: "Excellent. Video production is starting. The team will create professional content for maximum reach.",
     sales: "Perfect. Sales optimization begins now. The funnel will be aligned for the highest conversion rate.",
     seo: "Understood. SEO analysis running. Keywords will be identified and a ranking strategy will be developed.",

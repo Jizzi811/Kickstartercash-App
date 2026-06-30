@@ -232,7 +232,7 @@ export const Layout = ({ children }) => {
               >
                 KASHBOT
               </div>
-              <div className="text-[9px] tracking-[0.2em] uppercase text-zinc-600">KickstarterCash</div>
+              <div className="text-[9px] tracking-[0.2em] uppercase text-zinc-600">Kickstarcash.Club</div>
             </div>
           </div>
           {/* Gold divider line */}
