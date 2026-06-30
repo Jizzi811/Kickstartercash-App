@@ -27,6 +27,21 @@ const NAV = [
   { to: "/arena",      icon: MessageSquare, labelDE: "Chat Arena",    labelEN: "Chat Arena" },
 ];
 
+const PAGE_NAMES = {
+  "/": "Dashboard",
+  "/agents": "Agenten",
+  "/design": "Design Studio",
+  "/video": "Video Studio",
+  "/social": "Social Media",
+  "/seo": "SEO",
+  "/analytics": "Analytics",
+  "/automation": "Automationen",
+  "/knowledge": "Wissensdatenbank",
+  "/builder": "Eigene Agenten",
+  "/arena": "Chat Arena",
+  "/jarvjis": "CEO Kashbot",
+};
+
 // ── Page-enter particles ──────────────────────────────────────────────────────
 const PAGE_PARTICLE_COUNT = 7;
 
@@ -36,8 +51,8 @@ const PageParticles = ({ locationKey }) => {
   useEffect(() => {
     const list = Array.from({ length: PAGE_PARTICLE_COUNT }, (_, i) => ({
       id: `${locationKey}-${i}-${Date.now()}`,
-      left: 10 + Math.random() * 80, // % across viewport
-      delay: i * 80,                  // ms stagger
+      left: 10 + Math.random() * 80,
+      delay: i * 80,
       size: 3 + Math.random() * 4,
       duration: 600 + Math.random() * 200,
     }));
@@ -154,6 +169,8 @@ export const Layout = ({ children }) => {
     }
   }, [navigate]);
 
+  const currentPageName = PAGE_NAMES[location.pathname] ?? null;
+
   return (
     <div className="min-h-screen flex bg-[#050505]">
       {/* Global whimsy layers */}
@@ -168,14 +185,37 @@ export const Layout = ({ children }) => {
       <aside className="hidden md:flex flex-col w-60 border-r border-white/8 bg-[#080808] fixed h-screen z-20">
         {/* Logo – Easter egg trigger */}
         <div
-          className="flex items-center gap-3 px-5 py-5 cursor-pointer border-b border-white/8"
+          style={{
+            background: "linear-gradient(135deg, rgba(212,175,55,0.08) 0%, transparent 60%)",
+            borderBottom: "1px solid rgba(255,255,255,0.05)",
+          }}
+          className="cursor-pointer"
           onClick={handleLogoClick}
         >
-          <img src={LOGO_URL} alt="Kashbot" className="w-9 h-9 object-contain" />
-          <div className="leading-tight">
-            <div className="text-[13px] font-bold text-[#D4AF37] tracking-wide">KASHBOT</div>
-            <div className="text-[9px] tracking-[0.2em] uppercase text-zinc-600">KickstarterCash</div>
+          <div className="flex items-center gap-3 px-5 py-5">
+            <img src={LOGO_URL} alt="Kashbot" className="w-9 h-9 object-contain" />
+            <div className="leading-tight">
+              <div
+                className="text-[13px] font-bold tracking-wide"
+                style={{
+                  background: "linear-gradient(135deg, #FBE9A6, #D4AF37)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                KASHBOT
+              </div>
+              <div className="text-[9px] tracking-[0.2em] uppercase text-zinc-600">KickstarterCash</div>
+            </div>
           </div>
+          {/* Gold divider line */}
+          <div
+            style={{
+              height: "1px",
+              background: "linear-gradient(to right, rgba(212,175,55,0.4), transparent)",
+            }}
+          />
         </div>
 
         {/* Nav */}
@@ -188,9 +228,17 @@ export const Layout = ({ children }) => {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-sm text-[13px] font-medium transition-all duration-150 ${
                   isActive
-                    ? "bg-[#D4AF37]/12 text-[#D4AF37] border-l-2 border-[#D4AF37]"
+                    ? "text-[#D4AF37] border-l-2 border-[#D4AF37]"
                     : "text-zinc-500 hover:text-zinc-200 hover:bg-white/4 border-l-2 border-transparent"
                 }`
+              }
+              style={({ isActive }) =>
+                isActive
+                  ? {
+                      background: "rgba(212,175,55,0.1)",
+                      boxShadow: "inset 3px 0 0 #D4AF37, inset 0 0 20px rgba(212,175,55,0.05)",
+                    }
+                  : {}
               }
             >
               <Icon size={16} strokeWidth={1.6} />
@@ -199,9 +247,30 @@ export const Layout = ({ children }) => {
           ))}
         </nav>
 
-        {/* Footer */}
+        {/* Footer – status badge */}
         <div className="px-5 py-4 border-t border-white/8">
-          <div className="text-[9px] tracking-[0.2em] uppercase text-zinc-700">AI Agent System</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#4ade80",
+                boxShadow: "0 0 6px rgba(74,222,128,0.6)",
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                fontSize: "9px",
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                color: "#3f3f46",
+              }}
+            >
+              System Online
+            </span>
+          </div>
         </div>
       </aside>
 
@@ -213,7 +282,17 @@ export const Layout = ({ children }) => {
             <div className="flex items-center justify-between px-5 py-5 border-b border-white/8">
               <div className="flex items-center gap-3" onClick={handleLogoClick}>
                 <img src={LOGO_URL} alt="Kashbot" className="w-8 h-8 object-contain" />
-                <span className="text-sm font-bold text-[#D4AF37]">KASHBOT</span>
+                <span
+                  className="text-sm font-bold"
+                  style={{
+                    background: "linear-gradient(135deg, #FBE9A6, #D4AF37)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  KASHBOT
+                </span>
               </div>
               <button onClick={() => setMobileOpen(false)} className="text-zinc-500 hover:text-white">
                 <X size={18} />
@@ -229,9 +308,17 @@ export const Layout = ({ children }) => {
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3 py-2.5 rounded-sm text-[13px] font-medium transition-all ${
                       isActive
-                        ? "bg-[#D4AF37]/12 text-[#D4AF37] border-l-2 border-[#D4AF37]"
+                        ? "text-[#D4AF37] border-l-2 border-[#D4AF37]"
                         : "text-zinc-500 hover:text-zinc-200 hover:bg-white/4 border-l-2 border-transparent"
                     }`
+                  }
+                  style={({ isActive }) =>
+                    isActive
+                      ? {
+                          background: "rgba(212,175,55,0.1)",
+                          boxShadow: "inset 3px 0 0 #D4AF37, inset 0 0 20px rgba(212,175,55,0.05)",
+                        }
+                      : {}
                   }
                 >
                   <Icon size={16} strokeWidth={1.6} />
@@ -246,7 +333,15 @@ export const Layout = ({ children }) => {
       {/* Main */}
       <div className="flex-1 md:ml-60 flex flex-col min-h-screen">
         {/* Top bar */}
-        <header className="sticky top-0 z-30 bg-[#050505]/80 backdrop-blur-xl border-b border-white/8 h-14 flex items-center px-5 md:px-8 gap-3">
+        <header
+          className="sticky top-0 z-30 h-14 flex items-center px-5 md:px-8 gap-3"
+          style={{
+            background: "rgba(5,5,5,0.9)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            borderBottom: "1px solid rgba(212,175,55,0.08)",
+          }}
+        >
           {/* Mobile hamburger */}
           <button
             className="md:hidden text-zinc-500 hover:text-white mr-1"
@@ -260,11 +355,38 @@ export const Layout = ({ children }) => {
             <img src={LOGO_URL} alt="logo" className="w-7 h-7 object-contain" />
           </div>
 
+          {/* Desktop breadcrumb */}
+          {currentPageName && (
+            <div
+              className="hidden md:block"
+              style={{
+                fontSize: "11px",
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                color: "#52525b",
+              }}
+            >
+              {currentPageName}
+            </div>
+          )}
+
           <div className="flex items-center gap-2 ml-auto">
-            {/* Model */}
+            {/* Model dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-white/8 hover:border-[#D4AF37]/40 text-xs transition-colors text-zinc-400">
+                <button
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs transition-colors"
+                  style={{
+                    border: "1px solid rgba(212,175,55,0.15)",
+                    color: "#D4AF37",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.border = "1px solid rgba(212,175,55,0.35)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.border = "1px solid rgba(212,175,55,0.15)";
+                  }}
+                >
                   {model === "gemini" ? "Gemini 2.5" : model === "grok" ? "Grok 3" : "GPT-5.2"}
                   <ChevronDown size={12} className="text-zinc-600" />
                 </button>
@@ -276,13 +398,18 @@ export const Layout = ({ children }) => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Lang */}
+            {/* Lang toggle */}
             <div className="flex items-center rounded-sm border border-white/8 overflow-hidden text-xs">
               {["DE", "EN"].map((l) => (
                 <button
                   key={l}
                   onClick={() => setLang(l)}
-                  className={`px-2.5 py-1.5 transition-colors ${lang === l ? "bg-[#D4AF37] text-black font-bold" : "text-zinc-500 hover:text-white"}`}
+                  className={`px-2.5 py-1.5 transition-colors ${lang === l ? "text-black font-bold" : "text-zinc-500 hover:text-white"}`}
+                  style={
+                    lang === l
+                      ? { background: "linear-gradient(135deg, #D4AF37, #B8972E)" }
+                      : {}
+                  }
                 >
                   {l}
                 </button>
