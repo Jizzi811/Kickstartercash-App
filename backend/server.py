@@ -1189,6 +1189,71 @@ EMPFEHLUNG:
 - Krypto im Alltag ausgeben + Apple Pay + keine Jahresgebühr → RedotPay (ideal für Krypto-Nutzer)
 
 ═══════════════════════════════════════
+KARTENLÖSUNG 6: AURUM CARDS (Neo-Bank + Visa Business)
+═══════════════════════════════════════
+Partner: Aurum Foundation (aurum.foundation) — KI + Blockchain Finanz-Ökosystem
+Registriert: Kanada (BC1571382) + Polen (KRS 0001117211, Warschau)
+Trustpilot verifiziert | 170.000+ aktive Partner weltweit | $150M Assets under Management
+Gesperrte Länder: USA und sanktionierte Regionen
+
+AURUM KARTEN — 4 STUFEN (alle Visa Business):
+Kartentyp        | Aurum Nova | Aurum Imperium | Aurum World Elite | Aurum Infinity
+-----------------|------------|----------------|-------------------|----------------
+Ausstellungskosten| 33 USDT   | 66 USDT        | 99 USDT           | 249 USDT
+KYC erforderlich | Nein       | Nein           | Ja (+)            | Ja (+)
+USDT-Aufladegeb. | 3%         | 2,7%           | 2,5%              | 2,2%
+Transaktionsgeb. | 1,5%       | 1,2%           | 1%                | 0,7%
+Empfehlungsbonus | bis 15 USDT| bis 30 USDT    | bis 50 USDT       | bis 150 USDT
+
+AURUM INFINITY (Flaggschiff — physisch & virtuell):
+- Ausstellungsgebühr: 249 USDT (einmalig)
+- USDT-Aufladung: 2,2% Gebühr
+- Monatliches Ausgabelimit: 100.000 USD OHNE KYC
+- Empfehlungsbonus: bis zu 150 USDT pro Kartenverkauf
+- Apple Pay & Google Pay: ✓
+- Kontaktlos (Tap & Go): ✓
+- Sofortige Währungsumrechnung in Echtzeit
+- Krypto zu Fiat: automatisch beim Bezahlen
+
+AURUM NOVA (Einstieg — sofort nutzbar):
+- Nur virtuelle Karte
+- KEINE Verifizierung erforderlich
+- Sofort einsatzbereit
+- Ausstellungsgebühr: 33 USDT
+
+ALLGEMEINE FEATURES ALLER AURUM KARTEN:
+- Weltweit nutzbar (alle Regionen außer USA)
+- Online & Offline Zahlungen
+- Sofortige Kartenausstellung
+- Erste 3 Karten: ohne KYC erhältlich
+- Kein Limit bei Anzahl ausgestellter Karten
+- Nennwährung: Euro (Standard), flexible Optionen
+- Gültigkeit: bis zu 3 Jahre
+- Aufladung: sofort, in mehreren Währungen inkl. USDT
+
+AURUM NEO-BANK (dahinterliegendes System):
+- Web3 Finanz-Hub: Krypto + Fiat + Banking in einer App
+- Krypto speichern, tauschen, verwalten
+- Provisionsmodell für Partner:
+  ✦ bis zu 100% Gewinn aus Kartenverkäufen
+  ✦ 0,5% auf jede Transaktion deiner ausgegebenen Karten
+  ✦ 1% auf jede Währungsumrechnung
+  ✦ 2,2% auf USDT-Einzahlungen auf verteilte Karten
+
+AURUM ÖKOSYSTEM (Zusatzprodukte):
+- EX-AI Bot: autonomer Trading-Bot, Ø +18,5% monatliche Rendite (seit Feb 2024)
+- Zeus AI Bot: weiterer KI-Trading-Bot
+- NEYRO: nicht-verwahrter KI-Agenten-Handelsservice
+- Flash Loans: DeFi Flash-Kredite
+- AURUM Exchange: eigene Krypto-Börse
+- AURUM Token: eigener Token auf Polygon (100M Gesamtangebot)
+
+EMPFEHLUNG:
+- Sofort starten ohne KYC + günstig → Aurum Nova (33 USDT)
+- Business + hohe Limits + Provisionen verdienen → Aurum Infinity (249 USDT, 100k$/Monat)
+- KI-Trading + Karte kombinieren → Aurum Ecosystem (EX-AI Bot + Infinity Card)
+
+═══════════════════════════════════════
 LEAD-CAPTURE-PROTOKOLL
 ═══════════════════════════════════════
 Wenn ein Kunde echtes Kaufinteresse zeigt (fragt nach Preis, Bestellung, nächsten Schritten,
