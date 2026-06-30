@@ -4,7 +4,7 @@ import {
   LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
-  TrendingUp, BookOpen, FileText,
+  TrendingUp, BookOpen, FileText, Megaphone,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { LOGO_URL } from "@/i18n";
@@ -39,6 +39,7 @@ const NAV = [
   { to: "/finance-fpa", icon: TrendingUp, labelDE: "FP&A Studio", labelEN: "FP&A Studio" },
   { to: "/finance-bookkeeper", icon: BookOpen, labelDE: "Buchhaltung", labelEN: "Bookkeeper" },
   { to: "/finance-tax", icon: FileText, labelDE: "Tax Studio", labelEN: "Tax Studio" },
+  { to: "/workflow", icon: Megaphone, labelDE: "Kampagnen-Flow", labelEN: "Campaign Flow" },
 ];
 
 const PAGE_NAMES = {
@@ -66,6 +67,7 @@ const PAGE_NAMES = {
   "/finance-fpa": "FP&A Studio",
   "/finance-bookkeeper": "Buchhaltung",
   "/finance-tax": "Tax Studio",
+  "/workflow": "Kampagnen-Flow",
 };
 
 // ── Page-enter particles ──────────────────────────────────────────────────────
