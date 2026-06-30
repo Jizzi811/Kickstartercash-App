@@ -232,13 +232,35 @@ export default function ChatArena() {
         onDrop={onDrop}
       >
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        <div className="relative flex-1 overflow-y-auto p-5 space-y-4">
+          {/* Ambient orb — color follows selected model */}
+          <motion.div
+            aria-hidden
+            animate={{ backgroundColor: selectedModel.accent }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 320,
+              height: 320,
+              borderRadius: "50%",
+              filter: "blur(80px)",
+              opacity: 0.07,
+              pointerEvents: "none",
+              zIndex: 0,
+            }}
+          />
           {messages.length === 0 && (
-            <div className="h-full flex flex-col items-center justify-center text-center text-zinc-600">
-              <span className="w-14 h-14 rounded-full flex items-center justify-center mb-3"
+            <div className="relative z-10 h-full flex flex-col items-center justify-center text-center text-zinc-600">
+              <motion.span
+                animate={{ boxShadow: `0 0 40px 12px ${selectedModel.accent}40` }}
+                transition={{ duration: 0.8, ease: "easeInOut" }}
+                className="w-14 h-14 rounded-full flex items-center justify-center mb-3"
                 style={{ background: `${selectedModel.accent}1a`, color: selectedModel.accent }}>
                 {React.createElement(selectedModel.icon, { size: 26 })}
-              </span>
+              </motion.span>
               <p className="text-sm max-w-xs">
                 {t("chat_empty")}
                 {selectedModel.vision && (
@@ -249,6 +271,7 @@ export default function ChatArena() {
               </p>
             </div>
           )}
+          <div className="relative z-10 space-y-4">
           <AnimatePresence initial={false}>
             {messages.map((m) => (
               <MessageBubble key={m.id} msg={m} accent={selectedModel.accent} />
@@ -262,6 +285,7 @@ export default function ChatArena() {
             </div>
           )}
           <div ref={endRef} />
+          </div>
         </div>
 
         {/* Input area */}
