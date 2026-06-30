@@ -288,16 +288,13 @@ export default function VideoStudio() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-sm flex items-center justify-center" style={{ backgroundColor: `${COLOR}18` }}>
-          <Film size={20} style={{ color: COLOR }} />
-        </div>
-        <div>
-          <h1 className="font-display text-2xl text-white">Video Studio</h1>
-          <p className="text-xs text-zinc-500">Veo 2 KI-Videos · Remotion Templates · Scripts & Storyboards</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Film}
+        color="#F472B6"
+        title="Video Studio"
+        subtitle={lang === "DE" ? "Veo 3 · Scripts · Storyboards · Remotion · Reels" : "Veo 3 · Scripts · Storyboards · Remotion · Reels"}
+        badge="Video"
+      />
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-white/8 pb-0">

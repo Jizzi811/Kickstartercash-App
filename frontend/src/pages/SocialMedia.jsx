@@ -36,7 +36,13 @@ export default function SocialMedia() {
 
   return (
     <div>
-      <PageTitle title={t("social_title")} subtitle={t("social_sub")} icon={Share2} />
+      <PageHeader
+        icon={Share2}
+        color="#FBBF24"
+        title={t("social_title")}
+        subtitle={t("social_sub")}
+        badge="Social"
+      />
 
       <div className="bg-[#0A0A0A] border border-white/10 rounded-md p-6 md:p-7 space-y-5">
         <div className="space-y-1.5">

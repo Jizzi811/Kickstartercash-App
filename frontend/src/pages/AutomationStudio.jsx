@@ -58,15 +58,13 @@ export default function AutomationStudio() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-sm flex items-center justify-center" style={{ backgroundColor: `${COLOR}18` }}>
-          <Zap size={20} style={{ color: COLOR }} />
-        </div>
-        <div>
-          <h1 className="font-display text-2xl text-white">Automationen</h1>
-          <p className="text-xs text-zinc-500">n8n · Make · Zapier · HTTP Requests · APIs · Datenbanken</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Zap}
+        color="#F87171"
+        title="Automationen"
+        subtitle={lang === "DE" ? "n8n · Make · Zapier · HTTP Requests · APIs · Datenbanken" : "n8n · Make · Zapier · HTTP Requests · APIs · Databases"}
+        badge="Automation"
+      />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {PLATFORMS.map((p) => (

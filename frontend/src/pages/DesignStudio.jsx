@@ -92,8 +92,8 @@ export default function DesignStudio() {
         {/* Left: Tools + Generator */}
         <div className="lg:col-span-3 space-y-5">
           {/* Prompt input */}
-          <div className="bg-[#0A0A0A] border border-white/8 rounded-sm p-5 space-y-4">
-            <label className="block text-xs text-zinc-500 uppercase tracking-widest">
+          <div className="border border-white/8 rounded-sm p-5 space-y-4" style={{ background: "rgba(192,132,252,0.03)" }}>
+            <label className="block text-xs uppercase tracking-widest" style={{ color: COLOR }}>
               {lang === "DE" ? "Prompt / Beschreibung" : "Prompt / Description"}
             </label>
             <textarea
@@ -103,7 +103,10 @@ export default function DesignStudio() {
               placeholder={lang === "DE"
                 ? "z.B. Luxuriöses KickstarterCash Werbebanner, Gold & Schwarz, moderner Business-Stil…"
                 : "e.g. Luxurious KickstarterCash advertising banner, gold & black, modern business style…"}
-              className="w-full bg-black border border-white/8 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none focus:border-[#C084FC]/40"
+              className="w-full bg-black border border-white/8 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none"
+              style={{ transition: "border-color 150ms ease" }}
+              onFocus={(e) => { e.target.style.borderColor = `${COLOR}50`; }}
+              onBlur={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; }}
             />
             <div className="flex items-center gap-3">
               <select
@@ -126,14 +129,15 @@ export default function DesignStudio() {
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {TOOLS.map((tool) => (
-                <ToolCard
-                  key={tool.id}
-                  tool={tool}
-                  color={COLOR}
-                  onRun={runTool}
-                  isRunning={toolLoading === tool.id}
-                  disabled={!!toolLoading}
-                />
+                <motion.div key={tool.id} whileHover={{ y: -2 }} transition={{ duration: 0.18 }}>
+                  <ToolCard
+                    tool={tool}
+                    color={COLOR}
+                    onRun={runTool}
+                    isRunning={toolLoading === tool.id}
+                    disabled={!!toolLoading}
+                  />
+                </motion.div>
               ))}
             </div>
           </div>

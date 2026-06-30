@@ -192,22 +192,17 @@ export default function KnowledgeBase() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-sm bg-[#D4AF37]/10 flex items-center justify-center">
-              <Database size={20} className="text-[#D4AF37]" />
-            </div>
-            <h1 className="font-display text-2xl text-white">Kashbot Wissensdatenbank</h1>
-          </div>
-          <p className="text-sm text-zinc-500 ml-13">
-            Alles, was Kashbot über KickstarterCash wissen muss — kein Halluzinieren, nur echtes Wissen.
-          </p>
-        </div>
+        <PageHeader
+          icon={Database}
+          color="#60A5FA"
+          title="Kashbot Wissensdatenbank"
+          subtitle="Alles, was Kashbot über KickstarterCash wissen muss — kein Halluzinieren, nur echtes Wissen."
+          badge="Knowledge"
+        />
         <button
           onClick={() => setModal("new")}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#D4AF37] text-black text-sm font-semibold rounded-sm hover:bg-[#F3E5AB] transition-colors whitespace-nowrap"
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#D4AF37] text-black text-sm font-semibold rounded-sm hover:bg-[#F3E5AB] transition-colors whitespace-nowrap flex-shrink-0 mt-1"
         >
           <Plus size={15} /> Eintrag hinzufügen
         </button>

@@ -82,15 +82,13 @@ export default function SeoStudio() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-sm flex items-center justify-center" style={{ backgroundColor: `${COLOR}18` }}>
-          <Globe size={20} style={{ color: COLOR }} />
-        </div>
-        <div>
-          <h1 className="font-display text-2xl text-white">SEO Studio</h1>
-          <p className="text-xs text-zinc-500">Firecrawl · Google Search Console · Ahrefs · Analytics</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Globe}
+        color="#34D399"
+        title="SEO Studio"
+        subtitle={lang === "DE" ? "Firecrawl · Google Search Console · Ahrefs · Analytics" : "Firecrawl · Google Search Console · Ahrefs · Analytics"}
+        badge="SEO"
+      />
 
       {/* External Tool Integrations */}
       <div>

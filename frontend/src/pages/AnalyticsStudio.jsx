@@ -57,15 +57,13 @@ export default function AnalyticsStudio() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-sm flex items-center justify-center" style={{ backgroundColor: `${COLOR}18` }}>
-          <BarChart2 size={20} style={{ color: COLOR }} />
-        </div>
-        <div>
-          <h1 className="font-display text-2xl text-white">Analytics</h1>
-          <p className="text-xs text-zinc-500">GA4 · Meta Ads · TikTok · Search Console</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={BarChart2}
+        color="#A78BFA"
+        title="Analytics"
+        subtitle={lang === "DE" ? "GA4 · Meta Ads · TikTok · Search Console" : "GA4 · Meta Ads · TikTok · Search Console"}
+        badge="Analytics"
+      />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {PLATFORMS.map((p) => (
