@@ -6,6 +6,7 @@ import base64
 import asyncio
 import logging
 import time
+import aiohttp
 from collections import defaultdict
 from pathlib import Path
 from datetime import datetime, timezone
