@@ -756,7 +756,7 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
       const res = await fetch(API_URL, {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({message: msg, history: history.slice(-10), language:'DE', model:'gemini', session_id: sessionId})
+        body: JSON.stringify({message: msg, history: history.slice(-10), language:'DE', model:'claude-sonnet-4-6', session_id: sessionId})
       });
       let data = {};
       try { data = await res.json(); } catch(_){}

@@ -926,7 +926,7 @@ class HomepageChatRequest(BaseModel):
     message: str
     history: list = []
     language: str = "DE"
-    model: str = "gemini"
+    model: str = "claude-sonnet-4-6"
     session_id: str = ""
 
 
@@ -977,9 +977,9 @@ async def homepage_chat(req: HomepageChatRequest, request: Request):
 
     # Use gemini as reliable default, honour caller preference as hint
     model_hint = req.model if req.model in MODEL_MAP else "gemini"
-    # Never use grok on homepage (unavailable on Railway)
+    # Never use grok on homepage (unavailable on Railway); prefer Claude if available
     if MODEL_MAP.get(model_hint, ("",))[0] == "grok":
-        model_hint = "gemini"
+        model_hint = "claude-sonnet-4-6" if _anthropic_client else "gemini"
 
     reply = await llm_text(model_hint, system, convo)
     reply = reply.strip()

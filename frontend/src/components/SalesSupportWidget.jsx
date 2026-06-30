@@ -57,7 +57,7 @@ export function SalesSupportWidget() {
     setInput("");
     setLoading(true);
     try {
-      const effectiveModel = model === "grok" ? "gemini" : model;
+      const effectiveModel = (model === "grok" || model === "gemini") ? "claude-sonnet-4-6" : model;
       const res = await axios.post(`${API}/homepage/chat`, {
         message: msg,
         history,
