@@ -152,8 +152,20 @@ async def _llm_single(provider: str, model: str, system_message: str, user_text:
         )
         return msg.content[0].text
 
+    if provider == "gemini" and GEMINI_API_KEY:
+        import google.generativeai as genai
+        genai.configure(api_key=GEMINI_API_KEY)
+        gmodel = genai.GenerativeModel(
+            model_name=model,
+            system_instruction=system_message,
+        )
+        resp = await asyncio.to_thread(
+            lambda: gmodel.generate_content(user_text)
+        )
+        return resp.text
+
     if not _HAS_EMERGENT:
-        raise RuntimeError("Emergent LLM backend not configured")
+        raise RuntimeError("No LLM provider available (Emergent not installed, no direct keys)")
     chat = LlmChat(api_key=_api_key_for(provider), session_id=str(uuid.uuid4()), system_message=system_message)
     chat.with_model(provider, model)
     resp = await chat.send_message(UserMessage(text=user_text))
@@ -164,8 +176,8 @@ async def _llm_single(provider: str, model: str, system_message: str, user_text:
 
 # Fallback chain: if requested provider is unavailable, try these in order
 _FALLBACK_CHAIN = [
-    ("gemini", "gemini-2.5-flash"),
     ("anthropic", "claude-sonnet-4-6"),
+    ("gemini", "gemini-2.5-flash"),
     ("openai", "gpt-5.2"),
 ]
 
