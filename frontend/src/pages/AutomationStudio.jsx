@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { Zap, ExternalLink, Loader2, Copy, Check } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
-import { ToolCard, AgentChatPanel } from "@/components/StudioLayout";
+import { ToolCard, AgentChatPanel, StudioContextArea } from "@/components/StudioLayout";
 import { PageHeader } from "@/components/PageHeader";
 
 const COLOR = "#F87171";
@@ -83,16 +83,16 @@ export default function AutomationStudio() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3 space-y-5">
-          <div className="bg-[#0A0A0A] border border-white/8 rounded-sm p-5 space-y-3">
-            <label className="block text-xs text-zinc-500 uppercase tracking-widest">
-              {lang === "DE" ? "Was soll automatisiert werden?" : "What should be automated?"}
-            </label>
-            <textarea value={context} onChange={(e) => setContext(e.target.value)} rows={3}
-              placeholder={lang === "DE"
-                ? "z.B. Neue Leads aus Typeform → CRM → Willkommens-E-Mail → Slack-Benachrichtigung…"
-                : "e.g. New leads from Typeform → CRM → welcome email → Slack notification…"}
-              className="w-full bg-black border border-white/8 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none focus:border-[#F87171]/40" />
-          </div>
+          <StudioContextArea
+            color={COLOR}
+            context={context}
+            setContext={setContext}
+            label="Was soll automatisiert werden?"
+            labelEN="What should be automated?"
+            placeholder="z.B. Neue Leads aus Typeform → CRM → Willkommens-E-Mail → Slack-Benachrichtigung…"
+            placeholderEN="e.g. New leads from Typeform → CRM → welcome email → Slack notification…"
+            title="Automation Studio"
+          />
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {TOOLS.map((tool) => (
               <ToolCard key={tool.id} tool={tool} color={COLOR} onRun={runTool}

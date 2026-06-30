@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { Globe, Copy, Check, Loader2, ExternalLink } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
-import { ToolCard, AgentChatPanel } from "@/components/StudioLayout";
+import { ToolCard, AgentChatPanel, StudioContextArea } from "@/components/StudioLayout";
 import { PageHeader } from "@/components/PageHeader";
 
 const COLOR = "#34D399";
@@ -113,20 +113,16 @@ export default function SeoStudio() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3 space-y-5">
-          <div className="bg-[#0A0A0A] border border-white/8 rounded-sm p-5 space-y-3">
-            <label className="block text-xs text-zinc-500 uppercase tracking-widest">
-              {lang === "DE" ? "Thema / URL / Nische" : "Topic / URL / Niche"}
-            </label>
-            <textarea
-              value={context}
-              onChange={(e) => setContext(e.target.value)}
-              rows={3}
-              placeholder={lang === "DE"
-                ? "z.B. kickstartercash.club – Affiliate-Marketing, passives Einkommen, MLM-Alternative…"
-                : "e.g. kickstartercash.club – affiliate marketing, passive income, MLM alternative…"}
-              className="w-full bg-black border border-white/8 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none focus:border-[#34D399]/40"
-            />
-          </div>
+          <StudioContextArea
+            color={COLOR}
+            context={context}
+            setContext={setContext}
+            label="Thema / URL / Nische"
+            labelEN="Topic / URL / Niche"
+            placeholder="z.B. kickstartercash.club – Affiliate-Marketing, passives Einkommen, MLM-Alternative…"
+            placeholderEN="e.g. kickstartercash.club – affiliate marketing, passive income, MLM alternative…"
+            title="SEO Studio"
+          />
 
           <div>
             <p className="text-[10px] text-zinc-700 uppercase tracking-widest mb-3">

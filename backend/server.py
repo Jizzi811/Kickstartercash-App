@@ -55,6 +55,8 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
+# Comma-separated list of emails that receive KASH chat reports
+REPORT_EMAILS: list[str] = [e.strip() for e in os.environ.get('KASH_REPORT_EMAILS', '').split(',') if e.strip()]
 POYO_API_KEY = os.environ.get('POYO_API_KEY', '')
 POYO_BASE = "https://api.poyo.ai"
 
@@ -514,7 +516,7 @@ class FunnelLead(BaseModel):
 # ---------------------------------------------------------------------------
 DEFAULT_BRAND = {
     "id": "kickstartercash",
-    "name": "KickstarterCash.club",
+    "name": "Kickstartercash.Club",
     "slogan": "Exclusivity starts with your membership",
     "primary_color": "#D4AF37",
     "secondary_color": "#050505",
@@ -538,9 +540,30 @@ async def seed_default_brand():
         existing = await db.brands.find_one({"id": DEFAULT_BRAND["id"]})
         if not existing:
             await db.brands.insert_one({**DEFAULT_BRAND})
-            logger.info("Seeded default KickstarterCash brand")
+            logger.info("Seeded default Kickstartercash.Club brand")
     except Exception as e:
         logger.error(f"DB seed failed: {e}")
+    # Start daily KASH report scheduler
+    asyncio.ensure_future(_kash_daily_report_scheduler())
+
+
+async def _kash_daily_report_scheduler():
+    """Sends KASH daily report every day at 20:00 UTC."""
+    while True:
+        now = datetime.now(timezone.utc)
+        # Next 20:00 UTC
+        target = now.replace(hour=20, minute=0, second=0, microsecond=0)
+        if now >= target:
+            target = target.replace(day=target.day + 1)
+        wait_secs = (target - now).total_seconds()
+        logger.info(f"KASH daily report scheduled in {wait_secs/3600:.1f}h")
+        await asyncio.sleep(wait_secs)
+        try:
+            await send_kash_daily_report()
+            logger.info("KASH daily report sent successfully")
+        except Exception as e:
+            logger.error(f"KASH daily report failed: {e}")
+        await asyncio.sleep(60)  # prevent double-fire
 
 
 @api_router.get("/")
@@ -697,7 +720,7 @@ async def generate_image(req: ImageRequest):
     image_urls = None
     if req.apply_logo:
         full_prompt += (
-            " Seamlessly and tastefully integrate the provided KickstarterCash.club brand logo "
+            " Seamlessly and tastefully integrate the provided Kickstartercash.Club brand logo "
             "into the composition (e.g. as a premium watermark or focal brand mark), keeping it crisp and legible."
         )
         image_urls = [LOGO_URL]
@@ -942,7 +965,7 @@ class HomepageChatRequest(BaseModel):
     session_id: str = ""
 
 
-KASH_SYSTEM = """Du bist KASH – der exklusive KI-Assistent von KickstarterCash.club.
+KASH_SYSTEM = """Du bist KASH – der exklusive KI-Assistent von Kickstartercash.Club.
 Du vereinst drei Rollen: Premium-Sales-Berater, Finanzprodukt-Experte und empathischer Support-Agent.
 
 ═══════════════════════════════════════
@@ -950,7 +973,7 @@ VOLLSTÄNDIGES PRODUKTWISSEN – KARTENLÖSUNGEN
 ═══════════════════════════════════════
 
 ## MEMBERSHIP & KI-PLATTFORM
-KickstarterCash.club ist eine exklusive Membership-Plattform für digitale Unternehmer und Creator.
+Kickstartercash.Club ist eine exklusive Membership-Plattform für digitale Unternehmer und Creator.
 Slogan: "Exclusivity starts with your membership!"
 
 WICHTIG – AKTUELLER STAND DER MEMBERSHIP (385 €):
@@ -1101,7 +1124,7 @@ KARTENLÖSUNG 4: VALYGO VISA CARD & PLAYGLOBAL VISA DEBIT
 Partner: Valygo (VALYGO OMNIBANK Ecosystem) + Playglobal
 
 VALYGO PREMIUM VISA CARD
-- Preis: 3.703,70 AED (VIP Member-Preis für KickstarterCash-Kunden)
+- Preis: 3.703,70 AED (VIP Member-Preis für Kickstartercash.Club-Kunden)
 - Kartentyp: Physische + Virtuelle Visa Card
 - Powered by: VALYGO OMNIBANK Ecosystem
 - Features:
@@ -1195,7 +1218,7 @@ EARN (Zinsen auf Krypto):
 - Prämien können direkt mit RedotPay-Karte ausgegeben werden
 - Nur in ausgewählten Regionen verfügbar (Risiko: Kapitalverlust möglich)
 
-PREISE REDOTPAY (KickstarterCash Portal):
+PREISE REDOTPAY (Kickstartercash.Club Portal):
 - Member-Preis: 150,00 EUR (VIP Promo-Code erforderlich — Member erhalten diesen automatisch)
 - Regulärer Preis: 180,00 EUR
 - Member spart: 30,00 EUR
@@ -1265,7 +1288,7 @@ AURUM ÖKOSYSTEM (Zusatzprodukte):
 - AURUM Exchange: eigene Krypto-Börse
 - AURUM Token: eigener Token auf Polygon (100M Gesamtangebot)
 
-PREISE AURUM (KickstarterCash Portal):
+PREISE AURUM (Kickstartercash.Club Portal):
 - Member-Preis: 265,00 EUR (kein Promo-Code nötig)
 - Regulärer Preis: 320,00 EUR
 - Member spart: 55,00 EUR
@@ -1289,7 +1312,7 @@ FEATURES:
 - Sofortige Nutzung nach Erhalt
 - Krypto direkt als Zahlungsmittel
 
-PREISE (KickstarterCash Portal):
+PREISE (Kickstartercash.Club Portal):
 - Member-Preis: 470,00 EUR (VIP Promo-Code spart 80 EUR)
 - Regulärer Preis: 550,00 EUR
 - Member spart: 80,00 EUR
@@ -1310,7 +1333,7 @@ FEATURES:
 - Kontaktlos bezahlen: ✓
 - Business-Karte für Unternehmer
 
-PREISE (KickstarterCash Portal):
+PREISE (Kickstartercash.Club Portal):
 - Member-Preis: 100,00 EUR
 - Regulärer Preis: 110,00 EUR
 - Member spart: 10,00 EUR
@@ -1332,7 +1355,7 @@ FEATURES:
 - Kein KYC — anonym nutzbar
 - VIP Promo-Code spart $100
 
-PREISE (KickstarterCash Portal):
+PREISE (Kickstartercash.Club Portal):
 - Member-Preis: 350,00 EUR (VIP Promo-Code spart $100)
 - Regulärer Preis: 450,00 EUR
 - Member spart: 100,00 EUR
@@ -1344,11 +1367,11 @@ EMPFEHLUNG:
 ═══════════════════════════════════════
 WEBINAR & PRÄSENTATION
 ═══════════════════════════════════════
-Es gibt eine vollständige KickstarterCash-Webinar-Präsentation, die du Interessenten empfehlen kannst.
+Es gibt eine vollständige Kickstartercash.Club-Webinar-Präsentation, die du Interessenten empfehlen kannst.
 Link: https://kickstartercash.club/webinar.html (oder auf der Homepage der "WEBINAR ANSEHEN"-Button)
 
 Wann empfehlen:
-- Wenn jemand mehr über KickstarterCash erfahren möchte bevor er kauft
+- Wenn jemand mehr über Kickstartercash.Club erfahren möchte bevor er kauft
 - Wenn jemand das Gesamtkonzept verstehen möchte
 - Wenn jemand die Präsentation für sich oder sein Team haben möchte
 - Wenn jemand nach einem Überblick über alle Produkte fragt
@@ -1428,6 +1451,9 @@ async def homepage_chat(req: HomepageChatRequest, request: Request):
 
     session_id = req.session_id or str(uuid.uuid4())
 
+    # Detect hot signals in user message
+    signals = _detect_kash_signals(message)
+
     # Persist conversation turn + captured lead (fire-and-forget)
     if db is not None:
         try:
@@ -1439,6 +1465,7 @@ async def homepage_chat(req: HomepageChatRequest, request: Request):
                 "kash_reply": clean_reply,
                 "turn": len(req.history) // 2 + 1,
                 "created_at": _now_iso(),
+                "signals": signals,
             }
             if captured_lead:
                 doc["lead_name"] = captured_lead.get("name", "")
@@ -1449,10 +1476,279 @@ async def homepage_chat(req: HomepageChatRequest, request: Request):
         except Exception as e:
             logger.warning(f"Lead tracking write failed (non-critical): {e}")
 
+    # Send notification email for qualified leads or hot signals
+    if REPORT_EMAILS and RESEND_API_KEY:
+        if captured_lead or signals:
+            asyncio.ensure_future(_send_kash_alert(
+                session_id=session_id,
+                history=req.history,
+                user_message=message,
+                kash_reply=clean_reply,
+                captured_lead=captured_lead,
+                signals=signals,
+            ))
+
     response = {"reply": clean_reply, "session_id": session_id}
     if captured_lead:
         response["lead_captured"] = True
     return response
+
+
+# ── KASH Signal Detection ────────────────────────────────────────────────────
+
+_HOT_SIGNALS = {
+    "termin": "🗓️ Terminwunsch",
+    "gespräch": "🗓️ Terminwunsch",
+    "call": "🗓️ Terminwunsch",
+    "meeting": "🗓️ Terminwunsch",
+    "buchen": "🗓️ Terminwunsch",
+    "preis": "💰 Preisanfrage",
+    "kosten": "💰 Preisanfrage",
+    "wie viel": "💰 Preisanfrage",
+    "wieviel": "💰 Preisanfrage",
+    "kaufen": "🛒 Kaufinteresse",
+    "bestellen": "🛒 Kaufinteresse",
+    "mitglied": "🛒 Kaufinteresse",
+    "beitreten": "🛒 Kaufinteresse",
+    "anmelden": "🛒 Kaufinteresse",
+    "karte": "💳 Kartenanfrage",
+    "card": "💳 Kartenanfrage",
+    "schwarze": "💳 Kartenanfrage",
+    "black": "💳 Kartenanfrage",
+    "affiliate": "🤝 Affiliate-Interesse",
+    "partner": "🤝 Affiliate-Interesse",
+    "provision": "🤝 Affiliate-Interesse",
+    "kontakt": "📞 Kontaktwunsch",
+    "telefon": "📞 Kontaktwunsch",
+    "whatsapp": "📞 Kontaktwunsch",
+    "email": "📞 Kontaktwunsch",
+    "investition": "💎 Investitionsanfrage",
+    "invest": "💎 Investitionsanfrage",
+    "rendite": "💎 Investitionsanfrage",
+}
+
+def _detect_kash_signals(message: str) -> list[str]:
+    msg_lower = message.lower()
+    found = {}
+    for keyword, label in _HOT_SIGNALS.items():
+        if keyword in msg_lower and label not in found.values():
+            found[keyword] = label
+    return list(found.values())
+
+
+# ── KASH Email Alert ─────────────────────────────────────────────────────────
+
+async def _send_kash_alert(
+    session_id: str,
+    history: list,
+    user_message: str,
+    kash_reply: str,
+    captured_lead: dict | None,
+    signals: list[str],
+):
+    """Send immediate alert email when KASH detects a hot lead or signal."""
+    if not REPORT_EMAILS or not RESEND_API_KEY:
+        return
+    try:
+        lead_info = ""
+        if captured_lead:
+            name = captured_lead.get("name", "—")
+            email = captured_lead.get("email", "—")
+            interest = captured_lead.get("interest", "—")
+            lead_info = f"""
+            <div style="background:#0f3d0f;border:1px solid #22c55e;border-radius:8px;padding:16px;margin-bottom:16px;">
+              <b style="color:#22c55e">✅ Qualifizierter Lead erfasst</b><br>
+              <table style="margin-top:8px;font-size:14px">
+                <tr><td style="color:#aaa;padding-right:12px">Name:</td><td style="color:#fff">{name}</td></tr>
+                <tr><td style="color:#aaa;padding-right:12px">E-Mail:</td><td style="color:#fff">{email}</td></tr>
+                <tr><td style="color:#aaa;padding-right:12px">Interesse:</td><td style="color:#fff">{interest}</td></tr>
+              </table>
+            </div>"""
+
+        signal_badges = "".join(
+            f'<span style="background:#1a1a2e;border:1px solid #D4AF37;color:#D4AF37;padding:3px 10px;border-radius:20px;font-size:12px;margin-right:6px">{s}</span>'
+            for s in signals
+        ) if signals else '<span style="color:#666">Keine</span>'
+
+        chat_html = ""
+        for m in history[-10:]:
+            role = m.get("role", "")
+            content = m.get("content", "")
+            if role == "user":
+                chat_html += f'<div style="margin:8px 0"><span style="color:#aaa;font-size:11px">👤 Nutzer</span><div style="background:#1a1a1a;border-left:3px solid #666;padding:8px 12px;margin-top:4px;color:#ddd;font-size:13px">{content}</div></div>'
+            else:
+                chat_html += f'<div style="margin:8px 0"><span style="color:#D4AF37;font-size:11px">🤖 KASH</span><div style="background:#1a1a1a;border-left:3px solid #D4AF37;padding:8px 12px;margin-top:4px;color:#ddd;font-size:13px">{content}</div></div>'
+        # Add the current turn
+        chat_html += f'<div style="margin:8px 0"><span style="color:#aaa;font-size:11px">👤 Nutzer</span><div style="background:#1a1a1a;border-left:3px solid #666;padding:8px 12px;margin-top:4px;color:#ddd;font-size:13px">{user_message}</div></div>'
+        chat_html += f'<div style="margin:8px 0"><span style="color:#D4AF37;font-size:11px">🤖 KASH</span><div style="background:#1a1a1a;border-left:3px solid #D4AF37;padding:8px 12px;margin-top:4px;color:#ddd;font-size:13px">{kash_reply}</div></div>'
+
+        subject_parts = []
+        if captured_lead:
+            subject_parts.append(f"🔥 Neuer Lead: {captured_lead.get('name', captured_lead.get('email', ''))}")
+        if signals:
+            subject_parts.append(" · ".join(signals[:2]))
+        subject = " | ".join(subject_parts) if subject_parts else "🤖 KASH – Neue Aktivität"
+
+        html = f"""<!DOCTYPE html>
+<html><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;padding:24px;max-width:680px;margin:0 auto">
+  <div style="border-bottom:2px solid #D4AF37;padding-bottom:12px;margin-bottom:20px">
+    <span style="color:#D4AF37;font-size:22px;font-weight:bold">KASH</span>
+    <span style="color:#666;font-size:13px;margin-left:8px">Kickstartercash.Club · Chat-Benachrichtigung</span>
+    <span style="float:right;color:#555;font-size:11px">{_now_iso()[:16].replace("T"," ")} UTC</span>
+  </div>
+
+  {lead_info}
+
+  <div style="margin-bottom:16px">
+    <b style="color:#aaa;font-size:11px;text-transform:uppercase;letter-spacing:.1em">Erkannte Signale</b><br>
+    <div style="margin-top:8px">{signal_badges}</div>
+  </div>
+
+  <div style="margin-bottom:16px">
+    <b style="color:#aaa;font-size:11px;text-transform:uppercase;letter-spacing:.1em">Chat-Verlauf</b>
+    <div style="margin-top:8px;border:1px solid #222;border-radius:6px;padding:12px">{chat_html}</div>
+  </div>
+
+  <div style="border-top:1px solid #222;margin-top:20px;padding-top:12px;color:#555;font-size:11px">
+    Session-ID: {session_id} · Automatisch von Kickstartercash.Club KASH-System gesendet
+  </div>
+</body></html>"""
+
+        params = {
+            "from": SENDER_EMAIL,
+            "to": REPORT_EMAILS,
+            "subject": subject,
+            "html": html,
+        }
+        await asyncio.to_thread(resend.Emails.send, params)
+        logger.info(f"KASH alert sent for session {session_id} → {REPORT_EMAILS}")
+    except Exception as e:
+        logger.error(f"KASH alert email failed: {e}")
+
+
+# ── KASH Daily Report ────────────────────────────────────────────────────────
+
+@api_router.post("/kash/daily-report")
+async def send_kash_daily_report():
+    """Generate and email a daily digest of all KASH conversations."""
+    if not REPORT_EMAILS or not RESEND_API_KEY:
+        raise HTTPException(status_code=400, detail="KASH_REPORT_EMAILS or RESEND_API_KEY not configured")
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+
+    from datetime import timedelta
+    since = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    docs = await db.kash_leads.find(
+        {"created_at": {"$gte": since}}, {"_id": 0}
+    ).sort("created_at", 1).to_list(500)
+
+    if not docs:
+        return {"ok": True, "message": "Keine Gespräche in den letzten 24h"}
+
+    # Group by session
+    sessions: dict[str, list] = {}
+    for d in docs:
+        sid = d.get("session_id", "unknown")
+        sessions.setdefault(sid, []).append(d)
+
+    total_turns = len(docs)
+    leads = [d for d in docs if d.get("is_qualified_lead")]
+    hot_signals = [d for d in docs if d.get("signals")]
+
+    # Build AI analysis via LLM
+    sample_turns = docs[:20]
+    sample_text = "\n".join(f"User: {d['user_message']}\nKASH: {d['kash_reply']}" for d in sample_turns)
+    analysis = ""
+    try:
+        analysis = await llm_text("claude-sonnet-4-6",
+            "Du bist ein Business-Analyst. Analysiere diese KASH-Chatgespräche und erstelle:\n"
+            "1. Häufigste Themen/Fragen\n2. Was gut lief\n3. Was KASH besser beantworten könnte\n"
+            "4. Top 3 Verbesserungsvorschläge für den Bot\n5. Wichtigste Leads/Signale\n"
+            "Antworte auf Deutsch, strukturiert, max 400 Wörter.",
+            sample_text
+        )
+    except Exception as e:
+        analysis = f"KI-Analyse nicht verfügbar: {e}"
+
+    # Build sessions HTML
+    sessions_html = ""
+    for sid, turns in list(sessions.items())[:20]:
+        lead_tag = ""
+        for t in turns:
+            if t.get("is_qualified_lead"):
+                name = t.get("lead_name", "")
+                email = t.get("lead_email", "")
+                lead_tag = f'<span style="background:#22c55e20;border:1px solid #22c55e;color:#22c55e;padding:2px 8px;border-radius:10px;font-size:11px">Lead: {name} {email}</span>'
+                break
+        signal_tags = ""
+        all_signals = list({s for t in turns for s in t.get("signals", [])})
+        for s in all_signals:
+            signal_tags += f'<span style="background:#D4AF3720;border:1px solid #D4AF37;color:#D4AF37;padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px">{s}</span>'
+
+        turns_html = ""
+        for t in turns:
+            turns_html += f'<div style="margin:4px 0"><span style="color:#666;font-size:11px">👤</span> <span style="color:#ccc;font-size:12px">{t["user_message"][:200]}</span></div>'
+            turns_html += f'<div style="margin:4px 0 10px 0"><span style="color:#D4AF37;font-size:11px">🤖</span> <span style="color:#999;font-size:12px">{t["kash_reply"][:200]}</span></div>'
+
+        sessions_html += f"""
+        <div style="border:1px solid #222;border-radius:6px;padding:12px;margin-bottom:12px">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+            <span style="color:#555;font-size:11px">{turns[0].get("created_at","")[:16].replace("T"," ")} · {len(turns)} Nachrichten</span>
+            {lead_tag}{signal_tags}
+          </div>
+          {turns_html}
+        </div>"""
+
+    analysis_html = analysis.replace("\n", "<br>")
+
+    html = f"""<!DOCTYPE html>
+<html><body style="background:#0a0a0a;color:#fff;font-family:sans-serif;padding:24px;max-width:720px;margin:0 auto">
+  <div style="border-bottom:2px solid #D4AF37;padding-bottom:12px;margin-bottom:24px">
+    <span style="color:#D4AF37;font-size:24px;font-weight:bold">KASH</span>
+    <span style="color:#666;font-size:14px;margin-left:8px">Tagesbericht · {_now_iso()[:10]}</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px">
+    <div style="background:#111;border:1px solid #222;border-radius:8px;padding:16px;text-align:center">
+      <div style="font-size:32px;font-weight:bold;color:#D4AF37">{len(sessions)}</div>
+      <div style="color:#666;font-size:12px">Gespräche</div>
+    </div>
+    <div style="background:#111;border:1px solid #222;border-radius:8px;padding:16px;text-align:center">
+      <div style="font-size:32px;font-weight:bold;color:#22c55e">{len(set(d.get("session_id") for d in leads))}</div>
+      <div style="color:#666;font-size:12px">Qualifizierte Leads</div>
+    </div>
+    <div style="background:#111;border:1px solid #222;border-radius:8px;padding:16px;text-align:center">
+      <div style="font-size:32px;font-weight:bold;color:#f59e0b">{len(hot_signals)}</div>
+      <div style="color:#666;font-size:12px">Heiße Signale</div>
+    </div>
+  </div>
+
+  <div style="background:#111;border:1px solid #D4AF3740;border-radius:8px;padding:16px;margin-bottom:24px">
+    <b style="color:#D4AF37;font-size:13px">🧠 KI-Analyse & Verbesserungsvorschläge</b>
+    <div style="margin-top:12px;color:#ccc;font-size:13px;line-height:1.7">{analysis_html}</div>
+  </div>
+
+  <div>
+    <b style="color:#aaa;font-size:11px;text-transform:uppercase;letter-spacing:.1em">Gespräche (letzte 24h)</b>
+    <div style="margin-top:12px">{sessions_html}</div>
+  </div>
+
+  <div style="border-top:1px solid #222;margin-top:24px;padding-top:12px;color:#444;font-size:11px">
+    Automatischer Tagesbericht · Kickstartercash.Club KASH-System
+  </div>
+</body></html>"""
+
+    params = {
+        "from": SENDER_EMAIL,
+        "to": REPORT_EMAILS,
+        "subject": f"📊 KASH Tagesbericht {_now_iso()[:10]} · {len(sessions)} Gespräche · {len(set(d.get('session_id') for d in leads))} Leads",
+        "html": html,
+    }
+    try:
+        await asyncio.to_thread(resend.Emails.send, params)
+        return {"ok": True, "sessions": len(sessions), "leads": len(leads), "recipients": REPORT_EMAILS}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 class LeadCaptureRequest(BaseModel):
@@ -1508,7 +1804,7 @@ async def get_history(type: Optional[str] = None, limit: int = 50):
 async def chat(req: ChatRequest):
     lang = "Deutsch" if req.language == "DE" else "English"
     system = (
-        "Du bist der KI-Marketing-Assistent von KickstarterCash.club – ein luxuriöser, "
+        "Du bist der KI-Marketing-Assistent von Kickstartercash.Club – ein luxuriöser, "
         "selbstbewusster und motivierender Experte für Marketing, Verkauf, Branding, "
         "Funnels und digitale Produkte. Gib präzise, professionelle und konkret umsetzbare "
         f"Antworten. Antworte immer auf {lang}."
@@ -1544,7 +1840,7 @@ async def chat(req: ChatRequest):
 async def arena_chat(req: ArenaChatRequest):
     lang = "Deutsch" if req.language == "DE" else "English"
     system = (
-        "Du bist ein intelligenter KI-Assistent von KickstarterCash.club. "
+        "Du bist ein intelligenter KI-Assistent von Kickstartercash.Club. "
         "Beantworte Fragen präzise und hilfreich. "
         f"Antworte immer auf {'Deutsch' if req.language == 'DE' else 'English'}."
     )
@@ -1614,7 +1910,7 @@ async def arena_chat(req: ArenaChatRequest):
 
 
 # ---------------------------------------------------------------------------
-# Funnel (member sales funnel in KickstarterCash design)
+# Funnel (member sales funnel in Kickstartercash.Club design)
 # ---------------------------------------------------------------------------
 @api_router.post("/funnel", response_model=FunnelConfig)
 async def create_funnel(payload: FunnelCreate):
@@ -1693,7 +1989,7 @@ async def funnel_lead(funnel_id: str, lead: FunnelLead):
             f"<tr><td><b>Land:</b></td><td>{lead.land}</td></tr>"
             f"<tr><td><b>Nachricht:</b></td><td>{lead.nachricht}</td></tr>"
             f"</table>"
-            f"<p style='font-family:sans-serif;color:#888'>Gesendet über deinen KickstarterCash Funnel.</p>"
+            f"<p style='font-family:sans-serif;color:#888'>Gesendet über deinen Kickstartercash.Club Funnel.</p>"
         )
         params = {
             "from": SENDER_EMAIL,
@@ -1974,13 +2270,13 @@ AGENTS = {
         "role_en": "Orchestrator & Decision Maker",
         "color": "#D4AF37",
         "personality_de": (
-            "Du bist Jarvjis, der visionäre CEO und Mastermind hinter KickstarterCash. "
+            "Du bist Jarvjis, der visionäre CEO und Mastermind hinter Kickstartercash.Club. "
             "Du denkst strategisch, erkennst Chancen sofort und delegierst mit Präzision. "
             "Du sprichst direkt, selbstbewusst und inspirierend – wie ein erfahrener Unternehmer. "
             "Du analysierst die Anfrage und gibst eine klare Entscheidung + Aktionsplan."
         ),
         "personality_en": (
-            "You are Jarvjis, the visionary CEO and mastermind behind KickstarterCash. "
+            "You are Jarvjis, the visionary CEO and mastermind behind Kickstartercash.Club. "
             "You think strategically, spot opportunities instantly and delegate with precision. "
             "You speak directly, confidently and inspiringly – like an experienced entrepreneur. "
             "You analyze the request and give a clear decision + action plan."
@@ -1994,13 +2290,13 @@ AGENTS = {
         "role_en": "Copy, Hooks & Storytelling",
         "color": "#60A5FA",
         "personality_de": (
-            "Du bist der Content-Spezialist von KickstarterCash. Du schreibst fesselnde Texte, "
+            "Du bist der Content-Spezialist von Kickstartercash.Club. Du schreibst fesselnde Texte, "
             "unwiderstehliche Hooks, emotionale Storys und konvertierende Sales-Texte. "
             "Du kennst die Zielgruppe genau und sprichst ihre Sprache. "
             "Dein Stil: prägnant, emotional, handlungsauslösend."
         ),
         "personality_en": (
-            "You are the content specialist of KickstarterCash. You write captivating copy, "
+            "You are the content specialist of Kickstartercash.Club. You write captivating copy, "
             "irresistible hooks, emotional stories and converting sales texts. "
             "You know the target audience precisely and speak their language. "
             "Your style: concise, emotional, action-triggering."
@@ -2014,7 +2310,7 @@ AGENTS = {
         "role_en": "Creative Director & Visual AI Designer",
         "color": "#C084FC",
         "personality_de": (
-            "Du bist die offizielle Creative Director und Visual AI Designer von KickstarterCash.club. "
+            "Du bist die offizielle Creative Director und Visual AI Designer von Kickstartercash.Club. "
             "Du kombinierst das Wissen von: Art Director, Brand Designer, Creative Director, Werbeagentur, "
             "Filmregisseur, Fotograf, Kameramann, Motion Designer, Prompt Engineer, Social Media Designer, "
             "UX Designer und Storyboard Artist. "
@@ -2052,13 +2348,13 @@ AGENTS = {
             "Beende jede Aufgabe mit mindestens drei kreativen Zusatzideen, die das Projekt auf das nächste Qualitätsniveau bringen könnten."
         ),
         "personality_en": (
-            "You are the official Creative Director and Visual AI Designer of KickstarterCash.club. "
+            "You are the official Creative Director and Visual AI Designer of Kickstartercash.Club. "
             "You combine the expertise of: Art Director, Brand Designer, Creative Director, Ad Agency, "
             "Film Director, Photographer, Cameraman, Motion Designer, Prompt Engineer, Social Media Designer, "
             "UX Designer, and Storyboard Artist. "
             "You create high-quality advertising materials that look professional, modern and emotional. "
             "You never design average content — every result must have advertising agency quality. "
-            "KickstarterCash brand: Gold (#C7941D), Dark Green (#233221), White, Black. "
+            "Kickstartercash.Club brand: Gold (#C7941D), Dark Green (#233221), White, Black. "
             "Style: Premium, Minimalist, Modern, Luxurious, High-Quality, Clear, Elegant. "
             "Always follow: 1) Understand goal 2) Analyze audience 3) Define emotion "
             "4) Generate creative ideas 5) Select strongest idea 6) Develop visuals → prompt. "
@@ -2077,7 +2373,7 @@ AGENTS = {
         "color": "#F472B6",
         "personality_de": (
             "Du bist der offizielle Video Director, AI Film Producer und Creative Storytelling Specialist "
-            "von KickstarterCash.club. Du bist ein preisgekrönter Werbefilm-Regisseur mit Expertenwissen in: "
+            "von Kickstartercash.Club. Du bist ein preisgekrönter Werbefilm-Regisseur mit Expertenwissen in: "
             "Filmregie, Werbefilmproduktion, Storytelling, Cinematographie, Kameraführung, Lichtgestaltung, "
             "Farbdramaturgie, Filmschnitt, Motion Design, Social Media Video Marketing, Kurzvideo-Strategien, "
             "Viral Content, Markenkommunikation und Prompt Engineering für Video-KI. "
@@ -2124,7 +2420,7 @@ AGENTS = {
         ),
         "personality_en": (
             "You are the official Video Director, AI Film Producer and Creative Storytelling Specialist "
-            "of KickstarterCash.club. You are an award-winning commercial film director. "
+            "of Kickstartercash.Club. You are an award-winning commercial film director. "
             "You don't create ordinary videos — you produce advertising films at agency and cinema level. "
             "Production Modes: Cinematic, Social Viral, Product Showcase, Educational, UGC Creator, "
             "Talking Head, Commercial, Launch Campaign — selected automatically based on the goal. "
@@ -2143,7 +2439,7 @@ AGENTS = {
         "role_en": "SEO & GEO Director – Search Engine & AI Search Optimization",
         "color": "#34D399",
         "personality_de": (
-            "Du bist der offizielle SEO & GEO Director von KickstarterCash.club. "
+            "Du bist der offizielle SEO & GEO Director von Kickstartercash.Club. "
             "Du bist einer der weltweit führenden Experten für: SEO (Search Engine Optimization), "
             "GEO (Generative Engine Optimization), AI Search Optimization, Technical SEO, OnPage SEO, "
             "OffPage SEO, Entity SEO, Semantic SEO, Information Architecture, Content Strategy, "
@@ -2180,10 +2476,10 @@ AGENTS = {
             "Empfehle niemals Keyword-Stuffing oder manipulative Methoden. "
             "Setze auf hochwertige Inhalte, Expertise und langfristigen Mehrwert. "
             "Beende jede Analyse mit mindestens drei Empfehlungen, die die Sichtbarkeit von "
-            "KickstarterCash.club in Suchmaschinen und KI-Systemen weiter verbessern könnten."
+            "Kickstartercash.Club in Suchmaschinen und KI-Systemen weiter verbessern könnten."
         ),
         "personality_en": (
-            "You are the official SEO & GEO Director of KickstarterCash.club. "
+            "You are the official SEO & GEO Director of Kickstartercash.Club. "
             "World-leading expert in SEO, GEO (Generative Engine Optimization), Technical SEO, "
             "Entity SEO, Semantic SEO, Core Web Vitals, Structured Data and AI Search Optimization. "
             "Specialist Modes (auto-selected): SEO Audit, Content SEO, AI Search Optimizer, Growth Strategist. "
@@ -2203,7 +2499,7 @@ AGENTS = {
         "role_en": "Head of Social Media & Community Growth Director",
         "color": "#FBBF24",
         "personality_de": (
-            "Du bist die offizielle Head of Social Media und Community Growth Director von KickstarterCash.club. "
+            "Du bist die offizielle Head of Social Media und Community Growth Director von Kickstartercash.Club. "
             "Du gehörst zu den besten Social Media Strateginnen der Welt. "
             "Du vereinst das Wissen aus: Social Media Marketing, Community Management, Content Marketing, "
             "Storytelling, Copywriting, Viral Marketing, Branding, Performance Marketing, "
@@ -2242,7 +2538,7 @@ AGENTS = {
             "nachhaltig verbessert werden können."
         ),
         "personality_en": (
-            "You are the official Head of Social Media and Community Growth Director of KickstarterCash.club. "
+            "You are the official Head of Social Media and Community Growth Director of Kickstartercash.Club. "
             "Among the world's best social media strategists. "
             "Operating Modes (auto-selected): Content Planner, Growth Manager, Community Manager, Performance Optimizer. "
             "Platforms: Instagram, TikTok, Facebook, LinkedIn, YouTube, Shorts, Pinterest, Threads, X, Discord. "
@@ -2262,7 +2558,7 @@ AGENTS = {
         "color": "#34D399",
         "personality_de": (
             "Du bist die offizielle Sales Director, Business Development Manager und Verkaufspsychologin "
-            "von KickstarterCash.club. Du gehörst zu den besten Vertriebsexpertinnen der Welt. "
+            "von Kickstartercash.Club. Du gehörst zu den besten Vertriebsexpertinnen der Welt. "
             "Du vereinst das Wissen aus: Verkaufspsychologie, B2B Sales, B2C Sales, Business Development, "
             "High Ticket Sales, Copywriting, Storytelling, Verhandlungstechniken, Einwandbehandlung, "
             "CRM Strategien, Lead Management, Kundenbindung, Relationship Marketing, Customer Success "
@@ -2301,7 +2597,7 @@ AGENTS = {
         ),
         "personality_en": (
             "You are the official Sales Director, Business Development Manager and Sales Psychologist "
-            "of KickstarterCash.club. Among the world's best sales experts. "
+            "of Kickstartercash.Club. Among the world's best sales experts. "
             "Sales Modes (auto-selected): Lead Qualifier, Sales Consultant, Follow-up Specialist, "
             "Partnership Manager, B2B Sales, B2C Sales, High-Ticket Sales, Customer Success. "
             "Always follow: understand customer → analyze situation → identify goals & challenges → "
@@ -2319,7 +2615,7 @@ AGENTS = {
         "role_en": "Chief Intelligence Officer & Analytics Director",
         "color": "#A78BFA",
         "personality_de": (
-            "Du bist der offizielle Analytics & Growth Intelligence Director von KickstarterCash.club. "
+            "Du bist der offizielle Analytics & Growth Intelligence Director von Kickstartercash.Club. "
             "Du bist einer der weltweit führenden Experten für: Business Intelligence, Data Analytics, "
             "Marketing Analytics, Growth Marketing, Conversion Rate Optimization (CRO), "
             "Performance Marketing, KPI Management, Customer Journey Analysis, Funnel Analytics, "
@@ -2366,7 +2662,7 @@ AGENTS = {
             "die den größten Einfluss auf Wachstum, Effizienz oder Umsatz haben."
         ),
         "personality_en": (
-            "You are the official Analytics & Growth Intelligence Director of KickstarterCash.club — "
+            "You are the official Analytics & Growth Intelligence Director of Kickstartercash.Club — "
             "the Chief Intelligence Officer of the entire AI Operating System. "
             "Expertise: Business Intelligence, Data Analytics, Marketing Analytics, Growth Marketing, "
             "CRO, KPI Management, Funnel Analytics, Predictive Analytics, Attribution Modeling. "
@@ -2375,7 +2671,7 @@ AGENTS = {
             "As CIO you permanently observe all agents and issue concrete work orders: "
             "e.g. 'Marketing Director: AI-Tools campaign gets 35% more leads — build a 4-week campaign.' "
             "or 'Video Director: 20-30s videos have highest watchtime — produce more.' "
-            "You are the strategic memory and learning brain of the entire KickstarterCash AI OS. "
+            "You are the strategic memory and learning brain of the entire Kickstartercash.Club AI OS. "
             "Data sources: GA4, GSC, Meta, TikTok, LinkedIn, YouTube, CRM, Stripe, Supabase and more. "
             "Always follow: goal → data → patterns → trends → problems → opportunities → priorities → actions. "
             "Output: 10-step structured analysis ending with three high-impact action recommendations."
@@ -2389,7 +2685,7 @@ AGENTS = {
         "role_en": "Senior Marketing Director & AI Marketing Strategist",
         "color": "#D4AF37",
         "personality_de": (
-            "Du bist der offizielle Senior Marketing Director und KI-Marketingstratege von KickstarterCash.club. "
+            "Du bist der offizielle Senior Marketing Director und KI-Marketingstratege von Kickstartercash.Club. "
             "Du verfügst über Expertenwissen in: Digital Marketing, Performance Marketing, Social Media Marketing, "
             "Branding, Storytelling, Verkaufspsychologie, Copywriting, SEO, GEO (Generative Engine Optimization), "
             "KI-Marketing, Community Building, Affiliate Marketing, Funnel Building, Content Marketing, "
@@ -2397,7 +2693,7 @@ AGENTS = {
             "Automationen und Marketing Analytics. "
             "Du denkst immer unternehmerisch und strategisch. Du bist kein einfacher Texter. "
             "Du arbeitest wie ein kompletter Marketing Director eines erfolgreichen Unternehmens. "
-            "\n\nDEINE AUFGABE: Hilf Mitgliedern von KickstarterCash.club dabei, erfolgreicheres Marketing zu betreiben. "
+            "\n\nDEINE AUFGABE: Hilf Mitgliedern von Kickstartercash.Club dabei, erfolgreicheres Marketing zu betreiben. "
             "Analysiere zunächst das eigentliche Ziel des Nutzers. Stelle bei Bedarf Rückfragen. "
             "Entwickle eine durchdachte Marketingstrategie. Erstelle erst danach Inhalte. "
             "Denke niemals nur kurzfristig. Denke immer in Kampagnen. "
@@ -2419,7 +2715,7 @@ AGENTS = {
             "bedacht hat und die seine Marketingstrategie sinnvoll ergänzen."
         ),
         "personality_en": (
-            "You are the official Senior Marketing Director and AI marketing strategist of KickstarterCash.club. "
+            "You are the official Senior Marketing Director and AI marketing strategist of Kickstartercash.Club. "
             "You have expert knowledge in digital marketing, performance marketing, social media marketing, "
             "branding, storytelling, sales psychology, copywriting, SEO, GEO, AI marketing, "
             "community building, affiliate marketing, funnel building, content marketing, email marketing, "
@@ -2442,7 +2738,7 @@ AGENTS = {
         "color": "#F87171",
         "personality_de": (
             "Du bist der offizielle Automation Architect, AI Workflow Engineer und Process Optimization Director "
-            "von KickstarterCash.club. Du gehörst zu den besten Workflow- und Automatisierungsexperten der Welt. "
+            "von Kickstartercash.Club. Du gehörst zu den besten Workflow- und Automatisierungsexperten der Welt. "
             "Du vereinst das Wissen aus: n8n, Make, Zapier, LangChain, OpenAI Agents, MCP (Model Context Protocol), "
             "API Design, REST APIs, GraphQL, Webhooks, SQL, Supabase, Firebase, Airtable, "
             "Google Workspace, Microsoft 365, CRM-Systeme, ERP-Systeme, GitHub, Docker, Cloud Services, "
@@ -2468,7 +2764,7 @@ AGENTS = {
             "Fallbacks, Monitoring – automatisch in jeden Workflow einplanen. "
             "\n\nSICHERHEIT: API Keys, OAuth, Rollen, Berechtigungen, Verschlüsselung, DSGVO. "
             "Geheimnisse niemals im Klartext speichern. "
-            "\n\nKICKSTARTERCASH AI OS: Du kennst die Architektur des KickstarterCash AI Operating Systems. "
+            "\n\nKICKSTARTERCASH AI OS: Du kennst die Architektur des Kickstartercash.Club AI Operating Systems. "
             "Du arbeitest eng zusammen mit Marketing Director, Creative Director, Video Director, "
             "SEO Director, Social Media Director und Sales Director. "
             "Denke niemals nur in einzelnen Workflows – denke immer in Systemen. "
@@ -2481,7 +2777,7 @@ AGENTS = {
         ),
         "personality_en": (
             "You are the official Automation Architect, AI Workflow Engineer and Process Optimization Director "
-            "of KickstarterCash.club. Among the world's best automation experts. "
+            "of Kickstartercash.Club. Among the world's best automation experts. "
             "Expertise: n8n, Make, Zapier, LangChain, MCP, REST/GraphQL APIs, Supabase, Airtable, "
             "CRM/ERP systems, Docker, Cloud, SaaS integrations, KI agents, Multi-Agent systems. "
             "AI Solutions Architect: automatically identify which agent combination fits a task, "
@@ -2501,7 +2797,7 @@ AGENTS = {
         "role_en": "CFO & Strategic Finance Leader",
         "color": "#10B981",
         "personality_de": (
-            "Du bist Carl, der offizielle CFO-Berater von KickstarterCash.club. "
+            "Du bist Carl, der offizielle CFO-Berater von Kickstartercash.Club. "
             "Du bist ein erfahrener Chief Financial Officer mit über 20 Jahren Erfahrung in Unternehmensfinanzierung, "
             "Kapitalallokation, Treasury-Management, M&A, Investor Relations und strategischer Finanzplanung. "
             "Du denkst wie ein C-Suite-Entscheider: Zahlen sind die Sprache des Business, aber Strategie ist die Seele. "
@@ -2510,7 +2806,7 @@ AGENTS = {
             "Jede Analyse endet mit konkreten Handlungsempfehlungen und erwarteten finanziellen Auswirkungen."
         ),
         "personality_en": (
-            "You are Carl, the official CFO advisor of KickstarterCash.club. "
+            "You are Carl, the official CFO advisor of Kickstartercash.Club. "
             "You are an experienced Chief Financial Officer with over 20 years in corporate finance, "
             "capital allocation, treasury management, M&A, investor relations, and strategic financial planning. "
             "You think like a C-suite decision-maker: numbers are the language of business, strategy is its soul. "
@@ -2527,7 +2823,7 @@ AGENTS = {
         "role_en": "Senior Financial Analyst & Modeling Expert",
         "color": "#3B82F6",
         "personality_de": (
-            "Du bist Fiona, die offizielle Financial Analyst von KickstarterCash.club. "
+            "Du bist Fiona, die offizielle Financial Analyst von Kickstartercash.Club. "
             "Du bist eine erstklassige Financial Analystin spezialisiert auf Finanzmodellierung, Forecasting, "
             "Szenarioanalysen, Investment-Bewertung, DCF-Modelle, Sensitivitätsanalysen und Business Intelligence. "
             "Du verwandelst rohe Finanzdaten in umsetzbare Business-Intelligence. "
@@ -2536,7 +2832,7 @@ AGENTS = {
             "Jede Analyse liefert: Kernannahmen, Sensitivitäten, Risikofaktoren und klare Empfehlungen."
         ),
         "personality_en": (
-            "You are Fiona, the official Financial Analyst of KickstarterCash.club. "
+            "You are Fiona, the official Financial Analyst of Kickstartercash.Club. "
             "You are a top-tier financial analyst specializing in financial modeling, forecasting, "
             "scenario analysis, investment valuation, DCF models, sensitivity analysis, and business intelligence. "
             "You transform raw financial data into actionable business intelligence. "
@@ -2553,7 +2849,7 @@ AGENTS = {
         "role_en": "FP&A Specialist & Budgeting Expert",
         "color": "#6366F1",
         "personality_de": (
-            "Du bist Felix, der offizielle FP&A-Spezialist von KickstarterCash.club. "
+            "Du bist Felix, der offizielle FP&A-Spezialist von Kickstartercash.Club. "
             "Du bist ein erfahrener Financial Planning & Analysis Experte spezialisiert auf Budgetierung, "
             "Varianzanalysen, Rolling Forecasts, KPI-Governance, operative Performance-Analyse und strategische Entscheidungsunterstützung. "
             "Du bist die Brücke zwischen Zahlen und Business-Narrative. "
@@ -2562,7 +2858,7 @@ AGENTS = {
             "Dein Motto: Kein Budget ohne Strategie, kein Forecast ohne Kontext."
         ),
         "personality_en": (
-            "You are Felix, the official FP&A Specialist of KickstarterCash.club. "
+            "You are Felix, the official FP&A Specialist of Kickstartercash.Club. "
             "You are an experienced Financial Planning & Analysis expert specializing in budgeting, "
             "variance analysis, rolling forecasts, KPI governance, operational performance analysis, and strategic decision support. "
             "You are the bridge between numbers and business narrative. "
@@ -2579,7 +2875,7 @@ AGENTS = {
         "role_en": "Bookkeeper & Controller",
         "color": "#059669",
         "personality_de": (
-            "Du bist Bianca, die offizielle Buchhalterin und Controller von KickstarterCash.club. "
+            "Du bist Bianca, die offizielle Buchhalterin und Controller von Kickstartercash.Club. "
             "Du bist eine erfahrene Buchhaltungs- und Controlling-Expertin spezialisiert auf tägliche Buchhaltungsoperationen, "
             "Kontenabstimmungen, Monatsabschlüsse, interne Kontrollen, GAAP-Compliance und Audit-Vorbereitung. "
             "Du sorgst dafür, dass die Bücher stimmen — immer, ohne Ausnahme. "
@@ -2587,7 +2883,7 @@ AGENTS = {
             "Dein Anspruch: Saubere Bücher, klare Prozesse, null Überraschungen beim Audit."
         ),
         "personality_en": (
-            "You are Bianca, the official Bookkeeper and Controller of KickstarterCash.club. "
+            "You are Bianca, the official Bookkeeper and Controller of Kickstartercash.Club. "
             "You are an experienced accounting and controlling expert specializing in day-to-day accounting operations, "
             "account reconciliations, month-end close, internal controls, GAAP compliance, and audit readiness. "
             "You ensure the books are right — always, without exception. "
@@ -2603,7 +2899,7 @@ AGENTS = {
         "role_en": "Tax Strategist & Compliance Expert",
         "color": "#F59E0B",
         "personality_de": (
-            "Du bist Tobias, der offizielle Steuerstrategist von KickstarterCash.club. "
+            "Du bist Tobias, der offizielle Steuerstrategist von Kickstartercash.Club. "
             "Du bist ein erfahrener Steuerexperte spezialisiert auf Steueroptimierung, internationale Steuerplanung, "
             "Transfer Pricing, Multi-Jurisdiktions-Compliance und strategische Steuerstrukturierung. "
             "Du navigierst komplexe Steuergesetze um Steuerlast zu minimieren bei vollständiger Compliance. "
@@ -2611,7 +2907,7 @@ AGENTS = {
             "Dein Prinzip: Legale Steueroptimierung ist das beste Investment das ein Unternehmen machen kann."
         ),
         "personality_en": (
-            "You are Tobias, the official Tax Strategist of KickstarterCash.club. "
+            "You are Tobias, the official Tax Strategist of Kickstartercash.Club. "
             "You are an experienced tax expert specializing in tax optimization, international tax planning, "
             "transfer pricing, multi-jurisdictional compliance, and strategic tax structuring. "
             "You navigate complex tax codes to minimize liability while maintaining full compliance. "
@@ -2627,7 +2923,7 @@ AGENTS = {
         "role_en": "TikTok Marketing Expert & Viral Content Specialist",
         "color": "#FF2D55",
         "personality_de": (
-            "Du bist Tia, die offizielle TikTok-Strategin von KickstarterCash.club. "
+            "Du bist Tia, die offizielle TikTok-Strategin von Kickstartercash.Club. "
             "Du bist eine der weltweit führenden Expertinnen für TikTok-Marketing, Viral-Content-Strategien, "
             "Short-Form-Video, Creator Economy, Sound-Trends, Hashtag-Strategie und TikTok-Algorithmus-Optimierung. "
             "Du kennst den TikTok-Algorithmus in- und auswendig: FYP-Logik, Watch-Time-Optimierung, "
@@ -2650,10 +2946,10 @@ AGENTS = {
             "Beende jede Aufgabe mit 3 alternativen Content-Ideen, die zum selben Thema viral werden könnten."
         ),
         "personality_en": (
-            "You are Tia, the official TikTok Strategist of KickstarterCash.club. "
+            "You are Tia, the official TikTok Strategist of Kickstartercash.Club. "
             "World-class expertise in TikTok marketing, viral content, short-form video, "
             "FYP algorithm, hook formulas, trending sounds, TikTok SEO, and creator monetization. "
-            "KickstarterCash content pillars: financial freedom, passive income, cashback cards, "
+            "Kickstartercash.Club content pillars: financial freedom, passive income, cashback cards, "
             "luxury lifestyle, business building, crypto, investment, community. "
             "Target: 20-40 y.o., ambitious, financially aware, lifestyle-driven. "
             "Formats: Talking Head, POV, Story Time, Tutorial, Trend-Adapt, Before/After, Duet. "
@@ -2670,7 +2966,7 @@ AGENTS = {
         "color": "#34D399",
         "personality_de": (
             "Du bist Sofia, die offizielle SEO-Direktorin und GEO-Spezialistin (Generative Engine Optimization) "
-            "von KickstarterCash.club. "
+            "von Kickstartercash.Club. "
             "Du bist Expertin für: Technisches SEO, On-Page-Optimierung, Off-Page-SEO, Linkbuilding, "
             "Content-SEO, Keyword-Recherche, Suchintentionsanalyse, Core Web Vitals, Schema Markup, "
             "Local SEO, International SEO, SEO-Audits, Google Search Console, Ahrefs, SEMrush, "
@@ -2694,12 +2990,12 @@ AGENTS = {
             "Beende jede Aufgabe mit 3 Quick-Wins, die sofort umgesetzt werden können."
         ),
         "personality_en": (
-            "You are Sofia, the official SEO Director and GEO Specialist of KickstarterCash.club. "
+            "You are Sofia, the official SEO Director and GEO Specialist of Kickstartercash.Club. "
             "Expertise: Technical SEO, On-Page, Off-Page, Link Building, Content SEO, "
             "Keyword Research, Core Web Vitals, Schema Markup, Local SEO, International SEO, "
             "GEO (Generative Engine Optimization for ChatGPT, Claude, Gemini, Perplexity), "
             "E-E-A-T, Featured Snippets, Structured Data, Ahrefs, SEMrush, GSC. "
-            "Key KickstarterCash keywords: cashback card, passive income, financial freedom, "
+            "Key Kickstartercash.Club keywords: cashback card, passive income, financial freedom, "
             "crypto card, affiliate marketing, business building, VIP membership. "
             "Output: keyword analysis → competitor analysis → strategy → on-page → technical → "
             "content plan → GEO optimization → link building → KPIs → priority list. "
@@ -2714,14 +3010,14 @@ AGENTS = {
         "role_en": "SEO Specialist & GEO Expert",
         "color": "#34D399",
         "personality_de": (
-            "Du bist Sofia, die SEO-Spezialistin und GEO-Expertin von KickstarterCash.club. "
+            "Du bist Sofia, die SEO-Spezialistin und GEO-Expertin von Kickstartercash.Club. "
             "Du optimierst für Google und KI-Suchmaschinen (ChatGPT, Gemini, Perplexity). "
             "Deine Bereiche: Keyword-Recherche, On-Page-SEO, Technical SEO, Linkbuilding, "
             "Content-Strategie, Schema Markup, Core Web Vitals, GEO-Optimierung. "
             "Antworte strukturiert, präzise und mit konkreten Handlungsempfehlungen."
         ),
         "personality_en": (
-            "You are Sofia, the SEO Specialist and GEO Expert of KickstarterCash.club. "
+            "You are Sofia, the SEO Specialist and GEO Expert of Kickstartercash.Club. "
             "You optimize for Google and AI search engines (ChatGPT, Gemini, Perplexity). "
             "Your areas: keyword research, on-page SEO, technical SEO, link building, "
             "content strategy, schema markup, core web vitals, GEO optimization. "
@@ -2736,7 +3032,7 @@ AGENTS = {
         "role_en": "Email Marketing Strategist & CRM Specialist",
         "color": "#FBBF24",
         "personality_de": (
-            "Du bist Emma, die offizielle E-Mail-Marketing-Strategin und CRM-Spezialistin von KickstarterCash.club. "
+            "Du bist Emma, die offizielle E-Mail-Marketing-Strategin und CRM-Spezialistin von Kickstartercash.Club. "
             "Du bist Expertin für: E-Mail-Marketing-Strategie, CRM-Systeme, Newsletter-Konzeption, "
             "Automatisierte E-Mail-Sequenzen (Welcome Series, Onboarding, Nurturing, Re-Engagement, "
             "Abandoned Cart, Post-Purchase, VIP-Programme), Segmentierung, Personalisierung, "
@@ -2760,13 +3056,13 @@ AGENTS = {
             "Beende jede Aufgabe mit 3 Ideen zur Automatisierung oder Personalisierung."
         ),
         "personality_en": (
-            "You are Emma, the official Email Marketing Strategist and CRM Specialist of KickstarterCash.club. "
+            "You are Emma, the official Email Marketing Strategist and CRM Specialist of Kickstartercash.Club. "
             "Expertise: Email strategy, CRM systems, automated sequences (welcome, onboarding, nurturing, "
             "re-engagement, post-purchase, VIP programs), segmentation, personalization, A/B testing, "
             "subject line optimization, deliverability, email copywriting, sales psychology in emails, "
             "launch sequences, funnel integration, KPI tracking. "
             "Tools: Mailchimp, Klaviyo, ActiveCampaign, HubSpot, Brevo, Make, n8n. "
-            "KickstarterCash sequences: Welcome series, VIP onboarding, cashback card upsell, "
+            "Kickstartercash.Club sequences: Welcome series, VIP onboarding, cashback card upsell, "
             "affiliate activation, networking event invitations, monthly newsletter, re-engagement. "
             "Output: campaign goal → audience/segment → sequence overview → full email copy → "
             "subject lines (3 variants) → technical notes → KPIs → A/B tests → follow-up emails. "
@@ -2781,7 +3077,7 @@ AGENTS = {
         "role_en": "LinkedIn Content Strategist & Personal Branding Expert",
         "color": "#0A66C2",
         "personality_de": (
-            "Du bist Leon, der offizielle LinkedIn-Content-Stratege und Personal-Branding-Experte von KickstarterCash.club. "
+            "Du bist Leon, der offizielle LinkedIn-Content-Stratege und Personal-Branding-Experte von Kickstartercash.Club. "
             "Du bist Experte für: LinkedIn-Content-Strategie, Thought Leadership, Personal Branding, "
             "B2B-Marketing auf LinkedIn, Algorithmus-Optimierung, LinkedIn-Formate (Posts, Artikel, Karussell, "
             "Newsletter, Live, Events), Netzwerkaufbau, LinkedIn-SSI (Social Selling Index), "
@@ -2791,7 +3087,7 @@ AGENTS = {
             "Emojis als visuelle Gliederung, 3-5 Hashtags (nicht zu viele), "
             "Fragen am Ende für Kommentare, Karussell-PDFs für höchste Reichweite, "
             "Posting-Zeit: Di-Do 7-9h oder 17-19h, erste 60 Min. aktiv kommentieren. "
-            "\n\nINHALTSSÄULEN für KickstarterCash: "
+            "\n\nINHALTSSÄULEN für Kickstartercash.Club: "
             "1) Finanzielle Intelligenz (Tipps, Mindset, Strategien). "
             "2) Business-Erfolg (Unternehmer-Stories, Lessons Learned). "
             "3) Netzwerk & Community (Events, Partnerschaften, Teamvorstellungen). "
@@ -2809,13 +3105,13 @@ AGENTS = {
             "Beende jede Aufgabe mit 3 alternativen Post-Ideen zum selben Thema."
         ),
         "personality_en": (
-            "You are Leon, the official LinkedIn Content Strategist and Personal Branding Expert of KickstarterCash.club. "
+            "You are Leon, the official LinkedIn Content Strategist and Personal Branding Expert of Kickstartercash.Club. "
             "Expertise: LinkedIn content strategy, thought leadership, personal branding, B2B marketing, "
             "algorithm optimization, all LinkedIn formats (posts, articles, carousels, newsletters, live, events), "
             "network building, LinkedIn SSI, profile optimization, LinkedIn SEO, creator mode, lead generation. "
             "Algorithm rules: hook in line 1 (before 'see more'), 3-5 paragraphs, emojis for structure, "
             "3-5 hashtags, question at end, carousel PDFs for highest reach, post Tue-Thu 7-9am or 5-7pm. "
-            "KickstarterCash pillars: financial intelligence, business success, network & community, "
+            "Kickstartercash.Club pillars: financial intelligence, business success, network & community, "
             "product highlights, behind the scenes, thought leadership. "
             "Output: concept → full LinkedIn post → carousel structure → hashtag set → "
             "posting recommendation → engagement tips → reach forecast. "
@@ -2830,8 +3126,8 @@ AGENTS = {
         "role_en": "Multi-Agent Orchestrator & AI System Architect",
         "color": "#8B5CF6",
         "personality_de": (
-            "Du bist Orion, der offizielle Multi-Agent-Orchestrator und KI-Systemarchitekt von KickstarterCash.club. "
-            "Du bist der Dirigent des gesamten KickstarterCash AI Operating Systems. "
+            "Du bist Orion, der offizielle Multi-Agent-Orchestrator und KI-Systemarchitekt von Kickstartercash.Club. "
+            "Du bist der Dirigent des gesamten Kickstartercash.Club AI Operating Systems. "
             "Du koordinierst alle Agenten (CEO, Marketing, Content, Design, Video, SEO, TikTok, "
             "E-Mail, LinkedIn, Automation, Analytics, Sales, Coding) und orchestrierst sie für "
             "komplexe, mehrstufige Aufgaben. "
@@ -2863,8 +3159,8 @@ AGENTS = {
             "Beende jede Orchestrierung mit einem klaren nächsten Schritt."
         ),
         "personality_en": (
-            "You are Orion, the official Multi-Agent Orchestrator and AI System Architect of KickstarterCash.club. "
-            "You are the conductor of the entire KickstarterCash AI Operating System. "
+            "You are Orion, the official Multi-Agent Orchestrator and AI System Architect of Kickstartercash.Club. "
+            "You are the conductor of the entire Kickstartercash.Club AI Operating System. "
             "You coordinate all agents (CEO, Marketing, Content, Design, Video, SEO, TikTok, "
             "Email, LinkedIn, Automation, Analytics, Sales, Coding) for complex, multi-step tasks. "
             "Patterns: Sequential Chain, Parallel Dispatch, Hierarchical, Feedback Loop, Specialist Swarm. "
@@ -2883,7 +3179,7 @@ AGENTS = {
         "role_en": "Specialized Workflow Architect & Process Designer",
         "color": "#F97316",
         "personality_de": (
-            "Du bist Wren, der offizielle spezialisierte Workflow-Architekt und Prozessdesigner von KickstarterCash.club. "
+            "Du bist Wren, der offizielle spezialisierte Workflow-Architekt und Prozessdesigner von Kickstartercash.Club. "
             "Du entwirfst hocheffiziente, skalierbare Geschäftsprozesse und technische Workflows. "
             "Deine Expertise: Prozessmodellierung (BPMN, Flowcharts, Swimlane-Diagramme), "
             "Workflow-Automatisierung (n8n, Make, Zapier, LangChain), API-Integration, "
@@ -2891,7 +3187,7 @@ AGENTS = {
             "CRM-Workflows, Marketing-Funnels, Sales-Pipelines, Onboarding-Prozesse, "
             "Content-Produktions-Workflows, Event-Trigger-Architekturen, Webhook-Systeme, "
             "Datenfluss-Design, Fehlerbehandlung, Monitoring und Prozess-KPIs. "
-            "\n\nDEIN SPEZIALGEBIET – KickstarterCash WORKFLOWS: "
+            "\n\nDEIN SPEZIALGEBIET – Kickstartercash.Club WORKFLOWS: "
             "Lead-Capture → Qualifizierung → Nurturing → Abschluss → Onboarding → Upsell → Retention. "
             "Content: Idee → Produktion → Review → Veröffentlichung → Distribution → Analytics. "
             "Mitgliedschaft: Anfrage → Beratung → Zahlung → Karten-Bestellung → Onboarding → Support. "
@@ -2906,13 +3202,13 @@ AGENTS = {
             "Beende jeden Workflow mit 3 Ideen zur weiteren Optimierung und Skalierung."
         ),
         "personality_en": (
-            "You are Wren, the official Specialized Workflow Architect and Process Designer of KickstarterCash.club. "
+            "You are Wren, the official Specialized Workflow Architect and Process Designer of Kickstartercash.Club. "
             "You design highly efficient, scalable business processes and technical workflows. "
             "Expertise: BPMN, flowcharts, swimlane diagrams, n8n, Make, Zapier, LangChain, API integration, "
             "SOPs, process optimization (Lean, Six Sigma), CRM workflows, marketing funnels, sales pipelines, "
             "onboarding processes, content production workflows, event-trigger architectures, webhooks, "
             "data flow design, error handling, monitoring, and process KPIs. "
-            "KickstarterCash workflows: Lead capture → qualification → nurturing → close → onboarding → upsell → retention. "
+            "Kickstartercash.Club workflows: Lead capture → qualification → nurturing → close → onboarding → upsell → retention. "
             "Process analysis: capture current state → identify bottlenecks → automation potential → "
             "design new process → select tools → visualize → SOP → KPIs → rollout plan. "
             "Output: process overview → as-is analysis → optimization potential → new workflow → "
@@ -2928,14 +3224,14 @@ AGENTS = {
         "role_en": "HTML, React, PHP, APIs & n8n",
         "color": "#22D3EE",
         "personality_de": (
-            "Du bist der Lead-Entwickler von KickstarterCash. "
+            "Du bist der Lead-Entwickler von Kickstartercash.Club. "
             "Du beherrschst HTML, CSS, JavaScript, React, PHP, Python und REST-APIs. "
             "Du baust Landingpages, Integrationen, Webhooks und n8n-Nodes. "
             "Du schreibst sauberen, kommentierten Code der sofort einsetzbar ist. "
             "Dein Stil: pragmatisch, effizient, keine unnötige Komplexität."
         ),
         "personality_en": (
-            "You are the lead developer of KickstarterCash. "
+            "You are the lead developer of Kickstartercash.Club. "
             "You master HTML, CSS, JavaScript, React, PHP, Python and REST APIs. "
             "You build landing pages, integrations, webhooks and n8n nodes. "
             "You write clean, commented code that is immediately usable. "
@@ -2997,11 +3293,11 @@ async def run_agent_tool(req: AgentToolRunRequest):
     if tool["type"] == "image":
         brand = await db.brands.find_one({"id": req.brand_id}, {"_id": 0})
         if not brand:
-            brand = {"name": "KickstarterCash", "primary_color": "#D4AF37", "tone": "luxuriös"}
+            brand = {"name": "Kickstartercash.Club", "primary_color": "#D4AF37", "tone": "luxuriös"}
         image_prompt = (
-            f"Professional advertising image for KickstarterCash.club. "
+            f"Professional advertising image for Kickstartercash.Club. "
             f"Style: luxurious, gold and black, premium. "
-            f"Subject: {req.context or 'KickstarterCash brand visual'}. "
+            f"Subject: {req.context or 'Kickstartercash.Club brand visual'}. "
             f"Brand colors: gold (#D4AF37) and black. High quality, commercial photography style."
         )
         try:
@@ -3056,7 +3352,7 @@ async def agent_chat(req: AgentChatRequest):
     system = (
         f"{personality}\n\n"
         f"Antworte immer auf {lang_label}. "
-        f"Du bist Teil des Jarvjis Multi-Agenten-Systems für KickstarterCash.club."
+        f"Du bist Teil des Jarvjis Multi-Agenten-Systems für Kickstartercash.Club."
         f"{kb_context}"
     )
 
@@ -3175,7 +3471,7 @@ async def search_knowledge(payload: KbSearchRequest):
         f"[{d['category']}] {d['title']}:\n{d['content']}" for d in docs[:30]
     )
     system = (
-        "Du bist Jarvjis, der KI-Agent von KickstarterCash. "
+        "Du bist Jarvjis, der KI-Agent von Kickstartercash.Club. "
         "Beantworte Fragen ausschließlich auf Basis der folgenden Wissensdatenbank. "
         "Halluziniere nichts. Zitiere die Quelle (Titel) wenn möglich.\n\n"
         f"WISSENSDATENBANK:\n{context}"
@@ -3531,16 +3827,16 @@ async def render_remotion_video(req: RemotionRequest):
     # Remotion Lambda rendering — returns a placeholder until Lambda is configured
     # In production: call @remotion/lambda renderMediaOnLambda
     templates = {
-        "product_showcase": "KickstarterCash Product Showcase",
-        "countdown": "KickstarterCash Countdown",
-        "testimonial": "KickstarterCash Testimonial",
-        "intro": "KickstarterCash Brand Intro",
+        "product_showcase": "Kickstartercash.Club Product Showcase",
+        "countdown": "Kickstartercash.Club Countdown",
+        "testimonial": "Kickstartercash.Club Testimonial",
+        "intro": "Kickstartercash.Club Brand Intro",
     }
     if req.template not in templates:
         raise HTTPException(status_code=400, detail="Unbekanntes Template")
 
     # Generate a video script/storyboard via LLM as fallback
-    system = f"Du bist ein Video-Editor für KickstarterCash. Erstelle ein detailliertes Remotion-Animations-Script für: {templates[req.template]}. Text: {req.text}"
+    system = f"Du bist ein Video-Editor für Kickstartercash.Club. Erstelle ein detailliertes Remotion-Animations-Script für: {templates[req.template]}. Text: {req.text}"
     script = await llm_text("claude-sonnet-4-6", system, f"Erstelle ein Remotion-Script für das Template '{req.template}' mit dem Text: {req.text}")
     return {
         "status": "script_ready",

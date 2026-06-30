@@ -51,8 +51,8 @@ export default function TikTokStudio() {
         <div className="lg:col-span-3 space-y-5">
           <StudioContextArea color={COLOR} context={context} setContext={setContext}
             label="Thema / Kontext" labelEN="Topic / Context" title="TikTok Studio"
-            placeholder="z.B. KickstarterCash Cashback-Karte – finanzielle Freiheit für Unternehmer…"
-            placeholderEN="e.g. KickstarterCash cashback card – financial freedom for entrepreneurs…" />
+            placeholder="z.B. Kickstartercash.Club Cashback-Karte – finanzielle Freiheit für Unternehmer…"
+            placeholderEN="e.g. Kickstartercash.Club cashback card – financial freedom for entrepreneurs…" />
           <div>
             <p className="text-[10px] text-zinc-700 uppercase tracking-widest mb-3">
               {lang === "DE" ? "Tools — Kontext eingeben, dann klicken" : "Tools — enter context above, then click"}

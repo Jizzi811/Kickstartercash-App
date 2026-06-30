@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { Film, Copy, Check, Loader2, Sparkles, Play, Download, GalleryHorizontal } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
-import { AgentChatPanel } from "@/components/StudioLayout";
+import { AgentChatPanel, StudioContextArea } from "@/components/StudioLayout";
 import { PageHeader } from "@/components/PageHeader";
 
 const COLOR = "#F472B6";
@@ -18,7 +18,7 @@ const REMOTION_TEMPLATES = [
   { id: "testimonial", emoji: "⭐", labelDE: "Testimonial Slide", labelEN: "Testimonial Slide",
     descDE: "Kundenzitat mit animiertem Branding", descEN: "Customer quote with animated branding" },
   { id: "intro", emoji: "✨", labelDE: "Brand Intro", labelEN: "Brand Intro",
-    descDE: "Markantes KickstarterCash Intro (5s)", descEN: "Striking KickstarterCash intro (5s)" },
+    descDE: "Markantes Kickstartercash.Club Intro (5s)", descEN: "Striking Kickstartercash.Club intro (5s)" },
 ];
 
 // ── LLM Prompt Tools ────────────────────────────────────────────────────────
@@ -113,14 +113,15 @@ function VeoPanel({ lang }) {
         <span className="text-sm font-medium text-white">Veo 2 – KI Video generieren</span>
         <span className="text-[10px] bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded-full">LIVE</span>
       </div>
-      <textarea
-        value={prompt}
-        onChange={e => setPrompt(e.target.value)}
-        rows={3}
-        placeholder={lang === "DE"
-          ? "z.B. Ein elegantes KickstarterCash Produkt-Video, goldene Partikel, Dubai Skyline im Hintergrund, cinematic…"
-          : "e.g. An elegant KickstarterCash product video, golden particles, Dubai skyline, cinematic…"}
-        className="w-full bg-black border border-white/8 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none focus:border-pink-500/40"
+      <StudioContextArea
+        color={COLOR}
+        context={prompt}
+        setContext={setPrompt}
+        label="Video Prompt"
+        labelEN="Video Prompt"
+        placeholder="z.B. Ein elegantes Kickstartercash.Club Produkt-Video, goldene Partikel, Dubai Skyline im Hintergrund, cinematic…"
+        placeholderEN="e.g. An elegant Kickstartercash.Club product video, golden particles, Dubai skyline, cinematic…"
+        title="Veo Video Prompt"
       />
       <button
         onClick={generate}
@@ -158,7 +159,7 @@ function RemotionPanel({ lang }) {
     try {
       const res = await axios.post(`${BACKEND}/api/video/remotion`, {
         template: tpl.id,
-        text: customText || (lang === "DE" ? "KickstarterCash – Dein Weg zur finanziellen Freiheit" : "KickstarterCash – Your Path to Financial Freedom"),
+        text: customText || (lang === "DE" ? "Kickstartercash.Club – Dein Weg zur finanziellen Freiheit" : "Kickstartercash.Club – Your Path to Financial Freedom"),
         lang,
       });
       if (res.data.video_url) {
@@ -314,20 +315,16 @@ export default function VideoStudio() {
           {tab === "gallery" && <GalleryPanel lang={lang} />}
           {tab === "prompts" && (
             <div className="space-y-4">
-              <div className="bg-[#0A0A0A] border border-white/8 rounded-sm p-5 space-y-3">
-                <label className="block text-xs text-zinc-500 uppercase tracking-widest">
-                  {lang === "DE" ? "Video-Thema / Kontext" : "Video Topic / Context"}
-                </label>
-                <textarea
-                  value={context}
-                  onChange={e => setContext(e.target.value)}
-                  rows={4}
-                  placeholder={lang === "DE"
-                    ? "z.B. KickstarterCash Produkt-Vorstellung, 30 Sek, energetisch…"
-                    : "e.g. KickstarterCash product intro, 30 sec, energetic…"}
-                  className="w-full bg-black border border-white/8 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none focus:border-pink-500/40"
-                />
-              </div>
+              <StudioContextArea
+                color={COLOR}
+                context={context}
+                setContext={setContext}
+                label="Video-Thema / Kontext"
+                labelEN="Video Topic / Context"
+                placeholder="z.B. Kickstartercash.Club Produkt-Vorstellung, 30 Sek, energetisch…"
+                placeholderEN="e.g. Kickstartercash.Club product intro, 30 sec, energetic…"
+                title="Video Studio – Prompts & Scripts"
+              />
               <div className="grid grid-cols-2 gap-3">
                 {PROMPT_TOOLS.map(tool => (
                   <button key={tool.id} onClick={() => runPromptTool(tool)} disabled={!!toolLoading}

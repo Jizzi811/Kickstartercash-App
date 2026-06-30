@@ -4,7 +4,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { Palette, Download, Loader2, ExternalLink } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
-import { ToolCard, AgentChatPanel } from "@/components/StudioLayout";
+import { ToolCard, AgentChatPanel, StudioContextArea } from "@/components/StudioLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { IMAGE_STYLES } from "@/i18n";
 
@@ -93,20 +93,15 @@ export default function DesignStudio() {
         <div className="lg:col-span-3 space-y-5">
           {/* Prompt input */}
           <div className="border border-white/8 rounded-sm p-5 space-y-4" style={{ background: "rgba(192,132,252,0.03)" }}>
-            <label className="block text-xs uppercase tracking-widest" style={{ color: COLOR }}>
-              {lang === "DE" ? "Prompt / Beschreibung" : "Prompt / Description"}
-            </label>
-            <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              rows={4}
-              placeholder={lang === "DE"
-                ? "z.B. Luxuriöses KickstarterCash Werbebanner, Gold & Schwarz, moderner Business-Stil…"
-                : "e.g. Luxurious KickstarterCash advertising banner, gold & black, modern business style…"}
-              className="w-full bg-black border border-white/8 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none"
-              style={{ transition: "border-color 150ms ease" }}
-              onFocus={(e) => { e.target.style.borderColor = `${COLOR}50`; }}
-              onBlur={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; }}
+            <StudioContextArea
+              color={COLOR}
+              context={prompt}
+              setContext={setPrompt}
+              label="Prompt / Beschreibung"
+              labelEN="Prompt / Description"
+              placeholder="z.B. Luxuriöses Kickstartercash.Club Werbebanner, Gold & Schwarz, moderner Business-Stil…"
+              placeholderEN="e.g. Luxurious Kickstartercash.Club advertising banner, gold & black, modern business style…"
+              title="Design Studio"
             />
             <div className="flex items-center gap-3">
               <select

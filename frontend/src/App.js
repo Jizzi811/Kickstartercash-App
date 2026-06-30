@@ -45,6 +45,7 @@ import GrokChat from "@/pages/GrokChat";
 import ChatArena from "@/pages/ChatArena";
 import ExportCenter from "@/pages/ExportCenter";
 import Campaign from "@/pages/Campaign";
+import CampaignWorkflow from "@/pages/CampaignWorkflow";
 import AgentBuilder from "@/pages/AgentBuilder";
 
 function App() {
@@ -98,6 +99,7 @@ function App() {
               <Route path="/arena" element={<ChatArena />} />
               <Route path="/export" element={<ExportCenter />} />
               <Route path="/campaign" element={<Campaign />} />
+              <Route path="/workflow" element={<CampaignWorkflow />} />
               <Route path="/specialists" element={<Specialists />} />
             </Routes>
           </Layout>

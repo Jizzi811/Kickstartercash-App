@@ -3,6 +3,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { PenLine, Loader2 } from "lucide-react";
+import { StudioContextArea } from "@/components/StudioLayout";
 import { useApp, API } from "@/context/AppContext";
 import { PageTitle } from "@/components/PageTitle";
 import { CopyButton } from "@/components/CopyButton";
@@ -19,13 +20,14 @@ export default function Copywriter() {
   const [format, setFormat] = useState(formats[0]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [refContext, setRefContext] = useState("");
 
   const generate = async () => {
     if (!topic.trim()) { toast.error(t("topic")); return; }
     setLoading(true); setResult(null);
     try {
       const res = await axios.post(`${API}/generate/copy`, {
-        topic, format, brand_id: activeBrandId, model, language: lang,
+        topic: topic + (refContext ? `\n\n${refContext}` : ""), format, brand_id: activeBrandId, model, language: lang,
       });
       setResult(res.data);
     } catch (e) {
@@ -64,6 +66,16 @@ export default function Copywriter() {
             </Select>
           </div>
         </div>
+        <StudioContextArea
+          color="#D4AF37"
+          context={refContext}
+          setContext={setRefContext}
+          label="Referenz / Datei hochladen"
+          labelEN="Reference / Upload file"
+          placeholder="Zusätzliche Infos, Referenztexte oder Bilder…"
+          placeholderEN="Additional info, reference texts or images…"
+          title="Copywriter Export"
+        />
         <div className="flex items-center justify-between flex-wrap gap-3">
           <span className="text-xs text-zinc-500">{t("activeBrand")}: <span className="text-[#D4AF37]">{activeBrand?.name}</span></span>
           <button
