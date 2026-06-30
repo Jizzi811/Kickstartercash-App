@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Film, Copy, Check, Loader2, Sparkles, Play, Download, GalleryHorizontal } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 import { AgentChatPanel } from "@/components/StudioLayout";
+import { PageHeader } from "@/components/PageHeader";
 
 const COLOR = "#F472B6";
 const BACKEND = process.env.REACT_APP_BACKEND_URL || "";

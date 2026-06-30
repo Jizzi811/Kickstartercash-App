@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Globe, Copy, Check, Loader2, ExternalLink } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 import { ToolCard, AgentChatPanel } from "@/components/StudioLayout";
+import { PageHeader } from "@/components/PageHeader";
 
 const COLOR = "#34D399";
 

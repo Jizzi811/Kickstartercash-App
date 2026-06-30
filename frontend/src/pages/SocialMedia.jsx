@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Share2, Loader2, Hash, Megaphone, Image as ImgIcon } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 import { PageTitle } from "@/components/PageTitle";
+import { PageHeader } from "@/components/PageHeader";
 import { CopyButton } from "@/components/CopyButton";
 import { SOCIAL_PLATFORMS } from "@/i18n";
 import { Textarea } from "@/components/ui/textarea";

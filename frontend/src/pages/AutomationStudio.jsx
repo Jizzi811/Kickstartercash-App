@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Zap, ExternalLink, Loader2, Copy, Check } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 import { ToolCard, AgentChatPanel } from "@/components/StudioLayout";
+import { PageHeader } from "@/components/PageHeader";
 
 const COLOR = "#F87171";
 

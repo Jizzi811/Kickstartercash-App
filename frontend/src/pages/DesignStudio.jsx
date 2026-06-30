@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Palette, Download, Loader2, ExternalLink } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 import { ToolCard, AgentChatPanel } from "@/components/StudioLayout";
+import { PageHeader } from "@/components/PageHeader";
 import { IMAGE_STYLES } from "@/i18n";
 
 const COLOR = "#C084FC";
@@ -79,18 +80,13 @@ export default function DesignStudio() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-sm flex items-center justify-center" style={{ backgroundColor: `${COLOR}18` }}>
-          <Palette size={20} style={{ color: COLOR }} />
-        </div>
-        <div>
-          <h1 className="font-display text-2xl text-white">Design Studio</h1>
-          <p className="text-xs text-zinc-500">
-            {lang === "DE" ? "GPT Image · Canva · Leonardo · Flux · Ideogram" : "GPT Image · Canva · Leonardo · Flux · Ideogram"}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Palette}
+        color="#C084FC"
+        title="Design Studio"
+        subtitle={lang === "DE" ? "GPT Image · Canva · Leonardo · Flux · Ideogram" : "GPT Image · Canva · Leonardo · Flux · Ideogram"}
+        badge="Design"
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Left: Tools + Generator */}

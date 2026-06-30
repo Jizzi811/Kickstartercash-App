@@ -6,6 +6,7 @@ import {
   BookOpen, FileText, Palette, Megaphone, ShoppingBag, CreditCard,
   HelpCircle, BarChart2, Bot, ChevronRight, Loader2,
 } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { useApp } from "@/context/AppContext";
 import { API } from "@/context/AppContext";
 
