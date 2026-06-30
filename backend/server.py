@@ -1085,10 +1085,57 @@ DEX/Decentral Exchange   | ✗             | ✓            | bald
 Monatl. Gebühr           | 3,00 €        | 3,00 €       | KEINE
 Tages-Transaktionslimit  | 50.000 €      | 50.000 €     | 30.000 USD
 
+═══════════════════════════════════════
+KARTENLÖSUNG 4: VALYGO VISA CARD & PLAYGLOBAL VISA DEBIT
+═══════════════════════════════════════
+Partner: Valygo (VALYGO OMNIBANK Ecosystem) + Playglobal
+
+VALYGO PREMIUM VISA CARD
+- Preis: 3.703,70 AED (VIP Member-Preis für KickstarterCash-Kunden)
+- Kartentyp: Physische + Virtuelle Visa Card
+- Powered by: VALYGO OMNIBANK Ecosystem
+- Features:
+  ✦ USD-Banking-Konto (echte Bankkonto-Funktionen)
+  ✦ Multi-Krypto-Wallets (BTC, ETH, USDT und mehr)
+  ✦ Web3-Identity integriert
+  ✦ Blockchain-basierte Infrastruktur
+  ✦ Weltweit bei allen Visa-Akzeptanzstellen nutzbar
+  ✦ Physische UND virtuelle Karte gleichzeitig
+
+VALYGO PLÄNE & VORAUSSETZUNGEN:
+Plan         | Preis      | Voraussetzung
+-------------|------------|-------------------------------------------
+Freedom      | 0 USD/Monat| Kein Deposit nötig (Basisfunktionen)
+Essential    | 10 USD/Monat| 250 USD in VYO-Token hinterlegen
+Premium      | 50 USD/Monat| 1.000 USD in VYO-Token hinterlegen
+
+VYO-TOKEN (Valygo) & PGD-TOKEN (Playglobal):
+- Kauf über MetaMask mit USDT oder USDC
+- Kein Kauf über Börsen – direkt über Valygo/Playglobal Plattform
+- Tokens werden als Deposit hinterlegt (NICHT ausgegeben, bleiben im Wallet)
+
+SETUP-PROZESS (KASH erklärt Schritt für Schritt):
+1. REGISTRIERUNG: Auf valygo.io registrieren
+2. KYC (5 Schritte):
+   - Personalausweis ODER Reisepass (Reisepass bevorzugt)
+   - WICHTIG: Keine T-Online oder Gmail-Adressen verwenden
+   - Dateigröße: MAX. 500 KB pro Datei (JPG)
+   - KYC-Status in App prüfen bevor weiter
+3. TOKEN-KAUF: MetaMask installieren → USDT/USDC kaufen → VYO-Token kaufen
+4. PLAN-UPGRADE: Im Dashboard Plan auf Essential oder Premium upgraden
+5. PLAYGLOBAL-SETUP: playglobal.io mit EXAKT derselben E-Mail wie bei Valygo registrieren
+
+PLAYGLOBAL VISA DEBIT (Zusatzkarte):
+- Separate Karte im Playglobal-Ökosystem
+- Provisionsmodell: Empfehlungsprovisionen in USDT, VYO, PGD oder Kombination
+- Auszahlung wählbar: USDT | VYO-Token | PGD-Token | Kombination
+- WICHTIG: Gleiche E-Mail wie Valygo-Konto verwenden bei Registrierung
+
 EMPFEHLUNG durch KASH:
 - Klassische Bankfunktionen + IBAN gesucht → Premium Black Card (in Membership inklusive)
 - Cashback + DEX + mehr Power gesucht → Deluxe Black Card (460€ Upgrade)
 - Krypto nutzen, weltweit zahlen, keine monatl. Gebühren → Alpha2Pay Mastercard (350 USD)
+- Web3 + USD-Banking + Blockchain-Ökosystem + Provision verdienen → Valygo Premium (3.703,70 AED)
 
 ═══════════════════════════════════════
 LEAD-CAPTURE-PROTOKOLL
