@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, X, Send, Loader2, Sparkles, Ticket } from "lucide-react";
-import { API } from "@/context/AppContext";
-import { useApp } from "@/context/AppContext";
+import { MessageCircle, X, Send, Loader2, Sparkles, Ticket, Trash2 } from "lucide-react";
+import { API, useApp } from "@/context/AppContext";
 
 const SUGGESTIONS_DE = [
   "Was kann KickstarterCash für mich tun?",
@@ -19,102 +18,10 @@ const SUGGESTIONS_EN = [
   "What does the membership cost?",
 ];
 
-// Effekt C — Typewriter-Komponente
-function TypewriterText({ text, duration }) {
-  const [displayed, setDisplayed] = useState("");
-  const [done, setDone] = useState(false);
-  useEffect(() => {
-    let i = 0;
-    const speed = duration / text.length;
-    const tick = () => {
-      if (i < text.length) {
-        setDisplayed(text.slice(0, ++i));
-        setTimeout(tick, speed);
-      } else {
-        setDone(true);
-      }
-    };
-    tick();
-  }, [text, duration]);
-  return (
-    <span>
-      {displayed}
-      {!done && (
-        <span
-          style={{
-            display: "inline-block",
-            width: "2px",
-            height: "1em",
-            background: "#EBCB72",
-            marginLeft: "2px",
-            verticalAlign: "middle",
-            animation: "twBlink 0.7s step-end infinite",
-          }}
-        />
-      )}
-    </span>
-  );
-}
-
-// Effekt D — Driftende Gold-Partikel
-function ChatParticles() {
-  const canvasRef = useRef(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    const particles = Array.from({ length: 15 }, () => ({
-      x: Math.random() * 360,
-      y: Math.random() * 480,
-      r: Math.random() * 1.5 + 0.4,
-      vx: (Math.random() - 0.5) * 0.25,
-      vy: (Math.random() - 0.5) * 0.25,
-      o: Math.random() * 0.35 + 0.08,
-    }));
-    let raf;
-    const draw = () => {
-      ctx.clearRect(0, 0, 360, 480);
-      particles.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < 0) p.x = 360;
-        if (p.x > 360) p.x = 0;
-        if (p.y < 0) p.y = 480;
-        if (p.y > 480) p.y = 0;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(212,175,55,${p.o})`;
-        ctx.fill();
-      });
-      raf = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => cancelAnimationFrame(raf);
-  }, []);
-  return (
-    <canvas
-      ref={canvasRef}
-      width={360}
-      height={480}
-      style={{
-        position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
-        pointerEvents: "none",
-        zIndex: 0,
-        opacity: 0.6,
-      }}
-    />
-  );
-}
-
-function TicketQuickModal({ onClose, lang, prefill }) {
-  const [title, setTitle] = useState(prefill || "");
+function TicketModal({ onClose, lang }) {
+  const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [cat, setCat] = useState("support");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(null);
 
@@ -123,63 +30,123 @@ function TicketQuickModal({ onClose, lang, prefill }) {
     setLoading(true);
     try {
       const res = await axios.post(`${API}/tickets`, {
-        title, description: desc || title, category: cat,
-        priority: "medium", name, email, source: "widget", language: lang,
+        title: title.trim(),
+        description: desc.trim(),
+        category: cat,
+        priority: "medium",
+        email: "",
       });
       setDone(res.data.ticket_id);
-    } catch { /* silent */ }
-    finally { setLoading(false); }
+    } catch {
+      setDone("error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.75)", padding: "16px" }}>
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-        style={{ width: "100%", maxWidth: "360px", background: "#0D0D0D", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "12px", overflow: "hidden" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Ticket size={14} style={{ color: "#D4AF37" }} />
-            <span style={{ fontSize: "13px", fontWeight: 600, color: "#fff" }}>
-              {lang === "DE" ? "Support-Ticket erstellen" : "Create Support Ticket"}
-            </span>
-          </div>
-          <button onClick={onClose} style={{ color: "#71717a", background: "none", border: "none", cursor: "pointer" }}><X size={14} /></button>
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 9999,
+      background: "rgba(0,0,0,0.7)", display: "flex",
+      alignItems: "center", justifyContent: "center", padding: "16px",
+    }} onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#111", border: "1px solid rgba(212,175,55,0.3)",
+          borderRadius: "12px", padding: "24px", width: "100%", maxWidth: "400px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+          <Ticket size={16} style={{ color: "#D4AF37" }} />
+          <span style={{ color: "#fff", fontWeight: 600, fontSize: "15px" }}>
+            {lang === "DE" ? "Support-Ticket erstellen" : "Create Support Ticket"}
+          </span>
         </div>
+
         {done ? (
-          <div style={{ padding: "24px", textAlign: "center" }}>
-            <div style={{ fontSize: "2rem", marginBottom: "8px" }}>✅</div>
-            <p style={{ color: "#34D399", fontSize: "14px", fontWeight: 600 }}>
-              {lang === "DE" ? `Ticket #${done} erstellt!` : `Ticket #${done} created!`}
-            </p>
-            <p style={{ color: "#71717a", fontSize: "12px", marginTop: "4px" }}>
-              {lang === "DE" ? "Wir melden uns bald bei dir." : "We'll get back to you soon."}
-            </p>
-            <button onClick={onClose} style={{ marginTop: "16px", padding: "8px 20px", background: "linear-gradient(135deg,#D4AF37,#B8972E)", borderRadius: "6px", color: "#000", fontSize: "13px", fontWeight: 600, border: "none", cursor: "pointer" }}>OK</button>
+          <div style={{ textAlign: "center", padding: "16px 0" }}>
+            {done === "error" ? (
+              <p style={{ color: "#f87171" }}>Fehler. Bitte erneut versuchen.</p>
+            ) : (
+              <>
+                <div style={{ fontSize: "32px", marginBottom: "8px" }}>✅</div>
+                <p style={{ color: "#D4AF37", fontWeight: 600 }}>
+                  {lang === "DE" ? `Ticket #${done} erstellt!` : `Ticket #${done} created!`}
+                </p>
+                <p style={{ color: "#888", fontSize: "12px", marginTop: "4px" }}>
+                  {lang === "DE" ? "Wir melden uns persönlich." : "We'll reach out personally."}
+                </p>
+                <button onClick={onClose} style={{
+                  marginTop: "16px", padding: "8px 20px",
+                  background: "rgba(212,175,55,0.15)", border: "1px solid rgba(212,175,55,0.3)",
+                  borderRadius: "6px", color: "#D4AF37", cursor: "pointer",
+                }}>OK</button>
+              </>
+            )}
           </div>
         ) : (
-          <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
-            <select value={cat} onChange={(e) => setCat(e.target.value)}
-              style={{ background: "#000", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "8px 10px", color: "#fff", fontSize: "13px", outline: "none" }}>
+          <>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={lang === "DE" ? "Betreff *" : "Subject *"}
+              style={{
+                width: "100%", padding: "10px 12px", marginBottom: "10px",
+                background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: "6px", color: "#fff", fontSize: "13px",
+                outline: "none", boxSizing: "border-box",
+              }}
+            />
+            <select
+              value={cat}
+              onChange={(e) => setCat(e.target.value)}
+              style={{
+                width: "100%", padding: "10px 12px", marginBottom: "10px",
+                background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: "6px", color: "#888", fontSize: "13px",
+                outline: "none", boxSizing: "border-box",
+              }}
+            >
               <option value="support">{lang === "DE" ? "Support" : "Support"}</option>
-              <option value="sales">{lang === "DE" ? "Sales / Vertrieb" : "Sales"}</option>
-              <option value="general">{lang === "DE" ? "Allgemein" : "General"}</option>
+              <option value="billing">{lang === "DE" ? "Abrechnung" : "Billing"}</option>
+              <option value="technical">{lang === "DE" ? "Technisch" : "Technical"}</option>
+              <option value="feature">{lang === "DE" ? "Feature-Wunsch" : "Feature Request"}</option>
             </select>
-            <input value={title} onChange={(e) => setTitle(e.target.value)}
-              placeholder={lang === "DE" ? "Titel / Problem *" : "Title / Issue *"}
-              style={{ background: "#000", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "8px 10px", color: "#fff", fontSize: "13px", outline: "none" }} />
-            <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={3}
-              placeholder={lang === "DE" ? "Beschreibung (optional)…" : "Description (optional)…"}
-              style={{ background: "#000", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "8px 10px", color: "#fff", fontSize: "13px", outline: "none", resize: "none" }} />
-            <input value={name} onChange={(e) => setName(e.target.value)}
-              placeholder={lang === "DE" ? "Dein Name" : "Your name"}
-              style={{ background: "#000", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "8px 10px", color: "#fff", fontSize: "13px", outline: "none" }} />
-            <input value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder={lang === "DE" ? "E-Mail (für Rückfragen)" : "Email (for follow-up)"}
-              style={{ background: "#000", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", padding: "8px 10px", color: "#fff", fontSize: "13px", outline: "none" }} />
-            <button onClick={submit} disabled={loading || !title.trim()}
-              style={{ padding: "9px 16px", background: "linear-gradient(135deg,#D4AF37,#B8972E)", borderRadius: "6px", color: "#000", fontSize: "13px", fontWeight: 600, border: "none", cursor: "pointer", opacity: (!title.trim() || loading) ? 0.5 : 1 }}>
-              {loading ? "…" : (lang === "DE" ? "Ticket erstellen" : "Create Ticket")}
-            </button>
-          </div>
+            <textarea
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              placeholder={lang === "DE" ? "Beschreibung (optional)" : "Description (optional)"}
+              rows={3}
+              style={{
+                width: "100%", padding: "10px 12px", marginBottom: "16px",
+                background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: "6px", color: "#fff", fontSize: "13px",
+                outline: "none", resize: "none", boxSizing: "border-box",
+              }}
+            />
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button onClick={onClose} style={{
+                flex: 1, padding: "10px", background: "transparent",
+                border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px",
+                color: "#666", cursor: "pointer", fontSize: "13px",
+              }}>
+                {lang === "DE" ? "Abbrechen" : "Cancel"}
+              </button>
+              <button onClick={submit} disabled={!title.trim() || loading} style={{
+                flex: 2, padding: "10px",
+                background: loading || !title.trim() ? "rgba(212,175,55,0.2)" : "rgba(212,175,55,0.9)",
+                border: "1px solid rgba(212,175,55,0.4)", borderRadius: "6px",
+                color: loading || !title.trim() ? "#888" : "#000",
+                cursor: !title.trim() || loading ? "not-allowed" : "pointer",
+                fontWeight: 600, fontSize: "13px",
+              }}>
+                {loading ? "…" : (lang === "DE" ? "Ticket erstellen" : "Create Ticket")}
+              </button>
+            </div>
+          </>
         )}
       </motion.div>
     </div>
@@ -187,485 +154,297 @@ function TicketQuickModal({ onClose, lang, prefill }) {
 }
 
 export function SalesSupportWidget() {
-  const { lang, model } = useApp();
+  const { lang } = useApp();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(true);
-  const [sessionId] = useState(() => crypto.randomUUID());
   const [showTicketModal, setShowTicketModal] = useState(false);
-  // Effekt B — Reactions
-  const [reactions, setReactions] = useState({});
-  // Effekt C — Typewriter IDs
-  const [typingIds, setTypingIds] = useState(new Set());
-  const endRef = useRef(null);
+  const [sessionId] = useState(() => crypto.randomUUID());
+  const bottomRef = useRef(null);
   const inputRef = useRef(null);
-
   const suggestions = lang === "DE" ? SUGGESTIONS_DE : SUGGESTIONS_EN;
 
   useEffect(() => {
-    if (open && messages.length === 0) {
-      const greeting =
-        lang === "DE"
-          ? "Willkommen bei KickstarterCash ✦ Ich bin KASH, dein persönlicher Assistent. Wie kann ich dir heute helfen – hast du Fragen zu unseren Tools oder möchtest du mehr erfahren?"
-          : "Welcome to KickstarterCash ✦ I'm KASH, your personal assistant. How can I help you today – do you have questions about our tools or want to learn more?";
-      setMessages([{ role: "assistant", content: greeting, id: 0 }]);
-    }
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
-  }, [open, lang, messages.length]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  const send = async (text) => {
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 100);
+  }, [open]);
+
+  const send = useCallback(async (text) => {
     const msg = (text || input).trim();
     if (!msg || loading) return;
-    setShowSuggestions(false);
-    const history = messages.map((m) => ({ role: m.role, content: m.content }));
-    setMessages((prev) => [...prev, { role: "user", content: msg, id: Date.now() }]);
     setInput("");
+    const history = messages.slice(-10);
+    setMessages((p) => [...p, { role: "user", content: msg }]);
     setLoading(true);
     try {
-      const effectiveModel =
-        model === "grok" || model === "gemini" ? "claude-sonnet-4-6" : model;
-      const res = await axios.post(`${API}/homepage/chat`, {
-        message: msg,
-        history,
-        language: lang,
-        model: effectiveModel,
-        session_id: sessionId,
+      const res = await axios.post(`${API}/sales-support/chat`, {
+        message: msg, session_id: sessionId,
+        history, language: lang,
       });
-      const newMsg = {
-        role: "assistant",
-        content: res.data.reply,
-        id: Date.now() + 1,
-      };
-      setMessages((prev) => [...prev, newMsg]);
-      // Effekt C — Typewriter starten
-      setTypingIds((prev) => new Set([...prev, newMsg.id]));
-      const duration = Math.max(800, Math.min(3000, res.data.reply.length * 18));
-      setTimeout(() => {
-        setTypingIds((prev) => {
-          const s = new Set(prev);
-          s.delete(newMsg.id);
-          return s;
-        });
-      }, duration);
+      setMessages((p) => [...p, { role: "assistant", content: res.data.reply }]);
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            lang === "DE"
-              ? "⚠️ Entschuldigung, kurzer Verbindungsfehler. Bitte versuche es nochmal."
-              : "⚠️ Sorry, brief connection error. Please try again.",
-          id: Date.now() + 1,
-        },
-      ]);
+      setMessages((p) => [...p, { role: "assistant", content: lang === "DE" ? "Verbindungsfehler. Bitte erneut versuchen." : "Connection error. Please try again." }]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [input, loading, messages, sessionId, lang]);
 
-  const onKey = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      send();
-    }
+  const reset = () => {
+    setMessages([]);
+    setInput("");
   };
 
   return (
     <>
-      {/* Effekt A + C + D — globale Keyframes */}
-      <style>{`
-        @keyframes kashAvatarGlow {
-          0%, 100% { box-shadow: 0 0 8px rgba(212,175,55,0.4); }
-          50%       { box-shadow: 0 0 24px rgba(251,233,166,0.9), 0 0 48px rgba(212,175,55,0.5); }
-        }
-        @keyframes kashPanelPulse {
-          0%, 100% { border-color: rgba(212,175,55,0.25); }
-          50%       { border-color: rgba(212,175,55,0.6); }
-        }
-        @keyframes twBlink {
-          0%, 100% { opacity: 1; }
-          50%       { opacity: 0; }
-        }
-        .kash-reaction-bar { opacity: 0 !important; transition: opacity 0.2s; }
-        .group:hover .kash-reaction-bar { opacity: 1 !important; }
-      `}</style>
+      {showTicketModal && (
+        <TicketModal lang={lang} onClose={() => setShowTicketModal(false)} />
+      )}
 
       {/* Floating Button */}
       <AnimatePresence>
         {!open && (
           <motion.button
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => setOpen(true)}
-            className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl"
             style={{
+              position: "fixed", bottom: "24px", right: "24px", zIndex: 1000,
+              width: "52px", height: "52px", borderRadius: "50%",
               background: "linear-gradient(135deg, #D4AF37, #B8972E)",
-              boxShadow: "0 0 30px rgba(212,175,55,0.45), 0 8px 32px rgba(0,0,0,0.6)",
+              border: "none", cursor: "pointer", boxShadow: "0 4px 20px rgba(212,175,55,0.4)",
+              display: "flex", alignItems: "center", justifyContent: "center",
             }}
           >
-            <MessageCircle size={22} className="text-black" />
+            <MessageCircle size={22} color="#000" />
           </motion.button>
         )}
       </AnimatePresence>
 
       {/* Chat Panel */}
       <AnimatePresence>
-        {showTicketModal && (
-          <TicketQuickModal
-            lang={lang}
-            prefill={messages.filter((m) => m.role === "user").slice(-1)[0]?.content || ""}
-            onClose={() => setShowTicketModal(false)}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            initial={{ opacity: 0, y: 20, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 40, scale: 0.95 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed bottom-6 right-6 z-50 w-[360px] max-w-[calc(100vw-24px)] flex flex-col rounded-xl overflow-hidden"
+            exit={{ opacity: 0, y: 20, scale: 0.97 }}
+            transition={{ duration: 0.2 }}
             style={{
-              height: "520px",
-              background: "#0A0A0A",
-              border: "1px solid rgba(212,175,55,0.25)",
-              // Effekt A — Panel Glow bei loading
-              boxShadow: loading
-                ? "0 0 0 2px rgba(212,175,55,0.5), 0 0 40px rgba(212,175,55,0.15), 0 24px 64px rgba(0,0,0,0.8)"
-                : "0 0 60px rgba(212,175,55,0.12), 0 24px 64px rgba(0,0,0,0.8)",
-              transition: "box-shadow 0.4s ease",
-              animation: loading ? "kashPanelPulse 1.4s ease-in-out infinite" : "none",
+              position: "fixed", bottom: "24px", right: "24px", zIndex: 1000,
+              width: "360px", height: "540px",
+              background: "#0D0D0D", border: "1px solid rgba(212,175,55,0.25)",
+              borderRadius: "14px", display: "flex", flexDirection: "column",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(212,175,55,0.1)",
+              overflow: "hidden",
             }}
           >
             {/* Header */}
-            <div
-              className="flex items-center gap-3 px-4 py-3 border-b shrink-0"
-              style={{
-                borderColor: "rgba(212,175,55,0.2)",
-                background:
-                  "linear-gradient(135deg, rgba(212,175,55,0.08), rgba(0,0,0,0))",
-              }}
-            >
-              {/* Effekt A — Avatar Glow bei loading */}
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                style={{
-                  background: "linear-gradient(135deg, #D4AF37, #B8972E)",
-                  animation: loading ? "kashAvatarGlow 1.2s ease-in-out infinite" : "none",
-                }}
-              >
-                <Sparkles size={15} className="text-black" />
+            <div style={{
+              padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.08)",
+              background: "linear-gradient(135deg, rgba(212,175,55,0.08), transparent)",
+              display: "flex", alignItems: "center", gap: "10px", flexShrink: 0,
+            }}>
+              <div style={{
+                width: "32px", height: "32px", borderRadius: "50%", flexShrink: 0,
+                background: "linear-gradient(135deg, #D4AF37, #B8972E)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <Sparkles size={15} color="#000" />
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-white tracking-wide">KASH</div>
-                <div className="text-[10px] text-zinc-500 tracking-widest uppercase">
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: "#fff", fontWeight: 600, fontSize: "14px" }}>KASH</div>
+                <div style={{ color: "#666", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                   {lang === "DE" ? "Sales & Support · Online" : "Sales & Support · Online"}
                 </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setShowTicketModal(true)}
-                  title={lang === "DE" ? "Support-Ticket erstellen" : "Create support ticket"}
-                  style={{
-                    display: "flex", alignItems: "center", gap: "5px",
-                    padding: "4px 8px", borderRadius: "6px",
-                    background: "rgba(212,175,55,0.1)",
-                    border: "1px solid rgba(212,175,55,0.25)",
-                    color: "#D4AF37", fontSize: "11px", cursor: "pointer",
-                    transition: "all 0.15s", whiteSpace: "nowrap",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(212,175,55,0.2)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(212,175,55,0.1)"; }}
-                >
-                  <Ticket size={11} />
-                  <span>{lang === "DE" ? "Ticket" : "Ticket"}</span>
+              {/* TICKET BUTTON — always visible */}
+              <button
+                onClick={() => setShowTicketModal(true)}
+                style={{
+                  display: "flex", alignItems: "center", gap: "5px",
+                  padding: "5px 10px", borderRadius: "6px",
+                  background: "rgba(212,175,55,0.12)",
+                  border: "1px solid rgba(212,175,55,0.35)",
+                  color: "#D4AF37", fontSize: "11px", fontWeight: 600,
+                  cursor: "pointer", flexShrink: 0, transition: "all 0.15s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(212,175,55,0.22)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(212,175,55,0.12)"; }}
+              >
+                <Ticket size={11} />
+                Ticket
+              </button>
+              {messages.length > 0 && (
+                <button onClick={reset} style={{
+                  background: "none", border: "none", cursor: "pointer",
+                  color: "#555", padding: "4px", display: "flex",
+                }} title="Clear chat">
+                  <Trash2 size={13} />
                 </button>
-                <button
-                  onClick={() => {
-                    setMessages([]);
-                    setShowSuggestions(true);
-                    setOpen(false);
-                  }}
-                  className="w-7 h-7 rounded-sm flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/8 transition-colors"
-                >
-                  <X size={14} />
-                </button>
-              </div>
+              )}
+              <button onClick={() => setOpen(false)} style={{
+                background: "none", border: "none", cursor: "pointer",
+                color: "#555", padding: "4px", display: "flex",
+              }}>
+                <X size={16} />
+              </button>
             </div>
 
             {/* Messages */}
-            <div
-              className="flex-1 overflow-y-auto p-4 space-y-3"
-              style={{ position: "relative" }}
-            >
-              {/* Effekt D — Partikel-Canvas */}
-              <ChatParticles />
-
-              {messages.map((m) => (
-                <motion.div
-                  key={m.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  // Effekt B — group class für Hover-Reaktionen (nur assistant)
-                  className={`flex ${m.role === "user" ? "justify-end" : "justify-start group"}`}
-                  style={{ position: "relative", zIndex: 1 }}
-                >
-                  {m.role === "assistant" && (
-                    <div
-                      className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mr-2 mt-0.5"
-                      style={{
-                        background: "rgba(212,175,55,0.15)",
-                        border: "1px solid rgba(212,175,55,0.3)",
-                      }}
-                    >
-                      <Sparkles size={11} style={{ color: "#D4AF37" }} />
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+              {messages.length === 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {/* Greeting */}
+                  <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                    <div style={{
+                      width: "24px", height: "24px", borderRadius: "50%", flexShrink: 0,
+                      background: "rgba(212,175,55,0.15)", border: "1px solid rgba(212,175,55,0.3)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      <Sparkles size={11} color="#D4AF37" />
                     </div>
-                  )}
-                  <div style={{ display: "flex", flexDirection: "column", maxWidth: "78%" }}>
-                    <div
-                      className={`rounded-lg px-3.5 py-2.5 text-[13px] leading-relaxed whitespace-pre-wrap ${
-                        m.role === "user"
-                          ? "text-black font-medium rounded-br-sm"
-                          : "text-zinc-200 rounded-bl-sm"
-                      }`}
-                      style={
-                        m.role === "user"
-                          ? { background: "linear-gradient(135deg, #D4AF37, #C49B2D)" }
-                          : {
-                              background: "rgba(255,255,255,0.05)",
-                              border: "1px solid rgba(255,255,255,0.08)",
-                            }
-                      }
-                    >
-                      {/* Effekt C — Typewriter für neue assistant-Nachrichten */}
-                      {m.role === "assistant" && typingIds.has(m.id) ? (
-                        <TypewriterText
-                          text={m.content}
-                          duration={Math.max(800, Math.min(3000, m.content.length * 18))}
-                        />
-                      ) : (
-                        m.content
-                      )}
+                    <div style={{
+                      background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: "10px", borderTopLeftRadius: "2px",
+                      padding: "10px 13px", fontSize: "13px", color: "#d4d4d4", lineHeight: 1.5,
+                      maxWidth: "calc(100% - 36px)",
+                    }}>
+                      {lang === "DE"
+                        ? "Willkommen bei KickstarterCash ✦ Ich bin KASH. Wie kann ich dir helfen?"
+                        : "Welcome to KickstarterCash ✦ I'm KASH. How can I help you?"}
                     </div>
+                  </div>
 
-                    {/* Effekt B — Reaction-Bar unter assistant-Bubbles */}
-                    {m.role === "assistant" && (
-                      <div
-                        className="kash-reaction-bar"
-                        style={{
-                          display: "flex",
-                          gap: "4px",
-                          marginTop: "4px",
-                        }}
-                      >
-                        {["👍", "✦", "💡"].map((e) => (
-                          <button
-                            key={e}
-                            onClick={() =>
-                              setReactions((r) => ({ ...r, [m.id]: e }))
-                            }
-                            style={{
-                              background:
-                                reactions[m.id] === e
-                                  ? "rgba(212,175,55,0.25)"
-                                  : "rgba(212,175,55,0.08)",
-                              border: "1px solid rgba(212,175,55,0.25)",
-                              borderRadius: "10px",
-                              padding: "2px 7px",
-                              fontSize: "0.72rem",
-                              cursor: "pointer",
-                              color: "#EBCB72",
-                              transform:
-                                reactions[m.id] === e ? "scale(1.15)" : "scale(1)",
-                              transition: "all 0.15s",
-                            }}
-                          >
-                            {e}
-                          </button>
-                        ))}
+                  {/* Ticket Banner */}
+                  <button
+                    onClick={() => setShowTicketModal(true)}
+                    style={{
+                      width: "100%", display: "flex", alignItems: "center", gap: "10px",
+                      padding: "10px 14px", marginTop: "4px",
+                      background: "rgba(212,175,55,0.07)", border: "1px solid rgba(212,175,55,0.2)",
+                      borderRadius: "10px", cursor: "pointer", transition: "all 0.15s", textAlign: "left",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(212,175,55,0.13)"; e.currentTarget.style.borderColor = "rgba(212,175,55,0.4)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(212,175,55,0.07)"; e.currentTarget.style.borderColor = "rgba(212,175,55,0.2)"; }}
+                  >
+                    <Ticket size={16} color="#D4AF37" style={{ flexShrink: 0 }} />
+                    <div>
+                      <div style={{ color: "#D4AF37", fontWeight: 600, fontSize: "12px" }}>
+                        {lang === "DE" ? "Mit einem Menschen verbinden" : "Connect with a human"}
                       </div>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
+                      <div style={{ color: "#888", fontSize: "10px", marginTop: "1px" }}>
+                        {lang === "DE" ? "Support-Ticket erstellen — wir melden uns persönlich" : "Create a ticket — we'll reach out personally"}
+                      </div>
+                    </div>
+                  </button>
 
-              {loading && (
-                <div className="flex justify-start" style={{ position: "relative", zIndex: 1 }}>
-                  <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mr-2 mt-0.5"
-                    style={{
-                      background: "rgba(212,175,55,0.15)",
-                      border: "1px solid rgba(212,175,55,0.3)",
-                    }}
-                  >
-                    <Sparkles size={11} style={{ color: "#D4AF37" }} />
-                  </div>
-                  <div
-                    className="rounded-lg rounded-bl-sm px-4 py-3 flex gap-1 items-center"
-                    style={{
-                      background: "rgba(255,255,255,0.05)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                    }}
-                  >
-                    {[0, 1, 2].map((i) => (
-                      <motion.div
-                        key={i}
-                        className="w-1.5 h-1.5 rounded-full"
-                        style={{ background: "#D4AF37" }}
-                        animate={{ opacity: [0.3, 1, 0.3] }}
-                        transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }}
-                      />
+                  {/* Suggestions */}
+                  <div style={{ marginTop: "4px" }}>
+                    <p style={{ color: "#444", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "6px" }}>
+                      {lang === "DE" ? "Häufige Fragen" : "Quick questions"}
+                    </p>
+                    {suggestions.map((s, i) => (
+                      <button key={i} onClick={() => send(s)} style={{
+                        width: "100%", textAlign: "left", padding: "8px 12px", marginBottom: "5px",
+                        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+                        borderRadius: "8px", color: "#888", fontSize: "12px", cursor: "pointer",
+                        transition: "all 0.15s", display: "block",
+                      }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(212,175,55,0.3)"; e.currentTarget.style.color = "#ccc"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; e.currentTarget.style.color = "#888"; }}
+                      >
+                        {s}
+                      </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Suggestions */}
-              {showSuggestions && messages.length <= 1 && !loading && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="pt-2 space-y-2"
-                  style={{ position: "relative", zIndex: 1 }}
-                >
-                  <p className="text-[10px] text-zinc-600 uppercase tracking-widest px-1">
-                    {lang === "DE" ? "Häufige Fragen" : "Quick questions"}
-                  </p>
-                  {suggestions.map((s, i) => (
-                    <button
-                      key={i}
-                      onClick={() => send(s)}
-                      className="w-full text-left px-3 py-2 rounded-md text-xs text-zinc-400 hover:text-white transition-all duration-150"
-                      style={{
-                        background: "rgba(255,255,255,0.03)",
-                        border: "1px solid rgba(255,255,255,0.07)",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = "rgba(212,175,55,0.3)";
-                        e.currentTarget.style.background = "rgba(212,175,55,0.05)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
-                        e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-                      }}
-                    >
-                      {s}
-                    </button>
-                  ))}
-
-                  {/* Human-contact option */}
-                  <div style={{ paddingTop: "4px", borderTop: "1px solid rgba(255,255,255,0.05)", marginTop: "8px" }}>
-                    <p className="text-[10px] text-zinc-700 uppercase tracking-widest px-1 mb-2">
-                      {lang === "DE" ? "Oder direkt zum Team" : "Or contact the team"}
-                    </p>
-                    <button
-                      onClick={() => setShowTicketModal(true)}
-                      style={{
-                        width: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        padding: "9px 12px",
-                        background: "rgba(212,175,55,0.06)",
-                        border: "1px solid rgba(212,175,55,0.18)",
-                        borderRadius: "8px",
-                        color: "#A89040",
-                        fontSize: "12px",
-                        cursor: "pointer",
-                        transition: "all 0.15s",
-                        textAlign: "left",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(212,175,55,0.12)";
-                        e.currentTarget.style.borderColor = "rgba(212,175,55,0.35)";
-                        e.currentTarget.style.color = "#D4AF37";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(212,175,55,0.06)";
-                        e.currentTarget.style.borderColor = "rgba(212,175,55,0.18)";
-                        e.currentTarget.style.color = "#A89040";
-                      }}
-                    >
-                      <Ticket size={13} style={{ flexShrink: 0 }} />
-                      <div>
-                        <div style={{ fontWeight: 600, lineHeight: 1.3 }}>
-                          {lang === "DE" ? "Mit einem Menschen verbinden" : "Connect with a human"}
-                        </div>
-                        <div style={{ fontSize: "10px", opacity: 0.7, marginTop: "1px" }}>
-                          {lang === "DE" ? "Ticket erstellen — wir melden uns persönlich" : "Create a ticket — we'll reach out personally"}
-                        </div>
-                      </div>
-                    </button>
+              {messages.map((m, i) => (
+                <div key={i} style={{ display: "flex", gap: "8px", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
+                  {m.role === "assistant" && (
+                    <div style={{
+                      width: "24px", height: "24px", borderRadius: "50%", flexShrink: 0,
+                      background: "rgba(212,175,55,0.15)", border: "1px solid rgba(212,175,55,0.3)",
+                      display: "flex", alignItems: "center", justifyContent: "center", marginTop: "2px",
+                    }}>
+                      <Sparkles size={11} color="#D4AF37" />
+                    </div>
+                  )}
+                  <div style={{
+                    maxWidth: "80%", padding: "10px 13px", fontSize: "13px", lineHeight: 1.5,
+                    borderRadius: "10px", whiteSpace: "pre-wrap",
+                    ...(m.role === "user" ? {
+                      background: "linear-gradient(135deg, #D4AF37, #C49B2D)",
+                      color: "#000", fontWeight: 500, borderBottomRightRadius: "2px",
+                    } : {
+                      background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
+                      color: "#d4d4d4", borderTopLeftRadius: "2px",
+                    }),
+                  }}>
+                    {m.content}
                   </div>
-                </motion.div>
+                </div>
+              ))}
+
+              {loading && (
+                <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                  <div style={{
+                    width: "24px", height: "24px", borderRadius: "50%", flexShrink: 0,
+                    background: "rgba(212,175,55,0.15)", border: "1px solid rgba(212,175,55,0.3)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Sparkles size={11} color="#D4AF37" />
+                  </div>
+                  <div style={{
+                    background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: "10px", borderTopLeftRadius: "2px", padding: "10px 14px",
+                    display: "flex", gap: "4px", alignItems: "center",
+                  }}>
+                    {[0, 1, 2].map((j) => (
+                      <motion.div key={j} style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#D4AF37" }}
+                        animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 0.8, repeat: Infinity, delay: j * 0.2 }} />
+                    ))}
+                  </div>
+                </div>
               )}
 
-              <div ref={endRef} style={{ position: "relative", zIndex: 1 }} />
+              <div ref={bottomRef} />
             </div>
 
-            {/* Ticket CTA — erscheint nach 2+ Nachrichten */}
-            {messages.length >= 3 && !loading && (
-              <div style={{ padding: "4px 12px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                <button onClick={() => setShowTicketModal(true)}
-                  style={{ width: "100%", padding: "6px 12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", background: "rgba(212,175,55,0.07)", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "6px", color: "#D4AF37", fontSize: "11px", cursor: "pointer", transition: "all 0.15s" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(212,175,55,0.14)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(212,175,55,0.07)"; }}>
-                  <Ticket size={11} />
-                  {lang === "DE" ? "Support-Ticket erstellen" : "Create support ticket"}
-                </button>
-              </div>
-            )}
-
             {/* Input */}
-            <div
-              className="px-3 py-3 border-t shrink-0 flex items-end gap-2"
-              style={{ borderColor: "rgba(255,255,255,0.08)" }}
-            >
-              <textarea
+            <div style={{
+              padding: "12px 14px", borderTop: "1px solid rgba(255,255,255,0.08)",
+              display: "flex", gap: "8px", flexShrink: 0,
+            }}>
+              <input
                 ref={inputRef}
-                rows={1}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={onKey}
-                placeholder={lang === "DE" ? "Nachricht schreiben…" : "Write a message…"}
-                className="flex-1 resize-none rounded-md px-3 py-2.5 text-[13px] text-white placeholder-zinc-600 focus:outline-none max-h-28"
+                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send()}
+                placeholder={lang === "DE" ? "Frage stellen…" : "Ask a question…"}
                 style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  lineHeight: "1.5",
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "rgba(212,175,55,0.5)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "rgba(255,255,255,0.1)";
+                  flex: 1, background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px",
+                  padding: "9px 12px", color: "#fff", fontSize: "13px", outline: "none",
                 }}
               />
               <button
                 onClick={() => send()}
-                disabled={loading || !input.trim()}
-                className="w-9 h-9 rounded-md flex items-center justify-center shrink-0 transition-all duration-150 disabled:opacity-40"
-                style={{ background: "linear-gradient(135deg, #D4AF37, #B8972E)" }}
+                disabled={!input.trim() || loading}
+                style={{
+                  width: "36px", height: "36px", borderRadius: "8px", flexShrink: 0,
+                  background: input.trim() && !loading ? "rgba(212,175,55,0.2)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${input.trim() && !loading ? "rgba(212,175,55,0.4)" : "rgba(255,255,255,0.1)"}`,
+                  cursor: input.trim() && !loading ? "pointer" : "not-allowed",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
               >
-                {loading ? (
-                  <Loader2 size={15} className="animate-spin text-black" />
-                ) : (
-                  <Send size={15} className="text-black" />
-                )}
+                {loading ? <Loader2 size={14} color="#D4AF37" className="animate-spin" /> : <Send size={14} color={input.trim() ? "#D4AF37" : "#444"} />}
               </button>
             </div>
           </motion.div>
