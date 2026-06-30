@@ -1138,8 +1138,9 @@ EMPFEHLUNG durch KASH:
 - Web3 + USD-Banking + Blockchain-Ökosystem + Provision verdienen → Valygo Premium (3.703,70 AED)
 
 ═══════════════════════════════════════
-KARTENLÖSUNG 5: REDOTPAY KARTE (Physisch & Virtuell)
+KARTENLÖSUNG 5: REDOTPAY VISA CARD (Physisch & Virtuell)
 ═══════════════════════════════════════
+Kartennetzwerk: VISA
 Partner: RedotPay (Fintech, keine Bank — Wallet von lizenzierten Finanzinstituten)
 Nutzer weltweit: über 7 Millionen
 Apple Pay: ✓ (in Safari unterstützt)
