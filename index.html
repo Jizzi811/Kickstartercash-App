@@ -1123,6 +1123,49 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
   #kash-send:hover{filter:brightness(1.15)}
   #kash-send:disabled{opacity:.4;cursor:not-allowed}
   #kash-send svg{width:16px;height:16px;fill:none;stroke:#1a1206;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ── Typing Aura (Effekt A) ────────────────────────────────────────── */
+  #kash-panel.kash-thinking {
+    animation: kashAura 1.4s ease-in-out infinite;
+  }
+  @keyframes kashAura {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(212,175,55,0.15), 0 20px 60px rgba(0,0,0,0.8); }
+    50%       { box-shadow: 0 0 0 2px rgba(212,175,55,0.5), 0 0 40px rgba(212,175,55,0.12), 0 20px 60px rgba(0,0,0,0.8); }
+  }
+  #kash-panel.kash-thinking #kash-avatar {
+    animation: avatarSpin 2s linear infinite, avatarGlow 1.4s ease-in-out infinite;
+  }
+  @keyframes avatarSpin { to { transform: rotate(360deg); } }
+  @keyframes avatarGlow {
+    0%, 100% { box-shadow: 0 0 16px rgba(212,175,55,0.5); }
+    50%       { box-shadow: 0 0 32px rgba(251,233,166,0.9), 0 0 60px rgba(212,175,55,0.4); }
+  }
+
+  /* ── Message Reactions (Effekt B) ──────────────────────────────────── */
+  .kash-reactions {
+    display: flex; gap: 4px; margin-top: 5px;
+    opacity: 0; transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  .km.bot:hover .kash-reactions {
+    opacity: 1; pointer-events: auto;
+  }
+  .kr {
+    background: rgba(212,175,55,0.08);
+    border: 1px solid rgba(212,175,55,0.2);
+    border-radius: 12px;
+    padding: 2px 7px;
+    font-size: 0.72rem;
+    cursor: pointer;
+    color: #EBCB72;
+    transition: all 0.15s;
+  }
+  .kr:hover, .kr.active {
+    background: rgba(212,175,55,0.2);
+    border-color: rgba(212,175,55,0.5);
+    transform: scale(1.15);
+  }
+  .kr.active { opacity: 0.6; pointer-events: none; }
 </style>
 
 <!-- Floating Button -->
@@ -1174,6 +1217,7 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
   let history = [];
   let loading = false;
   let greeted = false;
+  let chatParticlesInit = false;
   const sessionId = crypto.randomUUID();
 
   let backendOk = null;
@@ -1195,6 +1239,7 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
     const isOpen = panel.classList.toggle('open');
     btn.setAttribute('aria-expanded', isOpen);
     if(isOpen && !greeted){ greet(); greeted = true; }
+    if(isOpen && !chatParticlesInit){ initChatParticles(); chatParticlesInit = true; }
     if(isOpen) setTimeout(()=>input.focus(),120);
   }
 
@@ -1202,10 +1247,90 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
     addMsg('bot','Willkommen bei KickstarterCash ✦ Ich bin KASH, dein persönlicher Assistent. Wie kann ich dir heute helfen – hast du Fragen zu unseren Tools oder möchtest du mehr erfahren?');
   }
 
+  function addReactions(el){
+    if(!el || el.dataset.hasReactions) return;
+    el.dataset.hasReactions = '1';
+    const bar = document.createElement('div');
+    bar.className = 'kash-reactions';
+    bar.innerHTML = '<button class="kr" data-e="👍">👍</button><button class="kr" data-e="✦">✦</button><button class="kr" data-e="💡">💡</button>';
+    bar.querySelectorAll('.kr').forEach(b => {
+      b.addEventListener('click', () => { b.classList.add('active'); });
+    });
+    el.appendChild(bar);
+  }
+
+  function typewriterMsg(text, targetEl, onDone){
+    let i = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'tw-cursor';
+    cursor.setAttribute('aria-hidden', 'true');
+    targetEl.textContent = '';
+    targetEl.appendChild(cursor);
+    const speed = Math.max(8, Math.min(28, Math.round(3000 / text.length)));
+    function tick(){
+      if(i < text.length){
+        targetEl.insertBefore(document.createTextNode(text[i]), cursor);
+        i++;
+        msgs.scrollTop = msgs.scrollHeight;
+        setTimeout(tick, speed);
+      } else {
+        cursor.remove();
+        if(onDone) onDone();
+      }
+    }
+    tick();
+  }
+
+  function initChatParticles(){
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:0.5;';
+    msgs.style.position = 'relative';
+    msgs.insertBefore(canvas, msgs.firstChild);
+    const ctx = canvas.getContext('2d');
+    const particles = [];
+    const N = 18;
+    function resize(){
+      canvas.width = msgs.offsetWidth;
+      canvas.height = msgs.offsetHeight;
+    }
+    resize();
+    new ResizeObserver(resize).observe(msgs);
+    for(let i = 0; i < N; i++){
+      particles.push({
+        x: Math.random() * (canvas.width || 300),
+        y: Math.random() * (canvas.height || 400),
+        r: Math.random() * 1.5 + 0.5,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        opacity: Math.random() * 0.4 + 0.1,
+      });
+    }
+    function draw(){
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if(p.x < 0) p.x = canvas.width;
+        if(p.x > canvas.width) p.x = 0;
+        if(p.y < 0) p.y = canvas.height;
+        if(p.y > canvas.height) p.y = 0;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(212,175,55,' + p.opacity + ')';
+        ctx.fill();
+      });
+      requestAnimationFrame(draw);
+    }
+    draw();
+  }
+
   function addMsg(role, text){
     const d = document.createElement('div');
     d.className = 'km ' + role;
-    d.textContent = text;
+    if(role === 'bot'){
+      typewriterMsg(text, d, () => { addReactions(d); });
+    } else {
+      d.textContent = text;
+    }
     msgs.appendChild(d);
     msgs.scrollTop = msgs.scrollHeight;
     return d;
@@ -1231,6 +1356,7 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
     input.style.height = '';
     sendB.disabled = true;
     loading = true;
+    panel.classList.add('kash-thinking');
 
     const typing = showTyping();
     try{
@@ -1263,6 +1389,7 @@ input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
       addMsg('error', `⚠️ Netzwerkfehler: ${e.message}. Ist Railway online?`);
     } finally{
       loading = false;
+      panel.classList.remove('kash-thinking');
       sendB.disabled = !input.value.trim();
     }
   }
