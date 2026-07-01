@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Loader2, Trash2, Paperclip, X, Bot, Sparkles, Zap, LayoutGrid,
-  FileText
+  FileText, Cpu
 } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 import { PageTitle } from "@/components/PageTitle";
@@ -45,6 +45,15 @@ const MODELS = [
     accent: "#FF6B35",
     vision: false,
     description: "Kostenlos & direkt",
+  },
+  {
+    id: "ollama",
+    label: "Ollama (Lokal)",
+    provider: "Ollama",
+    icon: Cpu,
+    accent: "#6B7280",
+    vision: false,
+    description: "Selbst gehostet, läuft lokal",
   },
 ];
 

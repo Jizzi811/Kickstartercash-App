@@ -60,6 +60,7 @@ SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
 REPORT_EMAILS: list[str] = [e.strip() for e in os.environ.get('KASH_REPORT_EMAILS', '').split(',') if e.strip()]
 POYO_API_KEY = os.environ.get('POYO_API_KEY', '')
 POYO_BASE = "https://api.poyo.ai"
+OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')
 
 _anthropic_client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
 LOGO_URL = "https://customer-assets.emergentagent.com/job_5234ef58-250d-4475-b61a-24b76051aa69/artifacts/y4lzk2ct_WhatsApp%20Image%202026-06-24%20at%2010.55.48.jpeg"
@@ -88,6 +89,8 @@ MODEL_MAP = {
     "grok-3-fast": ("grok", "grok-3-fast"),
     "grok-3-auto": ("grok", "grok-3-auto"),
     "grok-4": ("grok", "grok-4"),
+    # Ollama — local/self-hosted models via OLLAMA_BASE_URL (no API key needed)
+    "ollama": ("ollama", os.environ.get('OLLAMA_MODEL', 'llama3.2')),
 }
 IMAGE_MODEL = "gemini-3.1-flash-image-preview"
 
@@ -132,6 +135,27 @@ def _cb_record_success(provider: str):
     _cb_open_until[provider] = 0.0
 
 
+async def ollama_chat(model: str, system_message: str, user_text: str) -> str:
+    """Call a local/self-hosted Ollama instance (OLLAMA_BASE_URL, default http://localhost:11434)."""
+    messages = []
+    if system_message:
+        messages.append({"role": "system", "content": system_message})
+    messages.append({"role": "user", "content": user_text})
+    payload = {"model": model, "messages": messages, "stream": False}
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{OLLAMA_BASE_URL}/api/chat", json=payload, timeout=aiohttp.ClientTimeout(total=120)
+            ) as resp:
+                if resp.status != 200:
+                    text = await resp.text()
+                    raise RuntimeError(f"Ollama request failed ({resp.status}): {text}")
+                data = await resp.json()
+                return (data.get("message") or {}).get("content", "")
+    except aiohttp.ClientConnectorError as e:
+        raise RuntimeError(f"Ollama unreachable at {OLLAMA_BASE_URL}. Is `ollama serve` running? ({e})")
+
+
 async def _llm_single(provider: str, model: str, system_message: str, user_text: str, grok_extra_data: dict = None) -> str:
     """Call one specific provider/model. Raises on failure."""
     if provider == "grok":
@@ -166,6 +190,9 @@ async def _llm_single(provider: str, model: str, system_message: str, user_text:
             lambda: gmodel.generate_content(user_text)
         )
         return resp.text
+
+    if provider == "ollama":
+        return await ollama_chat(model, system_message, user_text)
 
     if not _HAS_EMERGENT:
         raise RuntimeError("No LLM provider available (Emergent not installed, no direct keys)")
@@ -1869,6 +1896,15 @@ async def arena_chat(req: ArenaChatRequest):
         if "error" in result:
             raise HTTPException(status_code=502, detail=str(result["error"]))
         return {"reply": (result.get("response") or "").strip(), "grok_extra_data": result.get("extra_data")}
+
+    # ── Ollama (local, text only) ────────────────────────────────────────────
+    if provider == "ollama":
+        note = "\n[Hinweis: Ollama unterstützt in dieser Integration keinen Datei-Upload.]" if has_file else ""
+        try:
+            reply_text = await ollama_chat(model, system, f"{convo}{note}")
+        except RuntimeError as e:
+            raise HTTPException(status_code=502, detail=str(e))
+        return {"reply": reply_text.strip()}
 
     # ── Claude (vision via Anthropic SDK) ────────────────────────────────────
     if provider == "anthropic" and _anthropic_client:
