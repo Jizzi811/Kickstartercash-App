@@ -3746,7 +3746,7 @@ async def generate_veo_video(req: VeoRequest):
         raise HTTPException(status_code=503, detail="GEMINI_API_KEY nicht gesetzt")
     try:
         async with aiohttp.ClientSession() as session:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/veo-2.0-generate-001:predictLongRunning?key={GEMINI_API_KEY}"
+            url = f"https://generativelanguage.googleapis.com/v1/models/veo-2.0-generate-001:predictLongRunning?key={GEMINI_API_KEY}"
             payload = {
                 "model": "models/veo-2.0-generate-001",
                 "instances": [{"prompt": req.prompt}],
@@ -3774,7 +3774,7 @@ async def check_veo_status(operation: str, prompt: str = ""):
         raise HTTPException(status_code=503, detail="GEMINI_API_KEY nicht gesetzt")
     try:
         async with aiohttp.ClientSession() as session:
-            url = f"https://generativelanguage.googleapis.com/v1beta/{operation}?key={GEMINI_API_KEY}"
+            url = f"https://generativelanguage.googleapis.com/v1/{operation}?key={GEMINI_API_KEY}"
             async with session.get(url) as resp:
                 data = await resp.json()
                 if data.get("done"):
