@@ -358,6 +358,32 @@ async def create_workspace(req: WorkspaceCreate, authorization: Optional[str] = 
     }
 
 
+async def workspace_from_request(authorization: Optional[str], x_workspace_id: Optional[str]) -> Optional[str]:
+    """Resolve the current workspace for a request WITHOUT raising.
+
+    Returns the validated workspace id if the caller is authenticated and a
+    member of that workspace, otherwise None. This lets legacy (un-authed)
+    endpoints keep working while authed requests get tenant isolation.
+    """
+    if not authorization or not x_workspace_id:
+        return None
+    if not authorization.lower().startswith("bearer "):
+        return None
+    if _db is None:
+        return None
+    try:
+        user_id = _decode_token(authorization.split(" ", 1)[1].strip())
+    except Exception:
+        return None
+    try:
+        member = await _db.bm_memberships.find_one(
+            {"user_id": user_id, "workspace_id": x_workspace_id}
+        )
+    except Exception:
+        return None
+    return x_workspace_id if member else None
+
+
 async def _assert_member(user_id: str, workspace_id: str) -> dict:
     db = _require_db()
     m = await db.bm_memberships.find_one({"user_id": user_id, "workspace_id": workspace_id}, {"_id": 0})

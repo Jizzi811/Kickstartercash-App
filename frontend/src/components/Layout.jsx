@@ -4,7 +4,7 @@ import {
   LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
-  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown,
+  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { LOGO_URL } from "@/i18n";
@@ -179,7 +179,7 @@ const CEOModeToast = ({ lang, onDone }) => {
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 export const Layout = ({ children }) => {
-  const { t, lang, setLang, model, setModel } = useApp();
+  const { t, lang, setLang, model, setModel, isAuthenticated, activeWorkspace, logout } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -447,6 +447,29 @@ export const Layout = ({ children }) => {
                 </button>
               ))}
             </div>
+
+            {/* Workspace + logout */}
+            {isAuthenticated && (
+              <div className="flex items-center gap-2">
+                {activeWorkspace && (
+                  <span
+                    className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-xs text-white/80 border border-white/8"
+                    title={t("Aktiver Workspace")}
+                  >
+                    <BrainCircuit size={13} style={{ color: "#7C3AED" }} />
+                    <span className="max-w-[140px] truncate">{activeWorkspace.name}</span>
+                  </span>
+                )}
+                <button
+                  onClick={() => { logout(); navigate("/auth"); }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-xs text-zinc-400 hover:text-white border border-white/8 hover:border-white/20 transition-colors"
+                  title={lang === "DE" ? "Abmelden" : "Log out"}
+                >
+                  <LogOut size={13} />
+                  <span className="hidden sm:inline">{lang === "DE" ? "Abmelden" : "Log out"}</span>
+                </button>
+              </div>
+            )}
           </div>
         </header>
 

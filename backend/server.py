@@ -12,7 +12,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Response
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Header
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -371,6 +371,7 @@ class Brand(BaseModel):
     products: str = ""
     social_accounts: str = ""
     onboarded: bool = False
+    workspace_id: str = ""
     is_default: bool = False
     created_at: str = Field(default_factory=_now_iso)
 
@@ -602,9 +603,33 @@ async def root():
     return {"message": "Kickstarter Content Maschine API"}
 
 
+async def current_workspace(
+    authorization: Optional[str] = Header(default=None),
+    x_workspace_id: Optional[str] = Header(default=None, alias="X-Workspace-Id"),
+) -> Optional[str]:
+    """FastAPI dependency – validated workspace id, or None for legacy requests."""
+    try:
+        from brandmind import workspace_from_request
+        return await workspace_from_request(authorization, x_workspace_id)
+    except Exception:
+        return None
+
+
+def _scope_filter(ws: Optional[str]) -> dict:
+    """Mongo filter that isolates a workspace's data.
+
+    Authed workspace  -> exactly that workspace's records.
+    Legacy (ws=None)  -> only un-scoped records (the original single-brand data),
+                         so existing deployments keep seeing their data untouched.
+    """
+    if ws:
+        return {"workspace_id": ws}
+    return {"$or": [{"workspace_id": {"$exists": False}}, {"workspace_id": {"$in": [None, ""]}}]}
+
+
 @api_router.get("/brands", response_model=List[Brand])
-async def list_brands():
-    docs = await db.brands.find({}, {"_id": 0}).to_list(1000)
+async def list_brands(ws: Optional[str] = Depends(current_workspace)):
+    docs = await db.brands.find(_scope_filter(ws), {"_id": 0}).to_list(1000)
     docs.sort(key=lambda d: (not d.get("is_default", False), d.get("created_at", "")))
     return docs
 
@@ -618,8 +643,10 @@ async def get_brand(brand_id: str):
 
 
 @api_router.post("/brands", response_model=Brand)
-async def create_brand(payload: BrandCreate):
+async def create_brand(payload: BrandCreate, ws: Optional[str] = Depends(current_workspace)):
     brand = Brand(**payload.model_dump())
+    if ws:
+        brand.workspace_id = ws
     await db.brands.insert_one(brand.model_dump())
     return brand
 
@@ -657,7 +684,7 @@ def _clean_hex(value: str, fallback: str) -> str:
 
 
 @api_router.post("/brand-brain/onboard")
-async def brand_brain_onboard(req: BrandBrainOnboardRequest):
+async def brand_brain_onboard(req: BrandBrainOnboardRequest, ws: Optional[str] = Depends(current_workspace)):
     if db is None:
         raise HTTPException(status_code=503, detail="Database not available")
 
@@ -733,6 +760,7 @@ async def brand_brain_onboard(req: BrandBrainOnboardRequest):
         "products": req.products.strip(),
         "social_accounts": req.social_accounts.strip(),
         "onboarded": True,
+        "workspace_id": ws or "",
     }
 
     # Create or update the brand
@@ -764,6 +792,7 @@ async def brand_brain_onboard(req: BrandBrainOnboardRequest):
         if brand["name"] not in tags:
             tags.append(brand["name"])
         entry = KbEntry(category=category, title=title, content=content, tags=tags).model_dump()
+        entry["workspace_id"] = ws or ""
         try:
             await db.knowledge.insert_one({**entry})
             entry.pop("_id", None)
@@ -3558,6 +3587,7 @@ class KbEntry(BaseModel):
     title: str
     content: str
     tags: List[str] = []
+    workspace_id: str = ""
     created_at: str = Field(default_factory=_now_iso)
     updated_at: str = Field(default_factory=_now_iso)
 
@@ -3583,10 +3613,11 @@ class KbSearchRequest(BaseModel):
 
 
 @api_router.get("/knowledge")
-async def list_knowledge(category: Optional[str] = None, q: Optional[str] = None):
+async def list_knowledge(category: Optional[str] = None, q: Optional[str] = None,
+                         ws: Optional[str] = Depends(current_workspace)):
     if db is None:
         return {"categories": KB_CATEGORIES, "entries": []}
-    filt: dict = {}
+    filt: dict = dict(_scope_filter(ws))
     if category and category != "Alle":
         filt["category"] = category
     try:
@@ -3603,10 +3634,12 @@ async def list_knowledge(category: Optional[str] = None, q: Optional[str] = None
 
 
 @api_router.post("/knowledge", response_model=KbEntry)
-async def create_knowledge(payload: KbEntryCreate):
+async def create_knowledge(payload: KbEntryCreate, ws: Optional[str] = Depends(current_workspace)):
     if db is None:
         raise HTTPException(status_code=503, detail="Database not available")
     entry = KbEntry(**payload.model_dump())
+    if ws:
+        entry.workspace_id = ws
     await db.knowledge.insert_one(entry.model_dump())
     return entry
 

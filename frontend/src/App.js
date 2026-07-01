@@ -1,7 +1,8 @@
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
-import { AppProvider } from "@/context/AppContext";
+import { AppProvider, useApp } from "@/context/AppContext";
+import { BRANDMIND } from "@/brandmind";
 import { Layout } from "@/components/Layout";
 
 // Core pages
@@ -70,6 +71,27 @@ function App() {
 }
 
 function AppShell() {
+  const { authReady, isAuthenticated } = useApp();
+
+  // Avoid a flash of the app before we know the auth state.
+  if (!authReady) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: BRANDMIND.colors.base }}
+      >
+        <div
+          className="w-10 h-10 rounded-full animate-pulse"
+          style={{ background: BRANDMIND.colors.glow, filter: "blur(4px)" }}
+        />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+
   return (
     <Layout>
       <Routes>

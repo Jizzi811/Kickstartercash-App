@@ -37,6 +37,15 @@ export const AppProvider = ({ children }) => {
     }
   }, [token]);
 
+  // Tell the backend which workspace the request is scoped to.
+  useEffect(() => {
+    if (activeWorkspaceId) {
+      axios.defaults.headers.common["X-Workspace-Id"] = activeWorkspaceId;
+    } else {
+      delete axios.defaults.headers.common["X-Workspace-Id"];
+    }
+  }, [activeWorkspaceId]);
+
   const applyAuth = useCallback((data) => {
     setToken(data.token);
     setUser(data.user);
@@ -95,7 +104,7 @@ export const AppProvider = ({ children }) => {
     return res.data;
   }, []);
 
-  useEffect(() => { loadBrands(); }, [loadBrands]);
+  useEffect(() => { loadBrands(); }, [loadBrands, activeWorkspaceId]);
   useEffect(() => { localStorage.setItem("kc_lang", lang); }, [lang]);
   useEffect(() => { localStorage.setItem("kc_model", model); }, [model]);
   useEffect(() => { localStorage.setItem("kc_brand", activeBrandId); }, [activeBrandId]);
