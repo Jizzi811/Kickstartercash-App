@@ -8,6 +8,7 @@ import { Layout } from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
 import KnowledgeBase from "@/pages/KnowledgeBase";
 import BrandBrain from "@/pages/BrandBrain";
+import Auth from "@/pages/Auth";
 
 // Agent system
 import JarvjisAgent from "@/pages/JarvjisAgent";   // CEO Orb – bleibt
@@ -54,8 +55,23 @@ function App() {
     <div className="App">
       <AppProvider>
         <BrowserRouter>
-          <Layout>
-            <Routes>
+          <Routes>
+            {/* Brandmind auth – standalone, no app chrome */}
+            <Route path="/auth" element={<Auth />} />
+            {/* Everything else runs inside the app shell */}
+            <Route path="/*" element={<AppShell />} />
+          </Routes>
+        </BrowserRouter>
+        <Toaster theme="dark" position="top-right" richColors />
+      </AppProvider>
+    </div>
+  );
+}
+
+function AppShell() {
+  return (
+    <Layout>
+      <Routes>
               {/* Phase 5 – Main Navigation */}
               <Route path="/" element={<Dashboard />} />
               <Route path="/brand-brain" element={<BrandBrain />} />
@@ -103,12 +119,8 @@ function App() {
               <Route path="/campaign" element={<Campaign />} />
               <Route path="/workflow" element={<CampaignWorkflow />} />
               <Route path="/specialists" element={<Specialists />} />
-            </Routes>
-          </Layout>
-        </BrowserRouter>
-        <Toaster theme="dark" position="top-right" richColors />
-      </AppProvider>
-    </div>
+      </Routes>
+    </Layout>
   );
 }
 

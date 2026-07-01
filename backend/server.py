@@ -4168,6 +4168,15 @@ async def ticket_stats():
 
 app.include_router(api_router)
 
+# Brandmind multi-tenant foundation (auth, workspaces, billing)
+try:
+    from brandmind import router as brandmind_router, init_brandmind
+    init_brandmind(db)
+    app.include_router(brandmind_router)
+    logger.info("Brandmind tenancy/auth/billing router mounted")
+except Exception as _bm_err:
+    logging.getLogger(__name__).warning(f"Brandmind router not mounted: {_bm_err}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
