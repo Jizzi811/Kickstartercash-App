@@ -3746,20 +3746,20 @@ async def generate_veo_video(req: VeoRequest):
         raise HTTPException(status_code=503, detail="GEMINI_API_KEY nicht gesetzt")
     try:
         async with aiohttp.ClientSession() as session:
-            url = f"https://generativelanguage.googleapis.com/v1/models/veo-2.0-generate-001:predictLongRunning?key={GEMINI_API_KEY}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/veo-2.0-generate-001:generateVideo?key={GEMINI_API_KEY}"
             payload = {
-                "model": "models/veo-2.0-generate-001",
-                "instances": [{"prompt": req.prompt}],
-                "parameters": {
+                "prompt": {"text": req.prompt},
+                "videoGenerationConfig": {
                     "aspectRatio": req.aspect_ratio,
                     "durationSeconds": 8,
                     "numberOfVideos": 1,
                 }
             }
             async with session.post(url, json=payload) as resp:
-                data = await resp.json()
+                raw = await resp.text()
                 if resp.status != 200:
-                    raise HTTPException(status_code=502, detail=data.get("error", {}).get("message", "Veo Fehler"))
+                    raise HTTPException(status_code=502, detail=f"Veo API Fehler {resp.status}: {raw[:300]}")
+                data = json.loads(raw)
                 op_name = data.get("name", "")
                 return {"operation_name": op_name, "status": "processing"}
     except HTTPException:
@@ -3774,7 +3774,7 @@ async def check_veo_status(operation: str, prompt: str = ""):
         raise HTTPException(status_code=503, detail="GEMINI_API_KEY nicht gesetzt")
     try:
         async with aiohttp.ClientSession() as session:
-            url = f"https://generativelanguage.googleapis.com/v1/{operation}?key={GEMINI_API_KEY}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/{operation}?key={GEMINI_API_KEY}"
             async with session.get(url) as resp:
                 data = await resp.json()
                 if data.get("done"):
