@@ -3745,24 +3745,23 @@ async def generate_veo_video(req: VeoRequest):
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="GEMINI_API_KEY nicht gesetzt")
     try:
-        from google import genai as _genai
-        from google.genai import types as _gtypes
+        import importlib
+        genai_mod = importlib.import_module("google.genai")
+        types_mod = importlib.import_module("google.genai.types")
 
-        client = _genai.Client(api_key=GEMINI_API_KEY)
-        # generate_video is a blocking long-running call – run in thread pool
+        client = genai_mod.Client(api_key=GEMINI_API_KEY)
         loop = asyncio.get_event_loop()
         operation = await loop.run_in_executor(
             None,
             lambda: client.models.generate_video(
                 model="veo-2.0-generate-001",
                 prompt=req.prompt,
-                config=_gtypes.GenerateVideoConfig(
+                config=types_mod.GenerateVideoConfig(
                     aspect_ratio=req.aspect_ratio,
                     number_of_videos=1,
                 ),
             ),
         )
-        # operation.name is the long-running operation identifier
         op_name = getattr(operation, "name", "") or ""
         return {"operation_name": op_name, "status": "processing"}
     except Exception as e:
@@ -3774,11 +3773,11 @@ async def check_veo_status(operation: str, prompt: str = ""):
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="GEMINI_API_KEY nicht gesetzt")
     try:
-        from google import genai as _genai
-        client = _genai.Client(api_key=GEMINI_API_KEY)
+        import importlib
+        genai_mod = importlib.import_module("google.genai")
+        client = genai_mod.Client(api_key=GEMINI_API_KEY)
         loop = asyncio.get_event_loop()
 
-        # Poll the operation by name
         op = await loop.run_in_executor(
             None,
             lambda: client.operations.get(name=operation),
