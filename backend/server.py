@@ -839,7 +839,7 @@ def _fetch_logo_b64(brand: dict) -> Optional[str]:
 
 
 @api_router.post("/generate/social")
-async def generate_social(req: SocialRequest):
+async def generate_social(req: SocialRequest, ws: Optional[str] = Depends(current_workspace)):
     brand = await _get_brand_or_404(req.brand_id)
     ctx = _brand_context(brand, req.language)
     platforms = ", ".join(req.platforms)
@@ -867,13 +867,14 @@ async def generate_social(req: SocialRequest):
         "posts": data.get("posts", []),
         "created_at": _now_iso(),
     }
+    result["workspace_id"] = ws or ""
     await db.history.insert_one({**result})
     result.pop("_id", None)
     return result
 
 
 @api_router.post("/generate/copy")
-async def generate_copy(req: CopyRequest):
+async def generate_copy(req: CopyRequest, ws: Optional[str] = Depends(current_workspace)):
     brand = await _get_brand_or_404(req.brand_id)
     ctx = _brand_context(brand, req.language)
     system = (
@@ -899,13 +900,14 @@ async def generate_copy(req: CopyRequest):
         "variants": data.get("variants", []),
         "created_at": _now_iso(),
     }
+    result["workspace_id"] = ws or ""
     await db.history.insert_one({**result})
     result.pop("_id", None)
     return result
 
 
 @api_router.post("/generate/image")
-async def generate_image(req: ImageRequest):
+async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_workspace)):
     brand = await _get_brand_or_404(req.brand_id)
     full_prompt = _build_image_prompt(brand, req.prompt, req.style)
     image_urls = None
@@ -936,6 +938,7 @@ async def generate_image(req: ImageRequest):
         "image": image_url,
         "created_at": _now_iso(),
     }
+    record["workspace_id"] = ws or ""
     await db.history.insert_one({**record})
     record.pop("_id", None)
     return record
@@ -954,7 +957,7 @@ async def optimize_prompt(req: PromptOptimizeRequest):
 
 
 @api_router.post("/generate/campaign")
-async def generate_campaign(req: CampaignRequest):
+async def generate_campaign(req: CampaignRequest, ws: Optional[str] = Depends(current_workspace)):
     brand = await _get_brand_or_404(req.brand_id)
     ctx = _brand_context(brand, req.language)
     platforms = ", ".join(req.platforms)
@@ -999,13 +1002,14 @@ async def generate_campaign(req: CampaignRequest):
         "image": image_url,
         "created_at": _now_iso(),
     }
+    result["workspace_id"] = ws or ""
     await db.history.insert_one({**result})
     result.pop("_id", None)
     return result
 
 
 @api_router.post("/generate/calendar")
-async def generate_calendar(req: CalendarRequest):
+async def generate_calendar(req: CalendarRequest, ws: Optional[str] = Depends(current_workspace)):
     brand = await _get_brand_or_404(req.brand_id)
     ctx = _brand_context(brand, req.language)
     days = req.days if req.days in (30, 60, 90) else 30
@@ -1032,13 +1036,14 @@ async def generate_calendar(req: CalendarRequest):
         "items": items,
         "created_at": _now_iso(),
     }
+    result["workspace_id"] = ws or ""
     await db.history.insert_one({**result})
     result.pop("_id", None)
     return result
 
 
 @api_router.post("/generate/landingpage")
-async def generate_landingpage(req: LandingpageRequest):
+async def generate_landingpage(req: LandingpageRequest, ws: Optional[str] = Depends(current_workspace)):
     brand = await _get_brand_or_404(req.brand_id)
     ctx = _brand_context(brand, req.language)
     system = "You are an elite conversion copywriter and web strategist. Return strictly valid JSON and nothing else."
@@ -1062,6 +1067,7 @@ async def generate_landingpage(req: LandingpageRequest):
         "content": data,
         "created_at": _now_iso(),
     }
+    result["workspace_id"] = ws or ""
     await db.history.insert_one({**result})
     result.pop("_id", None)
     return result
@@ -1074,7 +1080,7 @@ async def delete_history(item_id: str):
 
 
 @api_router.post("/analyze/content")
-async def analyze_content(req: AnalyzeRequest):
+async def analyze_content(req: AnalyzeRequest, ws: Optional[str] = Depends(current_workspace)):
     brand = await _get_brand_or_404(req.brand_id)
     ctx = _brand_context(brand, req.language)
     lang = "Deutsch" if req.language == "DE" else "English"
@@ -1115,6 +1121,7 @@ async def analyze_content(req: AnalyzeRequest):
         "strengths": data.get("strengths", []),
         "created_at": _now_iso(),
     }
+    result["workspace_id"] = ws or ""
     await db.history.insert_one({**result})
     result.pop("_id", None)
     return result
@@ -1985,8 +1992,11 @@ async def get_kash_leads(limit: int = 50, skip: int = 0):
 
 
 @api_router.get("/history")
-async def get_history(type: Optional[str] = None, limit: int = 50):
-    query = {"type": type} if type else {}
+async def get_history(type: Optional[str] = None, limit: int = 50,
+                     ws: Optional[str] = Depends(current_workspace)):
+    query = dict(_scope_filter(ws))
+    if type:
+        query["type"] = type
     docs = await db.history.find(query, {"_id": 0}).sort("created_at", -1).to_list(limit)
     return docs
 

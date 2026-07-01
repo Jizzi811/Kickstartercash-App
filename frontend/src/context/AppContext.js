@@ -67,6 +67,19 @@ export const AppProvider = ({ children }) => {
     return res.data;
   }, [applyAuth]);
 
+  const createWorkspace = useCallback(async ({ name, industry = "" }) => {
+    const res = await axios.post(`${API}/workspaces`, { name, industry });
+    setWorkspaces((prev) => [...prev, res.data]);
+    setActiveWorkspaceId(res.data.id);
+    localStorage.setItem("bm_workspace", res.data.id);
+    return res.data;
+  }, []);
+
+  const switchWorkspace = useCallback((id) => {
+    setActiveWorkspaceId(id);
+    localStorage.setItem("bm_workspace", id);
+  }, []);
+
   const logout = useCallback(() => {
     setToken("");
     setUser(null);
@@ -122,7 +135,7 @@ export const AppProvider = ({ children }) => {
       // Brandmind auth / tenancy
       token, user, workspaces, activeWorkspaceId, setActiveWorkspaceId,
       activeWorkspace, authReady, isAuthenticated: !!token && !!user,
-      register, login, logout,
+      register, login, logout, createWorkspace, switchWorkspace,
     }}>
       {children}
     </AppContext.Provider>

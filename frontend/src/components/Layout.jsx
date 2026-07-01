@@ -4,7 +4,7 @@ import {
   LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
-  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut,
+  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { LOGO_URL } from "@/i18n";
@@ -179,7 +179,22 @@ const CEOModeToast = ({ lang, onDone }) => {
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 export const Layout = ({ children }) => {
-  const { t, lang, setLang, model, setModel, isAuthenticated, activeWorkspace, logout } = useApp();
+  const {
+    t, lang, setLang, model, setModel,
+    isAuthenticated, activeWorkspace, workspaces, activeWorkspaceId,
+    switchWorkspace, createWorkspace, logout,
+  } = useApp();
+
+  const handleNewWorkspace = async () => {
+    const name = window.prompt(lang === "DE" ? "Name des neuen Workspace / Unternehmens:" : "New workspace / company name:");
+    if (!name || !name.trim()) return;
+    try {
+      await createWorkspace({ name: name.trim() });
+      navigate("/brand-brain");
+    } catch {
+      /* ignore */
+    }
+  };
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -448,17 +463,40 @@ export const Layout = ({ children }) => {
               ))}
             </div>
 
-            {/* Workspace + logout */}
+            {/* Workspace switcher + logout */}
             {isAuthenticated && (
               <div className="flex items-center gap-2">
                 {activeWorkspace && (
-                  <span
-                    className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-xs text-white/80 border border-white/8"
-                    title={t("Aktiver Workspace")}
-                  >
-                    <BrainCircuit size={13} style={{ color: "#7C3AED" }} />
-                    <span className="max-w-[140px] truncate">{activeWorkspace.name}</span>
-                  </span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-xs text-white/80 border border-white/8 hover:border-white/20 transition-colors"
+                        title={lang === "DE" ? "Workspace wechseln" : "Switch workspace"}
+                      >
+                        <BrainCircuit size={13} style={{ color: "#7C3AED" }} />
+                        <span className="max-w-[140px] truncate">{activeWorkspace.name}</span>
+                        <ChevronDown size={12} className="text-zinc-500" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-[#0A0A0A] border-white/10 text-white min-w-[220px]">
+                      {workspaces.map((w) => (
+                        <DropdownMenuItem
+                          key={w.id}
+                          onClick={() => switchWorkspace(w.id)}
+                          className="text-sm cursor-pointer focus:bg-[#7C3AED]/15 flex items-center justify-between gap-2"
+                        >
+                          <span className="truncate">{w.name}</span>
+                          {w.id === activeWorkspaceId && <Check size={13} style={{ color: "#7C3AED" }} />}
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuItem
+                        onClick={handleNewWorkspace}
+                        className="text-sm cursor-pointer focus:bg-[#7C3AED]/15 text-[#7C3AED] mt-1 border-t border-white/5"
+                      >
+                        + {lang === "DE" ? "Neuer Workspace" : "New workspace"}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
                 <button
                   onClick={() => { logout(); navigate("/auth"); }}
