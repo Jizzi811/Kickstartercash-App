@@ -3720,6 +3720,20 @@ async def homepage_ping():
     return {"pong": True, "ts": _now_iso()}
 
 
+@api_router.get("/debug/genai")
+async def debug_genai():
+    """Check available google-genai methods."""
+    try:
+        import importlib
+        genai_mod = importlib.import_module("google.genai")
+        client = genai_mod.Client(api_key=GEMINI_API_KEY or "test")
+        methods = [m for m in dir(client.models) if not m.startswith("_")]
+        version = getattr(genai_mod, "__version__", "unknown")
+        return {"version": version, "models_methods": methods}
+    except Exception as e:
+        return {"error": str(e)}
+
+
 @api_router.get("/homepage/test-kash")
 async def test_kash():
     """GET endpoint to verify Claude call works end-to-end."""
