@@ -9,6 +9,7 @@ import Dashboard from "@/pages/Dashboard";
 import KnowledgeBase from "@/pages/KnowledgeBase";
 import BrandBrain from "@/pages/BrandBrain";
 import Auth from "@/pages/Auth";
+import Billing from "@/pages/Billing";
 
 // Agent system
 import JarvjisAgent from "@/pages/JarvjisAgent";   // CEO Orb – bleibt
@@ -75,6 +76,7 @@ function AppShell() {
               {/* Phase 5 – Main Navigation */}
               <Route path="/" element={<Dashboard />} />
               <Route path="/brand-brain" element={<BrandBrain />} />
+              <Route path="/billing" element={<Billing />} />
               <Route path="/agents" element={<Specialists />} />
               <Route path="/design" element={<DesignStudio />} />
               <Route path="/video" element={<VideoStudio />} />

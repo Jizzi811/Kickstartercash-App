@@ -4,7 +4,7 @@ import {
   LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
-  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit,
+  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { LOGO_URL } from "@/i18n";
@@ -18,6 +18,7 @@ import { AmbientOrb } from "@/components/AmbientOrb";
 const NAV = [
   { to: "/",           icon: LayoutGrid, labelDE: "Dashboard",       labelEN: "Dashboard",       end: true },
   { to: "/brand-brain", icon: BrainCircuit, labelDE: "Brand Brain",   labelEN: "Brand Brain" },
+  { to: "/billing",    icon: Crown,      labelDE: "Preise & Plan",    labelEN: "Pricing & Plan" },
   { to: "/agents",     icon: Bot,        labelDE: "Agenten",          labelEN: "Agents" },
   { to: "/design",     icon: Palette,    labelDE: "Design Studio",    labelEN: "Design Studio" },
   { to: "/video",      icon: Film,       labelDE: "Video Studio",     labelEN: "Video Studio" },
@@ -46,6 +47,7 @@ const NAV = [
 const PAGE_NAMES = {
   "/": "Dashboard",
   "/brand-brain": "Brand Brain",
+  "/billing": "Preise & Plan",
   "/agents": "Agenten",
   "/design": "Design Studio",
   "/video": "Video Studio",
