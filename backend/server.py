@@ -3769,13 +3769,13 @@ async def generate_veo_video(req: VeoRequest):
         cfg = GenerateVideoConfig(aspect_ratio=req.aspect_ratio, number_of_videos=1)
 
         # SDK 2.x uses generate_videos (plural)
-        gen_fn = getattr(client.models, "generate_videos", None) or getattr(client.models, "generate_video", None)
-        if gen_fn is None:
-            raise RuntimeError("google-genai SDK does not expose generate_video(s) — please upgrade")
-
         operation = await loop.run_in_executor(
             None,
-            lambda: gen_fn(model="veo-2.0-generate-001", prompt=req.prompt, config=cfg),
+            lambda: client.models.generate_videos(
+                model="veo-2.0-generate-001",
+                prompt=req.prompt,
+                config=cfg,
+            ),
         )
         op_name = getattr(operation, "name", "") or ""
         return {"operation_name": op_name, "status": "processing"}
@@ -3798,12 +3798,16 @@ async def check_veo_status(operation: str, prompt: str = ""):
             lambda: client.operations.get(name=operation),
         )
         if getattr(op, "done", False):
-            # Extract video URI from operation response
             try:
-                samples = op.response.generate_video_response.generated_samples
-                video_uri = samples[0].video.uri if samples else ""
+                # SDK 2.x: response.generated_videos[0].video.uri
+                videos = op.response.generated_videos
+                video_uri = videos[0].video.uri if videos else ""
             except Exception:
-                video_uri = ""
+                try:
+                    samples = op.response.generate_video_response.generated_samples
+                    video_uri = samples[0].video.uri if samples else ""
+                except Exception:
+                    video_uri = ""
             if video_uri and db is not None:
                 await db.video_gallery.insert_one({
                     "type": "veo",
