@@ -78,6 +78,12 @@ agenthub/agents/youtube/db
 
 memory/test_credentials.md
 
+# Evolver local runtime state (node identity, GEP assets) — not source
+.evolver/
+memory/evolution/
+memory/atp-autobuyer-ledger.json
+memory/evolver_update_check.json
+
 # Mobile development
 android-sdk/
 .env

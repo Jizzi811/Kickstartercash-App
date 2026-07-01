@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@evomap/evolver": "^1.89.20"
+  }
+}
