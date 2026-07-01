@@ -407,7 +407,7 @@ export default function Specialists() {
             <Sparkles size={20} className="text-[#7C3AED]" />
           </div>
           <h1 className="font-display text-2xl text-white">
-            {lang === "DE" ? "Kashbot Spezialisten" : "Kashbot Specialists"}
+            {lang === "DE" ? "Brandmind Spezialisten" : "Brandmind Specialists"}
           </h1>
         </div>
         <p className="text-sm text-zinc-500">

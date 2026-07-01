@@ -447,7 +447,7 @@ export default function Dashboard() {
                       }}
                     >
                       <Sparkles size={14} />
-                      CEO Kashbot
+                      CEO Agent
                     </button>
                   </div>
                 </div>

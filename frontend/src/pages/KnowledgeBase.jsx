@@ -196,8 +196,8 @@ export default function KnowledgeBase() {
         <PageHeader
           icon={Database}
           color="#60A5FA"
-          title="Kashbot Wissensdatenbank"
-          subtitle="Alles, was Kashbot über Kickstartercash.Club wissen muss — kein Halluzinieren, nur echtes Wissen."
+          title="Brandmind Wissensdatenbank"
+          subtitle="Alles, was Brandmind über deine Marke wissen muss — kein Halluzinieren, nur echtes Wissen."
           badge="Knowledge"
         />
         <button
@@ -243,7 +243,7 @@ export default function KnowledgeBase() {
       <div className="bg-[#0A0A0A] border border-[#7C3AED]/20 rounded-sm p-5">
         <div className="flex items-center gap-2 mb-3">
           <Bot size={16} className="text-[#7C3AED]" />
-          <span className="text-sm font-semibold text-[#7C3AED]">Kashbot fragen</span>
+          <span className="text-sm font-semibold text-[#7C3AED]">Brandmind fragen</span>
           <span className="text-[10px] text-zinc-600 ml-1">— antwortet nur aus deiner Wissensdatenbank</span>
         </div>
         <div className="flex gap-2">
@@ -273,7 +273,7 @@ export default function KnowledgeBase() {
             {aiLoading ? (
               <div className="flex items-center gap-2 text-zinc-400 text-sm">
                 <Loader2 size={14} className="animate-spin text-[#7C3AED]" />
-                Kashbot durchsucht die Wissensdatenbank…
+                Brandmind durchsucht die Wissensdatenbank…
               </div>
             ) : (
               <>

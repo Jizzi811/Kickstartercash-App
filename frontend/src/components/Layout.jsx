@@ -58,7 +58,7 @@ const PAGE_NAMES = {
   "/tickets": "Tickets",
   "/builder": "Eigene Agenten",
   "/arena": "Chat Arena",
-  "/jarvjis": "CEO Kashbot",
+  "/jarvjis": "CEO Agent",
   "/tiktok": "TikTok Studio",
   "/seo-specialist": "SEO Specialist",
   "/email": "E-Mail Marketing",
