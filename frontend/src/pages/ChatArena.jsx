@@ -33,7 +33,7 @@ const MODELS = [
     label: "Claude Sonnet",
     provider: "Anthropic",
     icon: LayoutGrid,
-    accent: "#D4AF37",
+    accent: "#7C3AED",
     vision: true,
     description: "Präzise & kontextreich",
   },
@@ -57,7 +57,7 @@ function FilePreview({ file, onRemove }) {
       {isImage ? (
         <img src={`data:${file.mime};base64,${file.data}`} alt="" className="w-8 h-8 object-cover rounded" />
       ) : (
-        <FileText size={20} className="text-[#D4AF37] shrink-0" />
+        <FileText size={20} className="text-[#7C3AED] shrink-0" />
       )}
       <span className="truncate">{file.name}</span>
       <button onClick={onRemove} className="ml-1 text-zinc-500 hover:text-red-400 shrink-0">
@@ -78,7 +78,7 @@ function MessageBubble({ msg, accent }) {
       <div
         className={`max-w-[80%] rounded-lg px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
           isUser
-            ? "bg-[#D4AF37] text-black font-medium"
+            ? "bg-[#7C3AED] text-white font-medium"
             : "bg-white/5 text-zinc-200 border border-white/10"
         }`}
       >
@@ -202,7 +202,7 @@ export default function ChatArena() {
               onClick={() => { setSelectedModel(m); setGrokExtraData(null); }}
               className={`flex flex-col items-start gap-1.5 p-3 rounded-md border transition-all text-left ${
                 active
-                  ? "border-[#D4AF37] bg-[#D4AF37]/8"
+                  ? "border-[#7C3AED] bg-[#7C3AED]/8"
                   : "border-white/8 hover:border-white/20 bg-white/2"
               }`}
             >
@@ -225,7 +225,7 @@ export default function ChatArena() {
       {/* Chat window */}
       <div
         className={`bg-[#0A0A0A] border rounded-md flex flex-col h-[calc(100vh-360px)] min-h-[380px] transition-colors ${
-          dragging ? "border-[#D4AF37]" : "border-white/10"
+          dragging ? "border-[#7C3AED]" : "border-white/10"
         }`}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
@@ -298,7 +298,7 @@ export default function ChatArena() {
                   onChange={(e) => handleFileInput(e.target.files[0])} />
                 <button onClick={() => fileRef.current?.click()}
                   title="Datei / Bild anhängen"
-                  className="w-10 h-10 shrink-0 flex items-center justify-center rounded-sm border border-white/10 text-zinc-500 hover:text-[#D4AF37] hover:border-[#D4AF37]/40 transition-colors">
+                  className="w-10 h-10 shrink-0 flex items-center justify-center rounded-sm border border-white/10 text-zinc-500 hover:text-[#7C3AED] hover:border-[#7C3AED]/40 transition-colors">
                   <Paperclip size={16} />
                 </button>
               </>
@@ -309,10 +309,10 @@ export default function ChatArena() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKey}
               placeholder={t("chat_placeholder")}
-              className="flex-1 resize-none bg-black/40 border border-white/10 rounded-sm px-4 py-3 text-sm text-white focus:outline-none focus:border-[#D4AF37] max-h-36"
+              className="flex-1 resize-none bg-black/40 border border-white/10 rounded-sm px-4 py-3 text-sm text-white focus:outline-none focus:border-[#7C3AED] max-h-36"
             />
             <button onClick={send} disabled={loading || (!input.trim() && !file)}
-              className="w-12 h-12 shrink-0 inline-flex items-center justify-center rounded-sm bg-[#D4AF37] text-black hover:bg-[#F3E5AB] transition-colors disabled:opacity-50">
+              className="w-12 h-12 shrink-0 inline-flex items-center justify-center rounded-sm bg-[#7C3AED] text-white hover:bg-[#C4B5FD] transition-colors disabled:opacity-50">
               {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
             </button>
           </div>

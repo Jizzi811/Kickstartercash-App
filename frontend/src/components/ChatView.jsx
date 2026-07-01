@@ -64,7 +64,7 @@ export const ChatView = ({ model, title, subtitle, icon, accent }) => {
               className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
               data-testid={`chat-msg-${m.role}`}>
               <div className={`max-w-[80%] rounded-lg px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed ${
-                m.role === "user" ? "bg-[#D4AF37] text-black font-medium" : "bg-white/5 text-zinc-200 border border-white/10"}`}>
+                m.role === "user" ? "bg-[#7C3AED] text-white font-medium" : "bg-white/5 text-zinc-200 border border-white/10"}`}>
                 {m.content}
               </div>
             </motion.div>
@@ -87,10 +87,10 @@ export const ChatView = ({ model, title, subtitle, icon, accent }) => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKey}
             placeholder={t("chat_placeholder")}
-            className="flex-1 resize-none bg-black/40 border border-white/10 rounded-sm px-4 py-3 text-sm text-white focus:outline-none focus:border-[#D4AF37] max-h-36"
+            className="flex-1 resize-none bg-black/40 border border-white/10 rounded-sm px-4 py-3 text-sm text-white focus:outline-none focus:border-[#7C3AED] max-h-36"
           />
           <button data-testid="chat-send-btn" onClick={send} disabled={loading || !input.trim()}
-            className="inline-flex items-center justify-center w-12 h-12 rounded-sm bg-[#D4AF37] text-black hover:bg-[#F3E5AB] transition-colors disabled:opacity-50 shrink-0">
+            className="inline-flex items-center justify-center w-12 h-12 rounded-sm bg-[#7C3AED] text-white hover:bg-[#C4B5FD] transition-colors disabled:opacity-50 shrink-0">
             {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
           </button>
         </div>

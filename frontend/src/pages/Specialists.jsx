@@ -16,7 +16,7 @@ import { useApp } from "@/context/AppContext";
 import { API } from "@/context/AppContext";
 
 const ICON_MAP = {
-  ceo:        { Icon: Target,      color: "#D4AF37" },
+  ceo:        { Icon: Target,      color: "#7C3AED" },
   content:    { Icon: PenLine,     color: "#60A5FA" },
   designer:   { Icon: Palette,     color: "#C084FC" },
   video:      { Icon: Video,       color: "#F472B6" },
@@ -80,7 +80,7 @@ function ToolResultCard({ result, color }) {
 function AgentChat({ agent, onClose }) {
   const { model } = useApp();
   const lang = localStorage.getItem("kc_lang") || "DE";
-  const { Icon, color } = ICON_MAP[agent.id] || { Icon: Bot, color: "#D4AF37" };
+  const { Icon, color } = ICON_MAP[agent.id] || { Icon: Bot, color: "#7C3AED" };
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -198,7 +198,7 @@ function AgentChat({ agent, onClose }) {
             <button
               onClick={() => setUseKb((v) => !v)}
               className={`flex items-center gap-1.5 text-[10px] px-2.5 py-1.5 rounded-full border transition-all ${
-                useKb ? "border-[#D4AF37]/40 text-[#D4AF37] bg-[#D4AF37]/10" : "border-white/10 text-zinc-600"
+                useKb ? "border-[#7C3AED]/40 text-[#7C3AED] bg-[#7C3AED]/10" : "border-white/10 text-zinc-600"
               }`}
               title="Wissensdatenbank"
             >
@@ -305,7 +305,7 @@ function AgentChat({ agent, onClose }) {
                     m.role === "user"
                       ? m.isTool
                         ? "bg-white/3 border border-white/8 text-zinc-500 italic"
-                        : "bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-zinc-200"
+                        : "bg-[#7C3AED]/10 border border-[#7C3AED]/20 text-zinc-200"
                       : "bg-[#0A0A0A] border border-white/8 text-zinc-200"
                   }`}>
                     {m.content}
@@ -377,7 +377,7 @@ function AgentChat({ agent, onClose }) {
           </div>
           <p className="text-[10px] text-zinc-700 mt-1.5">
             Enter {lang === "DE" ? "senden" : "send"} · Shift+Enter {lang === "DE" ? "neue Zeile" : "newline"}
-            {useKb && <span className="text-[#D4AF37]/50"> · KB</span>}
+            {useKb && <span className="text-[#7C3AED]/50"> · KB</span>}
             {showTools && tools.length > 0 && <span style={{ color: `${color}60` }}> · {tools.length} Tools</span>}
           </p>
         </div>
@@ -403,8 +403,8 @@ export default function Specialists() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-sm bg-[#D4AF37]/10 flex items-center justify-center">
-            <Sparkles size={20} className="text-[#D4AF37]" />
+          <div className="w-10 h-10 rounded-sm bg-[#7C3AED]/10 flex items-center justify-center">
+            <Sparkles size={20} className="text-[#7C3AED]" />
           </div>
           <h1 className="font-display text-2xl text-white">
             {lang === "DE" ? "Kashbot Spezialisten" : "Kashbot Specialists"}
@@ -420,12 +420,12 @@ export default function Specialists() {
       {/* Agent Grid */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={20} className="animate-spin text-[#D4AF37]" />
+          <Loader2 size={20} className="animate-spin text-[#7C3AED]" />
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {agents.map((agent, i) => {
-            const meta = ICON_MAP[agent.id] || { Icon: Bot, color: "#D4AF37" };
+            const meta = ICON_MAP[agent.id] || { Icon: Bot, color: "#7C3AED" };
             const { Icon, color } = meta;
             const role = lang === "DE" ? agent.role_de : agent.role_en;
             const tools = agent.tools || [];
@@ -476,10 +476,10 @@ export default function Specialists() {
       )}
 
       {/* Info */}
-      <div className="flex items-start gap-3 p-4 bg-[#0A0A0A] border border-[#D4AF37]/15 rounded-sm">
-        <Wrench size={15} className="text-[#D4AF37] flex-shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 p-4 bg-[#0A0A0A] border border-[#7C3AED]/15 rounded-sm">
+        <Wrench size={15} className="text-[#7C3AED] flex-shrink-0 mt-0.5" />
         <div className="text-xs text-zinc-500 leading-relaxed">
-          <span className="text-[#D4AF37]">
+          <span className="text-[#7C3AED]">
             {lang === "DE" ? "Tool-System aktiv" : "Tool system active"}
           </span>
           {lang === "DE"

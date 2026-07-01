@@ -49,25 +49,25 @@ export default function Copywriter() {
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder={t("topic_ph")}
-              className="bg-black/40 border-white/10 focus:border-[#D4AF37] focus-visible:ring-[#D4AF37]/40 text-white"
+              className="bg-black/40 border-white/10 focus:border-[#7C3AED] focus-visible:ring-[#7C3AED]/40 text-white"
             />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs tracking-[0.12em] uppercase text-zinc-500">{t("format")}</label>
             <Select value={format} onValueChange={setFormat}>
-              <SelectTrigger data-testid="copy-format-select" className="bg-black/40 border-white/10 text-white focus:ring-[#D4AF37]/40">
+              <SelectTrigger data-testid="copy-format-select" className="bg-black/40 border-white/10 text-white focus:ring-[#7C3AED]/40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-[#0A0A0A] border-white/10 text-white">
                 {formats.map((f) => (
-                  <SelectItem key={f} value={f} className="focus:bg-[#D4AF37]/10 focus:text-[#D4AF37]">{f}</SelectItem>
+                  <SelectItem key={f} value={f} className="focus:bg-[#7C3AED]/10 focus:text-[#7C3AED]">{f}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
         </div>
         <StudioContextArea
-          color="#D4AF37"
+          color="#7C3AED"
           context={refContext}
           setContext={setRefContext}
           label="Referenz / Datei hochladen"
@@ -77,12 +77,12 @@ export default function Copywriter() {
           title="Copywriter Export"
         />
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <span className="text-xs text-zinc-500">{t("activeBrand")}: <span className="text-[#D4AF37]">{activeBrand?.name}</span></span>
+          <span className="text-xs text-zinc-500">{t("activeBrand")}: <span className="text-[#7C3AED]">{activeBrand?.name}</span></span>
           <button
             data-testid="copy-generate-btn"
             disabled={loading}
             onClick={generate}
-            className="inline-flex items-center gap-2 bg-[#D4AF37] text-black px-7 py-2.5 rounded-sm font-bold hover:bg-[#F3E5AB] transition-colors disabled:opacity-60"
+            className="inline-flex items-center gap-2 bg-[#7C3AED] text-white px-7 py-2.5 rounded-sm font-bold hover:bg-[#C4B5FD] transition-colors disabled:opacity-60"
           >
             {loading ? <><Loader2 size={16} className="animate-spin" /> {t("generating")}</> : t("generate")}
           </button>
@@ -110,7 +110,7 @@ export default function Copywriter() {
                 <ul className="space-y-2">
                   {result.variants.map((v, i) => (
                     <li key={`var-${i}-${String(v).slice(0, 16)}`} className="text-sm text-zinc-300 flex gap-2">
-                      <span className="text-[#D4AF37]">→</span> {v}
+                      <span className="text-[#7C3AED]">→</span> {v}
                     </li>
                   ))}
                 </ul>

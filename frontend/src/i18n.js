@@ -4,8 +4,8 @@ export const SKYLINE_URL = "/brand/skyline.jpg";
 
 export const translations = {
   DE: {
-    appName: "Kickstarter Content Maschine",
-    tagline: "Dein KI-Marketing-Betriebssystem",
+    appName: "Brandmind",
+    tagline: "Das Gehirn deiner Marke",
     nav_dashboard: "Dashboard",
     nav_campaign: "Ein-Klick-Kampagne",
     nav_brand: "Brand Designer",
@@ -186,8 +186,8 @@ export const translations = {
     funnel_email_hint: "Hinweis: Damit E-Mails wirklich versendet werden, muss ein Resend-API-Key hinterlegt sein. Anfragen werden in jedem Fall gespeichert.",
   },
   EN: {
-    appName: "Kickstarter Content Machine",
-    tagline: "Your AI Marketing Operating System",
+    appName: "Brandmind",
+    tagline: "The brain of your brand",
     nav_dashboard: "Dashboard",
     nav_campaign: "One-Click Campaign",
     nav_brand: "Brand Designer",

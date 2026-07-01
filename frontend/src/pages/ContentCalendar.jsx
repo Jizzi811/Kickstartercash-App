@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 const platformColor = (p) => {
   const map = { Instagram: "#E1306C", Facebook: "#1877F2", TikTok: "#69C9D0", X: "#fff", LinkedIn: "#0A66C2", Pinterest: "#E60023", Threads: "#aaa" };
-  return map[p] || "#D4AF37";
+  return map[p] || "#7C3AED";
 };
 
 export default function ContentCalendar() {
@@ -55,7 +55,7 @@ export default function ContentCalendar() {
         <div className="space-y-1.5">
           <label className="text-xs tracking-[0.12em] uppercase text-zinc-500">{t("topic")}</label>
           <Textarea data-testid="calendar-topic-input" rows={2} value={topic} onChange={(e) => setTopic(e.target.value)}
-            placeholder={t("topic_ph")} className="bg-black/40 border-white/10 focus:border-[#D4AF37] focus-visible:ring-[#D4AF37]/40 text-white" />
+            placeholder={t("topic_ph")} className="bg-black/40 border-white/10 focus:border-[#7C3AED] focus-visible:ring-[#7C3AED]/40 text-white" />
         </div>
         <div className="flex flex-wrap gap-6">
           <div>
@@ -63,7 +63,7 @@ export default function ContentCalendar() {
             <div className="flex gap-2 mt-2">
               {[30, 60, 90].map((d) => (
                 <button key={d} data-testid={`calendar-days-${d}`} onClick={() => setDays(d)}
-                  className={`px-4 py-1.5 rounded-sm text-sm border transition-all ${days === d ? "bg-[#D4AF37] text-black border-[#D4AF37] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#D4AF37]/40"}`}>
+                  className={`px-4 py-1.5 rounded-sm text-sm border transition-all ${days === d ? "bg-[#7C3AED] text-white border-[#7C3AED] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#7C3AED]/40"}`}>
                   {d} {t("day")}e
                 </button>
               ))}
@@ -74,7 +74,7 @@ export default function ContentCalendar() {
             <div className="flex flex-wrap gap-2 mt-2">
               {SOCIAL_PLATFORMS.map((p) => (
                 <button key={p} data-testid={`calendar-platform-${p}`} onClick={() => toggle(p)}
-                  className={`px-3 py-1.5 rounded-sm text-sm border transition-all ${selected.includes(p) ? "bg-[#D4AF37] text-black border-[#D4AF37] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#D4AF37]/40"}`}>
+                  className={`px-3 py-1.5 rounded-sm text-sm border transition-all ${selected.includes(p) ? "bg-[#7C3AED] text-white border-[#7C3AED] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#7C3AED]/40"}`}>
                   {p}
                 </button>
               ))}
@@ -82,9 +82,9 @@ export default function ContentCalendar() {
           </div>
         </div>
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <span className="text-xs text-zinc-500">{t("activeBrand")}: <span className="text-[#D4AF37]">{activeBrand?.name}</span></span>
+          <span className="text-xs text-zinc-500">{t("activeBrand")}: <span className="text-[#7C3AED]">{activeBrand?.name}</span></span>
           <button data-testid="calendar-generate-btn" disabled={loading} onClick={generate}
-            className="inline-flex items-center gap-2 bg-[#D4AF37] text-black px-7 py-2.5 rounded-sm font-bold hover:bg-[#F3E5AB] transition-colors disabled:opacity-60">
+            className="inline-flex items-center gap-2 bg-[#7C3AED] text-white px-7 py-2.5 rounded-sm font-bold hover:bg-[#C4B5FD] transition-colors disabled:opacity-60">
             {loading ? <><Loader2 size={16} className="animate-spin" /> {t("generating")}</> : t("generate")}
           </button>
         </div>
@@ -102,7 +102,7 @@ export default function ContentCalendar() {
             {items.map((it, i) => (
               <motion.div key={`${it.day}-${it.platform}-${i}`} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
                 data-testid={`calendar-item-${i}`}
-                className="bg-[#0A0A0A] border border-white/10 rounded-md p-4 hover:border-[#D4AF37]/40 transition-colors">
+                className="bg-[#0A0A0A] border border-white/10 rounded-md p-4 hover:border-[#7C3AED]/40 transition-colors">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-mono text-zinc-500">{t("day")} {it.day}</span>
                   <span className="text-xs font-semibold px-2 py-0.5 rounded" style={{ color: platformColor(it.platform), background: "rgba(255,255,255,0.05)" }}>{it.platform}</span>
@@ -110,7 +110,7 @@ export default function ContentCalendar() {
                 <h3 className="text-white text-sm font-medium mb-1.5">{it.title}</h3>
                 <p className="text-xs text-zinc-400 leading-relaxed">{it.caption}</p>
                 <div className="flex flex-wrap gap-1 mt-2">
-                  {(it.hashtags || []).slice(0, 4).map((h, j) => <span key={`${h}-${j}`} className="text-[10px] text-[#D4AF37]/80 bg-[#D4AF37]/10 px-1.5 py-0.5 rounded">#{h}</span>)}
+                  {(it.hashtags || []).slice(0, 4).map((h, j) => <span key={`${h}-${j}`} className="text-[10px] text-[#7C3AED]/80 bg-[#7C3AED]/10 px-1.5 py-0.5 rounded">#{h}</span>)}
                 </div>
                 <div className="flex items-center gap-1.5 mt-2 text-xs text-zinc-500"><Clock size={12} /> {it.post_time}</div>
               </motion.div>

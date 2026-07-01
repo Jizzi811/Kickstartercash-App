@@ -285,7 +285,7 @@ export function AgentChatPanel({ agentId, agentName, agentEmoji, color, tools = 
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setUseKb((v) => !v)}
-            className={`flex items-center gap-1 text-[10px] px-2 py-1 rounded-full border transition-all ${useKb ? "border-[#D4AF37]/40 text-[#D4AF37] bg-[#D4AF37]/10" : "border-white/10 text-zinc-600"}`}>
+            className={`flex items-center gap-1 text-[10px] px-2 py-1 rounded-full border transition-all ${useKb ? "border-[#7C3AED]/40 text-[#7C3AED] bg-[#7C3AED]/10" : "border-white/10 text-zinc-600"}`}>
             <Database size={9} /> KB
           </button>
           {messages.length > 0 && (
@@ -321,7 +321,7 @@ export function AgentChatPanel({ agentId, agentName, agentEmoji, color, tools = 
               {m.content && (
                 <div className={`px-3 py-2.5 rounded-sm text-sm leading-relaxed whitespace-pre-wrap ${
                   m.role === "user"
-                    ? m.isTool ? "bg-white/3 border border-white/8 text-zinc-500 italic text-xs" : "bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-zinc-200"
+                    ? m.isTool ? "bg-white/3 border border-white/8 text-zinc-500 italic text-xs" : "bg-[#7C3AED]/10 border border-[#7C3AED]/20 text-zinc-200"
                     : "bg-[#0A0A0A] border border-white/8 text-zinc-200"
                 }`}>{m.content}</div>
               )}

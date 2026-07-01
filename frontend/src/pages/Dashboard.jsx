@@ -27,7 +27,7 @@ const KPI_CARDS = [
     value: "17",
     subDE: "Aktiv & einsatzbereit",
     subEN: "Active & ready",
-    color: "#D4AF37",
+    color: "#7C3AED",
     trend: "+2",
     sparkPath: "M0,20 C10,18 20,8 30,10 C40,12 50,4 60,6 C70,8 80,2 90,0",
   },
@@ -75,7 +75,7 @@ const QUICK_ACTIONS = [
     labelEN: "Brand Brain",
     descDE: "Marke einrichten – Basis für alles",
     descEN: "Set up your brand – the base for all",
-    color: "#D4AF37",
+    color: "#7C3AED",
     featured: true,
   },
   {
@@ -85,7 +85,7 @@ const QUICK_ACTIONS = [
     labelEN: "Agents",
     descDE: "17 KI-Spezialisten starten",
     descEN: "Launch 17 AI specialists",
-    color: "#D4AF37",
+    color: "#7C3AED",
   },
   {
     to: "/design",
@@ -174,9 +174,9 @@ const QUICK_ACTIONS = [
 const FEED = [
   {
     icon: Star,
-    color: "#D4AF37",
-    textDE: "Kickstartercash.Club-System gestartet",
-    textEN: "Kickstartercash.Club system launched",
+    color: "#7C3AED",
+    textDE: "Brandmind-System gestartet",
+    textEN: "Brandmind system launched",
     timeDE: "Gerade eben",
     timeEN: "Just now",
   },
@@ -238,7 +238,7 @@ const TIPS = [
     descDE: "Verbinde n8n mit deinen KI-Agenten per Webhook.",
     descEN: "Connect n8n to your AI agents via webhook.",
     badge: "PRO",
-    color: "#D4AF37",
+    color: "#7C3AED",
   },
 ];
 
@@ -286,7 +286,7 @@ export default function Dashboard() {
       value: String(stats.agents),
       subDE: "Aktiv & einsatzbereit",
       subEN: "Active & ready",
-      color: "#D4AF37",
+      color: "#7C3AED",
       trend: stats.custom_agents > 0 ? `+${stats.custom_agents}` : "Live",
       sparkPath: "M0,20 C10,18 20,8 30,10 C40,12 50,4 60,6 C70,8 80,2 90,0",
     },
@@ -344,8 +344,8 @@ export default function Dashboard() {
           <div
             className="relative overflow-hidden rounded-sm"
             style={{
-              background: "linear-gradient(135deg, rgba(212,175,55,0.07) 0%, rgba(8,8,8,0) 55%, rgba(184,151,46,0.05) 100%)",
-              border: "1px solid rgba(212,175,55,0.18)",
+              background: "linear-gradient(135deg, rgba(124,58,237,0.07) 0%, rgba(8,8,8,0) 55%, rgba(184,151,46,0.05) 100%)",
+              border: "1px solid rgba(124,58,237,0.18)",
             }}
           >
             {/* SVG mesh grid background */}
@@ -356,7 +356,7 @@ export default function Dashboard() {
             >
               <defs>
                 <pattern id="mesh" x="0" y="0" width="48" height="48" patternUnits="userSpaceOnUse">
-                  <path d="M 48 0 L 0 0 0 48" fill="none" stroke="rgba(212,175,55,0.03)" strokeWidth="1" />
+                  <path d="M 48 0 L 0 0 0 48" fill="none" stroke="rgba(124,58,237,0.03)" strokeWidth="1" />
                 </pattern>
               </defs>
               <rect width="100%" height="100%" fill="url(#mesh)" />
@@ -364,7 +364,7 @@ export default function Dashboard() {
 
             {/* ambient glows */}
             <div className="absolute -top-28 -left-28 w-96 h-96 rounded-full pointer-events-none"
-              style={{ background: "radial-gradient(circle, rgba(212,175,55,0.10) 0%, transparent 70%)" }} />
+              style={{ background: "radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%)" }} />
             <div className="absolute -bottom-24 right-0 w-[28rem] h-[28rem] rounded-full pointer-events-none"
               style={{ background: "radial-gradient(circle, rgba(184,151,46,0.06) 0%, transparent 70%)" }} />
 
@@ -373,16 +373,16 @@ export default function Dashboard() {
               <div
                 className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full mb-7 text-[10px] tracking-[0.22em] uppercase font-semibold"
                 style={{
-                  background: "rgba(212,175,55,0.08)",
-                  border: "1px solid rgba(212,175,55,0.26)",
-                  color: "#D4AF37",
+                  background: "rgba(124,58,237,0.08)",
+                  border: "1px solid rgba(124,58,237,0.26)",
+                  color: "#7C3AED",
                 }}
               >
                 {/* pulsing dot */}
                 <span
                   className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                   style={{
-                    background: "#D4AF37",
+                    background: "#7C3AED",
                     animation: "pulse-dot 2s ease-in-out infinite",
                   }}
                 />
@@ -407,13 +407,13 @@ export default function Dashboard() {
                     </span>{" "}
                     <span
                       style={{
-                        background: "linear-gradient(90deg, #D4AF37 0%, #F3E5AB 45%, #B8962E 100%)",
+                        background: "linear-gradient(90deg, #7C3AED 0%, #C4B5FD 45%, #6D28D9 100%)",
                         WebkitBackgroundClip: "text",
                         WebkitTextFillColor: "transparent",
                         backgroundClip: "text",
                       }}
                     >
-                      {activeBrand?.name || "Kickstartercash.Club"}
+                      {activeBrand?.name || "Brandmind"}
                     </span>
                   </h1>
                   <p className="text-sm md:text-base text-zinc-400 leading-relaxed mb-8">
@@ -425,9 +425,9 @@ export default function Dashboard() {
                     <button
                       onClick={() => navigate("/agents")}
                       className="inline-flex items-center gap-2.5 font-bold text-sm tracking-wide px-6 py-3 rounded-sm transition-all duration-200"
-                      style={{ background: "#D4AF37", color: "#050505" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "#F3E5AB"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "#D4AF37"; }}
+                      style={{ background: "#7C3AED", color: "#050505" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#C4B5FD"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "#7C3AED"; }}
                     >
                       <Bot size={15} />
                       {lang === "DE" ? "Agenten starten" : "Launch Agents"}
@@ -438,8 +438,8 @@ export default function Dashboard() {
                       className="inline-flex items-center gap-2.5 text-sm px-6 py-3 rounded-sm transition-all duration-200"
                       style={{ border: "1px solid rgba(255,255,255,0.12)", color: "#a1a1aa" }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = "rgba(212,175,55,0.4)";
-                        e.currentTarget.style.color = "#D4AF37";
+                        e.currentTarget.style.borderColor = "rgba(124,58,237,0.4)";
+                        e.currentTarget.style.color = "#7C3AED";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
@@ -461,14 +461,14 @@ export default function Dashboard() {
                   ].map((s, idx) => (
                     <div key={s.labelDE} className="flex items-stretch">
                       {idx > 0 && (
-                        <div className="w-px mx-6 self-stretch" style={{ background: "rgba(212,175,55,0.15)" }} />
+                        <div className="w-px mx-6 self-stretch" style={{ background: "rgba(124,58,237,0.15)" }} />
                       )}
                       <div className="text-center">
                         <div
                           className="text-2xl md:text-3xl font-bold"
                           style={{
                             fontFamily: "'Playfair Display', Georgia, serif",
-                            background: "linear-gradient(180deg, #F3E5AB 0%, #D4AF37 100%)",
+                            background: "linear-gradient(180deg, #C4B5FD 0%, #7C3AED 100%)",
                             WebkitBackgroundClip: "text",
                             WebkitTextFillColor: "transparent",
                             backgroundClip: "text",
@@ -498,7 +498,7 @@ export default function Dashboard() {
             >
               {lang === "DE" ? "Übersicht" : "Overview"}
             </h2>
-            <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, rgba(212,175,55,0.3), transparent)" }} />
+            <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, rgba(124,58,237,0.3), transparent)" }} />
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
@@ -618,7 +618,7 @@ export default function Dashboard() {
             </h2>
             <div
               className="flex-1 h-px"
-              style={{ background: "linear-gradient(to right, rgba(212,175,55,0.3), transparent)" }}
+              style={{ background: "linear-gradient(to right, rgba(124,58,237,0.3), transparent)" }}
             />
             <span className="text-[11px] text-zinc-700 uppercase tracking-widest whitespace-nowrap">
               {QUICK_ACTIONS.length} {lang === "DE" ? "verfügbar" : "available"}
@@ -721,9 +721,9 @@ export default function Dashboard() {
             <div className="flex items-center gap-3 mb-7">
               <div
                 className="w-7 h-7 rounded-sm flex items-center justify-center flex-shrink-0"
-                style={{ background: "rgba(212,175,55,0.1)", border: "1px solid rgba(212,175,55,0.2)" }}
+                style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}
               >
-                <Clock size={13} style={{ color: "#D4AF37" }} />
+                <Clock size={13} style={{ color: "#7C3AED" }} />
               </div>
               <h3
                 className="text-sm font-semibold text-zinc-200"
@@ -731,7 +731,7 @@ export default function Dashboard() {
               >
                 {lang === "DE" ? "Letzte Aktivitäten" : "Recent Activity"}
               </h3>
-              <div className="flex-1 h-px ml-2" style={{ background: "linear-gradient(to right, rgba(212,175,55,0.15), transparent)" }} />
+              <div className="flex-1 h-px ml-2" style={{ background: "linear-gradient(to right, rgba(124,58,237,0.15), transparent)" }} />
             </div>
 
             {/* timeline */}
@@ -739,7 +739,7 @@ export default function Dashboard() {
               {/* vertical connector line */}
               <div
                 className="absolute left-[13px] top-2 bottom-2 w-px"
-                style={{ background: "linear-gradient(to bottom, rgba(212,175,55,0.25), rgba(255,255,255,0.04))" }}
+                style={{ background: "linear-gradient(to bottom, rgba(124,58,237,0.25), rgba(255,255,255,0.04))" }}
               />
 
               <div className="space-y-0">
@@ -782,16 +782,16 @@ export default function Dashboard() {
           <div
             className="rounded-sm p-6 flex flex-col"
             style={{
-              background: "linear-gradient(145deg, rgba(212,175,55,0.05) 0%, rgba(255,255,255,0.02) 100%)",
-              border: "1px solid rgba(212,175,55,0.14)",
+              background: "linear-gradient(145deg, rgba(124,58,237,0.05) 0%, rgba(255,255,255,0.02) 100%)",
+              border: "1px solid rgba(124,58,237,0.14)",
             }}
           >
             <div className="flex items-center gap-3 mb-7">
               <div
                 className="w-7 h-7 rounded-sm flex items-center justify-center flex-shrink-0"
-                style={{ background: "rgba(212,175,55,0.12)", border: "1px solid rgba(212,175,55,0.22)" }}
+                style={{ background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.22)" }}
               >
-                <Layers size={13} style={{ color: "#D4AF37" }} />
+                <Layers size={13} style={{ color: "#7C3AED" }} />
               </div>
               <h3
                 className="text-sm font-semibold text-zinc-200"
@@ -839,17 +839,17 @@ export default function Dashboard() {
               onClick={() => navigate("/agents")}
               className="mt-6 w-full inline-flex items-center justify-center gap-2 text-xs font-semibold py-2.5 rounded-sm transition-all duration-200"
               style={{
-                background: "rgba(212,175,55,0.1)",
-                border: "1px solid rgba(212,175,55,0.22)",
-                color: "#D4AF37",
+                background: "rgba(124,58,237,0.1)",
+                border: "1px solid rgba(124,58,237,0.22)",
+                color: "#7C3AED",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(212,175,55,0.18)";
-                e.currentTarget.style.borderColor = "rgba(212,175,55,0.42)";
+                e.currentTarget.style.background = "rgba(124,58,237,0.18)";
+                e.currentTarget.style.borderColor = "rgba(124,58,237,0.42)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(212,175,55,0.1)";
-                e.currentTarget.style.borderColor = "rgba(212,175,55,0.22)";
+                e.currentTarget.style.background = "rgba(124,58,237,0.1)";
+                e.currentTarget.style.borderColor = "rgba(124,58,237,0.22)";
               }}
             >
               {lang === "DE" ? "Alle Agenten öffnen" : "Open All Agents"}

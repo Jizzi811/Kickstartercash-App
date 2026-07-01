@@ -39,7 +39,7 @@ export default function PromptLibrary() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={t("search")}
-            className="pl-9 bg-black/40 border-white/10 focus:border-[#D4AF37] focus-visible:ring-[#D4AF37]/40 text-white"
+            className="pl-9 bg-black/40 border-white/10 focus:border-[#7C3AED] focus-visible:ring-[#7C3AED]/40 text-white"
           />
         </div>
         <div className="flex flex-wrap gap-2">
@@ -48,7 +48,7 @@ export default function PromptLibrary() {
               key={c}
               data-testid={`prompt-cat-${c}`}
               onClick={() => setActive(c)}
-              className={`px-3.5 py-1.5 rounded-sm text-sm border transition-all ${active === c ? "bg-[#D4AF37] text-black border-[#D4AF37] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#D4AF37]/40"}`}
+              className={`px-3.5 py-1.5 rounded-sm text-sm border transition-all ${active === c ? "bg-[#7C3AED] text-white border-[#7C3AED] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#7C3AED]/40"}`}
             >
               {c === "Alle" ? t("all") : c}
             </button>
@@ -64,10 +64,10 @@ export default function PromptLibrary() {
             <div
               key={p.id}
               data-testid={`prompt-card-${p.id}`}
-              className="bg-[#0A0A0A] border border-white/10 rounded-md p-5 hover:border-[#D4AF37]/40 transition-colors flex flex-col"
+              className="bg-[#0A0A0A] border border-white/10 rounded-md p-5 hover:border-[#7C3AED]/40 transition-colors flex flex-col"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37]/80 bg-[#D4AF37]/10 px-2 py-0.5 rounded">{p.category}</span>
+                <span className="text-[10px] tracking-[0.15em] uppercase text-[#7C3AED]/80 bg-[#7C3AED]/10 px-2 py-0.5 rounded">{p.category}</span>
               </div>
               <h3 className="font-display text-lg text-white mb-2">{title}</h3>
               <p className="text-sm text-zinc-400 leading-relaxed flex-1">{text}</p>

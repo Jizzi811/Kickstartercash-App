@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { useApp } from "@/context/AppContext";
 import { API } from "@/context/AppContext";
 
-const ACCENT = "#D4AF37";
+const ACCENT = "#7C3AED";
 
 const STEPS = [
   { icon: Building2, de: "Unternehmen", en: "Company" },
@@ -22,7 +22,7 @@ const EMPTY = {
   name: "",
   industry: "",
   website: "",
-  primary_color: "#D4AF37",
+  primary_color: "#7C3AED",
   secondary_color: "#050505",
   logo_url: "",
   target_audience: "",
@@ -42,7 +42,7 @@ function Field({ label, children }) {
 
 const inputCls =
   "w-full bg-black/40 border border-white/10 rounded-sm px-3 py-2.5 text-sm text-white " +
-  "placeholder:text-zinc-600 focus:outline-none focus:border-[#D4AF37]/50 transition-colors";
+  "placeholder:text-zinc-600 focus:outline-none focus:border-[#7C3AED]/50 transition-colors";
 
 export default function BrandBrain() {
   const { lang, model, loadBrands, setActiveBrandId } = useApp();
@@ -101,7 +101,7 @@ export default function BrandBrain() {
           animate={{ opacity: 1, y: 0 }}
           className="rounded-sm border border-white/10 bg-[#0A0A0A] p-6 mb-5"
         >
-          <div className="flex items-center gap-2 mb-4 text-[#D4AF37]">
+          <div className="flex items-center gap-2 mb-4 text-[#7C3AED]">
             <Sparkles size={16} />
             <h3 className="text-sm font-semibold text-white">
               {T("Generierte Marken-Identität", "Generated brand identity")}
@@ -156,7 +156,7 @@ export default function BrandBrain() {
         <div className="flex flex-wrap gap-3">
           <a
             href="/campaign"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-sm bg-[#D4AF37] text-black text-sm font-semibold hover:bg-[#e5c04a] transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-sm bg-[#7C3AED] text-white text-sm font-semibold hover:bg-[#6D28D9] transition-colors"
           >
             {T("Jetzt Marketing machen", "Do marketing now")} <ArrowRight size={16} />
           </a>
@@ -395,7 +395,7 @@ export default function BrandBrain() {
           <button
             onClick={() => setStep((s) => s + 1)}
             disabled={!canNext}
-            className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-sm bg-[#D4AF37] text-black text-sm font-semibold hover:bg-[#e5c04a] disabled:opacity-40 transition-colors"
+            className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-sm bg-[#7C3AED] text-white text-sm font-semibold hover:bg-[#6D28D9] disabled:opacity-40 transition-colors"
           >
             {T("Weiter", "Next")} <ChevronRight size={16} />
           </button>
@@ -403,7 +403,7 @@ export default function BrandBrain() {
           <button
             onClick={submit}
             disabled={loading || !form.name.trim()}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-sm bg-[#D4AF37] text-black text-sm font-semibold hover:bg-[#e5c04a] disabled:opacity-50 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-sm bg-[#7C3AED] text-white text-sm font-semibold hover:bg-[#6D28D9] disabled:opacity-50 transition-colors"
           >
             {loading ? (
               <>

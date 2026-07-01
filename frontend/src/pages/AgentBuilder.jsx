@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 
-const COLOR = "#D4AF37";
+const COLOR = "#7C3AED";
 
 const PRESET_CATEGORIES = [
   { label: "Immobilien", emoji: "🏠", role: "Immobilien-Experte", color: "#34D399" },
@@ -25,7 +25,7 @@ const EMOJI_OPTIONS = ["🤖","🏠","₿","🎯","📊","🤝","❤️","🛒",
 
 function CreateAgentModal({ onClose, onCreated }) {
   const { lang } = useApp();
-  const [form, setForm] = useState({ name: "", emoji: "🤖", role: "", personality: "", color: "#D4AF37", category: "" });
+  const [form, setForm] = useState({ name: "", emoji: "🤖", role: "", personality: "", color: "#7C3AED", category: "" });
   const [saving, setSaving] = useState(false);
 
   const applyPreset = (preset) => {
@@ -70,7 +70,7 @@ function CreateAgentModal({ onClose, onCreated }) {
             <div className="flex flex-wrap gap-2">
               {PRESET_CATEGORIES.map(p => (
                 <button key={p.label} onClick={() => applyPreset(p)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm border border-white/8 text-xs text-zinc-400 hover:border-[#D4AF37]/40 hover:text-white transition-all">
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm border border-white/8 text-xs text-zinc-400 hover:border-[#7C3AED]/40 hover:text-white transition-all">
                   {p.emoji} {p.label}
                 </button>
               ))}
@@ -83,7 +83,7 @@ function CreateAgentModal({ onClose, onCreated }) {
             <div className="flex flex-wrap gap-1.5">
               {EMOJI_OPTIONS.map(e => (
                 <button key={e} onClick={() => setForm(f => ({ ...f, emoji: e }))}
-                  className={`w-9 h-9 rounded-sm text-lg border transition-all ${form.emoji === e ? "border-[#D4AF37] bg-[#D4AF37]/10" : "border-white/8 hover:border-white/20"}`}>
+                  className={`w-9 h-9 rounded-sm text-lg border transition-all ${form.emoji === e ? "border-[#7C3AED] bg-[#7C3AED]/10" : "border-white/8 hover:border-white/20"}`}>
                   {e}
                 </button>
               ))}
@@ -97,7 +97,7 @@ function CreateAgentModal({ onClose, onCreated }) {
             </label>
             <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
               placeholder={lang === "DE" ? "z.B. Max – Immobilien Experte" : "e.g. Max – Real Estate Expert"}
-              className="w-full bg-black border border-white/8 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#D4AF37]/40" />
+              className="w-full bg-black border border-white/8 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#7C3AED]/40" />
           </div>
 
           {/* Role */}
@@ -107,7 +107,7 @@ function CreateAgentModal({ onClose, onCreated }) {
             </label>
             <input value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
               placeholder={lang === "DE" ? "z.B. Immobilien-Experte für München" : "e.g. Real estate expert for Munich"}
-              className="w-full bg-black border border-white/8 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#D4AF37]/40" />
+              className="w-full bg-black border border-white/8 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#7C3AED]/40" />
           </div>
 
           {/* Personality */}
@@ -120,7 +120,7 @@ function CreateAgentModal({ onClose, onCreated }) {
               placeholder={lang === "DE"
                 ? "z.B. Professionell, direkt, kennt den Münchner Immobilienmarkt seit 15 Jahren…"
                 : "e.g. Professional, direct, knows the Munich real estate market for 15 years…"}
-              className="w-full bg-black border border-white/8 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none focus:border-[#D4AF37]/40" />
+              className="w-full bg-black border border-white/8 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none focus:border-[#7C3AED]/40" />
           </div>
 
           {/* Color */}
@@ -129,7 +129,7 @@ function CreateAgentModal({ onClose, onCreated }) {
               {lang === "DE" ? "Farbe" : "Color"}
             </label>
             <div className="flex items-center gap-3">
-              {["#D4AF37","#34D399","#F59E0B","#A78BFA","#60A5FA","#F472B6","#F87171","#FBBF24"].map(c => (
+              {["#7C3AED","#34D399","#F59E0B","#A78BFA","#60A5FA","#F472B6","#F87171","#FBBF24"].map(c => (
                 <button key={c} onClick={() => setForm(f => ({ ...f, color: c }))}
                   className={`w-7 h-7 rounded-full border-2 transition-all ${form.color === c ? "border-white scale-110" : "border-transparent"}`}
                   style={{ backgroundColor: c }} />
@@ -138,7 +138,7 @@ function CreateAgentModal({ onClose, onCreated }) {
           </div>
 
           <button onClick={save} disabled={saving}
-            className="w-full flex items-center justify-center gap-2 bg-[#D4AF37] text-black py-2.5 rounded-sm font-bold text-sm hover:bg-[#F3E5AB] transition-colors disabled:opacity-50">
+            className="w-full flex items-center justify-center gap-2 bg-[#7C3AED] text-white py-2.5 rounded-sm font-bold text-sm hover:bg-[#C4B5FD] transition-colors disabled:opacity-50">
             {saving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
             {lang === "DE" ? "Agent erstellen" : "Create Agent"}
           </button>
@@ -246,7 +246,7 @@ function AgentChatDrawer({ agent, onClose }) {
             </span>
             <button onClick={() => fileRef.current?.click()}
               disabled={uploading}
-              className="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-sm border border-white/8 text-zinc-400 hover:border-[#D4AF37]/40 hover:text-[#D4AF37] transition-all disabled:opacity-50">
+              className="flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-sm border border-white/8 text-zinc-400 hover:border-[#7C3AED]/40 hover:text-[#7C3AED] transition-all disabled:opacity-50">
               {uploading ? <Loader2 size={10} className="animate-spin" /> : <Upload size={10} />}
               {lang === "DE" ? "Upload" : "Upload"}
             </button>
@@ -293,7 +293,7 @@ function AgentChatDrawer({ agent, onClose }) {
             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[85%] rounded-sm px-3.5 py-2.5 text-sm leading-relaxed ${
                 m.role === "user"
-                  ? "bg-[#D4AF37]/15 text-white border border-[#D4AF37]/20"
+                  ? "bg-[#7C3AED]/15 text-white border border-[#7C3AED]/20"
                   : "bg-[#111] text-zinc-200 border border-white/8"
               }`}>
                 {m.content}
@@ -322,7 +322,7 @@ function AgentChatDrawer({ agent, onClose }) {
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
               placeholder={lang === "DE" ? `${agent.name} fragen…` : `Ask ${agent.name}…`}
-              className="flex-1 bg-black border border-white/8 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#D4AF37]/40"
+              className="flex-1 bg-black border border-white/8 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#7C3AED]/40"
             />
             <button onClick={send} disabled={!input.trim() || loading}
               className="w-9 h-9 rounded-sm flex items-center justify-center transition-colors disabled:opacity-40"
@@ -353,9 +353,9 @@ function AgentBuilderSection({ lang, model }) {
   };
 
   return (
-    <div className="bg-[#0A0A0A] border border-[#D4AF37]/20 rounded-sm p-6 space-y-4">
+    <div className="bg-[#0A0A0A] border border-[#7C3AED]/20 rounded-sm p-6 space-y-4">
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-sm flex items-center justify-center" style={{ backgroundColor: "#D4AF3718" }}>
+        <div className="w-9 h-9 rounded-sm flex items-center justify-center" style={{ backgroundColor: "#7C3AED18" }}>
           <Wand2 size={18} style={{ color: COLOR }} />
         </div>
         <div>
@@ -369,7 +369,7 @@ function AgentBuilderSection({ lang, model }) {
           </p>
         </div>
         <div className="ml-auto">
-          <span className="text-[10px] px-2 py-1 rounded-full border border-[#D4AF37]/30 text-[#D4AF37]">
+          <span className="text-[10px] px-2 py-1 rounded-full border border-[#7C3AED]/30 text-[#7C3AED]">
             <Sparkles size={9} className="inline mr-1" />BETA
           </span>
         </div>
@@ -379,17 +379,17 @@ function AgentBuilderSection({ lang, model }) {
         placeholder={lang === "DE"
           ? "Beschreibe deinen Workflow auf Deutsch, z.B.:\n\"Wenn jemand mein Kontaktformular ausfüllt, soll automatisch eine Willkommens-E-Mail gesendet, ein CRM-Eintrag erstellt und ich per Slack benachrichtigt werden.\""
           : "Describe your workflow, e.g.:\n\"When someone fills my contact form, automatically send a welcome email, create a CRM entry, and notify me via Slack.\""}
-        className="w-full bg-black border border-white/8 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none focus:border-[#D4AF37]/40" />
+        className="w-full bg-black border border-white/8 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none focus:border-[#7C3AED]/40" />
 
       <button onClick={generate} disabled={!desc.trim() || loading}
-        className="flex items-center gap-2 bg-[#D4AF37] text-black px-5 py-2.5 rounded-sm font-bold text-sm hover:bg-[#F3E5AB] transition-colors disabled:opacity-50">
+        className="flex items-center gap-2 bg-[#7C3AED] text-white px-5 py-2.5 rounded-sm font-bold text-sm hover:bg-[#C4B5FD] transition-colors disabled:opacity-50">
         {loading ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
         {lang === "DE" ? "Workflow generieren" : "Generate Workflow"}
       </button>
 
       {loading && (
         <div className="flex items-center gap-2 text-sm text-zinc-500">
-          <Loader2 size={14} className="animate-spin text-[#D4AF37]" />
+          <Loader2 size={14} className="animate-spin text-[#7C3AED]" />
           {lang === "DE" ? "Analysiere & erstelle Automationsplan…" : "Analyzing & building automation plan…"}
         </div>
       )}
@@ -397,7 +397,7 @@ function AgentBuilderSection({ lang, model }) {
       {result && (
         <div className="bg-black border border-white/8 rounded-sm overflow-hidden">
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/8">
-            <span className="text-xs text-[#D4AF37] font-medium">
+            <span className="text-xs text-[#7C3AED] font-medium">
               {lang === "DE" ? "Generierter Workflow-Plan" : "Generated Workflow Plan"}
             </span>
             <button onClick={() => { navigator.clipboard.writeText(result); setCopied(true); setTimeout(() => setCopied(false), 1800); }}
@@ -459,7 +459,7 @@ export default function AgentBuilder() {
           </div>
         </div>
         <button onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 bg-[#D4AF37] text-black px-4 py-2.5 rounded-sm font-bold text-sm hover:bg-[#F3E5AB] transition-colors">
+          className="flex items-center gap-2 bg-[#7C3AED] text-white px-4 py-2.5 rounded-sm font-bold text-sm hover:bg-[#C4B5FD] transition-colors">
           <Plus size={15} />
           {lang === "DE" ? "Neuen Agenten" : "New Agent"}
         </button>
@@ -479,7 +479,7 @@ export default function AgentBuilder() {
               : "No custom agents yet. Create your first one!"}
           </p>
           <button onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 mx-auto bg-[#D4AF37] text-black px-5 py-2.5 rounded-sm font-bold text-sm hover:bg-[#F3E5AB] transition-colors">
+            className="flex items-center gap-2 mx-auto bg-[#7C3AED] text-white px-5 py-2.5 rounded-sm font-bold text-sm hover:bg-[#C4B5FD] transition-colors">
             <Plus size={14} /> {lang === "DE" ? "Agent erstellen" : "Create Agent"}
           </button>
         </div>

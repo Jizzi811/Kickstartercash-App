@@ -11,7 +11,7 @@ import {
 import { useApp, API } from "@/context/AppContext";
 import { PageHeader } from "@/components/PageHeader";
 
-const COLOR = "#D4AF37";
+const COLOR = "#7C3AED";
 
 const STATUS_CONFIG = {
   open:        { label: "Offen",         labelEN: "Open",        color: "#60A5FA", icon: Circle },
@@ -160,7 +160,7 @@ function CreateTicketModal({ onClose, onCreated, lang }) {
           </button>
           <button onClick={submit} disabled={loading}
             className="text-sm px-5 py-2 rounded-sm font-medium text-black transition-all disabled:opacity-50"
-            style={{ background: `linear-gradient(135deg, ${COLOR}, #B8972E)` }}>
+            style={{ background: `linear-gradient(135deg, ${COLOR}, #6D28D9)` }}>
             {loading ? (lang === "DE" ? "Erstelle…" : "Creating…") : (lang === "DE" ? "Ticket erstellen" : "Create Ticket")}
           </button>
         </div>
@@ -385,7 +385,7 @@ export default function TicketSystem() {
         </button>
         <button onClick={() => setShowCreate(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium text-black"
-          style={{ background: `linear-gradient(135deg, ${COLOR}, #B8972E)` }}>
+          style={{ background: `linear-gradient(135deg, ${COLOR}, #6D28D9)` }}>
           <Plus size={14} /> {lang === "DE" ? "Neues Ticket" : "New Ticket"}
         </button>
       </div>
@@ -414,9 +414,9 @@ export default function TicketSystem() {
               <motion.div key={t.ticket_id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                 onClick={() => setSelectedTicket(t)}
                 className={`group cursor-pointer bg-[#0A0A0A] border rounded-sm p-4 transition-all ${
-                  isSelected ? "border-[#D4AF37]/40" : "border-white/8 hover:border-white/20"
+                  isSelected ? "border-[#7C3AED]/40" : "border-white/8 hover:border-white/20"
                 }`}
-                style={isSelected ? { background: "rgba(212,175,55,0.04)" } : {}}>
+                style={isSelected ? { background: "rgba(124,58,237,0.04)" } : {}}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1.5">

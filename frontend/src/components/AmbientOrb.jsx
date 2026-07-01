@@ -45,7 +45,7 @@ export const AmbientOrb = () => {
         height: ORB_SIZE,
         borderRadius: "50%",
         background:
-          "radial-gradient(circle, rgba(212,175,55,0.07) 0%, rgba(212,175,55,0.02) 50%, transparent 70%)",
+          "radial-gradient(circle, rgba(124,58,237,0.07) 0%, rgba(124,58,237,0.02) 50%, transparent 70%)",
         pointerEvents: "none",
         zIndex: 0,
         willChange: "transform",
