@@ -3745,27 +3745,28 @@ async def generate_veo_video(req: VeoRequest):
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="GEMINI_API_KEY nicht gesetzt")
     try:
-        async with aiohttp.ClientSession() as session:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/veo-2.0-generate-001:generateVideo?key={GEMINI_API_KEY}"
-            payload = {
-                "prompt": {"text": req.prompt},
-                "videoGenerationConfig": {
-                    "aspectRatio": req.aspect_ratio,
-                    "durationSeconds": 8,
-                    "numberOfVideos": 1,
-                }
-            }
-            async with session.post(url, json=payload) as resp:
-                raw = await resp.text()
-                if resp.status != 200:
-                    raise HTTPException(status_code=502, detail=f"Veo API Fehler {resp.status}: {raw[:300]}")
-                data = json.loads(raw)
-                op_name = data.get("name", "")
-                return {"operation_name": op_name, "status": "processing"}
-    except HTTPException:
-        raise
+        from google import genai as _genai
+        from google.genai import types as _gtypes
+
+        client = _genai.Client(api_key=GEMINI_API_KEY)
+        # generate_video is a blocking long-running call – run in thread pool
+        loop = asyncio.get_event_loop()
+        operation = await loop.run_in_executor(
+            None,
+            lambda: client.models.generate_video(
+                model="veo-2.0-generate-001",
+                prompt=req.prompt,
+                config=_gtypes.GenerateVideoConfig(
+                    aspect_ratio=req.aspect_ratio,
+                    number_of_videos=1,
+                ),
+            ),
+        )
+        # operation.name is the long-running operation identifier
+        op_name = getattr(operation, "name", "") or ""
+        return {"operation_name": op_name, "status": "processing"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=502, detail=f"Veo Fehler: {str(e)[:400]}")
 
 
 @api_router.get("/video/veo/status")
@@ -3773,24 +3774,31 @@ async def check_veo_status(operation: str, prompt: str = ""):
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="GEMINI_API_KEY nicht gesetzt")
     try:
-        async with aiohttp.ClientSession() as session:
-            url = f"https://generativelanguage.googleapis.com/v1beta/{operation}?key={GEMINI_API_KEY}"
-            async with session.get(url) as resp:
-                data = await resp.json()
-                if data.get("done"):
-                    videos = data.get("response", {}).get("generateVideoResponse", {}).get("generatedSamples", [])
-                    if videos:
-                        video_uri = videos[0].get("video", {}).get("uri", "")
-                        # Save to gallery
-                        if db is not None:
-                            await db.video_gallery.insert_one({
-                                "type": "veo",
-                                "video_url": video_uri,
-                                "prompt": prompt,
-                                "created_at": datetime.utcnow().isoformat(),
-                            })
-                        return {"video_url": video_uri, "done": True}
-                return {"done": False, "status": "processing"}
+        from google import genai as _genai
+        client = _genai.Client(api_key=GEMINI_API_KEY)
+        loop = asyncio.get_event_loop()
+
+        # Poll the operation by name
+        op = await loop.run_in_executor(
+            None,
+            lambda: client.operations.get(name=operation),
+        )
+        if getattr(op, "done", False):
+            # Extract video URI from operation response
+            try:
+                samples = op.response.generate_video_response.generated_samples
+                video_uri = samples[0].video.uri if samples else ""
+            except Exception:
+                video_uri = ""
+            if video_uri and db is not None:
+                await db.video_gallery.insert_one({
+                    "type": "veo",
+                    "video_url": video_uri,
+                    "prompt": prompt,
+                    "created_at": datetime.utcnow().isoformat(),
+                })
+            return {"video_url": video_uri, "done": True}
+        return {"done": False, "status": "processing"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
