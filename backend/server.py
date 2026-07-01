@@ -364,6 +364,13 @@ class Brand(BaseModel):
     tone: str = "Premium, exklusiv, selbstbewusst"
     image_style: str = "Luxuriös, schwarz-gold, cinematisch, hoher Kontrast"
     logo_url: str = ""
+    # Brand Brain fields
+    industry: str = ""
+    website: str = ""
+    target_audience: str = ""
+    products: str = ""
+    social_accounts: str = ""
+    onboarded: bool = False
     is_default: bool = False
     created_at: str = Field(default_factory=_now_iso)
 
@@ -379,6 +386,29 @@ class BrandCreate(BaseModel):
     tone: str = "Premium, exklusiv, selbstbewusst"
     image_style: str = "Luxuriös, schwarz-gold, cinematisch, hoher Kontrast"
     logo_url: str = ""
+    industry: str = ""
+    website: str = ""
+    target_audience: str = ""
+    products: str = ""
+    social_accounts: str = ""
+
+
+class BrandBrainOnboardRequest(BaseModel):
+    # Raw onboarding answers from the user
+    name: str
+    industry: str = ""
+    logo_url: str = ""
+    primary_color: str = "#D4AF37"
+    secondary_color: str = "#050505"
+    website: str = ""
+    target_audience: str = ""
+    tone: str = ""
+    products: str = ""
+    social_accounts: str = ""
+    # Optional: onboard an existing brand instead of creating a new one
+    brand_id: Optional[str] = None
+    model: str = "gpt"
+    language: str = "DE"
 
 
 class SocialRequest(BaseModel):
@@ -611,6 +641,137 @@ async def delete_brand(brand_id: str):
         raise HTTPException(status_code=400, detail="Cannot delete the default brand")
     await db.brands.delete_one({"id": brand_id})
     return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
+# Brand Brain – onboarding: turns a handful of answers into a full brand
+# identity + a seeded Knowledge Base ("Gehirnspeicher" of the company).
+# ---------------------------------------------------------------------------
+def _clean_hex(value: str, fallback: str) -> str:
+    if not value:
+        return fallback
+    v = value.strip()
+    if not v.startswith("#"):
+        v = "#" + v
+    return v if re.fullmatch(r"#[0-9A-Fa-f]{6}", v) else fallback
+
+
+@api_router.post("/brand-brain/onboard")
+async def brand_brain_onboard(req: BrandBrainOnboardRequest):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+
+    is_en = req.language == "EN"
+    lang_label = "English" if is_en else "Deutsch"
+    primary = _clean_hex(req.primary_color, "#D4AF37")
+    secondary = _clean_hex(req.secondary_color, "#050505")
+
+    facts = "\n".join([
+        f"Company name: {req.name}",
+        f"Industry: {req.industry or '(not given)'}",
+        f"Website: {req.website or '(none)'}",
+        f"Target audience: {req.target_audience or '(not given)'}",
+        f"Desired tone: {req.tone or '(let the AI decide)'}",
+        f"Products / services: {req.products or '(not given)'}",
+        f"Social media accounts: {req.social_accounts or '(none)'}",
+        f"Primary color: {primary}",
+        f"Secondary color: {secondary}",
+    ])
+
+    kb_cats = ", ".join(KB_CATEGORIES)
+    system = (
+        "You are a senior brand strategist and creative director. You turn a short intake into a "
+        "complete, coherent brand identity plus a knowledge base that other AI agents will rely on. "
+        "You return STRICTLY valid JSON and nothing else."
+    )
+    user = (
+        f"Build the complete brand identity for the following company. Write ALL human-readable text in {lang_label}.\n\n"
+        f"{facts}\n\n"
+        "Return ONLY this JSON object:\n"
+        "{\n"
+        '  "slogan": "short memorable tagline",\n'
+        '  "accent_color": "#hex that harmonizes with the primary/secondary colors",\n'
+        '  "font_heading": "a fitting Google Font for headings",\n'
+        '  "font_body": "a fitting Google Font for body text",\n'
+        '  "tone": "3-6 adjectives describing the brand voice",\n'
+        '  "image_style": "one sentence describing the visual/photography style for this brand",\n'
+        '  "target_audience": "refined 1-2 sentence description of the ideal customer",\n'
+        '  "knowledge": [\n'
+        '    {"category": "one of: ' + kb_cats + '", "title": "...", "content": "detailed, useful paragraph", "tags": ["..."]}\n'
+        "  ]\n"
+        "}\n"
+        "For \"knowledge\" produce 5-7 rich entries that capture the brand brain: a Brand/Corporate-Design profile, "
+        "a target-audience persona, a tone-of-voice guide, a product/service overview, and 2-3 likely FAQs "
+        "(each FAQ as its own entry in the FAQs category). Base everything on the facts above; make reasonable, "
+        "on-brand assumptions where information is missing. Do not invent a different company name."
+    )
+
+    try:
+        raw = await llm_text(req.model, system, user)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Brand Brain LLM error: {e}")
+        raise HTTPException(status_code=502, detail="Brand identity generation failed. Please try again.")
+
+    data = _extract_json(raw) or {}
+
+    brand_fields = {
+        "name": req.name.strip() or "Meine Marke",
+        "slogan": (data.get("slogan") or "").strip(),
+        "primary_color": primary,
+        "secondary_color": secondary,
+        "accent_color": _clean_hex(data.get("accent_color", ""), "#F3E5AB"),
+        "font_heading": (data.get("font_heading") or "Playfair Display").strip(),
+        "font_body": (data.get("font_body") or "Manrope").strip(),
+        "tone": (data.get("tone") or req.tone or "Professionell, vertrauenswürdig").strip(),
+        "image_style": (data.get("image_style") or "Modern, professionell, hochwertig").strip(),
+        "logo_url": req.logo_url.strip(),
+        "industry": req.industry.strip(),
+        "website": req.website.strip(),
+        "target_audience": (data.get("target_audience") or req.target_audience or "").strip(),
+        "products": req.products.strip(),
+        "social_accounts": req.social_accounts.strip(),
+        "onboarded": True,
+    }
+
+    # Create or update the brand
+    if req.brand_id:
+        existing = await db.brands.find_one({"id": req.brand_id}, {"_id": 0})
+        if not existing:
+            raise HTTPException(status_code=404, detail="Brand not found")
+        await db.brands.update_one({"id": req.brand_id}, {"$set": brand_fields})
+        brand = {**existing, **brand_fields}
+    else:
+        brand = Brand(**brand_fields).model_dump()
+        await db.brands.insert_one({**brand})
+        brand.pop("_id", None)
+
+    # Seed the Knowledge Base
+    seeded = []
+    for item in (data.get("knowledge") or [])[:8]:
+        title = (item.get("title") or "").strip()
+        content = (item.get("content") or "").strip()
+        if not title or not content:
+            continue
+        category = item.get("category", "").strip()
+        if category not in KB_CATEGORIES:
+            category = "Marketingstrategien"
+        tags = item.get("tags") or []
+        if not isinstance(tags, list):
+            tags = []
+        tags = [str(t).strip() for t in tags if str(t).strip()]
+        if brand["name"] not in tags:
+            tags.append(brand["name"])
+        entry = KbEntry(category=category, title=title, content=content, tags=tags).model_dump()
+        try:
+            await db.knowledge.insert_one({**entry})
+            entry.pop("_id", None)
+            seeded.append(entry)
+        except Exception as e:
+            logger.warning(f"KB seed insert failed: {e}")
+
+    return {"brand": brand, "knowledge": seeded, "knowledge_count": len(seeded)}
 
 
 # ---------------------------------------------------------------------------

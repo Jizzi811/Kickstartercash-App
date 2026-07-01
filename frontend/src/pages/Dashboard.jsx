@@ -7,7 +7,7 @@ import {
   ArrowRight, Sparkles, Bot, Palette, Film, Smartphone,
   Globe, BarChart2, Zap, Database, Wrench, MessageSquare,
   TrendingUp, Users, FileText, Cpu, Crown, ChevronRight,
-  Star, Activity, Clock, Layers,
+  Star, Activity, Clock, Layers, BrainCircuit,
 } from "lucide-react";
 
 
@@ -69,6 +69,16 @@ const KPI_CARDS = [
 /* ─── quick actions ──────────────────────────────────────────────── */
 const QUICK_ACTIONS = [
   {
+    to: "/brand-brain",
+    icon: BrainCircuit,
+    labelDE: "Brand Brain",
+    labelEN: "Brand Brain",
+    descDE: "Marke einrichten – Basis für alles",
+    descEN: "Set up your brand – the base for all",
+    color: "#D4AF37",
+    featured: true,
+  },
+  {
     to: "/agents",
     icon: Bot,
     labelDE: "Agenten",
@@ -76,7 +86,6 @@ const QUICK_ACTIONS = [
     descDE: "17 KI-Spezialisten starten",
     descEN: "Launch 17 AI specialists",
     color: "#D4AF37",
-    featured: true,
   },
   {
     to: "/design",
