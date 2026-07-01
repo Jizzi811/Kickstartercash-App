@@ -3751,16 +3751,17 @@ async def generate_veo_video(req: VeoRequest):
 
         client = genai_mod.Client(api_key=GEMINI_API_KEY)
         loop = asyncio.get_event_loop()
+        GenerateVideoConfig = types_mod.GenerateVideoConfig
+        cfg = GenerateVideoConfig(aspect_ratio=req.aspect_ratio, number_of_videos=1)
+
+        # SDK 2.x uses generate_videos (plural)
+        gen_fn = getattr(client.models, "generate_videos", None) or getattr(client.models, "generate_video", None)
+        if gen_fn is None:
+            raise RuntimeError("google-genai SDK does not expose generate_video(s) — please upgrade")
+
         operation = await loop.run_in_executor(
             None,
-            lambda: client.models.generate_video(
-                model="veo-2.0-generate-001",
-                prompt=req.prompt,
-                config=types_mod.GenerateVideoConfig(
-                    aspect_ratio=req.aspect_ratio,
-                    number_of_videos=1,
-                ),
-            ),
+            lambda: gen_fn(model="veo-2.0-generate-001", prompt=req.prompt, config=cfg),
         )
         op_name = getattr(operation, "name", "") or ""
         return {"operation_name": op_name, "status": "processing"}
