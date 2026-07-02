@@ -4216,6 +4216,25 @@ async def homepage_ping():
     return {"pong": True, "ts": _now_iso()}
 
 
+@api_router.get("/debug/image")
+async def debug_image():
+    """Tries each image provider with a tiny prompt and reports what worked/failed."""
+    prompt = "A simple purple circle on a black background, minimal, high quality"
+    out = {
+        "freetheai_configured": bool(FREETHEAI_API_KEY),
+        "poyo_configured": bool(POYO_API_KEY),
+        "gemini_key": bool(GEMINI_API_KEY),
+        "image_model": FREETHEAI_IMAGE_MODEL,
+    }
+    for name, fn in [("freetheai", freetheai_image), ("gemini", gemini_nano_banana)]:
+        try:
+            img = await fn(prompt, size="1:1")
+            out[name] = ("ok (" + str(len(img)) + " bytes b64)") if img else "returned None (no image)"
+        except Exception as e:
+            out[name] = f"error: {str(e)[:200]}"
+    return out
+
+
 @api_router.get("/debug/genai")
 async def debug_genai():
     """Check available google-genai methods."""
