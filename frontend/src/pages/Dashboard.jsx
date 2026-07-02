@@ -447,7 +447,7 @@ export default function Dashboard() {
                       }}
                     >
                       <Sparkles size={14} />
-                      CEO Agent
+                      Quantum
                     </button>
                   </div>
                 </div>

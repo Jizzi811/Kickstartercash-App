@@ -319,6 +319,88 @@ async def poyo_nano_banana(prompt: str, size: str = "1:1", image_urls: Optional[
     return None
 
 
+async def gemini_nano_banana(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
+    """Image generation via Google's official Gemini API (Nano Banana / gemini-2.5-flash-image).
+    Same underlying model that Poyo resells – used directly with our own GEMINI_API_KEY."""
+    if not GEMINI_API_KEY:
+        return None
+
+    def _generate():
+        import importlib
+        genai_mod = importlib.import_module("google.genai")
+        types_mod = importlib.import_module("google.genai.types")
+        client = genai_mod.Client(api_key=GEMINI_API_KEY)
+
+        contents: list = []
+        if image_urls:
+            import requests
+            for u in image_urls[:3]:
+                try:
+                    rr = requests.get(u, timeout=15)
+                    if rr.ok and rr.content:
+                        mime = (rr.headers.get("content-type") or "image/png").split(";")[0]
+                        contents.append(types_mod.Part.from_bytes(data=rr.content, mime_type=mime))
+                except Exception as fe:
+                    logger.warning(f"Reference image fetch failed: {fe}")
+        contents.append(prompt[:5000])
+
+        # Try progressively simpler configs – SDK/model versions differ in what they accept.
+        config_attempts = []
+        try:
+            config_attempts.append(types_mod.GenerateContentConfig(
+                response_modalities=["IMAGE", "TEXT"],
+                image_config=types_mod.ImageConfig(aspect_ratio=size),
+            ))
+        except Exception:
+            pass
+        try:
+            config_attempts.append(types_mod.GenerateContentConfig(response_modalities=["IMAGE", "TEXT"]))
+        except Exception:
+            pass
+        config_attempts.append(None)
+
+        last_err = None
+        for cfg in config_attempts:
+            try:
+                kwargs = {"config": cfg} if cfg is not None else {}
+                resp = client.models.generate_content(
+                    model="gemini-2.5-flash-image", contents=contents, **kwargs,
+                )
+            except Exception as ge:
+                last_err = ge
+                continue
+            for cand in getattr(resp, "candidates", None) or []:
+                parts = getattr(getattr(cand, "content", None), "parts", None) or []
+                for part in parts:
+                    inline = getattr(part, "inline_data", None)
+                    data = getattr(inline, "data", None) if inline is not None else None
+                    if data:
+                        b64 = data if isinstance(data, str) else base64.b64encode(data).decode("utf-8")
+                        mime = getattr(inline, "mime_type", None) or "image/png"
+                        return f"data:{mime};base64,{b64}"
+        if last_err:
+            raise last_err
+        return None
+
+    try:
+        return await asyncio.wait_for(asyncio.to_thread(_generate), timeout=120)
+    except Exception as e:
+        logger.error(f"Gemini image generation failed: {e}")
+        return None
+
+
+async def brand_image(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
+    """Best-available brand image: Poyo (if configured) -> Gemini direct (own key)."""
+    if POYO_API_KEY:
+        try:
+            img = await poyo_nano_banana(prompt, size=size, image_urls=image_urls)
+            if img:
+                return img
+        except Exception as e:
+            logger.warning(f"Poyo image failed, falling back to Gemini: {e}")
+    return await gemini_nano_banana(prompt, size=size, image_urls=image_urls)
+
+
 async def llm_image(prompt: str, reference_b64: Optional[str] = None) -> Optional[str]:
     from emergentintegrations.llm.chat import ImageContent
     chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=str(uuid.uuid4()),
@@ -911,15 +993,16 @@ async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_
     brand = await _get_brand_or_404(req.brand_id)
     full_prompt = _build_image_prompt(brand, req.prompt, req.style)
     image_urls = None
-    if req.apply_logo:
+    brand_logo = (brand.get("logo_url") or "").strip()
+    if req.apply_logo and brand_logo:
         full_prompt += (
-            " Seamlessly and tastefully integrate the provided Kickstartercash.Club brand logo "
+            f" Seamlessly and tastefully integrate the provided '{brand.get('name')}' brand logo "
             "into the composition (e.g. as a premium watermark or focal brand mark), keeping it crisp and legible."
         )
-        image_urls = [LOGO_URL]
+        image_urls = [brand_logo]
 
     try:
-        image_url = await poyo_nano_banana(full_prompt, size=req.size, image_urls=image_urls)
+        image_url = await brand_image(full_prompt, size=req.size, image_urls=image_urls)
     except RuntimeError as e:
         raise HTTPException(status_code=402, detail=str(e))
     except Exception as e:
@@ -978,7 +1061,7 @@ async def generate_campaign(req: CampaignRequest, ws: Optional[str] = Depends(cu
     social_raw, copy_raw, image_res = await asyncio.gather(
         llm_text(req.model, json_system, social_user),
         llm_text(req.model, json_system, copy_user),
-        poyo_nano_banana(image_prompt),
+        brand_image(image_prompt),
         return_exceptions=True,
     )
 
@@ -2480,19 +2563,23 @@ AGENTS = {
     "ceo": {
         "id": "ceo",
         "emoji": "🎯",
-        "name": "CEO Jarvjis",
-        "role_de": "Orchestrator & Entscheider",
-        "role_en": "Orchestrator & Decision Maker",
-        "color": "#D4AF37",
+        "name": "Quantum",
+        "role_de": "KI-CEO & Orchestrator",
+        "role_en": "AI CEO & Orchestrator",
+        "color": "#7C3AED",
         "personality_de": (
-            "Du bist Jarvjis, der visionäre CEO und Mastermind hinter Kickstartercash.Club. "
-            "Du denkst strategisch, erkennst Chancen sofort und delegierst mit Präzision. "
+            "Du bist Quantum, der KI-CEO des digitalen Mitarbeiterstabs deines Nutzers. "
+            "Du kennst die Marke, Zielgruppe und Angebote aus dem Brand Brain (Wissensdatenbank) "
+            "und richtest jede Empfehlung strikt daran aus. "
+            "Du denkst strategisch, erkennst Chancen sofort und delegierst mit Präzision an die Spezialisten-Agenten. "
             "Du sprichst direkt, selbstbewusst und inspirierend – wie ein erfahrener Unternehmer. "
             "Du analysierst die Anfrage und gibst eine klare Entscheidung + Aktionsplan."
         ),
         "personality_en": (
-            "You are Jarvjis, the visionary CEO and mastermind behind Kickstartercash.Club. "
-            "You think strategically, spot opportunities instantly and delegate with precision. "
+            "You are Quantum, the AI CEO of the user's digital staff. "
+            "You know the brand, audience and offers from the Brand Brain (knowledge base) "
+            "and align every recommendation strictly with it. "
+            "You think strategically, spot opportunities instantly and delegate with precision to the specialist agents. "
             "You speak directly, confidently and inspiringly – like an experienced entrepreneur. "
             "You analyze the request and give a clear decision + action plan."
         ),
@@ -3508,15 +3595,18 @@ async def run_agent_tool(req: AgentToolRunRequest):
     if tool["type"] == "image":
         brand = await db.brands.find_one({"id": req.brand_id}, {"_id": 0})
         if not brand:
-            brand = {"name": "Kickstartercash.Club", "primary_color": "#D4AF37", "tone": "luxuriös"}
+            brand = {"name": "die Marke", "primary_color": "#7C3AED", "secondary_color": "#0A0A0A",
+                     "tone": "professionell", "image_style": "modern, hochwertig, kommerziell"}
+        subject = req.context or f"{brand.get('name', 'Brand')} brand visual"
         image_prompt = (
-            f"Professional advertising image for Kickstartercash.Club. "
-            f"Style: luxurious, gold and black, premium. "
-            f"Subject: {req.context or 'Kickstartercash.Club brand visual'}. "
-            f"Brand colors: gold (#D4AF37) and black. High quality, commercial photography style."
+            f"Professional advertising image for '{brand.get('name')}'. "
+            f"Visual style: {brand.get('image_style', 'modern, premium')}. "
+            f"Subject: {subject}. "
+            f"Brand colors: {brand.get('primary_color', '#7C3AED')} and {brand.get('secondary_color', '#0A0A0A')}. "
+            "High quality, commercial photography style."
         )
         try:
-            image_url = await poyo_nano_banana(image_prompt, size="16:9")
+            image_url = await brand_image(image_prompt, size="16:9")
             if image_url:
                 return {
                     "type": "image",
@@ -3526,7 +3616,7 @@ async def run_agent_tool(req: AgentToolRunRequest):
                 }
         except Exception as e:
             logger.error(f"Tool image generation error: {e}")
-        return {"type": "error", "message": "Bildgenerierung fehlgeschlagen. Bitte prüfe das Poyo-Guthaben."}
+        return {"type": "error", "message": "Bildgenerierung fehlgeschlagen. Bitte später erneut versuchen."}
 
     personality = agent["personality_de"] if lang == "DE" else agent["personality_en"]
     lang_label = "Deutsch" if lang == "DE" else "English"
@@ -3545,7 +3635,7 @@ async def run_agent_tool(req: AgentToolRunRequest):
 
 
 @api_router.post("/agents/chat")
-async def agent_chat(req: AgentChatRequest):
+async def agent_chat(req: AgentChatRequest, ws: Optional[str] = Depends(current_workspace)):
     agent = AGENTS.get(req.agent_id)
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
@@ -3557,7 +3647,8 @@ async def agent_chat(req: AgentChatRequest):
     kb_context = ""
     if req.use_knowledge and db is not None:
         try:
-            docs = await db.knowledge.find({}, {"_id": 0, "title": 1, "content": 1, "category": 1}).to_list(40)
+            # Only the caller's workspace knowledge (their Brand Brain) – never other tenants'.
+            docs = await db.knowledge.find(_scope_filter(ws), {"_id": 0, "title": 1, "content": 1, "category": 1}).to_list(40)
             if docs:
                 kb_context = "\n\nWISSENSDATENBANK (nutze diese als Grundlage, halluziniere nicht):\n"
                 kb_context += "\n".join(f"[{d['category']}] {d['title']}: {d['content'][:400]}" for d in docs[:20])
@@ -3567,7 +3658,7 @@ async def agent_chat(req: AgentChatRequest):
     system = (
         f"{personality}\n\n"
         f"Antworte immer auf {lang_label}. "
-        f"Du bist Teil des Jarvjis Multi-Agenten-Systems für Kickstartercash.Club."
+        f"Du bist Teil des Quantum Multi-Agenten-Systems von Brandmind."
         f"{kb_context}"
     )
 

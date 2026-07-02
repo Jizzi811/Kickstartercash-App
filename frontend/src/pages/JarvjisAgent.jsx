@@ -521,7 +521,7 @@ export default function JarvjisAgent() {
           </div>
         </motion.div>
 
-        {/* CEO Agent Node */}
+        {/* Quantum Node */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -534,7 +534,7 @@ export default function JarvjisAgent() {
             </div>
             <Bot size={22} className="text-[#7C3AED]" />
             <div>
-              <div className="text-base font-semibold text-[#7C3AED]">CEO Agent</div>
+              <div className="text-base font-semibold text-[#7C3AED]">Quantum</div>
               <div className="text-[11px] text-zinc-400">
                 {lang === "DE" ? "Orchestrator & Entscheider" : "Orchestrator & Decision Maker"}
               </div>
