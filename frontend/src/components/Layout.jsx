@@ -458,6 +458,7 @@ export const Layout = ({ children }) => {
                 <DropdownMenuItem onClick={() => setModel("gpt")} className="text-sm cursor-pointer focus:bg-[#7C3AED]/10">GPT-5.2</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setModel("gemini")} className="text-sm cursor-pointer focus:bg-[#7C3AED]/10">Gemini 2.5 Flash</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setModel("grok")} className="text-sm cursor-pointer focus:bg-[#7C3AED]/10">Grok 3 (xAI)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setModel("freetheai")} className="text-sm cursor-pointer focus:bg-[#7C3AED]/10">FreeTheAi (Gratis)</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 

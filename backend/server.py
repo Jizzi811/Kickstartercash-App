@@ -64,6 +64,8 @@ POYO_BASE = "https://api.poyo.ai"
 FREETHEAI_API_KEY = os.environ.get('FREETHEAI_API_KEY', '')
 FREETHEAI_BASE = os.environ.get('FREETHEAI_BASE', 'https://api.freetheai.xyz/v1')
 FREETHEAI_IMAGE_MODEL = os.environ.get('FREETHEAI_IMAGE_MODEL', 'eve/gpt-image-2')
+FREETHEAI_TEXT_MODEL = os.environ.get('FREETHEAI_TEXT_MODEL', 'opc/deepseek-v4-flash-free')
+FREETHEAI_TTS_MODEL = os.environ.get('FREETHEAI_TTS_MODEL', 'xai/grok-tts')
 
 _anthropic_client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
 LOGO_URL = "https://customer-assets.emergentagent.com/job_5234ef58-250d-4475-b61a-24b76051aa69/artifacts/y4lzk2ct_WhatsApp%20Image%202026-06-24%20at%2010.55.48.jpeg"
@@ -92,6 +94,8 @@ MODEL_MAP = {
     "grok-3-fast": ("grok", "grok-3-fast"),
     "grok-3-auto": ("grok", "grok-3-auto"),
     "grok-4": ("grok", "grok-4"),
+    # FreeTheAi (OpenAI-compatible free gateway)
+    "freetheai": ("freetheai", FREETHEAI_TEXT_MODEL),
 }
 IMAGE_MODEL = "gemini-3.1-flash-image-preview"
 
@@ -171,6 +175,27 @@ async def _llm_single(provider: str, model: str, system_message: str, user_text:
         )
         return resp.text
 
+    if provider == "freetheai":
+        if not FREETHEAI_API_KEY:
+            raise RuntimeError("FREETHEAI_API_KEY not set")
+
+        def _call():
+            import requests
+            messages = []
+            if system_message:
+                messages.append({"role": "system", "content": system_message})
+            messages.append({"role": "user", "content": user_text})
+            r = requests.post(
+                f"{FREETHEAI_BASE}/chat/completions",
+                headers={"Authorization": f"Bearer {FREETHEAI_API_KEY}", "Content-Type": "application/json"},
+                json={"model": model, "messages": messages},
+                timeout=60,
+            )
+            r.raise_for_status()
+            return (((r.json().get("choices") or [{}])[0]).get("message") or {}).get("content", "")
+
+        return await asyncio.to_thread(_call)
+
     if not _HAS_EMERGENT:
         raise RuntimeError("No LLM provider available (Emergent not installed, no direct keys)")
     chat = LlmChat(api_key=_api_key_for(provider), session_id=str(uuid.uuid4()), system_message=system_message)
@@ -186,6 +211,7 @@ _FALLBACK_CHAIN = [
     ("anthropic", "claude-sonnet-4-6"),
     ("gemini", "gemini-2.5-flash"),
     ("openai", "gpt-5.2"),
+    ("freetheai", FREETHEAI_TEXT_MODEL),
 ]
 
 
@@ -4062,6 +4088,52 @@ async def generate_agent_workflow(req: AgentBuilderRequest):
     return {"plan": reply.strip()}
 
 
+class TTSRequest(BaseModel):
+    text: str
+    voice: Optional[str] = None
+    model: Optional[str] = None
+
+
+@api_router.post("/audio/speech")
+async def audio_speech(req: TTSRequest):
+    """Text-to-speech via FreeTheAi (OpenAI-compatible /v1/audio/speech). Returns base64 audio."""
+    if not FREETHEAI_API_KEY:
+        raise HTTPException(status_code=503, detail="TTS ist nicht konfiguriert (FREETHEAI_API_KEY fehlt).")
+    text = (req.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Kein Text angegeben.")
+    tts_model = req.model or FREETHEAI_TTS_MODEL
+
+    def _call():
+        import requests
+        payload = {"model": tts_model, "input": text[:5000]}
+        if req.voice:
+            payload["voice"] = req.voice
+        r = requests.post(
+            f"{FREETHEAI_BASE}/audio/speech",
+            headers={"Authorization": f"Bearer {FREETHEAI_API_KEY}", "Content-Type": "application/json"},
+            json=payload, timeout=120,
+        )
+        if not r.ok:
+            raise RuntimeError(f"{r.status_code}: {r.text[:200]}")
+        ct = r.headers.get("content-type", "audio/mpeg")
+        # Some gateways return raw audio bytes, others JSON with b64.
+        if "application/json" in ct:
+            data = r.json()
+            b64 = data.get("b64_json") or (data.get("data") or [{}])[0].get("b64_json")
+            return f"data:audio/mpeg;base64,{b64}" if b64 else None
+        return f"data:{ct};base64,{base64.b64encode(r.content).decode('utf-8')}"
+
+    try:
+        audio = await asyncio.wait_for(asyncio.to_thread(_call), timeout=130)
+    except Exception as e:
+        logger.error(f"TTS failed: {e}")
+        raise HTTPException(status_code=502, detail="Sprachausgabe fehlgeschlagen.")
+    if not audio:
+        raise HTTPException(status_code=502, detail="Keine Audiodaten erhalten.")
+    return {"audio": audio, "model": tts_model, "voice": req.voice or "default"}
+
+
 @api_router.get("/health")
 async def health():
     # DB diagnostics: shows whether Mongo is configured, reachable, and why not.
@@ -4087,6 +4159,7 @@ async def health():
         "has_openai_key": bool(OPENAI_API_KEY),
         "has_anthropic_key": bool(ANTHROPIC_API_KEY),
         "has_emergent_key": bool(EMERGENT_LLM_KEY),
+        "has_freetheai": bool(FREETHEAI_API_KEY),
         "cb_status": {p: ("OPEN" if _cb_is_open(p) else "closed") for p in ["grok","gemini","openai","anthropic"]},
     }
 
