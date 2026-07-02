@@ -3905,8 +3905,22 @@ async def generate_agent_workflow(req: AgentBuilderRequest):
 
 @api_router.get("/health")
 async def health():
+    # DB diagnostics: shows whether Mongo is configured, reachable, and why not.
+    db_info = {
+        "db_configured": db is not None,
+        "db_name": os.environ.get('DB_NAME', '(default)'),
+        "mongo_url_set": bool(os.environ.get('MONGO_URL', '')),
+    }
+    if db is not None:
+        try:
+            await asyncio.wait_for(db.command("ping"), timeout=6.0)
+            db_info["db_connected"] = True
+        except Exception as e:
+            db_info["db_connected"] = False
+            db_info["db_error"] = str(e)[:300]
     return {
         "status": "ok",
+        **db_info,
         "llm": "anthropic" if _anthropic_client else "emergent",
         "has_grok": _HAS_GROK,
         "has_emergent": _HAS_EMERGENT,
