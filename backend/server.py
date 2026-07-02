@@ -60,6 +60,10 @@ SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
 REPORT_EMAILS: list[str] = [e.strip() for e in os.environ.get('KASH_REPORT_EMAILS', '').split(',') if e.strip()]
 POYO_API_KEY = os.environ.get('POYO_API_KEY', '')
 POYO_BASE = "https://api.poyo.ai"
+# FreeTheAi – free OpenAI-compatible gateway (gpt-image-2 etc.)
+FREETHEAI_API_KEY = os.environ.get('FREETHEAI_API_KEY', '')
+FREETHEAI_BASE = os.environ.get('FREETHEAI_BASE', 'https://api.freetheai.xyz/v1')
+FREETHEAI_IMAGE_MODEL = os.environ.get('FREETHEAI_IMAGE_MODEL', 'eve/gpt-image-2')
 
 _anthropic_client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
 LOGO_URL = "https://customer-assets.emergentagent.com/job_5234ef58-250d-4475-b61a-24b76051aa69/artifacts/y4lzk2ct_WhatsApp%20Image%202026-06-24%20at%2010.55.48.jpeg"
@@ -389,16 +393,80 @@ async def gemini_nano_banana(prompt: str, size: str = "1:1", image_urls: Optiona
         return None
 
 
+def _size_to_wh(size: str) -> str:
+    """Map an aspect-ratio label to an OpenAI-style WxH size string."""
+    return {
+        "1:1": "1024x1024",
+        "16:9": "1792x1024",
+        "9:16": "1024x1792",
+        "4:3": "1024x768",
+        "3:4": "768x1024",
+    }.get(size, "1024x1024")
+
+
+async def freetheai_image(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
+    """Image generation via FreeTheAi (OpenAI-compatible /v1/images/generations, e.g. gpt-image-2)."""
+    if not FREETHEAI_API_KEY:
+        return None
+
+    def _generate():
+        import requests
+        headers = {"Authorization": f"Bearer {FREETHEAI_API_KEY}", "Content-Type": "application/json"}
+        payload = {"model": FREETHEAI_IMAGE_MODEL, "prompt": prompt[:5000], "size": _size_to_wh(size), "n": 1}
+        # If a reference image (brand logo) is given, prefer the edits endpoint.
+        endpoint = "/images/generations"
+        if image_urls:
+            payload["image"] = image_urls[0]
+            endpoint = "/images/edits"
+        r = requests.post(f"{FREETHEAI_BASE}{endpoint}", headers=headers, json=payload, timeout=120)
+        if not r.ok:
+            # Retry a plain generation if the edits route rejected the request.
+            if image_urls:
+                payload.pop("image", None)
+                r = requests.post(f"{FREETHEAI_BASE}/images/generations", headers=headers, json=payload, timeout=120)
+            if not r.ok:
+                logger.warning(f"FreeTheAi image {r.status_code}: {r.text[:200]}")
+                return None
+        data = (r.json().get("data") or [{}])[0]
+        b64 = data.get("b64_json")
+        if b64:
+            return f"data:image/png;base64,{b64}"
+        url = data.get("url")
+        if url:
+            rr = requests.get(url, timeout=60)
+            if rr.ok and rr.content:
+                ct = rr.headers.get("content-type", "image/png")
+                return f"data:{ct};base64,{base64.b64encode(rr.content).decode('utf-8')}"
+        return None
+
+    try:
+        return await asyncio.wait_for(asyncio.to_thread(_generate), timeout=130)
+    except Exception as e:
+        logger.error(f"FreeTheAi image generation failed: {e}")
+        return None
+
+
 async def brand_image(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
-    """Best-available brand image: Poyo (if configured) -> Gemini direct (own key)."""
+    """Best-available brand image, in order: FreeTheAi (gpt-image-2) -> Poyo -> Gemini direct."""
+    providers = []
+    if FREETHEAI_API_KEY:
+        providers.append(("FreeTheAi", freetheai_image))
     if POYO_API_KEY:
+        providers.append(("Poyo", poyo_nano_banana))
+    providers.append(("Gemini", gemini_nano_banana))
+
+    last_exc = None
+    for name, fn in providers:
         try:
-            img = await poyo_nano_banana(prompt, size=size, image_urls=image_urls)
+            img = await fn(prompt, size=size, image_urls=image_urls)
             if img:
                 return img
         except Exception as e:
-            logger.warning(f"Poyo image failed, falling back to Gemini: {e}")
-    return await gemini_nano_banana(prompt, size=size, image_urls=image_urls)
+            last_exc = e
+            logger.warning(f"{name} image failed, trying next provider: {e}")
+    if last_exc:
+        logger.error(f"All image providers failed. Last error: {last_exc}")
+    return None
 
 
 async def llm_image(prompt: str, reference_b64: Optional[str] = None) -> Optional[str]:
