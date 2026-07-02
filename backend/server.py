@@ -903,19 +903,19 @@ async def brand_brain_onboard(req: BrandBrainOnboardRequest, ws: Optional[str] =
         '    {"category": "one of: ' + kb_cats + '", "title": "...", "content": "detailed, useful paragraph", "tags": ["..."]}\n'
         "  ]\n"
         "}\n"
-        "For \"knowledge\" produce 5-7 rich entries that capture the brand brain: a Brand/Corporate-Design profile, "
-        "a target-audience persona, a tone-of-voice guide, a product/service overview, and 2-3 likely FAQs "
-        "(each FAQ as its own entry in the FAQs category). Base everything on the facts above; make reasonable, "
-        "on-brand assumptions where information is missing. Do not invent a different company name."
+        "For \"knowledge\" produce 4-5 concise but useful entries that capture the brand brain: a "
+        "Brand/Corporate-Design profile, a target-audience persona, a product/service overview, and 1-2 likely "
+        "FAQs (each FAQ as its own entry in the FAQs category). Keep each content field under 120 words. "
+        "Base everything on the facts above; make reasonable, on-brand assumptions where information is missing. "
+        "Do not invent a different company name."
     )
 
+    # AI enrichment is best-effort — the brand must be created either way.
+    raw = ""
     try:
         raw = await llm_text(req.model, system, user)
-    except HTTPException:
-        raise
     except Exception as e:
-        logger.error(f"Brand Brain LLM error: {e}")
-        raise HTTPException(status_code=502, detail="Brand identity generation failed. Please try again.")
+        logger.warning(f"Brand Brain LLM enrichment failed, using fallback defaults: {e}")
 
     data = _extract_json(raw) or {}
 
@@ -951,9 +951,33 @@ async def brand_brain_onboard(req: BrandBrainOnboardRequest, ws: Optional[str] =
         await db.brands.insert_one({**brand})
         brand.pop("_id", None)
 
-    # Seed the Knowledge Base
+    # Seed the Knowledge Base. If the AI produced nothing usable, build a
+    # sensible fallback brain straight from the user's own inputs so the
+    # workspace is never left empty.
+    kb_items = [i for i in (data.get("knowledge") or []) if isinstance(i, dict)]
+    if not kb_items:
+        kb_items = [
+            {"category": "Corporate Design",
+             "title": f"Markenprofil {brand['name']}",
+             "content": (f"{brand['name']}"
+                         + (f" ({brand_fields['industry']})" if brand_fields.get('industry') else "")
+                         + f". Tonalität: {brand_fields['tone']}. Bildstil: {brand_fields['image_style']}. "
+                         + f"Farben: {primary} / {secondary}."
+                         + (f" Website: {brand_fields['website']}." if brand_fields.get('website') else "")),
+             "tags": [brand["name"], "Branding"]},
+        ]
+        if brand_fields.get("target_audience"):
+            kb_items.append({"category": "Marketingstrategien", "title": "Zielgruppe",
+                             "content": brand_fields["target_audience"], "tags": ["Zielgruppe"]})
+        if brand_fields.get("products"):
+            kb_items.append({"category": "Produkte", "title": "Produkte & Angebote",
+                             "content": brand_fields["products"], "tags": ["Produkte"]})
+        if brand_fields.get("social_accounts"):
+            kb_items.append({"category": "Marketingstrategien", "title": "Social-Media-Kanäle",
+                             "content": brand_fields["social_accounts"], "tags": ["Social Media"]})
+
     seeded = []
-    for item in (data.get("knowledge") or [])[:8]:
+    for item in kb_items[:8]:
         title = (item.get("title") or "").strip()
         content = (item.get("content") or "").strip()
         if not title or not content:
