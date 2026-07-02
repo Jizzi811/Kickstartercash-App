@@ -2264,26 +2264,48 @@ async def arena_chat(req: ArenaChatRequest):
         )
         return {"reply": msg.content[0].text.strip()}
 
-    # ── OpenAI / Gemini via Emergent ─────────────────────────────────────────
-    if not _HAS_EMERGENT:
-        raise HTTPException(status_code=503, detail="LLM backend nicht konfiguriert")
+    # ── Gemini with image upload (direct SDK) ────────────────────────────────
+    if provider == "gemini" and GEMINI_API_KEY and is_image:
+        def _gemini_vision():
+            import importlib, base64 as _b64
+            genai_mod = importlib.import_module("google.genai")
+            types_mod = importlib.import_module("google.genai.types")
+            client = genai_mod.Client(api_key=GEMINI_API_KEY)
+            parts = [
+                types_mod.Part.from_bytes(data=_b64.b64decode(req.file_data), mime_type=req.file_mime),
+                f"{system}\n\n{convo}",
+            ]
+            resp = client.models.generate_content(model="gemini-2.5-flash", contents=parts)
+            return getattr(resp, "text", "") or ""
+        try:
+            return {"reply": (await asyncio.to_thread(_gemini_vision)).strip()}
+        except Exception as e:
+            logger.warning(f"Gemini vision failed, falling back to text: {e}")
 
-    from emergentintegrations.llm.chat import ImageContent
-    api_key = _api_key_for(provider)
-    chat = LlmChat(api_key=api_key, session_id=str(uuid.uuid4()), system_message=system)
-    chat.with_model(provider, model)
+    # ── OpenAI / Gemini via Emergent (if available) ──────────────────────────
+    if _HAS_EMERGENT:
+        from emergentintegrations.llm.chat import ImageContent
+        api_key = _api_key_for(provider)
+        chat = LlmChat(api_key=api_key, session_id=str(uuid.uuid4()), system_message=system)
+        chat.with_model(provider, model)
+        if is_image:
+            from emergentintegrations.llm.chat import UserMessage as UM
+            user_msg = UM(text=convo, file_contents=[ImageContent(req.file_data)])
+        else:
+            if has_file:
+                convo = f"[Datei: {req.file_name}]\n{convo}"
+            from emergentintegrations.llm.chat import UserMessage as UM
+            user_msg = UM(text=convo)
+        resp = await chat.send_message(user_msg)
+        reply_text = resp if isinstance(resp, str) else getattr(resp, "content", str(resp))
+        return {"reply": reply_text.strip()}
 
-    if is_image:
-        from emergentintegrations.llm.chat import UserMessage as UM
-        user_msg = UM(text=convo, file_contents=[ImageContent(req.file_data)])
-    else:
-        if has_file:
-            convo = f"[Datei: {req.file_name}]\n{convo}"
-        from emergentintegrations.llm.chat import UserMessage as UM
-        user_msg = UM(text=convo)
-
-    resp = await chat.send_message(user_msg)
-    reply_text = resp if isinstance(resp, str) else getattr(resp, "content", str(resp))
+    # ── Resilient fallback: direct Gemini / FreeTheAi + fallback chain ───────
+    note = ""
+    if has_file:
+        note = ("\n[Hinweis: Datei-/Bild-Upload wird von der gewählten Engine nicht unterstützt – "
+                "nutze Gemini für Bilder.]") if not is_image else ""
+    reply_text = await llm_text(req.model, system, convo + note)
     return {"reply": reply_text.strip()}
 
 
