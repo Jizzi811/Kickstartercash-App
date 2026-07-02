@@ -1,0 +1,40 @@
+# Brandmind backend on Render.
+# In the new Brandmind repo, this can live at the repo root as render.yaml
+# and Render will pick it up via "Blueprint". Set the secret values in the
+# Render dashboard (marked sync: false below).
+services:
+  - type: web
+    name: brandmind-api
+    runtime: python
+    rootDir: backend
+    plan: starter
+    buildCommand: pip install -r requirements-deploy.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: MONGO_URL
+        sync: false
+      - key: DB_NAME
+        value: brandmind
+      - key: BRANDMIND_JWT_SECRET
+        generateValue: true
+      - key: BRANDMIND_APP_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: STRIPE_API_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_STARTER
+        sync: false
+      - key: STRIPE_PRICE_PRO
+        sync: false
+      - key: STRIPE_PRICE_AGENCY
+        sync: false
+      - key: CORS_ORIGINS
+        value: "*"
