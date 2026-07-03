@@ -1206,32 +1206,34 @@ async def generate_campaign(req: CampaignRequest, ws: Optional[str] = Depends(cu
     ctx = _brand_context(brand, req.language)
     platforms = ", ".join(req.platforms)
 
-    social_user = (
-        f"{ctx}\n\nCreate platform-optimized social media posts about: '{req.topic}'.\n"
-        f"Target platforms: {platforms}.\n"
-        "For EACH platform return an object with keys: platform, caption, hashtags (array without #), cta, image_idea.\n"
-        'Return ONLY this JSON: {"posts": [ {"platform": "...", "caption": "...", "hashtags": ["..."], "cta": "...", "image_idea": "..."} ]}'
-    )
-    copy_user = (
-        f"{ctx}\n\nWrite a high-converting short ad / sales copy about: '{req.topic}'.\n"
-        'Return ONLY this JSON: {"title": "punchy headline", "body": "the ad copy with \\n line breaks", "variants": ["1-2 alternative hooks"]}'
+    # One combined text call (posts + ad copy) avoids firing two parallel
+    # requests at the same provider – which trips Gemini's free-tier rate limit.
+    combined_user = (
+        f"{ctx}\n\nCreate a full marketing package about: '{req.topic}'.\n"
+        f"Target social platforms: {platforms}.\n"
+        "Return ONLY this JSON:\n"
+        '{"posts": [ {"platform": "...", "caption": "...", "hashtags": ["without #"], "cta": "...", "image_idea": "..."} ], '
+        '"copy": {"title": "punchy headline", "body": "the ad copy with \\n line breaks", "variants": ["1-2 alternative hooks"]}}'
     )
     json_system = "You return strictly valid JSON and nothing else."
     image_prompt = _build_image_prompt(brand, req.topic, req.image_style)
 
-    social_raw, copy_raw, image_res = await asyncio.gather(
-        llm_text(req.model, json_system, social_user),
-        llm_text(req.model, json_system, copy_user),
+    text_raw, image_res = await asyncio.gather(
+        llm_text(req.model, json_system, combined_user),
         brand_image_verbose(image_prompt),
         return_exceptions=True,
     )
 
     posts = []
-    if isinstance(social_raw, str):
-        posts = (_extract_json(social_raw) or {}).get("posts", [])
     copy_data = {"title": "", "body": "", "variants": []}
-    if isinstance(copy_raw, str):
-        copy_data = _extract_json(copy_raw) or copy_data
+    text_error = None
+    if isinstance(text_raw, str):
+        parsed = _extract_json(text_raw) or {}
+        posts = parsed.get("posts", []) or []
+        copy_data = parsed.get("copy") or copy_data
+    elif isinstance(text_raw, Exception):
+        text_error = str(text_raw)[:200]
+        logger.error(f"Campaign text error: {text_raw}")
     image_url = None
     image_error = None
     if isinstance(image_res, tuple):
@@ -1251,6 +1253,7 @@ async def generate_campaign(req: CampaignRequest, ws: Optional[str] = Depends(cu
         "copy": copy_data,
         "image": image_url,
         "image_error": image_error,
+        "text_error": text_error,
         "created_at": _now_iso(),
     }
     result["workspace_id"] = ws or ""
