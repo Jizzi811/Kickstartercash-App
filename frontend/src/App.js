@@ -51,6 +51,7 @@ import ExportCenter from "@/pages/ExportCenter";
 import Campaign from "@/pages/Campaign";
 import CampaignWorkflow from "@/pages/CampaignWorkflow";
 import AgentBuilder from "@/pages/AgentBuilder";
+import TTSStudio from "@/pages/TTSStudio";
 
 function App() {
   return (
@@ -141,6 +142,7 @@ function AppShell() {
               <Route path="/arena" element={<ChatArena />} />
               <Route path="/export" element={<ExportCenter />} />
               <Route path="/campaign" element={<Campaign />} />
+              <Route path="/tts" element={<TTSStudio />} />
               <Route path="/workflow" element={<CampaignWorkflow />} />
               <Route path="/specialists" element={<Specialists />} />
       </Routes>

@@ -4,7 +4,7 @@ import {
   LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
-  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check,
+  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { SalesSupportWidget } from "@/components/SalesSupportWidget";
@@ -41,6 +41,7 @@ const NAV = [
   { to: "/finance-bookkeeper", icon: BookOpen, labelDE: "Buchhaltung", labelEN: "Bookkeeper" },
   { to: "/finance-tax", icon: FileText, labelDE: "Tax Studio", labelEN: "Tax Studio" },
   { to: "/workflow", icon: Megaphone, labelDE: "Kampagnen-Flow", labelEN: "Campaign Flow" },
+  { to: "/tts", icon: Volume2, labelDE: "TTS Studio", labelEN: "TTS Studio" },
 ];
 
 const PAGE_NAMES = {
