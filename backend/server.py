@@ -66,6 +66,9 @@ FREETHEAI_BASE = os.environ.get('FREETHEAI_BASE', 'https://api.freetheai.xyz/v1'
 FREETHEAI_IMAGE_MODEL = os.environ.get('FREETHEAI_IMAGE_MODEL', 'eve/gpt-image-2')
 FREETHEAI_TEXT_MODEL = os.environ.get('FREETHEAI_TEXT_MODEL', 'opc/deepseek-v4-flash-free')
 FREETHEAI_TTS_MODEL = os.environ.get('FREETHEAI_TTS_MODEL', 'xai/grok-tts')
+# OpenAI text model used by the "gpt" button. Overridable so a non-technical
+# operator can swap it in Render (e.g. to gpt-4o) without a code change.
+OPENAI_TEXT_MODEL = os.environ.get('OPENAI_TEXT_MODEL', 'gpt-5.2')
 
 _anthropic_client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
 LOGO_URL = "https://customer-assets.emergentagent.com/job_5234ef58-250d-4475-b61a-24b76051aa69/artifacts/y4lzk2ct_WhatsApp%20Image%202026-06-24%20at%2010.55.48.jpeg"
@@ -82,7 +85,7 @@ logger = logging.getLogger(__name__)
 # LLM helpers
 # ---------------------------------------------------------------------------
 MODEL_MAP = {
-    "gpt": ("openai", "gpt-5.2"),
+    "gpt": ("openai", OPENAI_TEXT_MODEL),
     "gemini": ("gemini", "gemini-2.5-flash"),
     # Claude models — routed directly via Anthropic SDK
     "claude-opus-4-8": ("anthropic", "claude-opus-4-8"),
@@ -196,6 +199,27 @@ async def _llm_single(provider: str, model: str, system_message: str, user_text:
 
         return await asyncio.to_thread(_call)
 
+    if provider == "openai" and OPENAI_API_KEY:
+        # Direct OpenAI Chat Completions – so the "gpt" button actually uses the
+        # user's OPENAI_API_KEY instead of silently falling back to Gemini.
+        def _call_openai():
+            import requests
+            messages = []
+            if system_message:
+                messages.append({"role": "system", "content": system_message})
+            messages.append({"role": "user", "content": user_text})
+            r = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
+                json={"model": model, "messages": messages},
+                timeout=90,
+            )
+            if not r.ok:
+                raise RuntimeError(f"OpenAI {r.status_code}: {r.text[:200]}")
+            return (((r.json().get("choices") or [{}])[0]).get("message") or {}).get("content", "") or ""
+
+        return await asyncio.to_thread(_call_openai)
+
     if not _HAS_EMERGENT:
         raise RuntimeError("No LLM provider available (Emergent not installed, no direct keys)")
     chat = LlmChat(api_key=_api_key_for(provider), session_id=str(uuid.uuid4()), system_message=system_message)
@@ -223,7 +247,7 @@ async def llm_text(model_choice: str, system_message: str, user_text: str, grok_
         try:
             result = await asyncio.wait_for(
                 _llm_single(provider, model, system_message, user_text, grok_extra_data),
-                timeout=30.0
+                timeout=60.0
             )
             _cb_record_success(provider)
             return result
