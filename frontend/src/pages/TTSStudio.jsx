@@ -7,8 +7,8 @@ import { useApp, API } from "@/context/AppContext";
 import { PageTitle } from "@/components/PageTitle";
 import { Textarea } from "@/components/ui/textarea";
 
-// grok-tts is OpenAI-compatible; "Standard" sends no voice and lets the model pick.
-const VOICES = ["Standard", "alloy", "echo", "fable", "onyx", "nova", "shimmer"];
+// OpenAI gpt-4o-mini-tts voices. "Standard" = alloy.
+const VOICES = ["Standard", "alloy", "ash", "ballad", "coral", "echo", "fable", "nova", "onyx", "sage", "shimmer", "verse"];
 const MAX = 5000;
 
 export default function TTSStudio() {
@@ -84,7 +84,7 @@ export default function TTSStudio() {
         </div>
 
         <div className="flex items-center justify-between border-t border-white/10 pt-4">
-          <span className="text-xs text-zinc-500">FreeTheAi · Grok TTS</span>
+          <span className="text-xs text-zinc-500">OpenAI · gpt-4o-mini-tts</span>
           <button
             data-testid="tts-generate-btn"
             disabled={loading}

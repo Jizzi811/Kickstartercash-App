@@ -4234,16 +4234,16 @@ class TTSRequest(BaseModel):
     model: Optional[str] = None
 
 
-OPENAI_TTS_MODEL = os.environ.get('OPENAI_TTS_MODEL', 'tts-1')
-# OpenAI's built-in voices (also the ones offered in the TTS studio UI).
-_OPENAI_VOICES = {"alloy", "echo", "fable", "onyx", "nova", "shimmer"}
+# gpt-4o-mini-tts = neueres, natuerlicheres Modell mit mehr Stimmen. Bei Problemen
+# per Env auf 'tts-1' zuruecksetzbar (dann nur die 6 Basis-Stimmen).
+OPENAI_TTS_MODEL = os.environ.get('OPENAI_TTS_MODEL', 'gpt-4o-mini-tts')
 
 
 def _openai_tts(text: str, voice: Optional[str]) -> Optional[str]:
     """Text-to-speech via OpenAI /v1/audio/speech. Reliable, uses OPENAI_API_KEY."""
     if not OPENAI_API_KEY:
         return None
-    v = voice if voice in _OPENAI_VOICES else "alloy"
+    v = voice or "alloy"  # OpenAI validiert die Stimme selbst
     import requests
     r = requests.post(
         "https://api.openai.com/v1/audio/speech",
