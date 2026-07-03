@@ -1234,6 +1234,20 @@ async def generate_campaign(req: CampaignRequest, ws: Optional[str] = Depends(cu
     elif isinstance(text_raw, Exception):
         text_error = str(text_raw)[:200]
         logger.error(f"Campaign text error: {text_raw}")
+
+    # Cold free-tier instances often time out on the first call – give the now-warm
+    # server one more, sequential attempt before returning empty text.
+    if not posts and not copy_data.get("body"):
+        try:
+            retry_raw = await llm_text(req.model, json_system, combined_user)
+            parsed = _extract_json(retry_raw) or {}
+            posts = parsed.get("posts", []) or posts
+            copy_data = parsed.get("copy") or copy_data
+            if posts or copy_data.get("body"):
+                text_error = None
+        except Exception as e:
+            text_error = text_error or str(e)[:200]
+            logger.error(f"Campaign text retry failed: {e}")
     image_url = None
     image_error = None
     if isinstance(image_res, tuple):
