@@ -42,36 +42,29 @@ except ImportError:
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-mongo_url = os.environ.get('MONGO_URL', '')
+# --- Central configuration (Sprint 0.2 refactor) ----------------------------
+# All environment-derived settings now live in app/core/config.py. They are
+# imported here so the rest of server.py keeps using the same names unchanged.
+sys.path.insert(0, str(ROOT_DIR))
+from app.core.config import (  # noqa: E402
+    MONGO_URL, DB_NAME,
+    ANTHROPIC_API_KEY, EMERGENT_LLM_KEY, OPENAI_API_KEY, GEMINI_API_KEY,
+    RESEND_API_KEY, SENDER_EMAIL, REPORT_EMAILS,
+    POYO_API_KEY, POYO_BASE,
+    FREETHEAI_API_KEY, FREETHEAI_BASE, FREETHEAI_IMAGE_MODEL,
+    FREETHEAI_TEXT_MODEL, FREETHEAI_TTS_MODEL,
+    OPENAI_TEXT_MODEL, LOGO_URL,
+)
+
 try:
-    client = AsyncIOMotorClient(mongo_url, serverSelectionTimeoutMS=5000) if mongo_url else None
-    db = client[os.environ.get('DB_NAME', 'kickstartercash')] if client else None
+    client = AsyncIOMotorClient(MONGO_URL, serverSelectionTimeoutMS=5000) if MONGO_URL else None
+    db = client[DB_NAME] if client else None
 except Exception as _mongo_err:
     logging.warning(f"MongoDB init failed: {_mongo_err}")
     client = None
     db = None
-ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
-EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
-RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
-SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
-# Comma-separated list of emails that receive KASH chat reports
-REPORT_EMAILS: list[str] = [e.strip() for e in os.environ.get('KASH_REPORT_EMAILS', '').split(',') if e.strip()]
-POYO_API_KEY = os.environ.get('POYO_API_KEY', '')
-POYO_BASE = "https://api.poyo.ai"
-# FreeTheAi – free OpenAI-compatible gateway (gpt-image-2 etc.)
-FREETHEAI_API_KEY = os.environ.get('FREETHEAI_API_KEY', '')
-FREETHEAI_BASE = os.environ.get('FREETHEAI_BASE', 'https://api.freetheai.xyz/v1')
-FREETHEAI_IMAGE_MODEL = os.environ.get('FREETHEAI_IMAGE_MODEL', 'eve/gpt-image-2')
-FREETHEAI_TEXT_MODEL = os.environ.get('FREETHEAI_TEXT_MODEL', 'opc/deepseek-v4-flash-free')
-FREETHEAI_TTS_MODEL = os.environ.get('FREETHEAI_TTS_MODEL', 'xai/grok-tts')
-# OpenAI text model used by the "gpt" button. Overridable so a non-technical
-# operator can swap it in Render (e.g. to gpt-4o) without a code change.
-OPENAI_TEXT_MODEL = os.environ.get('OPENAI_TEXT_MODEL', 'gpt-5.2')
 
 _anthropic_client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
-LOGO_URL = "https://customer-assets.emergentagent.com/job_5234ef58-250d-4475-b61a-24b76051aa69/artifacts/y4lzk2ct_WhatsApp%20Image%202026-06-24%20at%2010.55.48.jpeg"
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
 
