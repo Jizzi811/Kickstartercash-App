@@ -56,13 +56,7 @@ from app.core.config import (  # noqa: E402
     OPENAI_TEXT_MODEL, LOGO_URL,
 )
 
-try:
-    client = AsyncIOMotorClient(MONGO_URL, serverSelectionTimeoutMS=5000) if MONGO_URL else None
-    db = client[DB_NAME] if client else None
-except Exception as _mongo_err:
-    logging.warning(f"MongoDB init failed: {_mongo_err}")
-    client = None
-    db = None
+from app.core.database import client, db  # noqa: E402
 
 _anthropic_client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
 if RESEND_API_KEY:
