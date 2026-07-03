@@ -1,0 +1,46 @@
+name: CI
+
+# Safety net for a deploy-to-test project: catch backend import errors and
+# frontend build breaks on every push/PR, BEFORE Render/Netlify deploy.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend – import smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install backend dependencies
+        run: pip install -r backend/requirements-deploy.txt
+      - name: Syntax + import check
+        working-directory: backend
+        env:
+          MONGO_URL: ""
+          DB_NAME: brandmind_ci
+        run: |
+          python -c "import ast; ast.parse(open('server.py').read()); print('syntax OK')"
+          python -c "import server; print('backend import OK')"
+
+  frontend:
+    name: Frontend – build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Build
+        working-directory: frontend
+        env:
+          CI: false   # don't fail the build on lint warnings (CRA/craco)
+        run: npm run build
