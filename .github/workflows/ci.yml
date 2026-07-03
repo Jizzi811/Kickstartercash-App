@@ -38,7 +38,9 @@ jobs:
           node-version: "20"
       - name: Install frontend dependencies
         working-directory: frontend
-        run: npm ci
+        # --legacy-peer-deps mirrors the deploy install; the project has a known
+        # react-day-picker/date-fns peer-dep mismatch (tech debt, tracked in ROADMAP).
+        run: npm ci --legacy-peer-deps
       - name: Build
         working-directory: frontend
         env:

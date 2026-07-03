@@ -44,6 +44,12 @@ veränderbare** Plattform machen.
 | 0.4 | Logging & Fehlerbehandlung vereinheitlichen | offen | Einheitliches Log-Format; Fehler liefern klare Meldungen |
 | 0.5 | Rollen-/Rechtekonzept konsolidieren | offen | Ein `current_user`/`current_workspace`-Pfad, überall genutzt |
 
+### Tech-Debt (im Blick behalten)
+
+- **Frontend Peer-Deps:** `react-day-picker@8.10.1` erwartet `date-fns` 2/3, das
+  Projekt nutzt `date-fns@4`. Läuft heute nur über `--legacy-peer-deps`. Später
+  sauber auflösen (react-day-picker upgraden oder date-fns downgraden).
+
 ### Der Refactor-Ansatz (CTO-Entscheidung)
 
 server.py (~4.700 Zeilen) wird **nicht** in einem großen Wurf zerlegt. Das wäre
