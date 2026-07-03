@@ -62,7 +62,7 @@ const generatePDF = async (content, title) => {
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
-  doc.text("Kickstartercash.Club", margin, 12);
+  doc.text("Brandmind", margin, 12);
 
   // Title
   doc.setTextColor(212, 175, 55);
@@ -125,7 +125,7 @@ const generatePDF = async (content, title) => {
     doc.setPage(p);
     doc.setTextColor(150, 150, 150);
     doc.setFontSize(7);
-    doc.text(`Kickstartercash.Club — Seite ${p} von ${pageCount}`, pageW / 2, pageH - 10, { align: "center" });
+    doc.text(`Brandmind — Seite ${p} von ${pageCount}`, pageW / 2, pageH - 10, { align: "center" });
   }
 
   doc.save(`kickstartercash-export-${Date.now()}.pdf`);

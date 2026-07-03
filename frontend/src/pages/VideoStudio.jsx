@@ -18,7 +18,7 @@ const REMOTION_TEMPLATES = [
   { id: "testimonial", emoji: "⭐", labelDE: "Testimonial Slide", labelEN: "Testimonial Slide",
     descDE: "Kundenzitat mit animiertem Branding", descEN: "Customer quote with animated branding" },
   { id: "intro", emoji: "✨", labelDE: "Brand Intro", labelEN: "Brand Intro",
-    descDE: "Markantes Kickstartercash.Club Intro (5s)", descEN: "Striking Kickstartercash.Club intro (5s)" },
+    descDE: "Markantes Brandmind Intro (5s)", descEN: "Striking Brandmind intro (5s)" },
 ];
 
 // ── LLM Prompt Tools ────────────────────────────────────────────────────────
@@ -119,8 +119,8 @@ function VeoPanel({ lang }) {
         setContext={setPrompt}
         label="Video Prompt"
         labelEN="Video Prompt"
-        placeholder="z.B. Ein elegantes Kickstartercash.Club Produkt-Video, goldene Partikel, Dubai Skyline im Hintergrund, cinematic…"
-        placeholderEN="e.g. An elegant Kickstartercash.Club product video, golden particles, Dubai skyline, cinematic…"
+        placeholder="z.B. Ein elegantes Brandmind Produkt-Video, goldene Partikel, Dubai Skyline im Hintergrund, cinematic…"
+        placeholderEN="e.g. An elegant Brandmind product video, golden particles, Dubai skyline, cinematic…"
         title="Veo Video Prompt"
       />
       <button
@@ -159,7 +159,7 @@ function RemotionPanel({ lang }) {
     try {
       const res = await axios.post(`${BACKEND}/api/video/remotion`, {
         template: tpl.id,
-        text: customText || (lang === "DE" ? "Kickstartercash.Club – Dein Weg zur finanziellen Freiheit" : "Kickstartercash.Club – Your Path to Financial Freedom"),
+        text: customText || (lang === "DE" ? "Brandmind – Dein Weg zur finanziellen Freiheit" : "Brandmind – Your Path to Financial Freedom"),
         lang,
       });
       if (res.data.video_url) {
@@ -321,8 +321,8 @@ export default function VideoStudio() {
                 setContext={setContext}
                 label="Video-Thema / Kontext"
                 labelEN="Video Topic / Context"
-                placeholder="z.B. Kickstartercash.Club Produkt-Vorstellung, 30 Sek, energetisch…"
-                placeholderEN="e.g. Kickstartercash.Club product intro, 30 sec, energetic…"
+                placeholder="z.B. Brandmind Produkt-Vorstellung, 30 Sek, energetisch…"
+                placeholderEN="e.g. Brandmind product intro, 30 sec, energetic…"
                 title="Video Studio – Prompts & Scripts"
               />
               <div className="grid grid-cols-2 gap-3">

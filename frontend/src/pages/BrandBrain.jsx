@@ -248,7 +248,7 @@ export default function BrandBrain() {
                     className={inputCls}
                     value={form.name}
                     onChange={(e) => set("name", e.target.value)}
-                    placeholder={T("z. B. Kickstartercash.Club", "e.g. Kickstartercash.Club")}
+                    placeholder={T("z. B. Brandmind", "e.g. Brandmind")}
                     autoFocus
                   />
                 </Field>

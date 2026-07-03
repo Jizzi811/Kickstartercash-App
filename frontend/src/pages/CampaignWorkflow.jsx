@@ -169,7 +169,7 @@ export default function CampaignWorkflow() {
     doc.setFont("helvetica", "bold");
     doc.setTextColor(212, 175, 55);
     doc.setFontSize(20);
-    doc.text("Kickstartercash.Club – Kampagnen-Report", 20, 25);
+    doc.text("Brandmind – Kampagnen-Report", 20, 25);
     doc.setTextColor(180, 180, 180);
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
@@ -212,7 +212,7 @@ export default function CampaignWorkflow() {
               <span className="text-xs text-zinc-400 mb-1.5 block">{t("Thema / Produkt *", "Topic / Product *")}</span>
               <input value={topic} onChange={e => setTopic(e.target.value)}
                 className="w-full bg-[#111] border border-white/10 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#7C3AED]/60"
-                placeholder={t("z.B. Kickstartercash.Club Black Card Launch…", "e.g. Kickstartercash.Club Black Card Launch…")} />
+                placeholder={t("z.B. Brandmind Black Card Launch…", "e.g. Brandmind Black Card Launch…")} />
             </label>
             <label className="block">
               <span className="text-xs text-zinc-400 mb-1.5 block">{t("Kampagnenziel", "Campaign Goal")}</span>

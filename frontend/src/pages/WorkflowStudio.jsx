@@ -14,10 +14,10 @@ const TOOLS = [
   { id: "wf_sop",        label: "SOP erstellen",           label_en: "Create SOP",           emoji: "📋", type: "llm", desc: "Standard Operating Procedure Schritt für Schritt." },
   { id: "wf_automation", label: "Automatisierungs-Plan",   label_en: "Automation Plan",      emoji: "⚡", type: "llm", desc: "Identifiziert Automatisierungspotenzial & Tool-Stack." },
   { id: "wf_funnel",     label: "Funnel-Workflow",         label_en: "Funnel Workflow",      emoji: "🔽", type: "llm", desc: "Lead-to-Sale-Workflow mit allen Touchpoints & Automationen." },
-  { id: "wf_onboarding", label: "Onboarding-Prozess",      label_en: "Onboarding Process",  emoji: "🚀", type: "llm", desc: "Neukunden-Onboarding-Workflow für Kickstartercash.Club." },
+  { id: "wf_onboarding", label: "Onboarding-Prozess",      label_en: "Onboarding Process",  emoji: "🚀", type: "llm", desc: "Neukunden-Onboarding-Workflow für Brandmind." },
   { id: "wf_kpis",       label: "Prozess-KPIs",            label_en: "Process KPIs",        emoji: "📊", type: "llm", desc: "Definiert messbare KPIs für jeden Prozessschritt." },
 
-  /* ── Kickstartercash.Club spezifische Workflows ──────────────────────── */
+  /* ── Brandmind spezifische Workflows ──────────────────────── */
   { id: "wf_brand_content",    label: "Brand Content",          label_en: "Brand Content",          emoji: "🎨", type: "llm", desc: "Karte/Produkt → Plattform → Caption, Bildprompt, Reel-Idee, Hashtags, CTA." },
   { id: "wf_card_ads",         label: "Karten-Werbemittel",     label_en: "Card Ad Assets",         emoji: "💳", type: "llm", desc: "Banner-Ideen, Carousel-Struktur & Story-Frames für die schwarze Karte." },
   { id: "wf_week_plan",        label: "7-Tage Contentplan",     label_en: "7-Day Content Plan",     emoji: "📅", type: "llm", desc: "1-Klick → 7 Tage Posts für Instagram, TikTok, Facebook, LinkedIn." },

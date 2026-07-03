@@ -76,7 +76,7 @@ function EntryModal({ entry, categories, onSave, onClose }) {
             <input
               value={form.title}
               onChange={(e) => set("title", e.target.value)}
-              placeholder="z.B. Kickstartercash.Club Produkt-Übersicht"
+              placeholder="z.B. Brandmind Produkt-Übersicht"
               className="w-full bg-black border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#7C3AED]/50"
             />
           </div>
