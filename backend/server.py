@@ -1291,6 +1291,7 @@ async def generate_campaign(req: CampaignRequest, ws: Optional[str] = Depends(cu
         "copy": copy_data,
         "image": image_url,
         "image_error": image_error,
+        "image_prompt": image_prompt,
         "text_error": text_error,
         "created_at": _now_iso(),
     }

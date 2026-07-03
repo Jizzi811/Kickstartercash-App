@@ -18,12 +18,14 @@ export default function Campaign() {
   const [applyLogo, setApplyLogo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [puterImg, setPuterImg] = useState(null);
+  const [puterLoading, setPuterLoading] = useState(false);
 
   const toggle = (p) => setSelected((s) => s.includes(p) ? s.filter((x) => x !== p) : [...s, p]);
 
   const generate = async () => {
     if (!topic.trim()) { toast.error(t("topic")); return; }
-    setLoading(true); setResult(null);
+    setLoading(true); setResult(null); setPuterImg(null);
     try {
       const res = await axios.post(`${API}/generate/campaign`, {
         topic, platforms: selected, brand_id: activeBrandId, model, language: lang,
@@ -35,10 +37,29 @@ export default function Campaign() {
     } finally { setLoading(false); }
   };
 
+  // Free client-side image via Puter (gpt-image-2) – used when the backend
+  // provider chain returned no image. First use prompts a one-time Puter login.
+  const generatePuterImage = async () => {
+    const prompt = result?.image_prompt
+      || `Premium marketing image, ${style} style, about: ${topic}. Elegant, dramatic lighting, professional advertising asset.`;
+    if (!window.puter?.ai?.txt2img) { toast.error("Puter konnte nicht geladen werden."); return; }
+    setPuterLoading(true);
+    try {
+      const el = await window.puter.ai.txt2img(prompt, { model: "gpt-image-2" });
+      const src = el?.src || (typeof el === "string" ? el : null);
+      if (src) setPuterImg(src);
+      else toast.error(t("error_generic"));
+    } catch (e) {
+      toast.error("Puter: " + (e?.message || e?.error?.message || "Bild fehlgeschlagen"));
+    } finally { setPuterLoading(false); }
+  };
+
+  const shownImage = result?.image || puterImg;
+
   const downloadImg = () => {
-    if (!result?.image) return;
+    if (!shownImage) return;
     const a = document.createElement("a");
-    a.href = result.image; a.download = `campaign-${Date.now()}.png`; a.click();
+    a.href = shownImage; a.download = `campaign-${Date.now()}.png`; a.click();
   };
 
   return (
@@ -103,14 +124,25 @@ export default function Campaign() {
           {/* Image */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="bg-[#0A0A0A] border border-white/10 rounded-md p-4 flex flex-col">
             <div className="text-xs tracking-[0.12em] uppercase text-[#7C3AED] mb-3 flex items-center gap-1.5"><ImageIcon size={13} /> {t("campaign_image")}</div>
-            <div className="flex-1 flex items-center justify-center min-h-[220px] rounded-sm bg-black/40 overflow-hidden">
-              {result.image
-                ? <img data-testid="campaign-image" src={result.image} alt="brand" className="w-full h-full object-contain" />
-                : result.image_error
-                  ? <span className="text-red-400/80 text-xs p-3 text-center break-words">{result.image_error}</span>
-                  : <span className="text-zinc-700 text-sm">—</span>}
+            <div className="flex-1 flex flex-col items-center justify-center min-h-[220px] rounded-sm bg-black/40 overflow-hidden">
+              {shownImage
+                ? <img data-testid="campaign-image" src={shownImage} alt="brand" className="w-full h-full object-contain" />
+                : puterLoading
+                  ? <span className="text-[#7C3AED] text-xs p-3 text-center flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Bild wird erzeugt…</span>
+                  : (
+                    <div className="flex flex-col items-center gap-2 p-3 text-center">
+                      {result.image_error && <span className="text-red-400/70 text-[11px] break-words">{result.image_error}</span>}
+                      <button
+                        data-testid="campaign-puter-btn"
+                        onClick={generatePuterImage}
+                        className="inline-flex items-center gap-2 bg-[#7C3AED] text-white px-4 py-2 rounded-sm text-sm font-semibold hover:bg-[#C4B5FD] transition-colors">
+                        <ImageIcon size={14} /> Bild gratis erzeugen
+                      </button>
+                      <span className="text-zinc-600 text-[10px]">via Puter · gpt-image-2 (einmalig Login)</span>
+                    </div>
+                  )}
             </div>
-            {result.image && (
+            {shownImage && (
               <button data-testid="campaign-image-download" onClick={downloadImg} className="mt-3 inline-flex items-center justify-center gap-2 border border-[#7C3AED]/50 text-[#7C3AED] py-2 rounded-sm hover:bg-[#7C3AED]/10 text-sm">
                 <Download size={14} /> {t("download")}
               </button>
