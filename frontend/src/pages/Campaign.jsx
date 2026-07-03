@@ -106,7 +106,9 @@ export default function Campaign() {
             <div className="flex-1 flex items-center justify-center min-h-[220px] rounded-sm bg-black/40 overflow-hidden">
               {result.image
                 ? <img data-testid="campaign-image" src={result.image} alt="brand" className="w-full h-full object-contain" />
-                : <span className="text-zinc-700 text-sm">—</span>}
+                : result.image_error
+                  ? <span className="text-red-400/80 text-xs p-3 text-center break-words">{result.image_error}</span>
+                  : <span className="text-zinc-700 text-sm">—</span>}
             </div>
             {result.image && (
               <button data-testid="campaign-image-download" onClick={downloadImg} className="mt-3 inline-flex items-center justify-center gap-2 border border-[#7C3AED]/50 text-[#7C3AED] py-2 rounded-sm hover:bg-[#7C3AED]/10 text-sm">

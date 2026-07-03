@@ -512,8 +512,8 @@ async def openai_image(prompt: str, size: str = "1:1", image_urls: Optional[list
         return None
 
 
-async def brand_image(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
-    """Best-available brand image: FreeTheAi -> OpenAI (gpt-image-1) -> Poyo -> Gemini."""
+async def brand_image_verbose(prompt: str, size: str = "1:1", image_urls: Optional[list] = None):
+    """Try providers in order; return (image_or_None, per_provider_status_dict)."""
     providers = []
     if FREETHEAI_API_KEY:
         providers.append(("FreeTheAi", freetheai_image))
@@ -523,18 +523,25 @@ async def brand_image(prompt: str, size: str = "1:1", image_urls: Optional[list]
         providers.append(("Poyo", poyo_nano_banana))
     providers.append(("Gemini", gemini_nano_banana))
 
-    last_exc = None
+    status = {}
     for name, fn in providers:
         try:
             img = await fn(prompt, size=size, image_urls=image_urls)
             if img:
-                return img
+                status[name] = "ok"
+                return img, status
+            status[name] = "kein Bild"
         except Exception as e:
-            last_exc = e
+            status[name] = str(e)[:160]
             logger.warning(f"{name} image failed, trying next provider: {e}")
-    if last_exc:
-        logger.error(f"All image providers failed. Last error: {last_exc}")
-    return None
+    logger.error(f"All image providers failed: {status}")
+    return None, status
+
+
+async def brand_image(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
+    """Best-available brand image: FreeTheAi -> OpenAI (gpt-image-1) -> Poyo -> Gemini."""
+    img, _ = await brand_image_verbose(prompt, size=size, image_urls=image_urls)
+    return img
 
 
 async def llm_image(prompt: str, reference_b64: Optional[str] = None) -> Optional[str]:
@@ -1161,16 +1168,10 @@ async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_
         )
         image_urls = [brand_logo]
 
-    try:
-        image_url = await brand_image(full_prompt, size=req.size, image_urls=image_urls)
-    except RuntimeError as e:
-        raise HTTPException(status_code=402, detail=str(e))
-    except Exception as e:
-        logger.error(f"Image generation error: {e}")
-        raise HTTPException(status_code=500, detail="Bildgenerierung fehlgeschlagen / Image generation failed")
-
+    image_url, img_status = await brand_image_verbose(full_prompt, size=req.size, image_urls=image_urls)
     if not image_url:
-        raise HTTPException(status_code=500, detail="Kein Bild erzeugt / No image produced")
+        detail = "Bildgenerierung fehlgeschlagen. " + " · ".join(f"{k}: {v}" for k, v in img_status.items())
+        raise HTTPException(status_code=502, detail=detail[:500])
 
     record = {
         "id": str(uuid.uuid4()),
@@ -1221,7 +1222,7 @@ async def generate_campaign(req: CampaignRequest, ws: Optional[str] = Depends(cu
     social_raw, copy_raw, image_res = await asyncio.gather(
         llm_text(req.model, json_system, social_user),
         llm_text(req.model, json_system, copy_user),
-        brand_image(image_prompt),
+        brand_image_verbose(image_prompt),
         return_exceptions=True,
     )
 
@@ -1231,8 +1232,14 @@ async def generate_campaign(req: CampaignRequest, ws: Optional[str] = Depends(cu
     copy_data = {"title": "", "body": "", "variants": []}
     if isinstance(copy_raw, str):
         copy_data = _extract_json(copy_raw) or copy_data
-    image_url = image_res if isinstance(image_res, str) else None
-    if isinstance(image_res, Exception):
+    image_url = None
+    image_error = None
+    if isinstance(image_res, tuple):
+        image_url, img_status = image_res
+        if not image_url:
+            image_error = " · ".join(f"{k}: {v}" for k, v in img_status.items())
+    elif isinstance(image_res, Exception):
+        image_error = str(image_res)[:300]
         logger.error(f"Campaign image error: {image_res}")
 
     result = {
@@ -1243,6 +1250,7 @@ async def generate_campaign(req: CampaignRequest, ws: Optional[str] = Depends(cu
         "posts": posts,
         "copy": copy_data,
         "image": image_url,
+        "image_error": image_error,
         "created_at": _now_iso(),
     }
     result["workspace_id"] = ws or ""
