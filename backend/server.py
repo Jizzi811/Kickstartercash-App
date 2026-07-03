@@ -4234,44 +4234,75 @@ class TTSRequest(BaseModel):
     model: Optional[str] = None
 
 
+OPENAI_TTS_MODEL = os.environ.get('OPENAI_TTS_MODEL', 'tts-1')
+# OpenAI's built-in voices (also the ones offered in the TTS studio UI).
+_OPENAI_VOICES = {"alloy", "echo", "fable", "onyx", "nova", "shimmer"}
+
+
+def _openai_tts(text: str, voice: Optional[str]) -> Optional[str]:
+    """Text-to-speech via OpenAI /v1/audio/speech. Reliable, uses OPENAI_API_KEY."""
+    if not OPENAI_API_KEY:
+        return None
+    v = voice if voice in _OPENAI_VOICES else "alloy"
+    import requests
+    r = requests.post(
+        "https://api.openai.com/v1/audio/speech",
+        headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
+        json={"model": OPENAI_TTS_MODEL, "input": text[:4000], "voice": v, "response_format": "mp3"},
+        timeout=120,
+    )
+    if not r.ok:
+        raise RuntimeError(f"OpenAI TTS {r.status_code}: {r.text[:200]}")
+    return f"data:audio/mpeg;base64,{base64.b64encode(r.content).decode('utf-8')}"
+
+
+def _freetheai_tts(text: str, voice: Optional[str], model: Optional[str]) -> Optional[str]:
+    """Text-to-speech via FreeTheAi (OpenAI-compatible /v1/audio/speech)."""
+    if not FREETHEAI_API_KEY:
+        return None
+    import requests
+    payload = {"model": model or FREETHEAI_TTS_MODEL, "input": text[:5000]}
+    if voice:
+        payload["voice"] = voice
+    r = requests.post(
+        f"{FREETHEAI_BASE}/audio/speech",
+        headers={"Authorization": f"Bearer {FREETHEAI_API_KEY}", "Content-Type": "application/json"},
+        json=payload, timeout=120,
+    )
+    if not r.ok:
+        raise RuntimeError(f"FreeTheAi TTS {r.status_code}: {r.text[:200]}")
+    ct = r.headers.get("content-type", "audio/mpeg")
+    if "application/json" in ct:
+        data = r.json()
+        b64 = data.get("b64_json") or (data.get("data") or [{}])[0].get("b64_json")
+        return f"data:audio/mpeg;base64,{b64}" if b64 else None
+    return f"data:{ct};base64,{base64.b64encode(r.content).decode('utf-8')}"
+
+
 @api_router.post("/audio/speech")
 async def audio_speech(req: TTSRequest):
-    """Text-to-speech via FreeTheAi (OpenAI-compatible /v1/audio/speech). Returns base64 audio."""
-    if not FREETHEAI_API_KEY:
-        raise HTTPException(status_code=503, detail="TTS ist nicht konfiguriert (FREETHEAI_API_KEY fehlt).")
+    """Text-to-speech. OpenAI first (reliable), FreeTheAi as free fallback."""
     text = (req.text or "").strip()
     if not text:
         raise HTTPException(status_code=400, detail="Kein Text angegeben.")
-    tts_model = req.model or FREETHEAI_TTS_MODEL
+    if not (OPENAI_API_KEY or FREETHEAI_API_KEY):
+        raise HTTPException(status_code=503, detail="TTS ist nicht konfiguriert (kein OpenAI- oder FreeTheAi-Key).")
 
-    def _call():
-        import requests
-        payload = {"model": tts_model, "input": text[:5000]}
-        if req.voice:
-            payload["voice"] = req.voice
-        r = requests.post(
-            f"{FREETHEAI_BASE}/audio/speech",
-            headers={"Authorization": f"Bearer {FREETHEAI_API_KEY}", "Content-Type": "application/json"},
-            json=payload, timeout=120,
-        )
-        if not r.ok:
-            raise RuntimeError(f"{r.status_code}: {r.text[:200]}")
-        ct = r.headers.get("content-type", "audio/mpeg")
-        # Some gateways return raw audio bytes, others JSON with b64.
-        if "application/json" in ct:
-            data = r.json()
-            b64 = data.get("b64_json") or (data.get("data") or [{}])[0].get("b64_json")
-            return f"data:audio/mpeg;base64,{b64}" if b64 else None
-        return f"data:{ct};base64,{base64.b64encode(r.content).decode('utf-8')}"
+    errors = {}
+    for name, fn in [("OpenAI", lambda: _openai_tts(text, req.voice)),
+                     ("FreeTheAi", lambda: _freetheai_tts(text, req.voice, req.model))]:
+        try:
+            audio = await asyncio.wait_for(asyncio.to_thread(fn), timeout=130)
+            if audio:
+                return {"audio": audio, "provider": name, "voice": req.voice or "alloy"}
+            errors[name] = "kein Audio"
+        except Exception as e:
+            errors[name] = str(e)[:160]
+            logger.warning(f"{name} TTS failed: {e}")
 
-    try:
-        audio = await asyncio.wait_for(asyncio.to_thread(_call), timeout=130)
-    except Exception as e:
-        logger.error(f"TTS failed: {e}")
-        raise HTTPException(status_code=502, detail="Sprachausgabe fehlgeschlagen.")
-    if not audio:
-        raise HTTPException(status_code=502, detail="Keine Audiodaten erhalten.")
-    return {"audio": audio, "model": tts_model, "voice": req.voice or "default"}
+    logger.error(f"All TTS providers failed: {errors}")
+    detail = "Sprachausgabe fehlgeschlagen · " + " · ".join(f"{k}: {v}" for k, v in errors.items())
+    raise HTTPException(status_code=502, detail=detail[:300])
 
 
 @api_router.get("/health")
