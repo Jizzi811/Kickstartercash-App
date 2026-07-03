@@ -512,8 +512,9 @@ async def openai_image(prompt: str, size: str = "1:1", image_urls: Optional[list
             "https://api.openai.com/v1/images/generations",
             headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
             json={"model": OPENAI_IMAGE_MODEL, "prompt": prompt[:4000],
-                  "size": size_map.get(size, "1024x1024"), "n": 1},
-            timeout=120,
+                  "size": size_map.get(size, "1024x1024"), "n": 1,
+                  "quality": os.environ.get("OPENAI_IMAGE_QUALITY", "high")},
+            timeout=180,
         )
         if not r.ok:
             logger.warning(f"OpenAI image {r.status_code}: {r.text[:200]}")
@@ -530,7 +531,7 @@ async def openai_image(prompt: str, size: str = "1:1", image_urls: Optional[list
         return None
 
     try:
-        return await asyncio.wait_for(asyncio.to_thread(_generate), timeout=130)
+        return await asyncio.wait_for(asyncio.to_thread(_generate), timeout=190)
     except Exception as e:
         logger.error(f"OpenAI image generation failed: {e}")
         return None
@@ -1087,14 +1088,20 @@ async def _get_brand_or_404(brand_id: str) -> dict:
 
 
 def _build_image_prompt(brand: dict, subject: str, style: str) -> str:
-    brand_line = (
-        f"Apply the brand identity of '{brand.get('name')}': dominant colors {brand.get('primary_color')} (gold) "
-        f"and {brand.get('secondary_color')} (deep black), {brand.get('image_style')}. "
-    )
+    name = brand.get("name") or "the brand"
+    colors = ", ".join([c for c in [brand.get("primary_color"), brand.get("secondary_color")] if c]) or "the brand's colors"
+    extra = (brand.get("image_style") or "").strip()
     return (
-        f"Create a premium, high-resolution marketing image. Visual style: {style}. {brand_line}"
-        f"Subject: {subject}. The result must look like a professional advertising asset, "
-        "elegant composition, dramatic lighting, no spelling errors in any text."
+        f"Create a premium, high-end advertising visual for the brand \"{name}\" – "
+        f"the kind a world-class creative agency would deliver. Visual style: {style}. "
+        f"Brand color palette: {colors}. {extra} "
+        f"Theme: {subject}. "
+        "Design a rich, detailed and FINISHED campaign scene – NOT a plain background with a caption. "
+        "Give it a clear focal point with depth: a real person, a product, or a striking hero object "
+        "interacting with the theme, set in a polished, cinematic environment with supporting details "
+        "(atmosphere, lighting effects, subtle graphic or holographic UI elements). "
+        "Photorealistic or premium 3D render, dramatic lighting, sharp focus, professional composition, "
+        "shallow depth of field. If any text appears, spell it correctly and keep it minimal and elegant."
     )
 
 
