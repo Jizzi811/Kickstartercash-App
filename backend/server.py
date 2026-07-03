@@ -15,7 +15,6 @@ from typing import List, Optional
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Header
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 
 import anthropic

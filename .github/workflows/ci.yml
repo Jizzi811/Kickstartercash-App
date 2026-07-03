@@ -27,6 +27,16 @@ jobs:
         run: |
           python -c "import ast; ast.parse(open('server.py').read()); print('syntax OK')"
           python -c "import server; print('backend import OK')"
+      - name: Static check – no undefined names (catches missed imports in refactors)
+        working-directory: backend
+        run: |
+          pip install pyflakes
+          OUT="$(python -m pyflakes server.py app || true)"
+          echo "$OUT"
+          if echo "$OUT" | grep -q "undefined name"; then
+            echo "::error::pyflakes found undefined name(s) – a reference is missing an import."
+            exit 1
+          fi
 
   frontend:
     name: Frontend – build
