@@ -5,17 +5,17 @@ import { MessageCircle, X, Send, Loader2, Sparkles, Ticket, Trash2 } from "lucid
 import { API, useApp } from "@/context/AppContext";
 
 const SUGGESTIONS_DE = [
-  "Was kann Kickstartercash.Club für mich tun?",
-  "Welche KI-Tools sind enthalten?",
-  "Wie funktioniert der Agenten-Builder?",
-  "Was kostet die Mitgliedschaft?",
+  "Was ist Brandmind?",
+  "Wie erstelle ich meine erste Kampagne?",
+  "Was ist das Brand Brain?",
+  "Welche Tarife gibt es?",
 ];
 
 const SUGGESTIONS_EN = [
-  "What can Kickstartercash.Club do for me?",
-  "Which AI tools are included?",
-  "How does the agent builder work?",
-  "What does the membership cost?",
+  "What is Brandmind?",
+  "How do I create my first campaign?",
+  "What is the Brand Brain?",
+  "Which plans are available?",
 ];
 
 function TicketModal({ onClose, lang }) {
@@ -256,9 +256,9 @@ export function SalesSupportWidget() {
                 <Sparkles size={15} color="#000" />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: "#fff", fontWeight: 600, fontSize: "14px" }}>KASH</div>
+                <div style={{ color: "#fff", fontWeight: 600, fontSize: "14px" }}>Quantum</div>
                 <div style={{ color: "#666", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                  {lang === "DE" ? "Sales & Support · Online" : "Sales & Support · Online"}
+                  {lang === "DE" ? "Brandmind Assistent · Online" : "Brandmind Assistant · Online"}
                 </div>
               </div>
               {/* TICKET BUTTON — always visible */}
@@ -314,8 +314,8 @@ export function SalesSupportWidget() {
                       maxWidth: "calc(100% - 36px)",
                     }}>
                       {lang === "DE"
-                        ? "Willkommen bei Kickstartercash.Club ✦ Ich bin KASH. Wie kann ich dir helfen?"
-                        : "Welcome to Kickstartercash.Club ✦ I'm KASH. How can I help you?"}
+                        ? "Willkommen bei Brandmind ✦ Ich bin Quantum. Wie kann ich dir helfen?"
+                        : "Welcome to Brandmind ✦ I'm Quantum. How can I help you?"}
                     </div>
                   </div>
 

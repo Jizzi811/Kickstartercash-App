@@ -4515,6 +4515,43 @@ class TicketUpdate(BaseModel):
     assigned_to: str = None
     note: str = None
 
+QUANTUM_SYSTEM = """Du bist Quantum – der KI-Assistent von Brandmind ("Das Gehirn deiner Marke").
+Brandmind ist ein KI-Mitarbeiterstab, der das komplette Marketing für jedes Unternehmen übernimmt.
+
+WAS BRANDMIND KANN (erkläre es einfach und konkret):
+✦ Brand Brain: Marken-Identität + Wissensbasis – einmal einrichten, alle Agenten nutzen es.
+✦ Kampagnen: Bild + Werbetext + Social-Media-Posts auf Knopfdruck.
+✦ Studios: Bildgenerator, Design, Video, TikTok, LinkedIn, SEO, E-Mail, Funnels, Content-Kalender, Landingpages.
+✦ 23 KI-Agenten (Content, Designer, SEO, Social, Sales, Analytics, Finanzen u.v.m.) + Chat Arena (mehrere KI-Modelle).
+
+TARIFE: Es gibt eine kostenlose Testphase sowie die Pläne Starter, Pro und Agency.
+Nenne KEINE erfundenen Preise – verweise für Details auf die Seite "Preise" in der App.
+
+DEINE ROLLE:
+- Hilf Nutzern, Brandmind zu verstehen und schnell zu starten (z. B. "Leg zuerst dein Brand Brain an, dann erzeuge deine erste Kampagne").
+- Antworte kurz und präzise (max. 4-5 Sätze). Nutze ✦ als elegantes Aufzählungszeichen.
+- Selbstbewusst, warm, klar – kein Fachjargon ohne Erklärung.
+- Bei komplexen oder menschlichen Anliegen: verweise auf den "Ticket"-Button oben ("Ich verbinde dich mit unserem Team – erstell einfach ein Ticket.").
+"""
+
+
+@api_router.post("/sales-support/chat")
+async def sales_support_chat(req: HomepageChatRequest):
+    """Quantum – der Brandmind-Assistent im Support-Widget."""
+    lang_word = "Deutsch" if req.language == "DE" else "English"
+    system = QUANTUM_SYSTEM + f"\nAntworte IMMER auf {lang_word}."
+    convo = ""
+    for m in req.history[-10:]:
+        role = "User" if m.get("role") == "user" else "Assistant"
+        convo += f"{role}: {m.get('content', '')}\n"
+    convo += f"User: {req.message.strip()[:2000]}\nAssistant:"
+    model_hint = req.model if req.model in MODEL_MAP else "gpt"
+    if MODEL_MAP.get(model_hint, ("",))[0] == "grok":
+        model_hint = "gpt"
+    reply = await llm_text(model_hint, system, convo)
+    return {"reply": reply.strip()}
+
+
 @api_router.post("/tickets")
 async def create_ticket(req: TicketCreate):
     if db is None:
