@@ -40,7 +40,9 @@ veränderbare** Plattform machen.
 |---|---------|--------|--------------------|
 | 0.1 | **CI-Sicherheitsnetz** (Backend-Import + Frontend-Build bei jedem Push) | ✅ fertig | CI grün auf `14cc4bb` (Backend-Import + Frontend-Build) |
 | 0.2 | **Backend modularisieren** (server.py → `app/`), *inkrementell* | 🚧 läuft | App bootet nach jedem Schritt identisch; CI grün |
-| 0.3 | Konfiguration & Secrets zentralisieren (`app/core/config.py`) | 🚧 Start | Erste Env-Konstanten ausgelagert; nächste Module ziehen nach |
+| 0.3 | Konfiguration & Secrets zentralisieren (`app/core/config.py`) | ✅ fertig | Env-Konstanten zentral; CI-grün |
+| 0.4 | LLM-Stack nach `app/services/llm.py` | ✅ fertig | Provider/Fallback/Circuit-Breaker extrahiert; pyflakes 0 undefined |
+| 0.5 | pyflakes-Gate in CI (undefinierte Namen) | ✅ fertig | Refactor-Sicherheitsnetz aktiv |
 | 0.4 | Logging & Fehlerbehandlung vereinheitlichen | offen | Einheitliches Log-Format; Fehler liefern klare Meldungen |
 | 0.5 | Rollen-/Rechtekonzept konsolidieren | offen | Ein `current_user`/`current_workspace`-Pfad, überall genutzt |
 
