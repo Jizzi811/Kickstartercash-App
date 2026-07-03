@@ -472,11 +472,53 @@ async def freetheai_image(prompt: str, size: str = "1:1", image_urls: Optional[l
         return None
 
 
+OPENAI_IMAGE_MODEL = os.environ.get('OPENAI_IMAGE_MODEL', 'gpt-image-1')
+
+
+async def openai_image(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
+    """Image generation via OpenAI Images API (gpt-image-1). Reliable, needs OPENAI_API_KEY with billing."""
+    if not OPENAI_API_KEY:
+        return None
+    size_map = {"1:1": "1024x1024", "16:9": "1536x1024", "9:16": "1024x1536",
+                "4:3": "1536x1024", "3:4": "1024x1536"}
+
+    def _generate():
+        import requests
+        r = requests.post(
+            "https://api.openai.com/v1/images/generations",
+            headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
+            json={"model": OPENAI_IMAGE_MODEL, "prompt": prompt[:4000],
+                  "size": size_map.get(size, "1024x1024"), "n": 1},
+            timeout=120,
+        )
+        if not r.ok:
+            logger.warning(f"OpenAI image {r.status_code}: {r.text[:200]}")
+            return None
+        data = (r.json().get("data") or [{}])[0]
+        b64 = data.get("b64_json")
+        if b64:
+            return f"data:image/png;base64,{b64}"
+        url = data.get("url")
+        if url:
+            rr = requests.get(url, timeout=60)
+            if rr.ok and rr.content:
+                return f"data:image/png;base64,{base64.b64encode(rr.content).decode('utf-8')}"
+        return None
+
+    try:
+        return await asyncio.wait_for(asyncio.to_thread(_generate), timeout=130)
+    except Exception as e:
+        logger.error(f"OpenAI image generation failed: {e}")
+        return None
+
+
 async def brand_image(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
-    """Best-available brand image, in order: FreeTheAi (gpt-image-2) -> Poyo -> Gemini direct."""
+    """Best-available brand image: FreeTheAi -> OpenAI (gpt-image-1) -> Poyo -> Gemini."""
     providers = []
     if FREETHEAI_API_KEY:
         providers.append(("FreeTheAi", freetheai_image))
+    if OPENAI_API_KEY:
+        providers.append(("OpenAI", openai_image))
     if POYO_API_KEY:
         providers.append(("Poyo", poyo_nano_banana))
     providers.append(("Gemini", gemini_nano_banana))
@@ -4222,11 +4264,12 @@ async def debug_image():
     prompt = "A simple purple circle on a black background, minimal, high quality"
     out = {
         "freetheai_configured": bool(FREETHEAI_API_KEY),
+        "openai_configured": bool(OPENAI_API_KEY),
         "poyo_configured": bool(POYO_API_KEY),
         "gemini_key": bool(GEMINI_API_KEY),
         "image_model": FREETHEAI_IMAGE_MODEL,
     }
-    for name, fn in [("freetheai", freetheai_image), ("gemini", gemini_nano_banana)]:
+    for name, fn in [("freetheai", freetheai_image), ("openai", openai_image), ("gemini", gemini_nano_banana)]:
         try:
             img = await fn(prompt, size="1:1")
             out[name] = ("ok (" + str(len(img)) + " bytes b64)") if img else "returned None (no image)"
