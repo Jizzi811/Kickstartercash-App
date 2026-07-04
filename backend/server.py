@@ -383,13 +383,13 @@ class Brand(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     slogan: str = ""
-    primary_color: str = "#D4AF37"
-    secondary_color: str = "#050505"
-    accent_color: str = "#F3E5AB"
-    font_heading: str = "Playfair Display"
-    font_body: str = "Manrope"
-    tone: str = "Premium, exklusiv, selbstbewusst"
-    image_style: str = "Luxuriös, schwarz-gold, cinematisch, hoher Kontrast"
+    primary_color: str = "#7C3AED"
+    secondary_color: str = "#0A0A0A"
+    accent_color: str = "#F5F5F7"
+    font_heading: str = "Space Grotesk"
+    font_body: str = "Inter"
+    tone: str = "Modern, klar, intelligent, selbstbewusst, inspirierend"
+    image_style: str = "Modern, hochwertig, violett-schwarz mit Off-White-Akzenten, cinematisch, klare Komposition, subtile Tech-/KI-Ästhetik, hoher Kontrast"
     logo_url: str = ""
     # Brand Brain fields
     industry: str = ""
@@ -406,13 +406,13 @@ class Brand(BaseModel):
 class BrandCreate(BaseModel):
     name: str
     slogan: str = ""
-    primary_color: str = "#D4AF37"
-    secondary_color: str = "#050505"
-    accent_color: str = "#F3E5AB"
-    font_heading: str = "Playfair Display"
-    font_body: str = "Manrope"
-    tone: str = "Premium, exklusiv, selbstbewusst"
-    image_style: str = "Luxuriös, schwarz-gold, cinematisch, hoher Kontrast"
+    primary_color: str = "#7C3AED"
+    secondary_color: str = "#0A0A0A"
+    accent_color: str = "#F5F5F7"
+    font_heading: str = "Space Grotesk"
+    font_body: str = "Inter"
+    tone: str = "Modern, klar, intelligent, selbstbewusst, inspirierend"
+    image_style: str = "Modern, hochwertig, violett-schwarz mit Off-White-Akzenten, cinematisch, klare Komposition, subtile Tech-/KI-Ästhetik, hoher Kontrast"
     logo_url: str = ""
     industry: str = ""
     website: str = ""
@@ -426,8 +426,8 @@ class BrandBrainOnboardRequest(BaseModel):
     name: str
     industry: str = ""
     logo_url: str = ""
-    primary_color: str = "#D4AF37"
-    secondary_color: str = "#050505"
+    primary_color: str = "#7C3AED"
+    secondary_color: str = "#0A0A0A"
     website: str = ""
     target_audience: str = ""
     tone: str = ""
@@ -462,6 +462,7 @@ class ImageRequest(BaseModel):
     language: str = "DE"
     apply_logo: bool = False
     size: str = "1:1"
+    count: int = 1   # number of variants to generate (1-4)
 
 
 class PromptOptimizeRequest(BaseModel):
@@ -574,17 +575,17 @@ class FunnelLead(BaseModel):
 # Brand endpoints
 # ---------------------------------------------------------------------------
 DEFAULT_BRAND = {
-    "id": "kickstartercash",
-    "name": "Kickstartercash.Club",
-    "slogan": "Exclusivity starts with your membership",
-    "primary_color": "#D4AF37",
-    "secondary_color": "#050505",
-    "accent_color": "#F3E5AB",
-    "font_heading": "Playfair Display",
-    "font_body": "Manrope",
-    "tone": "Premium, exklusiv, luxuriös, selbstbewusst, motivierend",
-    "image_style": "Luxuriös, schwarz-gold, cinematisch, Dubai-Skyline-Ästhetik, hoher Kontrast, goldene Lichteffekte",
-    "logo_url": "https://customer-assets.emergentagent.com/job_5234ef58-250d-4475-b61a-24b76051aa69/artifacts/nwxii717_bloom-generated-1782456245045.png",
+    "id": "kickstartercash",  # internal id kept for backward-compat; display is Brandmind
+    "name": "Brandmind",
+    "slogan": "Das Gehirn deiner Marke",
+    "primary_color": "#7C3AED",
+    "secondary_color": "#0A0A0A",
+    "accent_color": "#F5F5F7",
+    "font_heading": "Space Grotesk",
+    "font_body": "Inter",
+    "tone": "Modern, klar, intelligent, selbstbewusst, inspirierend",
+    "image_style": "Modern, hochwertig, violett-schwarz mit Off-White-Akzenten, cinematisch, klare Komposition, subtile Tech-/KI-Ästhetik, hoher Kontrast",
+    "logo_url": "",
     "is_default": True,
     "created_at": _now_iso(),
 }
@@ -599,7 +600,18 @@ async def seed_default_brand():
         existing = await db.brands.find_one({"id": DEFAULT_BRAND["id"]})
         if not existing:
             await db.brands.insert_one({**DEFAULT_BRAND})
-            logger.info("Seeded default Kickstartercash.Club brand")
+            logger.info("Seeded default Brandmind brand")
+        elif existing.get("name") == "Kickstartercash.Club":
+            # Legacy seed – rebrand the untouched default from Kickstartercash to
+            # Brandmind so studios stop injecting gold/Dubai identity into images.
+            fields = ["name", "slogan", "primary_color", "secondary_color",
+                      "accent_color", "font_heading", "font_body", "tone",
+                      "image_style", "logo_url"]
+            await db.brands.update_one(
+                {"id": DEFAULT_BRAND["id"]},
+                {"$set": {k: DEFAULT_BRAND[k] for k in fields}},
+            )
+            logger.info("Migrated legacy Kickstartercash seed brand -> Brandmind")
     except Exception as e:
         logger.error(f"DB seed failed: {e}")
     # Start daily KASH report scheduler
@@ -717,8 +729,8 @@ async def brand_brain_onboard(req: BrandBrainOnboardRequest, ws: Optional[str] =
 
     is_en = req.language == "EN"
     lang_label = "English" if is_en else "Deutsch"
-    primary = _clean_hex(req.primary_color, "#D4AF37")
-    secondary = _clean_hex(req.secondary_color, "#050505")
+    primary = _clean_hex(req.primary_color, "#7C3AED")
+    secondary = _clean_hex(req.secondary_color, "#0A0A0A")
 
     facts = "\n".join([
         f"Company name: {req.name}",
@@ -775,9 +787,9 @@ async def brand_brain_onboard(req: BrandBrainOnboardRequest, ws: Optional[str] =
         "slogan": (data.get("slogan") or "").strip(),
         "primary_color": primary,
         "secondary_color": secondary,
-        "accent_color": _clean_hex(data.get("accent_color", ""), "#F3E5AB"),
-        "font_heading": (data.get("font_heading") or "Playfair Display").strip(),
-        "font_body": (data.get("font_body") or "Manrope").strip(),
+        "accent_color": _clean_hex(data.get("accent_color", ""), "#F5F5F7"),
+        "font_heading": (data.get("font_heading") or "Space Grotesk").strip(),
+        "font_body": (data.get("font_body") or "Inter").strip(),
         "tone": (data.get("tone") or req.tone or "Professionell, vertrauenswürdig").strip(),
         "image_style": (data.get("image_style") or "Modern, professionell, hochwertig").strip(),
         "logo_url": req.logo_url.strip(),
@@ -878,7 +890,11 @@ def _build_image_prompt(brand: dict, subject: str, style: str) -> str:
         "interacting with the theme, set in a polished, cinematic environment with supporting details "
         "(atmosphere, lighting effects, subtle graphic or holographic UI elements). "
         "Photorealistic or premium 3D render, dramatic lighting, sharp focus, professional composition, "
-        "shallow depth of field. If any text appears, spell it correctly and keep it minimal and elegant."
+        "shallow depth of field. "
+        # Consistency anchors – raise the hit-rate for a cohesive, on-brand look.
+        "Editorial ad-campaign quality with cohesive color grading strictly in the brand palette; "
+        "ONE strong focal subject; clean, uncluttered background with deliberate negative space for a short headline; "
+        "no busy collages, no stock-photo feel. If any text appears, spell it correctly and keep it minimal and elegant."
     )
 
 
@@ -976,9 +992,24 @@ async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_
         )
         image_urls = [brand_logo]
 
-    image_url, img_status = await brand_image_verbose(full_prompt, size=req.size, image_urls=image_urls)
-    if not image_url:
-        detail = "Bildgenerierung fehlgeschlagen. " + " · ".join(f"{k}: {v}" for k, v in img_status.items())
+    count = min(max(req.count or 1, 1), 4)
+    results = await asyncio.gather(
+        *[brand_image_verbose(full_prompt, size=req.size, image_urls=image_urls) for _ in range(count)],
+        return_exceptions=True,
+    )
+    images = []
+    last_status = {}
+    for r in results:
+        if isinstance(r, tuple):
+            img, status = r
+            if img:
+                images.append(img)
+            else:
+                last_status = status
+        elif isinstance(r, Exception):
+            last_status = {"error": str(r)[:160]}
+    if not images:
+        detail = "Bildgenerierung fehlgeschlagen. " + " · ".join(f"{k}: {v}" for k, v in last_status.items())
         raise HTTPException(status_code=502, detail=detail[:500])
 
     record = {
@@ -987,7 +1018,8 @@ async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_
         "prompt": req.prompt,
         "style": req.style,
         "brand_id": req.brand_id,
-        "image": image_url,
+        "image": images[0],
+        "images": images,
         "created_at": _now_iso(),
     }
     record["workspace_id"] = ws or ""
@@ -3003,7 +3035,7 @@ AGENTS = {
         "name": "Marco – Marketing Director",
         "role_de": "Senior Marketing Director & KI-Marketingstratege",
         "role_en": "Senior Marketing Director & AI Marketing Strategist",
-        "color": "#D4AF37",
+        "color": "#7C3AED",
         "personality_de": (
             "Du bist der offizielle Senior Marketing Director und KI-Marketingstratege von Brandmind. "
             "Du verfügst über Expertenwissen in: Digital Marketing, Performance Marketing, Social Media Marketing, "
@@ -3822,7 +3854,7 @@ class CustomAgent(BaseModel):
     emoji: str = "🤖"
     role: str
     personality: str
-    color: str = "#D4AF37"
+    color: str = "#7C3AED"
     category: str = ""
     created_at: str = Field(default_factory=_now_iso)
     updated_at: str = Field(default_factory=_now_iso)
@@ -3833,7 +3865,7 @@ class CustomAgentCreate(BaseModel):
     emoji: str = "🤖"
     role: str
     personality: str
-    color: str = "#D4AF37"
+    color: str = "#7C3AED"
     category: str = ""
 
 

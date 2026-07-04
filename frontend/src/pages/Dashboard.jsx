@@ -261,8 +261,9 @@ const SHIMMER_CSS = `
 
 /* ═══════════════════════════════════════════════════════════════════ */
 export default function Dashboard() {
-  const { lang, activeBrand } = useApp();
+  const { lang, activeBrand, user } = useApp();
   const navigate = useNavigate();
+  const firstName = (user?.name || user?.email?.split("@")[0] || "").split(" ")[0];
   const [hovered, setHovered] = useState(null);
   const [tick, setTick] = useState(0);
   const [stats, setStats] = useState(null);
@@ -413,7 +414,7 @@ export default function Dashboard() {
                         backgroundClip: "text",
                       }}
                     >
-                      {activeBrand?.name || "Brandmind"}
+                      {firstName || (lang === "DE" ? "willkommen" : "there")}
                     </span>
                   </h1>
                   <p className="text-sm md:text-base text-zinc-400 leading-relaxed mb-8">

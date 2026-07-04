@@ -23,7 +23,7 @@ const EMPTY = {
   industry: "",
   website: "",
   primary_color: "#7C3AED",
-  secondary_color: "#050505",
+  secondary_color: "#0A0A0A",
   logo_url: "",
   target_audience: "",
   tone: "",

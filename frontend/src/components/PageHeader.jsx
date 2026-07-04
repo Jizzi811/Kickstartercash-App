@@ -2,6 +2,8 @@ import React from "react";
 import { motion } from "framer-motion";
 
 export function PageHeader({ icon: Icon, color, title, subtitle, badge }) {
+  // Unify all section headings on the Brandmind violet accent (ignore per-page color).
+  color = "#7C3AED";
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -40,10 +42,7 @@ export function PageHeader({ icon: Icon, color, title, subtitle, badge }) {
               {badge}
             </div>
           )}
-          <h1
-            className="text-xl md:text-2xl font-bold text-white leading-tight"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-          >
+          <h1 className="font-display text-2xl md:text-3xl font-light tracking-tight leading-tight gold-text">
             {title}
           </h1>
           {subtitle && (
