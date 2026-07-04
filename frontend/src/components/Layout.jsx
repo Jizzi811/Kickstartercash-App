@@ -4,7 +4,7 @@ import {
   LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
-  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target,
+  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target, Factory,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { SalesSupportWidget } from "@/components/SalesSupportWidget";
@@ -18,6 +18,7 @@ const NAV = [
   { to: "/",           icon: Target,     labelDE: "Mission Control",  labelEN: "Mission Control", end: true },
   { to: "/modules",    icon: LayoutGrid, labelDE: "Module",           labelEN: "Modules" },
   { to: "/brand-brain", icon: BrainCircuit, labelDE: "Brand Brain",   labelEN: "Brand Brain" },
+  { to: "/output-factory", icon: Factory, labelDE: "Output Factory", labelEN: "Output Factory" },
   { to: "/billing",    icon: Crown,      labelDE: "Preise & Plan",    labelEN: "Pricing & Plan" },
   { to: "/agents",     icon: Bot,        labelDE: "Agenten",          labelEN: "Agents" },
   { to: "/design",     icon: Palette,    labelDE: "Design Studio",    labelEN: "Design Studio" },
@@ -49,6 +50,7 @@ const PAGE_NAMES = {
   "/": "Mission Control",
   "/modules": "Module",
   "/brand-brain": "Brand Brain",
+  "/output-factory": "Output Factory",
   "/billing": "Preise & Plan",
   "/agents": "Agenten",
   "/design": "Design Studio",
