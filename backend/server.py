@@ -4652,8 +4652,94 @@ class MissionTaskUpdate(BaseModel):
     comment: Optional[str] = None
 
 
+class TeamChatMessage(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    thread_id: str = ""
+    workspace_id: str = ""
+    brand_id: str = ""
+    plan_id: str = ""
+    campaign_id: str = ""
+    agent: str = ""
+    role: str = ""
+    content: str = ""
+    timestamp: str = Field(default_factory=_now_iso)
+    message_type: str = "agent"            # user | agent | summary | system
+    linked_task_id: Optional[str] = None
+
+
+class TeamChatThread(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    workspace_id: str = ""
+    brand_id: str = ""
+    plan_id: str = ""
+    campaign_id: str = ""
+    title: str = ""
+    created_at: str = Field(default_factory=_now_iso)
+    updated_at: str = Field(default_factory=_now_iso)
+
+
+class TeamChatAskRequest(BaseModel):
+    question: str
+    model: str = "claude"
+    language: str = "DE"
+
+
 def _dept_for(dept_id: str) -> dict:
     return next((d for d in MISSION_DEPARTMENTS if d["id"] == dept_id), MISSION_DEPARTMENTS[0])
+
+
+TEAM_CHAT_AGENTS = [
+    {"agent": "AI CEO", "role": "Moderator & final decision maker"},
+    {"agent": "Marketing Director", "role": "Campaign strategy and channel focus"},
+    {"agent": "Creative Director", "role": "Big idea, story and creative quality"},
+    {"agent": "Copywriter", "role": "Messaging, hooks and conversion copy"},
+    {"agent": "SEO Manager", "role": "Search demand, keywords and content structure"},
+    {"agent": "Designer", "role": "Visual system, assets and layout quality"},
+    {"agent": "Video Producer", "role": "Video concepts, scripts and production flow"},
+    {"agent": "Sales Expert", "role": "Offer, objections and lead conversion"},
+    {"agent": "Analytics Expert", "role": "KPIs, measurement and risk signals"},
+    {"agent": "Automation Architect", "role": "Workflow design and approval gates"},
+]
+
+
+async def _team_chat_thread(plan: dict, ws: Optional[str]) -> dict:
+    """Return or create the single internal AI-team chat thread for a plan."""
+    existing = await db.mission_team_chat_threads.find_one(
+        {"plan_id": plan["id"], **_scope_filter(ws)}, {"_id": 0}
+    )
+    if existing:
+        return existing
+    thread = TeamChatThread(
+        workspace_id=ws or "",
+        brand_id=plan.get("brand_id", ""),
+        plan_id=plan["id"],
+        campaign_id=plan.get("campaign_id") or plan.get("linked_campaign") or plan.get("goal", ""),
+        title=f"AI Team Chat · {plan.get('goal', '')[:80]}",
+    ).model_dump()
+    await db.mission_team_chat_threads.insert_one(thread)
+    return thread
+
+
+def _fallback_team_chat(question: str, plan: dict, tasks: List[dict], lang: str) -> List[dict]:
+    """Safe deterministic team discussion if an LLM response is unavailable."""
+    top_tasks = ", ".join(t.get("title", "") for t in tasks[:3] if t.get("title")) or plan.get("goal", "")
+    if lang == "DE":
+        return [
+            {"agent": "AI CEO", "role": "Moderator & final decision maker", "content": f"Ich moderiere: Wir prüfen den Plan zu „{plan.get('goal', '')}“ anhand Wirkung, Risiken und benötigter Freigaben.", "message_type": "agent"},
+            {"agent": "Marketing Director", "role": "Campaign strategy and channel focus", "content": "Priorisiert einen klaren Lead-Kanal und eine sekundäre Content-Schleife, statt alle Kanäle gleichzeitig zu starten.", "message_type": "agent"},
+            {"agent": "Creative Director", "role": "Big idea, story and creative quality", "content": "Die Kernidee braucht eine einfache Story: Problem, sichtbarer Wandel, Proof und konkreter nächster Schritt.", "message_type": "agent"},
+            {"agent": "Copywriter", "role": "Messaging, hooks and conversion copy", "content": "Ich würde Hooks und CTA zuerst schärfen; jede Aufgabe sollte eine konkrete Conversion-Aussage enthalten.", "message_type": "agent"},
+            {"agent": "Analytics Expert", "role": "KPIs, measurement and risk signals", "content": "Risiko: Ohne Messplan optimieren wir blind. Definiert Lead-Kosten, Conversion-Rate und Produktionsgeschwindigkeit vor Start.", "message_type": "agent"},
+            {"agent": "AI CEO", "role": "Moderator & final decision maker", "content": f"Entscheidung: Zuerst die wichtigsten Tasks fokussieren ({top_tasks}), fehlende Assets ergänzen und alles nur nach menschlicher Freigabe umsetzen. Keine externen oder destruktiven Aktionen.", "message_type": "summary"},
+        ]
+    return [
+        {"agent": "AI CEO", "role": "Moderator & final decision maker", "content": f"I'll moderate: we are reviewing the plan for “{plan.get('goal', '')}” for impact, risks and approval needs.", "message_type": "agent"},
+        {"agent": "Marketing Director", "role": "Campaign strategy and channel focus", "content": "Prioritize one primary lead channel and one supporting content loop instead of launching every channel at once.", "message_type": "agent"},
+        {"agent": "Creative Director", "role": "Big idea, story and creative quality", "content": "The idea needs a simple story: problem, visible transformation, proof and one clear next step.", "message_type": "agent"},
+        {"agent": "Copywriter", "role": "Messaging, hooks and conversion copy", "content": "I would sharpen hooks and CTAs first; every task should include a concrete conversion message.", "message_type": "agent"},
+        {"agent": "Analytics Expert", "role": "KPIs, measurement and risk signals", "content": "Risk: without measurement, we optimize blindly. Define CPL, conversion rate and production velocity before launch.", "message_type": "agent"},
+        {"agent": "AI CEO", "role": "Moderator & final decision maker", "content": f"Decision: focus the highest-impact tasks first ({top_tasks}), add missing assets, and execute only after human approval. No external or destructive actions.", "message_type": "summary"},
+    ]
 
 
 @api_router.post("/mission/ceo/plan")
@@ -4806,6 +4892,108 @@ async def mission_get_plan(plan_id: str, ws: Optional[str] = Depends(current_wor
         raise HTTPException(status_code=404, detail="Plan not found")
     tasks = await db.mission_tasks.find({"plan_id": plan_id, **_scope_filter(ws)}, {"_id": 0}).to_list(100)
     return {"plan": plan, "tasks": tasks}
+
+
+@api_router.get("/mission/plans/{plan_id}/team-chat")
+async def mission_team_chat(plan_id: str, ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    plan = await db.mission_plans.find_one({"id": plan_id, **_scope_filter(ws)}, {"_id": 0})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    thread = await _team_chat_thread(plan, ws)
+    messages = await db.mission_team_chat_messages.find(
+        {"thread_id": thread["id"], **_scope_filter(ws)}, {"_id": 0}
+    ).to_list(300)
+    messages.sort(key=lambda m: m.get("timestamp", ""))
+    return {"thread": thread, "messages": messages, "agents": TEAM_CHAT_AGENTS}
+
+
+@api_router.post("/mission/plans/{plan_id}/team-chat/ask")
+async def mission_team_chat_ask(plan_id: str, payload: TeamChatAskRequest,
+                                ws: Optional[str] = Depends(current_workspace)):
+    question = (payload.question or "").strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="Question is required")
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    plan = await db.mission_plans.find_one({"id": plan_id, **_scope_filter(ws)}, {"_id": 0})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    tasks = await db.mission_tasks.find({"plan_id": plan_id, **_scope_filter(ws)}, {"_id": 0}).to_list(100)
+    brand = await _resolve_brand(plan.get("brand_id"), ws)
+    thread = await _team_chat_thread(plan, ws)
+
+    base = {
+        "thread_id": thread["id"],
+        "workspace_id": ws or "",
+        "brand_id": plan.get("brand_id", ""),
+        "plan_id": plan_id,
+        "campaign_id": thread.get("campaign_id", ""),
+    }
+    user_msg = TeamChatMessage(
+        **base, agent="Human", role="Plan owner", content=question, message_type="user"
+    ).model_dump()
+
+    lang_label = "Deutsch" if payload.language == "DE" else "English"
+    task_brief = "\n".join(
+        f"- {t.get('id')}: {t.get('department')} · {t.get('title')} · {t.get('status')} · {t.get('expected_output', '')}"
+        for t in tasks[:20]
+    )
+    system = (
+        f"{_brand_context(brand, payload.language)}\n\n"
+        "You are BrandMind's internal AI Team Chat for a Mission Control plan. "
+        "The AI CEO moderates. Relevant agents respond with short role-specific critique, improvements and next actions. "
+        "Agents may challenge or improve each other's suggestions. "
+        "The AI CEO must end with a highlighted final recommendation. "
+        "No external publishing, no destructive actions, no execution. Human approval is always required. "
+        f"Answer only valid JSON in {lang_label}, no markdown. Shape: "
+        '{"messages":[{"agent":"AI CEO|Marketing Director|Creative Director|Copywriter|SEO Manager|Designer|Video Producer|Sales Expert|Analytics Expert|Automation Architect","role":"...","content":"1-3 short sentences","message_type":"agent|summary","linked_task_id":"optional task id or empty"}]}. '
+        "Use 4-8 total team messages. Last message_type must be summary by AI CEO."
+    )
+    user = (
+        f"PLAN GOAL: {plan.get('goal')}\nSUMMARY: {plan.get('summary')}\nSTRATEGY: {plan.get('strategy')}\n"
+        f"TARGET: {plan.get('target_audience')}\nCHANNELS: {plan.get('channels')}\nASSETS: {plan.get('required_assets')}\n"
+        f"TASKS:\n{task_brief}\n\nUSER QUESTION: {question}"
+    )
+    messages = []
+    try:
+        raw = await llm_text(payload.model, system, user)
+        data = _extract_json(raw) or {}
+        messages = data.get("messages") if isinstance(data.get("messages"), list) else []
+    except Exception as e:
+        logger.warning(f"Team chat LLM failed, using fallback: {e}")
+    if not messages:
+        messages = _fallback_team_chat(question, plan, tasks, payload.language)
+
+    allowed_agents = {a["agent"]: a["role"] for a in TEAM_CHAT_AGENTS}
+    docs = [user_msg]
+    for item in messages[:10]:
+        if not isinstance(item, dict):
+            continue
+        agent = str(item.get("agent") or "AI CEO").strip()
+        if agent not in allowed_agents:
+            agent = "AI CEO"
+        mtype = str(item.get("message_type") or "agent").strip()
+        if mtype not in {"agent", "summary"}:
+            mtype = "agent"
+        linked = str(item.get("linked_task_id") or "").strip() or None
+        if linked and linked not in {t.get("id") for t in tasks}:
+            linked = None
+        docs.append(TeamChatMessage(
+            **base,
+            agent=agent,
+            role=str(item.get("role") or allowed_agents[agent]),
+            content=str(item.get("content") or "").strip(),
+            message_type=mtype,
+            linked_task_id=linked,
+        ).model_dump())
+    await db.mission_team_chat_messages.insert_many(docs)
+    await db.mission_team_chat_threads.update_one(
+        {"id": thread["id"], **_scope_filter(ws)},
+        {"$set": {"updated_at": _now_iso(), "brand_id": plan.get("brand_id", ""), "campaign_id": thread.get("campaign_id", "")}},
+    )
+    return {"thread": thread, "messages": docs, "agents": TEAM_CHAT_AGENTS}
 
 
 @api_router.get("/mission/tasks")
