@@ -7,49 +7,88 @@
 :root {
   color-scheme: dark;
   --bm-font-sans: 'Sora', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --bm-space-1: 0.5rem;
-  --bm-space-2: 1rem;
-  --bm-space-3: 1.5rem;
-  --bm-space-4: 2rem;
-  --bm-space-5: 2.5rem;
-  --bm-space-6: 3rem;
-  --bm-space-7: 4rem;
-  --bm-radius-sm: 0.5rem;
-  --bm-radius-md: 1rem;
-  --bm-radius-lg: 1rem;
-  --bm-radius-xl: 1rem;
+
+  /* BrandMind Design System 3.0 — only approved color tokens */
+  --bm-color-primary-background: #05040A;
+  --bm-color-secondary-background: #090811;
+  --bm-color-surface: #0F0D18;
+  --bm-color-surface-elevated: #161321;
+  --bm-color-brand-purple: #7C3AED;
+  --bm-color-brand-purple-hover: #6D28D9;
+  --bm-color-brand-purple-soft: rgba(124, 58, 237, 0.16);
+  --bm-color-text-primary: #F8FAFC;
+  --bm-color-text-secondary: #A1A1AA;
+  --bm-color-text-muted: #71717A;
+  --bm-color-success: #34D399;
+  --bm-color-warning: #FACC15;
+  --bm-color-error: #F43F5E;
+  --bm-color-info: #38BDF8;
+  --bm-color-border: rgba(255, 255, 255, 0.10);
+  --bm-color-divider: rgba(255, 255, 255, 0.06);
+
+  /* Spacing: 4, 8, 12, 16, 24, 32, 40, 48, 64, 80, 96 */
+  --bm-space-4: 0.25rem;
+  --bm-space-8: 0.5rem;
+  --bm-space-12: 0.75rem;
+  --bm-space-16: 1rem;
+  --bm-space-24: 1.5rem;
+  --bm-space-32: 2rem;
+  --bm-space-40: 2.5rem;
+  --bm-space-48: 3rem;
+  --bm-space-64: 4rem;
+  --bm-space-80: 5rem;
+  --bm-space-96: 6rem;
+
+  /* Radius: 8, 12, 16, 20 */
+  --bm-radius-8: 0.5rem;
+  --bm-radius-12: 0.75rem;
+  --bm-radius-16: 1rem;
+  --bm-radius-20: 1.25rem;
   --bm-radius-full: 9999px;
-  --bm-bg: #05040a;
-  --bm-bg-soft: #090811;
-  --bm-surface: #0f0d18;
-  --bm-surface-raised: #161321;
+  --bm-radius-sm: var(--bm-radius-8);
+  --bm-radius-md: var(--bm-radius-12);
+  --bm-radius-lg: var(--bm-radius-16);
+  --bm-radius-xl: var(--bm-radius-20);
+
+  /* Shadows: sm, md, lg, xl */
+  --bm-shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.22);
+  --bm-shadow-md: 0 16px 48px rgba(0, 0, 0, 0.28);
+  --bm-shadow-lg: 0 24px 80px rgba(0, 0, 0, 0.32);
+  --bm-shadow-xl: 0 32px 120px rgba(0, 0, 0, 0.42);
+
+  /* Legacy aliases point at the approved tokens during migration. */
+  --bm-bg: var(--bm-color-primary-background);
+  --bm-bg-soft: var(--bm-color-secondary-background);
+  --bm-surface: var(--bm-color-surface);
+  --bm-surface-raised: var(--bm-color-surface-elevated);
   --bm-surface-glass: rgba(18, 16, 30, 0.72);
-  --bm-primary: #7c3aed;
-  --bm-primary-strong: #8b5cf6;
-  --bm-primary-soft: rgba(124, 58, 237, 0.16);
-  --bm-secondary: #a78bfa;
-  --bm-accent: #a78bfa;
-  --bm-accent-soft: rgba(167, 139, 250, 0.14);
-  --bm-success: #34d399;
-  --bm-warning: #facc15;
-  --bm-error: #f43f5e;
-  --bm-text: #f8fafc;
-  --bm-text-muted: #a1a1aa;
-  --bm-text-subtle: #71717a;
-  --bm-border: rgba(255, 255, 255, 0.10);
-  --bm-border-strong: rgba(167, 139, 250, 0.34);
+  --bm-primary: var(--bm-color-brand-purple);
+  --bm-primary-strong: var(--bm-color-brand-purple-hover);
+  --bm-primary-soft: var(--bm-color-brand-purple-soft);
+  --bm-secondary: var(--bm-color-text-secondary);
+  --bm-accent: var(--bm-color-brand-purple);
+  --bm-accent-soft: var(--bm-color-brand-purple-soft);
+  --bm-success: var(--bm-color-success);
+  --bm-warning: var(--bm-color-warning);
+  --bm-error: var(--bm-color-error);
+  --bm-info: var(--bm-color-info);
+  --bm-text: var(--bm-color-text-primary);
+  --bm-text-muted: var(--bm-color-text-secondary);
+  --bm-text-subtle: var(--bm-color-text-muted);
+  --bm-border: var(--bm-color-border);
+  --bm-border-strong: rgba(124, 58, 237, 0.34);
   --bm-hover: rgba(255, 255, 255, 0.06);
   --bm-disabled: rgba(255, 255, 255, 0.28);
-  --bm-focus: var(--bm-accent);
-  --bm-gradient-purple: linear-gradient(135deg, #c4b5fd 0%, #8b5cf6 42%, #7c3aed 100%);
-  --bm-shadow-card: 0 24px 80px rgba(0, 0, 0, 0.32);
-  --bm-shadow-focus: 0 0 0 3px rgba(34, 211, 238, 0.28);
+  --bm-focus: var(--bm-color-brand-purple);
+  --bm-gradient-purple: linear-gradient(135deg, var(--bm-color-brand-purple) 0%, var(--bm-color-brand-purple-hover) 100%);
+  --bm-shadow-card: var(--bm-shadow-lg);
+  --bm-shadow-focus: 0 0 0 3px rgba(124, 58, 237, 0.28);
 
   --kc-bg: var(--bm-bg);
   --kc-surface: var(--bm-surface);
   --kc-elevated: var(--bm-surface-raised);
   --kc-primary: var(--bm-primary);
-  --kc-primary-light: var(--bm-secondary);
+  --kc-primary-light: var(--bm-primary-strong);
 }
 
 @layer base {
