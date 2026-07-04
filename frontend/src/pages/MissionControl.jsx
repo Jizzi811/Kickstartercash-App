@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { toast } from "sonner";
 import {
   Sparkles, Target, ArrowRight, CheckCircle2, Clock, Building2, Palette,
-  TrendingUp, Users, Megaphone, Search, Film, DollarSign, Zap, BarChart2,
-  LifeBuoy, ChevronRight, Loader2, ListChecks, Rocket, CircleDot, History,
+  Users, Megaphone, Search, Film, DollarSign, Zap, BarChart2,
+  LifeBuoy, ChevronRight, Loader2, ListChecks, Rocket, CircleDot, History, MessageSquare, FileText, ShieldCheck,
+  Send, Bot,
 } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 
@@ -32,11 +33,26 @@ const PRIORITY_STYLE = {
 };
 
 const STATUS_STYLE = {
-  proposed: { fg: "#a78bfa", label_de: "Vorschlag", label_en: "Proposed" },
-  approved: { fg: "#34d399", label_de: "Freigegeben", label_en: "Approved" },
+  planned: { fg: "#a78bfa", label_de: "Geplant", label_en: "Planned" },
   in_progress: { fg: "#60a5fa", label_de: "Läuft", label_en: "In progress" },
-  done: { fg: "#4ade80", label_de: "Erledigt", label_en: "Done" },
+  needs_review: { fg: "#c4b5fd", label_de: "Review nötig", label_en: "Needs review" },
+  approved: { fg: "#34d399", label_de: "Freigegeben", label_en: "Approved" },
+  completed: { fg: "#4ade80", label_de: "Abgeschlossen", label_en: "Completed" },
   rejected: { fg: "#71717a", label_de: "Abgelehnt", label_en: "Rejected" },
+};
+
+const TEAM_AVATARS = {
+  "AI CEO": { initials: "QC", gradient: "linear-gradient(135deg,#7C3AED,#C4B5FD)" },
+  "Marketing Director": { initials: "MD", gradient: "linear-gradient(135deg,#6D28D9,#A78BFA)" },
+  "Creative Director": { initials: "CD", gradient: "linear-gradient(135deg,#8B5CF6,#EC4899)" },
+  Copywriter: { initials: "CW", gradient: "linear-gradient(135deg,#7C3AED,#60A5FA)" },
+  "SEO Manager": { initials: "SEO", gradient: "linear-gradient(135deg,#4F46E5,#22C55E)" },
+  Designer: { initials: "DS", gradient: "linear-gradient(135deg,#9333EA,#F472B6)" },
+  "Video Producer": { initials: "VP", gradient: "linear-gradient(135deg,#7C3AED,#38BDF8)" },
+  "Sales Expert": { initials: "SE", gradient: "linear-gradient(135deg,#6D28D9,#34D399)" },
+  "Analytics Expert": { initials: "AE", gradient: "linear-gradient(135deg,#7C3AED,#818CF8)" },
+  "Automation Architect": { initials: "AA", gradient: "linear-gradient(135deg,#5B21B6,#C4B5FD)" },
+  Human: { initials: "YOU", gradient: "linear-gradient(135deg,#27272A,#71717A)" },
 };
 
 /* ─── small UI atoms ─────────────────────────────────────────────── */
@@ -89,18 +105,25 @@ function Pill({ children, tone = "violet", icon: Icon }) {
 }
 
 /* ─── task row with approval controls ────────────────────────────── */
-function TaskRow({ task, lang, onUpdate }) {
+function TaskRow({ task, lang, onUpdate, detailed = false }) {
   const dept = DEPT_ICON[task.department] || CircleDot;
   const DeptIcon = dept;
   const prio = PRIORITY_STYLE[task.priority] || PRIORITY_STYLE.medium;
-  const st = STATUS_STYLE[task.status] || STATUS_STYLE.proposed;
+  const st = STATUS_STYLE[task.status] || STATUS_STYLE.planned;
   const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState("");
 
-  const change = async (status) => {
+  const change = async (status, comment = "") => {
     setBusy(true);
     try {
-      const res = await axios.patch(`${API}/mission/tasks/${task.id}`, { status });
+      const res = await axios.patch(`${API}/mission/tasks/${task.id}`, { status, comment });
       onUpdate?.(res.data);
+      setNote("");
+      // Feed the Intelligence Engine – a human decision is a learning signal.
+      axios.post(`${API}/intelligence/event`, {
+        kind: `task_${status}`, subject: task.id, label: task.title,
+        meta: { department: task.department, priority: task.priority },
+      }).catch(() => {});
     } catch { toast.error(lang === "DE" ? "Aktion fehlgeschlagen" : "Action failed"); }
     finally { setBusy(false); }
   };
@@ -123,19 +146,38 @@ function TaskRow({ task, lang, onUpdate }) {
         {task.description && (
           <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed line-clamp-2">{task.description}</p>
         )}
-        <div className="flex items-center gap-3 mt-2 text-[10px] text-zinc-600">
+        <div className="flex items-center gap-3 mt-2 text-[10px] text-zinc-600 flex-wrap">
           <span className="uppercase tracking-wider">{task.department}</span>
+          <span>{lang === "DE" ? "Agent" : "Agent"}: {task.assigned_agent || task.owner_agent}</span>
           {task.due_date && <span className="inline-flex items-center gap-1"><Clock size={9} />{task.due_date}</span>}
           <span style={{ color: st.fg }}>● {lang === "DE" ? st.label_de : st.label_en}</span>
         </div>
+        {detailed && (
+          <div className="mt-3 grid md:grid-cols-2 gap-3">
+            <div className="p-3 rounded-sm" style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.14)" }}>
+              <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-zinc-500 mb-2"><FileText size={11} />{lang === "DE" ? "Inputs" : "Required inputs"}</div>
+              <ul className="space-y-1">{(task.required_inputs || []).map((x, i) => <li key={i} className="text-[11px] text-zinc-400">• {x}</li>)}</ul>
+            </div>
+            <div className="p-3 rounded-sm" style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.14)" }}>
+              <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-zinc-500 mb-2"><ShieldCheck size={11} />{lang === "DE" ? "Erwartetes Ergebnis" : "Expected output"}</div>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">{task.expected_output}</p>
+            </div>
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-zinc-500 mb-2"><MessageSquare size={11} />{lang === "DE" ? "Kommentare / Notizen" : "Comments / notes"}</div>
+              <div className="space-y-1.5 mb-2">{(task.comments || []).map((c) => <div key={c.id || c.created_at} className="text-[11px] text-zinc-500"><span className="text-zinc-300">{c.author}:</span> {c.text}</div>)}</div>
+              {(task.timeline || []).length > 0 && <div className="mb-2 space-y-1">{(task.timeline || []).map((item, i) => <div key={`${item.at}-${i}`} className="text-[10px] text-zinc-600">● {item.text} <span className="text-zinc-700">{(item.at || "").slice(0, 16)}</span></div>)}</div>}
+              <div className="flex gap-2"><input value={note} onChange={(e) => setNote(e.target.value)} placeholder={lang === "DE" ? "Interne Notiz hinzufügen…" : "Add internal note…"} className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-sm px-3 py-2 text-[12px] text-zinc-200 outline-none focus:border-[#7C3AED]/50" /><button disabled={!note.trim() || busy} onClick={() => change(task.status, note)} className="px-3 py-2 text-[11px] rounded-sm font-semibold" style={{ background: "rgba(124,58,237,0.16)", color: "#c4b5fd", border: "1px solid rgba(124,58,237,0.3)" }}>{lang === "DE" ? "Notiz" : "Note"}</button></div>
+            </div>
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        {task.status === "proposed" && (
+        {task.status === "planned" && (
           <>
-            <button disabled={busy} onClick={() => change("approved")}
+            <button disabled={busy} onClick={() => change("in_progress")}
               className="text-[10px] font-semibold px-2.5 py-1 rounded-sm transition-colors"
               style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.3)", color: "#34d399" }}>
-              {lang === "DE" ? "Freigeben" : "Approve"}
+              {lang === "DE" ? "Starten" : "Start"}
             </button>
             <button disabled={busy} onClick={() => change("rejected")}
               className="text-[10px] px-2.5 py-1 rounded-sm transition-colors text-zinc-500"
@@ -144,18 +186,25 @@ function TaskRow({ task, lang, onUpdate }) {
             </button>
           </>
         )}
-        {task.status === "approved" && (
-          <button disabled={busy} onClick={() => change("in_progress")}
+        {task.status === "in_progress" && (
+          <button disabled={busy} onClick={() => change("needs_review")}
             className="text-[10px] font-semibold px-2.5 py-1 rounded-sm"
-            style={{ background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.3)", color: "#60a5fa" }}>
-            {lang === "DE" ? "Starten" : "Start"}
+            style={{ background: "rgba(196,181,253,0.12)", border: "1px solid rgba(196,181,253,0.3)", color: "#c4b5fd" }}>
+            {lang === "DE" ? "Review" : "Review"}
           </button>
         )}
-        {task.status === "in_progress" && (
-          <button disabled={busy} onClick={() => change("done")}
+        {task.status === "needs_review" && (
+          <button disabled={busy} onClick={() => change("approved")}
+            className="text-[10px] font-semibold px-2.5 py-1 rounded-sm"
+            style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.3)", color: "#34d399" }}>
+            {lang === "DE" ? "Freigeben" : "Approve"}
+          </button>
+        )}
+        {task.status === "approved" && (
+          <button disabled={busy} onClick={() => change("completed")}
             className="text-[10px] font-semibold px-2.5 py-1 rounded-sm inline-flex items-center gap-1"
             style={{ background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.3)", color: "#4ade80" }}>
-            <CheckCircle2 size={11} />{lang === "DE" ? "Fertig" : "Done"}
+            <CheckCircle2 size={11} />{lang === "DE" ? "Abschließen" : "Complete"}
           </button>
         )}
       </div>
@@ -164,7 +213,7 @@ function TaskRow({ task, lang, onUpdate }) {
 }
 
 /* ─── executive plan render ──────────────────────────────────────── */
-function PlanView({ plan, tasks, lang, onUpdate }) {
+function PlanView({ plan, tasks, lang, onUpdate, detailed = false }) {
   const Block = ({ title, items }) => (
     items?.length ? (
       <div>
@@ -223,7 +272,7 @@ function PlanView({ plan, tasks, lang, onUpdate }) {
             </span>
           </div>
           <div className="space-y-2">
-            {tasks.map((t) => <TaskRow key={t.id} task={t} lang={lang} onUpdate={onUpdate} />)}
+            {tasks.map((t) => <TaskRow key={t.id} task={t} lang={lang} onUpdate={onUpdate} detailed={detailed} />)}
           </div>
         </div>
       )}
@@ -231,10 +280,153 @@ function PlanView({ plan, tasks, lang, onUpdate }) {
   );
 }
 
+function TeamChat({ plan, tasks, lang, model }) {
+  const [messages, setMessages] = useState([]);
+  const [agents, setAgents] = useState([]);
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const suggestions = [
+    "Verbessert diesen Kampagnenplan",
+    "Welche Risiken seht ihr?",
+    "Welche Inhalte sollen zuerst produziert werden?",
+    "Wie können wir schneller Leads gewinnen?",
+    "Welche Assets fehlen noch?",
+  ];
+
+  const load = useCallback(async () => {
+    if (!plan?.id) return;
+    try {
+      const r = await axios.get(`${API}/mission/plans/${plan.id}/team-chat`);
+      setMessages(r.data.messages || []);
+      setAgents(r.data.agents || []);
+    } catch {
+      toast.error(lang === "DE" ? "Team-Chat konnte nicht geladen werden" : "Could not load team chat");
+    }
+  }, [plan?.id, lang]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const ask = async (text = input) => {
+    const question = (text || "").trim();
+    if (!question || busy) return;
+    setBusy(true);
+    setInput("");
+    try {
+      const r = await axios.post(`${API}/mission/plans/${plan.id}/team-chat/ask`, {
+        question, model, language: lang,
+      });
+      setMessages((prev) => [...prev, ...(r.data.messages || [])]);
+      setAgents(r.data.agents || []);
+    } catch {
+      toast.error(lang === "DE" ? "Das KI-Team konnte nicht antworten" : "The AI team could not respond");
+      setInput(question);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="p-4 md:p-6 overflow-hidden" style={{
+      background: "linear-gradient(145deg, rgba(124,58,237,0.08) 0%, rgba(10,10,10,0.84) 48%, rgba(109,40,217,0.06) 100%)",
+      border: "1px solid rgba(124,58,237,0.2)",
+    }}>
+      <div className="flex flex-col xl:flex-row xl:items-start gap-5">
+        <div className="xl:w-64 flex-shrink-0">
+          <SectionHeader icon={MessageSquare} title={lang === "DE" ? "AI Team Chat" : "AI Team Chat"} />
+          <p className="text-[12px] text-zinc-500 leading-relaxed mb-4">
+            {lang === "DE"
+              ? "Das Team diskutiert diesen Plan intern. Quantum moderiert, fasst Entscheidungen zusammen und wartet immer auf deine Freigabe."
+              : "The team discusses this plan internally. Quantum moderates, summarizes decisions and always waits for your approval."}
+          </p>
+          <div className="grid grid-cols-2 xl:grid-cols-1 gap-2">
+            {(agents.length ? agents : Object.keys(TEAM_AVATARS).filter((a) => a !== "Human").map((agent) => ({ agent, role: "" }))).map((a) => {
+              const av = TEAM_AVATARS[a.agent] || TEAM_AVATARS["AI CEO"];
+              return (
+                <div key={a.agent} className="flex items-center gap-2 p-2 rounded-sm" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-black text-white" style={{ background: av.gradient }}>{av.initials}</div>
+                  <div className="min-w-0">
+                    <div className="text-[11px] text-zinc-200 font-semibold truncate">{a.agent}</div>
+                    <div className="text-[9px] text-zinc-600 truncate">{a.role}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap gap-2 mb-4">
+            {suggestions.map((s) => (
+              <button key={s} onClick={() => ask(s)} disabled={busy}
+                className="text-[11px] px-3 py-1.5 rounded-full transition-colors disabled:opacity-50"
+                style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.25)", color: "#c4b5fd" }}>
+                {s}
+              </button>
+            ))}
+          </div>
+
+          <div className="max-h-[560px] overflow-y-auto pr-1 space-y-3">
+            {messages.length === 0 && (
+              <div className="text-center py-10 rounded-sm" style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(124,58,237,0.22)" }}>
+                <Bot size={24} className="mx-auto mb-3 text-[#7C3AED]" />
+                <p className="text-sm text-zinc-400">{lang === "DE" ? "Stelle dem ganzen KI-Team eine Frage zum Plan." : "Ask the whole AI team a question about the plan."}</p>
+              </div>
+            )}
+            {messages.map((m) => {
+              const av = TEAM_AVATARS[m.agent] || TEAM_AVATARS["AI CEO"];
+              const task = m.linked_task_id ? tasks?.find((t) => t.id === m.linked_task_id) : null;
+              const isSummary = m.message_type === "summary";
+              const isUser = m.message_type === "user";
+              return (
+                <div key={m.id || `${m.timestamp}-${m.agent}`} className={`flex gap-3 ${isUser ? "justify-end" : ""}`}>
+                  {!isUser && <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-black text-white flex-shrink-0" style={{ background: av.gradient }}>{av.initials}</div>}
+                  <div className={`${isUser ? "max-w-[86%] md:max-w-[70%]" : "flex-1"} rounded-sm p-3`}
+                    style={{
+                      background: isSummary ? "linear-gradient(135deg, rgba(124,58,237,0.2), rgba(196,181,253,0.08))" : (isUser ? "rgba(124,58,237,0.18)" : "rgba(255,255,255,0.03)"),
+                      border: isSummary ? "1px solid rgba(196,181,253,0.32)" : "1px solid rgba(255,255,255,0.07)",
+                    }}>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div>
+                        <span className="text-[12px] font-semibold text-zinc-100">{m.agent}</span>
+                        {!isUser && <span className="text-[10px] text-zinc-600 ml-2">{m.role}</span>}
+                      </div>
+                      {isSummary && <Pill icon={ShieldCheck}>{lang === "DE" ? "CEO Empfehlung" : "CEO summary"}</Pill>}
+                    </div>
+                    <p className="text-[13px] text-zinc-300 leading-relaxed whitespace-pre-wrap">{m.content}</p>
+                    {task && <div className="mt-2 text-[10px] text-zinc-500">↳ {lang === "DE" ? "Task" : "Task"}: {task.title}</div>}
+                  </div>
+                </div>
+              );
+            })}
+            {busy && <div className="flex items-center gap-2 text-[12px] text-zinc-500"><Loader2 size={13} className="animate-spin" />{lang === "DE" ? "Das Team diskutiert…" : "The team is discussing…"}</div>}
+          </div>
+
+          <div className="mt-4 flex flex-col sm:flex-row gap-2">
+            <input value={input} onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") ask(); }}
+              placeholder={lang === "DE" ? "Frage an das ganze Team…" : "Ask the whole team…"}
+              className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-sm px-4 py-3 text-sm text-zinc-200 outline-none focus:border-[#7C3AED]/50" />
+            <button onClick={() => ask()} disabled={!input.trim() || busy}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-sm text-sm font-bold disabled:opacity-40"
+              style={{ background: V, color: "#0A0A0A" }}>
+              {busy ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+              {lang === "DE" ? "Fragen" : "Ask"}
+            </button>
+          </div>
+          <p className="mt-2 text-[10px] text-zinc-600">
+            {lang === "DE" ? "Internes Brainstorming: keine Veröffentlichung, keine destruktiven Aktionen, menschliche Freigabe erforderlich." : "Internal brainstorming: no publishing, no destructive actions, human approval required."}
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════════ */
 export default function MissionControl() {
   const { lang, user, activeBrand, activeBrandId, activeWorkspace, model } = useApp();
   const navigate = useNavigate();
+  const { planId } = useParams();
   const firstName = (user?.name || user?.email?.split("@")[0] || "").split(" ")[0];
 
   const [goal, setGoal] = useState("");
@@ -257,6 +449,7 @@ export default function MissionControl() {
   }, []);
 
   useEffect(() => { loadOverview(); loadPlans(); }, [loadOverview, loadPlans, activeBrandId]);
+  useEffect(() => { if (planId) openPlan(planId); }, [planId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const createPlan = async () => {
     if (!goal.trim() || planning) return;
@@ -377,8 +570,13 @@ export default function MissionControl() {
                   {lang === "DE" ? "Freigabe ausstehend" : "Awaiting approval"}
                 </Pill>
               </div>
-              <PlanView plan={activePlan.plan} tasks={activePlan.tasks} lang={lang} onUpdate={onTaskUpdate} />
+              <PlanView plan={activePlan.plan} tasks={activePlan.tasks} lang={lang} onUpdate={onTaskUpdate} detailed={Boolean(planId)} />
             </Card>
+            {planId && (
+              <div className="mt-5">
+                <TeamChat plan={activePlan.plan} tasks={activePlan.tasks} lang={lang} model={model} />
+              </div>
+            )}
           </motion.section>
         )}
       </AnimatePresence>
@@ -506,7 +704,7 @@ export default function MissionControl() {
             right={<span className="text-[10px] text-zinc-700 uppercase tracking-widest">{plans.length}</span>} />
           <div className="space-y-2">
             {plans.map((p) => (
-              <button key={p.id} onClick={() => openPlan(p.id)}
+              <button key={p.id} onClick={() => navigate(`/mission/plans/${p.id}`)}
                 className="w-full text-left flex items-center gap-3 p-3.5 rounded-sm transition-colors group"
                 style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(124,58,237,0.35)"; }}
