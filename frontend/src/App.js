@@ -9,6 +9,7 @@ import { Layout } from "@/components/Layout";
 import MissionControl from "@/pages/MissionControl";
 import IntelligenceStudio from "@/pages/IntelligenceStudio";
 import GatewayStudio from "@/pages/GatewayStudio";
+import BrandIdentity from "@/pages/BrandIdentity";
 import Dashboard from "@/pages/Dashboard";
 import KnowledgeBase from "@/pages/KnowledgeBase";
 import BrandBrain from "@/pages/BrandBrain";
@@ -108,6 +109,7 @@ function AppShell() {
               <Route path="/modules" element={<Dashboard />} />
               <Route path="/output-factory" element={<OutputFactory />} />
               <Route path="/brand-brain" element={<BrandBrain />} />
+              <Route path="/brand-identity" element={<BrandIdentity />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/agents" element={<Specialists />} />
               <Route path="/design" element={<DesignStudio />} />
