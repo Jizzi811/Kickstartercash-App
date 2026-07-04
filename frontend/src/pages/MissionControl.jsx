@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { toast } from "sonner";
 import {
   Sparkles, Target, ArrowRight, CheckCircle2, Clock, Building2, Palette,
   TrendingUp, Users, Megaphone, Search, Film, DollarSign, Zap, BarChart2,
-  LifeBuoy, ChevronRight, Loader2, ListChecks, Rocket, CircleDot, History,
+  LifeBuoy, ChevronRight, Loader2, ListChecks, Rocket, CircleDot, History, MessageSquare, FileText, ShieldCheck,
 } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 
@@ -32,10 +32,11 @@ const PRIORITY_STYLE = {
 };
 
 const STATUS_STYLE = {
-  proposed: { fg: "#a78bfa", label_de: "Vorschlag", label_en: "Proposed" },
-  approved: { fg: "#34d399", label_de: "Freigegeben", label_en: "Approved" },
+  planned: { fg: "#a78bfa", label_de: "Geplant", label_en: "Planned" },
   in_progress: { fg: "#60a5fa", label_de: "Läuft", label_en: "In progress" },
-  done: { fg: "#4ade80", label_de: "Erledigt", label_en: "Done" },
+  needs_review: { fg: "#c4b5fd", label_de: "Review nötig", label_en: "Needs review" },
+  approved: { fg: "#34d399", label_de: "Freigegeben", label_en: "Approved" },
+  completed: { fg: "#4ade80", label_de: "Abgeschlossen", label_en: "Completed" },
   rejected: { fg: "#71717a", label_de: "Abgelehnt", label_en: "Rejected" },
 };
 
@@ -89,18 +90,20 @@ function Pill({ children, tone = "violet", icon: Icon }) {
 }
 
 /* ─── task row with approval controls ────────────────────────────── */
-function TaskRow({ task, lang, onUpdate }) {
+function TaskRow({ task, lang, onUpdate, detailed = false }) {
   const dept = DEPT_ICON[task.department] || CircleDot;
   const DeptIcon = dept;
   const prio = PRIORITY_STYLE[task.priority] || PRIORITY_STYLE.medium;
-  const st = STATUS_STYLE[task.status] || STATUS_STYLE.proposed;
+  const st = STATUS_STYLE[task.status] || STATUS_STYLE.planned;
   const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState("");
 
-  const change = async (status) => {
+  const change = async (status, comment = "") => {
     setBusy(true);
     try {
-      const res = await axios.patch(`${API}/mission/tasks/${task.id}`, { status });
+      const res = await axios.patch(`${API}/mission/tasks/${task.id}`, { status, comment });
       onUpdate?.(res.data);
+      setNote("");
     } catch { toast.error(lang === "DE" ? "Aktion fehlgeschlagen" : "Action failed"); }
     finally { setBusy(false); }
   };
@@ -123,19 +126,38 @@ function TaskRow({ task, lang, onUpdate }) {
         {task.description && (
           <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed line-clamp-2">{task.description}</p>
         )}
-        <div className="flex items-center gap-3 mt-2 text-[10px] text-zinc-600">
+        <div className="flex items-center gap-3 mt-2 text-[10px] text-zinc-600 flex-wrap">
           <span className="uppercase tracking-wider">{task.department}</span>
+          <span>{lang === "DE" ? "Agent" : "Agent"}: {task.assigned_agent || task.owner_agent}</span>
           {task.due_date && <span className="inline-flex items-center gap-1"><Clock size={9} />{task.due_date}</span>}
           <span style={{ color: st.fg }}>● {lang === "DE" ? st.label_de : st.label_en}</span>
         </div>
+        {detailed && (
+          <div className="mt-3 grid md:grid-cols-2 gap-3">
+            <div className="p-3 rounded-sm" style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.14)" }}>
+              <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-zinc-500 mb-2"><FileText size={11} />{lang === "DE" ? "Inputs" : "Required inputs"}</div>
+              <ul className="space-y-1">{(task.required_inputs || []).map((x, i) => <li key={i} className="text-[11px] text-zinc-400">• {x}</li>)}</ul>
+            </div>
+            <div className="p-3 rounded-sm" style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.14)" }}>
+              <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-zinc-500 mb-2"><ShieldCheck size={11} />{lang === "DE" ? "Erwartetes Ergebnis" : "Expected output"}</div>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">{task.expected_output}</p>
+            </div>
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-zinc-500 mb-2"><MessageSquare size={11} />{lang === "DE" ? "Kommentare / Notizen" : "Comments / notes"}</div>
+              <div className="space-y-1.5 mb-2">{(task.comments || []).map((c) => <div key={c.id || c.created_at} className="text-[11px] text-zinc-500"><span className="text-zinc-300">{c.author}:</span> {c.text}</div>)}</div>
+              {(task.timeline || []).length > 0 && <div className="mb-2 space-y-1">{(task.timeline || []).map((item, i) => <div key={`${item.at}-${i}`} className="text-[10px] text-zinc-600">● {item.text} <span className="text-zinc-700">{(item.at || "").slice(0, 16)}</span></div>)}</div>}
+              <div className="flex gap-2"><input value={note} onChange={(e) => setNote(e.target.value)} placeholder={lang === "DE" ? "Interne Notiz hinzufügen…" : "Add internal note…"} className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-sm px-3 py-2 text-[12px] text-zinc-200 outline-none focus:border-[#7C3AED]/50" /><button disabled={!note.trim() || busy} onClick={() => change(task.status, note)} className="px-3 py-2 text-[11px] rounded-sm font-semibold" style={{ background: "rgba(124,58,237,0.16)", color: "#c4b5fd", border: "1px solid rgba(124,58,237,0.3)" }}>{lang === "DE" ? "Notiz" : "Note"}</button></div>
+            </div>
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        {task.status === "proposed" && (
+        {task.status === "planned" && (
           <>
-            <button disabled={busy} onClick={() => change("approved")}
+            <button disabled={busy} onClick={() => change("in_progress")}
               className="text-[10px] font-semibold px-2.5 py-1 rounded-sm transition-colors"
               style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.3)", color: "#34d399" }}>
-              {lang === "DE" ? "Freigeben" : "Approve"}
+              {lang === "DE" ? "Starten" : "Start"}
             </button>
             <button disabled={busy} onClick={() => change("rejected")}
               className="text-[10px] px-2.5 py-1 rounded-sm transition-colors text-zinc-500"
@@ -144,18 +166,25 @@ function TaskRow({ task, lang, onUpdate }) {
             </button>
           </>
         )}
-        {task.status === "approved" && (
-          <button disabled={busy} onClick={() => change("in_progress")}
+        {task.status === "in_progress" && (
+          <button disabled={busy} onClick={() => change("needs_review")}
             className="text-[10px] font-semibold px-2.5 py-1 rounded-sm"
-            style={{ background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.3)", color: "#60a5fa" }}>
-            {lang === "DE" ? "Starten" : "Start"}
+            style={{ background: "rgba(196,181,253,0.12)", border: "1px solid rgba(196,181,253,0.3)", color: "#c4b5fd" }}>
+            {lang === "DE" ? "Review" : "Review"}
           </button>
         )}
-        {task.status === "in_progress" && (
-          <button disabled={busy} onClick={() => change("done")}
+        {task.status === "needs_review" && (
+          <button disabled={busy} onClick={() => change("approved")}
+            className="text-[10px] font-semibold px-2.5 py-1 rounded-sm"
+            style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.3)", color: "#34d399" }}>
+            {lang === "DE" ? "Freigeben" : "Approve"}
+          </button>
+        )}
+        {task.status === "approved" && (
+          <button disabled={busy} onClick={() => change("completed")}
             className="text-[10px] font-semibold px-2.5 py-1 rounded-sm inline-flex items-center gap-1"
             style={{ background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.3)", color: "#4ade80" }}>
-            <CheckCircle2 size={11} />{lang === "DE" ? "Fertig" : "Done"}
+            <CheckCircle2 size={11} />{lang === "DE" ? "Abschließen" : "Complete"}
           </button>
         )}
       </div>
@@ -164,7 +193,7 @@ function TaskRow({ task, lang, onUpdate }) {
 }
 
 /* ─── executive plan render ──────────────────────────────────────── */
-function PlanView({ plan, tasks, lang, onUpdate }) {
+function PlanView({ plan, tasks, lang, onUpdate, detailed = false }) {
   const Block = ({ title, items }) => (
     items?.length ? (
       <div>
@@ -223,7 +252,7 @@ function PlanView({ plan, tasks, lang, onUpdate }) {
             </span>
           </div>
           <div className="space-y-2">
-            {tasks.map((t) => <TaskRow key={t.id} task={t} lang={lang} onUpdate={onUpdate} />)}
+            {tasks.map((t) => <TaskRow key={t.id} task={t} lang={lang} onUpdate={onUpdate} detailed={detailed} />)}
           </div>
         </div>
       )}
@@ -235,6 +264,7 @@ function PlanView({ plan, tasks, lang, onUpdate }) {
 export default function MissionControl() {
   const { lang, user, activeBrand, activeBrandId, activeWorkspace, model } = useApp();
   const navigate = useNavigate();
+  const { planId } = useParams();
   const firstName = (user?.name || user?.email?.split("@")[0] || "").split(" ")[0];
 
   const [goal, setGoal] = useState("");
@@ -257,6 +287,7 @@ export default function MissionControl() {
   }, []);
 
   useEffect(() => { loadOverview(); loadPlans(); }, [loadOverview, loadPlans, activeBrandId]);
+  useEffect(() => { if (planId) openPlan(planId); }, [planId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const createPlan = async () => {
     if (!goal.trim() || planning) return;
@@ -377,7 +408,7 @@ export default function MissionControl() {
                   {lang === "DE" ? "Freigabe ausstehend" : "Awaiting approval"}
                 </Pill>
               </div>
-              <PlanView plan={activePlan.plan} tasks={activePlan.tasks} lang={lang} onUpdate={onTaskUpdate} />
+              <PlanView plan={activePlan.plan} tasks={activePlan.tasks} lang={lang} onUpdate={onTaskUpdate} detailed={Boolean(planId)} />
             </Card>
           </motion.section>
         )}
@@ -506,7 +537,7 @@ export default function MissionControl() {
             right={<span className="text-[10px] text-zinc-700 uppercase tracking-widest">{plans.length}</span>} />
           <div className="space-y-2">
             {plans.map((p) => (
-              <button key={p.id} onClick={() => openPlan(p.id)}
+              <button key={p.id} onClick={() => navigate(`/mission/plans/${p.id}`)}
                 className="w-full text-left flex items-center gap-3 p-3.5 rounded-sm transition-colors group"
                 style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(124,58,237,0.35)"; }}
