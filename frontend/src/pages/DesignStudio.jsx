@@ -4,7 +4,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { Palette, Download, Loader2, ExternalLink } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
-import { ToolCard, AgentChatPanel, StudioContextArea } from "@/components/StudioLayout";
+import { ToolCard, AgentChatPanel, StudioContextArea, StudioFlowRail } from "@/components/StudioLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { IMAGE_STYLES } from "@/i18n";
 
@@ -87,6 +87,8 @@ export default function DesignStudio() {
         subtitle={lang === "DE" ? "GPT Image · Canva · Leonardo · Flux · Ideogram" : "GPT Image · Canva · Leonardo · Flux · Ideogram"}
         badge="Design"
       />
+
+      <StudioFlowRail color={COLOR} lang={lang} active="Workspace" />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Left: Tools + Generator */}

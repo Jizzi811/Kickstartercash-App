@@ -4,7 +4,7 @@ import axios from "axios";
 import {
   Activity, BarChart2, Brain, Building2, Crown, Dna, Film, LifeBuoy,
   Megaphone, MessageSquare, Palette, Rocket, Search, ShieldCheck, Sparkles,
-  Target, Users, Zap, ThumbsUp, ClipboardList,
+  Target, Users, Zap, ThumbsUp, ClipboardList, AlertTriangle, PlayCircle,
 } from "lucide-react";
 import { API, useApp } from "@/context/AppContext";
 import {
@@ -59,6 +59,15 @@ export default function BrandMindHQ() {
   const insights = intel?.insights || [];
   const recommendations = intel?.recommendations || [];
   const activeGoals = plans.slice(0, 3);
+  const teamPulse = departments.slice(0, 4).map((d, i) => ({
+    ...d,
+    state: [de ? "arbeitet" : "working", de ? "prüft" : "reviewing", de ? "wartet" : "waiting", de ? "aktiv" : "active"][i % 4],
+  }));
+  const jarvjisPriorities = [
+    { icon: Target, label: de ? "Priorität" : "Priority", text: recommendations[0]?.title || (de ? "Heute ein klares Kampagnenziel definieren." : "Define one clear campaign goal today.") },
+    { icon: Sparkles, label: de ? "Chance" : "Opportunity", text: insights[0]?.title || (de ? "Brand-DNA schärfen und in neue Assets übersetzen." : "Sharpen brand DNA and translate it into new assets.") },
+    { icon: AlertTriangle, label: de ? "Risiko" : "Risk", text: counts.tasks_open ? (de ? `${counts.tasks_open} offene Aufgaben können den Flow bremsen.` : `${counts.tasks_open} open tasks may slow the flow.`) : (de ? "Keine kritischen Risiken sichtbar." : "No critical risks visible.") },
+  ];
 
   const actions = [
     [de ? "Ziel erstellen" : "Create Goal", "/mission", Target],
@@ -85,16 +94,56 @@ export default function BrandMindHQ() {
 
       {/* Real KPIs – or em-dash while loading, never invented numbers */}
       <StatGrid>
-        <Metric icon={Dna} label={de ? "DNA-Vollständigkeit" : "DNA completeness"}
-          value={dnaScore != null ? `${dnaScore}%` : "—"} color="#C084FC" />
-        <Metric icon={ThumbsUp} label={de ? "Freigabequote" : "Approval rate"}
-          value={metrics.approval_rate != null ? `${metrics.approval_rate}%` : "—"} color="#34d399" />
-        <Metric icon={ClipboardList} label={de ? "Offene Tasks" : "Open tasks"}
-          value={counts.tasks_open ?? "—"} />
-        <Metric icon={Rocket} label={de ? "Laufende Kampagnen" : "Running campaigns"}
+        <div className="animate-[pulse_3s_ease-in-out_infinite]"><Metric icon={Dna} label={de ? "DNA-Vollständigkeit" : "DNA completeness"}
+          value={dnaScore != null ? `${dnaScore}%` : "—"} color="#C084FC" /></div>
+        <div className="animate-[pulse_3.4s_ease-in-out_infinite]"><Metric icon={ThumbsUp} label={de ? "Freigabequote" : "Approval rate"}
+          value={metrics.approval_rate != null ? `${metrics.approval_rate}%` : "—"} color="#34d399" /></div>
+        <div className="animate-[pulse_3.8s_ease-in-out_infinite]"><Metric icon={ClipboardList} label={de ? "Offene Tasks" : "Open tasks"}
+          value={counts.tasks_open ?? "—"} /></div>
+        <div className="animate-[pulse_4.2s_ease-in-out_infinite]"><Metric icon={Rocket} label={de ? "Laufende Kampagnen" : "Running campaigns"}
           value={counts.campaigns_running ?? "—"} color="#F472B6"
-          hint={counts.campaigns_running === 0 ? (de ? "Keine aktiven Workflows." : "No active workflows.") : undefined} />
+          hint={counts.campaigns_running === 0 ? (de ? "Keine aktiven Workflows." : "No active workflows.") : undefined} /></div>
       </StatGrid>
+
+
+
+      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <Section icon={Users} title={de ? "Dein Team arbeitet gerade…" : "Your team is working on…"}>
+          <Card className="h-full">
+            <div className="space-y-3">
+              {(teamPulse.length ? teamPulse : [{ id: "ceo", label_de: "Jarvjis", label_en: "Jarvjis", state: de ? "bereit" : "ready" }]).map((member, i) => {
+                const Icon = DEPT_ICON[member.id] || Crown;
+                return (
+                  <div key={member.id} className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/[0.03] p-3">
+                    <span className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/10">
+                      <Icon size={15} className="text-violet-300" />
+                      <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.9)]" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-zinc-200">{de ? member.label_de : member.label_en}</p>
+                      <p className="text-xs text-zinc-600">{member.state} · {member.open || 0} {de ? "Aufgaben" : "tasks"}</p>
+                    </div>
+                    <PlayCircle size={14} className="text-zinc-600" />
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </Section>
+
+        <Section icon={Crown} title={de ? "Tagesempfehlungen von Jarvjis" : "Jarvjis daily recommendations"}>
+          <Card tinted className="h-full">
+            <div className="grid gap-3 md:grid-cols-3">
+              {jarvjisPriorities.map(({ icon: Icon, label, text }) => (
+                <div key={label} className="rounded-xl border border-violet-400/15 bg-black/25 p-4">
+                  <div className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-violet-300"><Icon size={12} />{label}</div>
+                  <p className="text-sm leading-relaxed text-zinc-300">{text}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </Section>
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         {/* AI CEO Office – real goals + real recommendations */}
