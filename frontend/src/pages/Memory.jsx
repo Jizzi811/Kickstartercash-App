@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 import { V, SORA, fadeUp, GradientHeading, Card, SectionHeader } from "@/components/bm";
+import { PageHeader } from "@/components/PageHeader";
 
 
 const BRAIN_ICON = { brand: Palette, business: Briefcase, experience: Star };
@@ -96,32 +97,14 @@ export default function Memory() {
   return (
     <div className="space-y-10 pb-12">
       {/* HERO */}
-      <motion.section {...fadeUp(0)}>
-        <div className="relative overflow-hidden rounded-xl" style={{
-          background: "linear-gradient(135deg, rgba(124,58,237,0.08) 0%, rgba(8,8,8,0) 55%, rgba(124,58,237,0.05) 100%)",
-          border: "1px solid rgba(124,58,237,0.14)",
-        }}>
-          <div className="absolute -top-28 -left-28 w-96 h-96 rounded-full pointer-events-none"
-            style={{ background: "radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%)" }} />
-          <div className="relative px-6 md:px-10 py-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4 text-[10px] tracking-[0.2em] uppercase font-semibold"
-              style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.26)", color: V }}>
-              <Brain size={11} /> Multi-Brain Memory
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-2" style={{ fontFamily: SORA }}>
-              <span style={{
-                background: "linear-gradient(90deg, #7C3AED 0%, #C4B5FD 45%, #6D28D9 100%)",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-              }}>{lang === "DE" ? "Das Gedächtnis deiner Agenten" : "Your agents' memory"}</span>
-            </h1>
-            <p className="text-sm text-zinc-400 leading-relaxed max-w-xl">
-              {lang === "DE"
-                ? "Drei Gehirne – Marke, Unternehmen, Erfahrung. Der Memory Router gibt jedem Agenten genau das Wissen, das er braucht."
-                : "Three brains – brand, business, experience. The Memory Router gives each agent exactly the knowledge it needs."}
-            </p>
-          </div>
-        </div>
-      </motion.section>
+      <PageHeader
+        icon={Brain}
+        badge="Multi-Brain Memory"
+        title={lang === "DE" ? "Das Gedächtnis deiner Agenten" : "Your agents' memory"}
+        subtitle={lang === "DE"
+          ? "Drei Gehirne – Marke, Unternehmen, Erfahrung. Der Memory Router gibt jedem Agenten genau das Wissen, das er braucht."
+          : "Three brains – brand, business, experience. The Memory Router gives each agent exactly the knowledge it needs."}
+      />
 
       {/* BRAIN CARDS */}
       <motion.section {...fadeUp(0.05)} className="grid grid-cols-1 md:grid-cols-3 gap-3">

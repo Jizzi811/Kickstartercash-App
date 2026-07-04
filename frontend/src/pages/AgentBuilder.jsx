@@ -7,6 +7,7 @@ import {
   ChevronRight, Sparkles, Wand2, Copy, Check
 } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
+import { PageHeader } from "@/components/PageHeader";
 
 const COLOR = "#7C3AED";
 
@@ -443,28 +444,21 @@ export default function AgentBuilder() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-sm flex items-center justify-center" style={{ backgroundColor: `${COLOR}18` }}>
-            <Bot size={20} style={{ color: COLOR }} />
-          </div>
-          <div>
-            <h1 className="font-display text-2xl text-white">
-              {lang === "DE" ? "Eigene Agenten" : "Custom Agents"}
-            </h1>
-            <p className="text-xs text-zinc-500">
-              {lang === "DE"
-                ? "Erstelle personalisierte KI-Agenten mit deinen Dokumenten"
-                : "Create personalized AI agents with your documents"}
-            </p>
-          </div>
-        </div>
-        <button onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 bg-[#7C3AED] text-white px-4 py-2.5 rounded-sm font-bold text-sm hover:bg-[#C4B5FD] transition-colors">
-          <Plus size={15} />
-          {lang === "DE" ? "Neuen Agenten" : "New Agent"}
-        </button>
-      </div>
+      <PageHeader
+        icon={Bot}
+        badge="Agent Builder"
+        title={lang === "DE" ? "Eigene Agenten" : "Custom Agents"}
+        subtitle={lang === "DE"
+          ? "Erstelle personalisierte KI-Agenten mit deinen Dokumenten"
+          : "Create personalized AI agents with your documents"}
+        actions={(
+          <button onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 bg-[#7C3AED] text-white px-4 py-2.5 rounded-sm font-bold text-sm hover:bg-[#C4B5FD] transition-colors">
+            <Plus size={15} />
+            {lang === "DE" ? "Neuen Agenten" : "New Agent"}
+          </button>
+        )}
+      />
 
       {/* Agents grid */}
       {loading ? (
