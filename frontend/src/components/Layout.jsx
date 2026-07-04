@@ -86,6 +86,7 @@ const PAGE_NAMES = {
   "/finance-bookkeeper": "Buchhaltung",
   "/finance-tax": "Tax Studio",
   "/workflow": "Kampagnen-Flow",
+  "/tts": "TTS Studio",
 };
 
 // ── Page-enter particles ──────────────────────────────────────────────────────
