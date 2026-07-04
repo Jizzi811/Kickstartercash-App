@@ -74,7 +74,7 @@ export default function ExportCenter() {
       <div className="flex flex-wrap gap-2 mb-6">
         {["all", "campaign", "social", "copy", "image", "landingpage", "calendar", "analysis"].map((f) => (
           <button key={f} data-testid={`export-filter-${f}`} onClick={() => setFilter(f)}
-            className={`px-3.5 py-1.5 rounded-sm text-sm border transition-all ${filter === f ? "bg-[#D4AF37] text-black border-[#D4AF37] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#D4AF37]/40"}`}>
+            className={`px-3.5 py-1.5 rounded-sm text-sm border transition-all ${filter === f ? "bg-[#7C3AED] text-white border-[#7C3AED] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#7C3AED]/40"}`}>
             {f === "all" ? t("filter_all") : (typeMeta[f]?.label || f)}
           </button>
         ))}
@@ -89,8 +89,8 @@ export default function ExportCenter() {
           return (
             <div key={it.id} data-testid={`export-item-${it.id}`} className="bg-[#0A0A0A] border border-white/10 rounded-md p-4 flex flex-col">
               <div className="flex items-center gap-2 mb-3">
-                <span className="w-8 h-8 rounded-sm bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37]"><Icon size={15} /></span>
-                <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37]/80">{Meta.label}</span>
+                <span className="w-8 h-8 rounded-sm bg-[#7C3AED]/10 flex items-center justify-center text-[#7C3AED]"><Icon size={15} /></span>
+                <span className="text-[10px] tracking-[0.15em] uppercase text-[#7C3AED]/80">{Meta.label}</span>
                 <span className="text-[10px] text-zinc-600 ml-auto">{(it.created_at || "").slice(0, 10)}</span>
               </div>
               {it.type === "image" && it.image && (
@@ -99,15 +99,15 @@ export default function ExportCenter() {
               <p className="text-sm text-white font-medium line-clamp-2 mb-3 flex-1">{title(it)}</p>
               <div className="flex flex-wrap gap-2">
                 {it.type === "image" ? (
-                  <button data-testid={`export-png-${it.id}`} onClick={() => exportImage(it)} className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-sm border border-white/10 text-zinc-300 hover:border-[#D4AF37]/50 hover:text-[#D4AF37]">
+                  <button data-testid={`export-png-${it.id}`} onClick={() => exportImage(it)} className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-sm border border-white/10 text-zinc-300 hover:border-[#7C3AED]/50 hover:text-[#7C3AED]">
                     <Download size={13} /> PNG
                   </button>
                 ) : (
-                  <button data-testid={`export-txt-${it.id}`} onClick={() => download(`${it.type}-${it.id}.txt`, itemToText(it), "text/plain")} className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-sm border border-white/10 text-zinc-300 hover:border-[#D4AF37]/50 hover:text-[#D4AF37]">
+                  <button data-testid={`export-txt-${it.id}`} onClick={() => download(`${it.type}-${it.id}.txt`, itemToText(it), "text/plain")} className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-sm border border-white/10 text-zinc-300 hover:border-[#7C3AED]/50 hover:text-[#7C3AED]">
                     <FileText size={13} /> {t("export_txt")}
                   </button>
                 )}
-                <button data-testid={`export-json-${it.id}`} onClick={() => download(`${it.type}-${it.id}.json`, JSON.stringify(it, null, 2), "application/json")} className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-sm border border-white/10 text-zinc-300 hover:border-[#D4AF37]/50 hover:text-[#D4AF37]">
+                <button data-testid={`export-json-${it.id}`} onClick={() => download(`${it.type}-${it.id}.json`, JSON.stringify(it, null, 2), "application/json")} className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-sm border border-white/10 text-zinc-300 hover:border-[#7C3AED]/50 hover:text-[#7C3AED]">
                   <FileJson size={13} /> {t("export_json")}
                 </button>
                 <button data-testid={`export-delete-${it.id}`} onClick={() => remove(it.id)} className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-sm border border-white/10 text-zinc-400 hover:border-red-400/50 hover:text-red-400 ml-auto">

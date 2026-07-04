@@ -12,7 +12,7 @@ const empty = {
   email: "", telegram: "", instagram: "", cta_text: "", photo: "",
 };
 
-const inputCls = "bg-black/40 border-white/10 focus:border-[#D4AF37] focus-visible:ring-[#D4AF37]/40 text-white";
+const inputCls = "bg-black/40 border-white/10 focus:border-[#7C3AED] focus-visible:ring-[#7C3AED]/40 text-white";
 
 const Field = ({ label, children }) => (
   <div className="space-y-1.5">
@@ -95,14 +95,14 @@ export default function Funnel() {
     <div>
       <PageTitle title={t("funnel_title")} subtitle={t("funnel_sub")} icon={Rocket} />
 
-      <div className="bg-[#D4AF37]/5 border border-[#D4AF37]/20 rounded-md p-4 text-sm text-zinc-300 mb-6 leading-relaxed">
+      <div className="bg-[#7C3AED]/5 border border-[#7C3AED]/20 rounded-md p-4 text-sm text-zinc-300 mb-6 leading-relaxed">
         {t("funnel_intro")}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Form */}
         <div className="bg-[#0A0A0A] border border-white/10 rounded-md p-6 md:p-7 space-y-5" data-testid="funnel-form">
-          <div className="flex items-center gap-2 text-[#D4AF37]">
+          <div className="flex items-center gap-2 text-[#7C3AED]">
             {editing ? <Pencil size={16} /> : <Plus size={16} />}
             <span className="font-display text-lg">{editing ? t("funnel_update") : t("funnel_new")}</span>
           </div>
@@ -131,7 +131,7 @@ export default function Funnel() {
             <div className="flex items-center gap-4">
               {form.photo ? (
                 <div className="relative">
-                  <img src={form.photo} alt="Berater" className="w-20 h-20 rounded-full object-cover border-2 border-[#D4AF37]" data-testid="funnel-photo-preview" />
+                  <img src={form.photo} alt="Berater" className="w-20 h-20 rounded-full object-cover border-2 border-[#7C3AED]" data-testid="funnel-photo-preview" />
                   <button type="button" data-testid="funnel-photo-remove" onClick={() => set("photo", "")}
                     className="absolute -top-1.5 -right-1.5 bg-black border border-white/20 rounded-full p-0.5 text-zinc-300 hover:text-red-400">
                     <X size={13} />
@@ -140,7 +140,7 @@ export default function Funnel() {
               ) : (
                 <div className="w-20 h-20 rounded-full border-2 border-dashed border-white/15 flex items-center justify-center text-zinc-600 text-[10px] text-center">{t("funnel_photo_ph")}</div>
               )}
-              <label data-testid="funnel-photo-label" className="inline-flex items-center gap-2 cursor-pointer text-sm px-4 py-2.5 rounded-sm border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-colors">
+              <label data-testid="funnel-photo-label" className="inline-flex items-center gap-2 cursor-pointer text-sm px-4 py-2.5 rounded-sm border border-[#7C3AED]/40 text-[#7C3AED] hover:bg-[#7C3AED]/10 transition-colors">
                 <Upload size={15} /> {t("funnel_photo_btn")}
                 <input data-testid="funnel-photo-input" type="file" accept="image/*" className="hidden" onChange={onPhoto} />
               </label>
@@ -149,7 +149,7 @@ export default function Funnel() {
 
           <div className="flex gap-3 pt-1">
             <button data-testid="funnel-save-btn" disabled={saving} onClick={save}
-              className="inline-flex items-center gap-2 bg-[#D4AF37] text-black px-7 py-2.5 rounded-sm font-bold hover:bg-[#F3E5AB] transition-colors disabled:opacity-60">
+              className="inline-flex items-center gap-2 bg-[#7C3AED] text-white px-7 py-2.5 rounded-sm font-bold hover:bg-[#C4B5FD] transition-colors disabled:opacity-60">
               {saving ? <Loader2 size={16} className="animate-spin" /> : <Rocket size={16} />}
               {editing ? t("funnel_update") : t("funnel_create")}
             </button>
@@ -170,7 +170,7 @@ export default function Funnel() {
                   <div className="text-xs text-zinc-500 truncate">{f.email}</div>
                 </div>
                 <div className="flex gap-1.5 shrink-0">
-                  <button data-testid={`funnel-edit-${f.id}`} onClick={() => startEdit(f)} className="p-2 rounded border border-white/10 text-zinc-400 hover:text-[#D4AF37] hover:border-[#D4AF37]/50"><Pencil size={13} /></button>
+                  <button data-testid={`funnel-edit-${f.id}`} onClick={() => startEdit(f)} className="p-2 rounded border border-white/10 text-zinc-400 hover:text-[#7C3AED] hover:border-[#7C3AED]/50"><Pencil size={13} /></button>
                   <button data-testid={`funnel-delete-${f.id}`} onClick={() => remove(f.id)} className="p-2 rounded border border-white/10 text-zinc-400 hover:text-red-400 hover:border-red-400/50"><Trash2 size={13} /></button>
                 </div>
               </div>
@@ -179,15 +179,15 @@ export default function Funnel() {
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <a data-testid={`funnel-open-${f.id}`} href={pageUrl(f.id)} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-sm bg-[#D4AF37] text-black font-semibold hover:bg-[#F3E5AB]">
+                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-sm bg-[#7C3AED] text-white font-semibold hover:bg-[#C4B5FD]">
                   <ExternalLink size={13} /> {t("funnel_open")}
                 </a>
                 <button data-testid={`funnel-copy-${f.id}`} onClick={() => copyLink(f.id)}
-                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-sm border border-white/10 text-zinc-300 hover:border-[#D4AF37]/50 hover:text-[#D4AF37]">
+                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-sm border border-white/10 text-zinc-300 hover:border-[#7C3AED]/50 hover:text-[#7C3AED]">
                   {copiedId === f.id ? <Check size={13} /> : <Copy size={13} />} {t("funnel_copy")}
                 </button>
                 <button data-testid={`funnel-leads-${f.id}`} onClick={() => showLeads(f.id)}
-                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-sm border border-white/10 text-zinc-300 hover:border-[#D4AF37]/50 hover:text-[#D4AF37]">
+                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-sm border border-white/10 text-zinc-300 hover:border-[#7C3AED]/50 hover:text-[#7C3AED]">
                   <Inbox size={13} /> {t("funnel_leads")}
                 </button>
               </div>
@@ -196,7 +196,7 @@ export default function Funnel() {
                   {leads.length === 0 && <p className="text-xs text-zinc-600">{t("funnel_noleads")}</p>}
                   {leads.map((l) => (
                     <div key={l.id} className="text-xs bg-black/30 rounded-sm p-2.5">
-                      <div className="text-white">{l.vorname} {l.nachname} · <span className="text-[#D4AF37]">{l.email}</span></div>
+                      <div className="text-white">{l.vorname} {l.nachname} · <span className="text-[#7C3AED]">{l.email}</span></div>
                       <div className="text-zinc-500">{l.telefon} {l.land && `· ${l.land}`}</div>
                       {l.nachricht && <div className="text-zinc-400 mt-1">{l.nachricht}</div>}
                     </div>

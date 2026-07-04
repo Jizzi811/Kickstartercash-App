@@ -4,7 +4,7 @@ export const PageTitle = ({ title, subtitle, icon: Icon }) => (
   <div className="mb-8">
     <div className="flex items-center gap-3 mb-2">
       {Icon && (
-        <span className="w-10 h-10 rounded-sm bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37]">
+        <span className="w-10 h-10 rounded-sm bg-[#7C3AED]/10 flex items-center justify-center text-[#7C3AED]">
           <Icon size={20} strokeWidth={1.6} />
         </span>
       )}

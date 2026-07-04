@@ -11,7 +11,7 @@ import { useApp, API } from "@/context/AppContext";
 import { PageHeader } from "@/components/PageHeader";
 import jsPDF from "jspdf";
 
-const COLOR = "#D4AF37";
+const COLOR = "#7C3AED";
 
 /* ── Step definitions ─────────────────────────────────────────────── */
 const STEPS = [
@@ -24,7 +24,7 @@ const STEPS = [
 ];
 
 const AGENTS = [
-  { id: "copywriter",  emoji: "✍️", labelDE: "Copywriter",           labelEN: "Copywriter",           color: "#D4AF37" },
+  { id: "copywriter",  emoji: "✍️", labelDE: "Copywriter",           labelEN: "Copywriter",           color: "#7C3AED" },
   { id: "social",      emoji: "📱", labelDE: "Social Media Agent",   labelEN: "Social Media Agent",   color: "#C084FC" },
   { id: "seo",         emoji: "🌍", labelDE: "SEO Agent",            labelEN: "SEO Agent",            color: "#34D399" },
   { id: "email",       emoji: "📧", labelDE: "E-Mail Agent",         labelEN: "Email Agent",          color: "#F472B6" },
@@ -169,7 +169,7 @@ export default function CampaignWorkflow() {
     doc.setFont("helvetica", "bold");
     doc.setTextColor(212, 175, 55);
     doc.setFontSize(20);
-    doc.text("Kickstartercash.Club – Kampagnen-Report", 20, 25);
+    doc.text("Brandmind – Kampagnen-Report", 20, 25);
     doc.setTextColor(180, 180, 180);
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
@@ -211,19 +211,19 @@ export default function CampaignWorkflow() {
             <label className="block">
               <span className="text-xs text-zinc-400 mb-1.5 block">{t("Thema / Produkt *", "Topic / Product *")}</span>
               <input value={topic} onChange={e => setTopic(e.target.value)}
-                className="w-full bg-[#111] border border-white/10 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#D4AF37]/60"
-                placeholder={t("z.B. Kickstartercash.Club Black Card Launch…", "e.g. Kickstartercash.Club Black Card Launch…")} />
+                className="w-full bg-[#111] border border-white/10 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#7C3AED]/60"
+                placeholder={t("z.B. Brandmind Black Card Launch…", "e.g. Brandmind Black Card Launch…")} />
             </label>
             <label className="block">
               <span className="text-xs text-zinc-400 mb-1.5 block">{t("Kampagnenziel", "Campaign Goal")}</span>
               <input value={goal} onChange={e => setGoal(e.target.value)}
-                className="w-full bg-[#111] border border-white/10 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#D4AF37]/60"
+                className="w-full bg-[#111] border border-white/10 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#7C3AED]/60"
                 placeholder={t("z.B. Leads generieren, Produkt vorstellen…", "e.g. generate leads, product launch…")} />
             </label>
             <label className="block">
               <span className="text-xs text-zinc-400 mb-1.5 block">{t("Zielgruppe", "Target Audience")}</span>
               <input value={audience} onChange={e => setAudience(e.target.value)}
-                className="w-full bg-[#111] border border-white/10 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#D4AF37]/60"
+                className="w-full bg-[#111] border border-white/10 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#7C3AED]/60"
                 placeholder={t("z.B. Unternehmer 25–45, Deutschland…", "e.g. entrepreneurs 25–45, Germany…")} />
             </label>
           </div>
@@ -250,7 +250,7 @@ export default function CampaignWorkflow() {
             <input ref={fileRef} type="file" accept="image/*,.pdf,.doc,.docx,.txt" className="hidden" onChange={handleFile} />
             {uploadedFile ? (
               <div className="flex items-center gap-2 p-2.5 bg-[#111] border border-white/10 rounded-sm">
-                <Upload size={13} className="text-[#D4AF37]" />
+                <Upload size={13} className="text-[#7C3AED]" />
                 <span className="text-xs text-zinc-300 flex-1 truncate">{uploadedFile.name}</span>
                 <button onClick={() => setUploadedFile(null)}><X size={13} className="text-zinc-500 hover:text-white" /></button>
               </div>
@@ -372,7 +372,7 @@ export default function CampaignWorkflow() {
               <img src={imageUrl} alt="generated" className="w-full object-cover" />
               <div className="flex items-center justify-between px-4 py-2.5 bg-[#0A0A0A] border-t border-white/8">
                 <span className="text-xs text-zinc-500">{t("Generiertes Bild", "Generated Image")}</span>
-                <a href={imageUrl} download className="text-xs text-[#D4AF37] hover:text-white flex items-center gap-1.5">
+                <a href={imageUrl} download className="text-xs text-[#7C3AED] hover:text-white flex items-center gap-1.5">
                   <Download size={12} /> {t("Download", "Download")}
                 </a>
               </div>
@@ -410,7 +410,7 @@ export default function CampaignWorkflow() {
           <div>
             <span className="text-xs text-zinc-400 mb-2 block">{t("Uhrzeit", "Posting Time")}</span>
             <input type="time" value={postTime} onChange={e => setPostTime(e.target.value)}
-              className="bg-[#111] border border-white/10 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37]/60" />
+              className="bg-[#111] border border-white/10 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-[#7C3AED]/60" />
           </div>
 
           <div className="p-4 bg-[#0A0A0A] border border-white/8 rounded-sm space-y-2">
@@ -463,7 +463,7 @@ export default function CampaignWorkflow() {
 
           <div className="flex flex-col sm:flex-row gap-3">
             <button onClick={exportPDF}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-sm text-sm font-medium border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-all">
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-sm text-sm font-medium border border-[#7C3AED]/40 text-[#7C3AED] hover:bg-[#7C3AED]/10 transition-all">
               <Download size={15} /> {t("Als PDF exportieren", "Export as PDF")}
             </button>
             {generatedContent && (

@@ -1,12 +1,16 @@
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
-import { AppProvider } from "@/context/AppContext";
+import { AppProvider, useApp } from "@/context/AppContext";
+import { BRANDMIND } from "@/brandmind";
 import { Layout } from "@/components/Layout";
 
 // Core pages
 import Dashboard from "@/pages/Dashboard";
 import KnowledgeBase from "@/pages/KnowledgeBase";
+import BrandBrain from "@/pages/BrandBrain";
+import Auth from "@/pages/Auth";
+import Billing from "@/pages/Billing";
 
 // Agent system
 import JarvjisAgent from "@/pages/JarvjisAgent";   // CEO Orb – bleibt
@@ -47,16 +51,55 @@ import ExportCenter from "@/pages/ExportCenter";
 import Campaign from "@/pages/Campaign";
 import CampaignWorkflow from "@/pages/CampaignWorkflow";
 import AgentBuilder from "@/pages/AgentBuilder";
+import TTSStudio from "@/pages/TTSStudio";
 
 function App() {
   return (
     <div className="App">
       <AppProvider>
         <BrowserRouter>
-          <Layout>
-            <Routes>
+          <Routes>
+            {/* Brandmind auth – standalone, no app chrome */}
+            <Route path="/auth" element={<Auth />} />
+            {/* Everything else runs inside the app shell */}
+            <Route path="/*" element={<AppShell />} />
+          </Routes>
+        </BrowserRouter>
+        <Toaster theme="dark" position="top-right" richColors />
+      </AppProvider>
+    </div>
+  );
+}
+
+function AppShell() {
+  const { authReady, isAuthenticated } = useApp();
+
+  // Avoid a flash of the app before we know the auth state.
+  if (!authReady) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: BRANDMIND.colors.base }}
+      >
+        <div
+          className="w-10 h-10 rounded-full animate-pulse"
+          style={{ background: BRANDMIND.colors.glow, filter: "blur(4px)" }}
+        />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return (
+    <Layout>
+      <Routes>
               {/* Phase 5 – Main Navigation */}
               <Route path="/" element={<Dashboard />} />
+              <Route path="/brand-brain" element={<BrandBrain />} />
+              <Route path="/billing" element={<Billing />} />
               <Route path="/agents" element={<Specialists />} />
               <Route path="/design" element={<DesignStudio />} />
               <Route path="/video" element={<VideoStudio />} />
@@ -99,14 +142,11 @@ function App() {
               <Route path="/arena" element={<ChatArena />} />
               <Route path="/export" element={<ExportCenter />} />
               <Route path="/campaign" element={<Campaign />} />
+              <Route path="/tts" element={<TTSStudio />} />
               <Route path="/workflow" element={<CampaignWorkflow />} />
               <Route path="/specialists" element={<Specialists />} />
-            </Routes>
-          </Layout>
-        </BrowserRouter>
-        <Toaster theme="dark" position="top-right" richColors />
-      </AppProvider>
-    </div>
+      </Routes>
+    </Layout>
   );
 }
 

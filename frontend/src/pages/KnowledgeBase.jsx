@@ -11,7 +11,7 @@ import { useApp } from "@/context/AppContext";
 import { API } from "@/context/AppContext";
 
 const CATEGORY_META = {
-  "Produkte":              { icon: ShoppingBag,  color: "#D4AF37" },
+  "Produkte":              { icon: ShoppingBag,  color: "#7C3AED" },
   "Exclusive Cards":       { icon: CreditCard,   color: "#C084FC" },
   "FAQs":                  { icon: HelpCircle,   color: "#60A5FA" },
   "PDFs & Schulung":       { icon: FileText,     color: "#34D399" },
@@ -65,7 +65,7 @@ function EntryModal({ entry, categories, onSave, onClose }) {
             <select
               value={form.category}
               onChange={(e) => set("category", e.target.value)}
-              className="w-full bg-black border border-white/10 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37]/50"
+              className="w-full bg-black border border-white/10 rounded-sm px-3 py-2 text-sm text-white focus:outline-none focus:border-[#7C3AED]/50"
             >
               {categories.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -76,8 +76,8 @@ function EntryModal({ entry, categories, onSave, onClose }) {
             <input
               value={form.title}
               onChange={(e) => set("title", e.target.value)}
-              placeholder="z.B. Kickstartercash.Club Produkt-Übersicht"
-              className="w-full bg-black border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#D4AF37]/50"
+              placeholder="z.B. Brandmind Produkt-Übersicht"
+              className="w-full bg-black border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#7C3AED]/50"
             />
           </div>
 
@@ -88,7 +88,7 @@ function EntryModal({ entry, categories, onSave, onClose }) {
               onChange={(e) => set("content", e.target.value)}
               rows={7}
               placeholder="Füge hier den vollständigen Text, die Beschreibung, FAQ-Antwort, etc. ein..."
-              className="w-full bg-black border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#D4AF37]/50 resize-none"
+              className="w-full bg-black border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#7C3AED]/50 resize-none"
             />
           </div>
 
@@ -98,7 +98,7 @@ function EntryModal({ entry, categories, onSave, onClose }) {
               value={form.tags}
               onChange={(e) => set("tags", e.target.value)}
               placeholder="z.B. produkt, preis, provision"
-              className="w-full bg-black border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#D4AF37]/50"
+              className="w-full bg-black border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#7C3AED]/50"
             />
           </div>
         </div>
@@ -110,7 +110,7 @@ function EntryModal({ entry, categories, onSave, onClose }) {
           <button
             onClick={handleSave}
             disabled={!form.title.trim() || !form.content.trim()}
-            className="flex items-center gap-2 px-5 py-2 bg-[#D4AF37] text-black text-sm font-semibold rounded-sm hover:bg-[#F3E5AB] transition-colors disabled:opacity-40"
+            className="flex items-center gap-2 px-5 py-2 bg-[#7C3AED] text-white text-sm font-semibold rounded-sm hover:bg-[#C4B5FD] transition-colors disabled:opacity-40"
           >
             <Check size={14} /> Speichern
           </button>
@@ -196,13 +196,13 @@ export default function KnowledgeBase() {
         <PageHeader
           icon={Database}
           color="#60A5FA"
-          title="Kashbot Wissensdatenbank"
-          subtitle="Alles, was Kashbot über Kickstartercash.Club wissen muss — kein Halluzinieren, nur echtes Wissen."
+          title="Brandmind Wissensdatenbank"
+          subtitle="Alles, was Brandmind über deine Marke wissen muss — kein Halluzinieren, nur echtes Wissen."
           badge="Knowledge"
         />
         <button
           onClick={() => setModal("new")}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#D4AF37] text-black text-sm font-semibold rounded-sm hover:bg-[#F3E5AB] transition-colors whitespace-nowrap flex-shrink-0 mt-1"
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#7C3AED] text-white text-sm font-semibold rounded-sm hover:bg-[#C4B5FD] transition-colors whitespace-nowrap flex-shrink-0 mt-1"
         >
           <Plus size={15} /> Eintrag hinzufügen
         </button>
@@ -240,10 +240,10 @@ export default function KnowledgeBase() {
       </div>
 
       {/* AI Search Panel */}
-      <div className="bg-[#0A0A0A] border border-[#D4AF37]/20 rounded-sm p-5">
+      <div className="bg-[#0A0A0A] border border-[#7C3AED]/20 rounded-sm p-5">
         <div className="flex items-center gap-2 mb-3">
-          <Bot size={16} className="text-[#D4AF37]" />
-          <span className="text-sm font-semibold text-[#D4AF37]">Kashbot fragen</span>
+          <Bot size={16} className="text-[#7C3AED]" />
+          <span className="text-sm font-semibold text-[#7C3AED]">Brandmind fragen</span>
           <span className="text-[10px] text-zinc-600 ml-1">— antwortet nur aus deiner Wissensdatenbank</span>
         </div>
         <div className="flex gap-2">
@@ -252,12 +252,12 @@ export default function KnowledgeBase() {
             onChange={(e) => setAiQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAiSearch()}
             placeholder="z.B. Was kostet die Exclusive Card? Wie hoch ist die Provision?"
-            className="flex-1 bg-black border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#D4AF37]/40"
+            className="flex-1 bg-black border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#7C3AED]/40"
           />
           <button
             onClick={handleAiSearch}
             disabled={aiLoading || !aiQuery.trim()}
-            className="flex items-center gap-2 px-4 py-2 bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] text-sm rounded-sm hover:bg-[#D4AF37]/20 transition-colors disabled:opacity-40"
+            className="flex items-center gap-2 px-4 py-2 bg-[#7C3AED]/10 border border-[#7C3AED]/30 text-[#7C3AED] text-sm rounded-sm hover:bg-[#7C3AED]/20 transition-colors disabled:opacity-40"
           >
             {aiLoading ? <Loader2 size={15} className="animate-spin" /> : <Bot size={15} />}
             Fragen
@@ -272,8 +272,8 @@ export default function KnowledgeBase() {
           >
             {aiLoading ? (
               <div className="flex items-center gap-2 text-zinc-400 text-sm">
-                <Loader2 size={14} className="animate-spin text-[#D4AF37]" />
-                Kashbot durchsucht die Wissensdatenbank…
+                <Loader2 size={14} className="animate-spin text-[#7C3AED]" />
+                Brandmind durchsucht die Wissensdatenbank…
               </div>
             ) : (
               <>
@@ -302,7 +302,7 @@ export default function KnowledgeBase() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Einträge durchsuchen…"
-            className="w-full bg-[#0A0A0A] border border-white/10 rounded-sm pl-9 pr-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#D4AF37]/40"
+            className="w-full bg-[#0A0A0A] border border-white/10 rounded-sm pl-9 pr-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#7C3AED]/40"
           />
         </div>
         {activeCategory !== "Alle" && (
@@ -321,7 +321,7 @@ export default function KnowledgeBase() {
       {/* Entry List */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 size={20} className="animate-spin text-[#D4AF37]" />
+          <Loader2 size={20} className="animate-spin text-[#7C3AED]" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-zinc-600 text-sm">
@@ -331,7 +331,7 @@ export default function KnowledgeBase() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filtered.map((entry) => {
-            const meta = CATEGORY_META[entry.category] || { icon: FileText, color: "#D4AF37" };
+            const meta = CATEGORY_META[entry.category] || { icon: FileText, color: "#7C3AED" };
             const Icon = meta.icon;
             return (
               <motion.div

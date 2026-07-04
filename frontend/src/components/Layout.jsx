@@ -4,10 +4,9 @@ import {
   LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
-  TrendingUp, BookOpen, FileText, Megaphone,
+  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import { LOGO_URL } from "@/i18n";
 import { SalesSupportWidget } from "@/components/SalesSupportWidget";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -17,6 +16,8 @@ import { AmbientOrb } from "@/components/AmbientOrb";
 
 const NAV = [
   { to: "/",           icon: LayoutGrid, labelDE: "Dashboard",       labelEN: "Dashboard",       end: true },
+  { to: "/brand-brain", icon: BrainCircuit, labelDE: "Brand Brain",   labelEN: "Brand Brain" },
+  { to: "/billing",    icon: Crown,      labelDE: "Preise & Plan",    labelEN: "Pricing & Plan" },
   { to: "/agents",     icon: Bot,        labelDE: "Agenten",          labelEN: "Agents" },
   { to: "/design",     icon: Palette,    labelDE: "Design Studio",    labelEN: "Design Studio" },
   { to: "/video",      icon: Film,       labelDE: "Video Studio",     labelEN: "Video Studio" },
@@ -40,10 +41,13 @@ const NAV = [
   { to: "/finance-bookkeeper", icon: BookOpen, labelDE: "Buchhaltung", labelEN: "Bookkeeper" },
   { to: "/finance-tax", icon: FileText, labelDE: "Tax Studio", labelEN: "Tax Studio" },
   { to: "/workflow", icon: Megaphone, labelDE: "Kampagnen-Flow", labelEN: "Campaign Flow" },
+  { to: "/tts", icon: Volume2, labelDE: "TTS Studio", labelEN: "TTS Studio" },
 ];
 
 const PAGE_NAMES = {
   "/": "Dashboard",
+  "/brand-brain": "Brand Brain",
+  "/billing": "Preise & Plan",
   "/agents": "Agenten",
   "/design": "Design Studio",
   "/video": "Video Studio",
@@ -55,7 +59,7 @@ const PAGE_NAMES = {
   "/tickets": "Tickets",
   "/builder": "Eigene Agenten",
   "/arena": "Chat Arena",
-  "/jarvjis": "CEO Kashbot",
+  "/jarvjis": "Quantum",
   "/tiktok": "TikTok Studio",
   "/seo-specialist": "SEO Specialist",
   "/email": "E-Mail Marketing",
@@ -113,8 +117,8 @@ const PageParticles = ({ locationKey }) => {
             width: p.size,
             height: p.size,
             borderRadius: "50%",
-            background: "rgba(212,175,55,0.75)",
-            boxShadow: "0 0 6px rgba(212,175,55,0.5)",
+            background: "rgba(124,58,237,0.75)",
+            boxShadow: "0 0 6px rgba(124,58,237,0.5)",
             animation: `pageParticleFall ${p.duration}ms ease-in forwards`,
             animationDelay: `${p.delay}ms`,
           }}
@@ -147,14 +151,14 @@ const CEOModeToast = ({ lang, onDone }) => {
         transform: "translateX(-50%)",
         zIndex: 99999,
         background: "linear-gradient(135deg, #1a1400 0%, #2a1f00 100%)",
-        border: "1px solid rgba(212,175,55,0.5)",
+        border: "1px solid rgba(124,58,237,0.5)",
         borderRadius: 10,
         padding: "14px 28px",
-        color: "#D4AF37",
+        color: "#7C3AED",
         fontWeight: 700,
         fontSize: 15,
         letterSpacing: "0.04em",
-        boxShadow: "0 0 40px rgba(212,175,55,0.2), 0 8px 32px rgba(0,0,0,0.6)",
+        boxShadow: "0 0 40px rgba(124,58,237,0.2), 0 8px 32px rgba(0,0,0,0.6)",
         animation: "ceoToastIn 0.35s cubic-bezier(0.23,1,0.32,1)",
         whiteSpace: "nowrap",
         pointerEvents: "none",
@@ -175,7 +179,22 @@ const CEOModeToast = ({ lang, onDone }) => {
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 export const Layout = ({ children }) => {
-  const { t, lang, setLang, model, setModel } = useApp();
+  const {
+    t, lang, setLang, model, setModel,
+    isAuthenticated, activeWorkspace, workspaces, activeWorkspaceId,
+    switchWorkspace, createWorkspace, logout,
+  } = useApp();
+
+  const handleNewWorkspace = async () => {
+    const name = window.prompt(lang === "DE" ? "Name des neuen Workspace / Unternehmens:" : "New workspace / company name:");
+    if (!name || !name.trim()) return;
+    try {
+      await createWorkspace({ name: name.trim() });
+      navigate("/brand-brain");
+    } catch {
+      /* ignore */
+    }
+  };
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -214,34 +233,41 @@ export const Layout = ({ children }) => {
         {/* Logo – Easter egg trigger */}
         <div
           style={{
-            background: "linear-gradient(135deg, rgba(212,175,55,0.08) 0%, transparent 60%)",
+            background: "linear-gradient(135deg, rgba(124,58,237,0.08) 0%, transparent 60%)",
             borderBottom: "1px solid rgba(255,255,255,0.05)",
           }}
           className="cursor-pointer"
           onClick={handleLogoClick}
         >
           <div className="flex items-center gap-3 px-5 py-5">
-            <img src={LOGO_URL} alt="Kashbot" className="w-9 h-9 object-contain" />
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: "#7C3AED22", border: "1px solid #7C3AED55" }}
+            >
+              <BrainCircuit size={20} style={{ color: "#7C3AED" }} />
+            </div>
             <div className="leading-tight">
               <div
-                className="text-[13px] font-bold tracking-wide"
+                className="text-[14px] font-bold tracking-wide"
                 style={{
-                  background: "linear-gradient(135deg, #FBE9A6, #D4AF37)",
+                  background: "linear-gradient(135deg, #C4B5FD, #7C3AED)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
                 }}
               >
-                KASHBOT
+                BRANDMIND
               </div>
-              <div className="text-[9px] tracking-[0.2em] uppercase text-zinc-600">Kickstartercash.Club</div>
+              <div className="text-[9px] tracking-[0.2em] uppercase text-zinc-600">
+                {lang === "DE" ? "Das Gehirn deiner Marke" : "The brain of your brand"}
+              </div>
             </div>
           </div>
           {/* Gold divider line */}
           <div
             style={{
               height: "1px",
-              background: "linear-gradient(to right, rgba(212,175,55,0.4), transparent)",
+              background: "linear-gradient(to right, rgba(124,58,237,0.4), transparent)",
             }}
           />
         </div>
@@ -256,15 +282,15 @@ export const Layout = ({ children }) => {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-sm text-[13px] font-medium transition-all duration-150 ${
                   isActive
-                    ? "text-[#D4AF37] border-l-2 border-[#D4AF37]"
+                    ? "text-[#7C3AED] border-l-2 border-[#7C3AED]"
                     : "text-zinc-500 hover:text-zinc-200 hover:bg-white/4 border-l-2 border-transparent"
                 }`
               }
               style={({ isActive }) =>
                 isActive
                   ? {
-                      background: "rgba(212,175,55,0.1)",
-                      boxShadow: "inset 3px 0 0 #D4AF37, inset 0 0 20px rgba(212,175,55,0.05)",
+                      background: "rgba(124,58,237,0.1)",
+                      boxShadow: "inset 3px 0 0 #7C3AED, inset 0 0 20px rgba(124,58,237,0.05)",
                     }
                   : {}
               }
@@ -308,18 +334,23 @@ export const Layout = ({ children }) => {
           <div className="absolute inset-0 bg-black/70" onClick={() => setMobileOpen(false)} />
           <aside className="absolute left-0 top-0 h-full w-64 bg-[#080808] border-r border-white/8 flex flex-col z-50">
             <div className="flex items-center justify-between px-5 py-5 border-b border-white/8">
-              <div className="flex items-center gap-3" onClick={handleLogoClick}>
-                <img src={LOGO_URL} alt="Kashbot" className="w-8 h-8 object-contain" />
+              <div className="flex items-center gap-2.5" onClick={handleLogoClick}>
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: "#7C3AED22", border: "1px solid #7C3AED55" }}
+                >
+                  <BrainCircuit size={17} style={{ color: "#7C3AED" }} />
+                </div>
                 <span
                   className="text-sm font-bold"
                   style={{
-                    background: "linear-gradient(135deg, #FBE9A6, #D4AF37)",
+                    background: "linear-gradient(135deg, #C4B5FD, #7C3AED)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                     backgroundClip: "text",
                   }}
                 >
-                  KASHBOT
+                  BRANDMIND
                 </span>
               </div>
               <button onClick={() => setMobileOpen(false)} className="text-zinc-500 hover:text-white">
@@ -336,15 +367,15 @@ export const Layout = ({ children }) => {
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3 py-2.5 rounded-sm text-[13px] font-medium transition-all ${
                       isActive
-                        ? "text-[#D4AF37] border-l-2 border-[#D4AF37]"
+                        ? "text-[#7C3AED] border-l-2 border-[#7C3AED]"
                         : "text-zinc-500 hover:text-zinc-200 hover:bg-white/4 border-l-2 border-transparent"
                     }`
                   }
                   style={({ isActive }) =>
                     isActive
                       ? {
-                          background: "rgba(212,175,55,0.1)",
-                          boxShadow: "inset 3px 0 0 #D4AF37, inset 0 0 20px rgba(212,175,55,0.05)",
+                          background: "rgba(124,58,237,0.1)",
+                          boxShadow: "inset 3px 0 0 #7C3AED, inset 0 0 20px rgba(124,58,237,0.05)",
                         }
                       : {}
                   }
@@ -367,7 +398,7 @@ export const Layout = ({ children }) => {
             background: "rgba(5,5,5,0.9)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            borderBottom: "1px solid rgba(212,175,55,0.08)",
+            borderBottom: "1px solid rgba(124,58,237,0.08)",
           }}
         >
           {/* Mobile hamburger */}
@@ -380,7 +411,12 @@ export const Layout = ({ children }) => {
 
           {/* Mobile logo */}
           <div className="md:hidden flex items-center gap-2">
-            <img src={LOGO_URL} alt="logo" className="w-7 h-7 object-contain" />
+            <div
+              className="w-7 h-7 rounded-md flex items-center justify-center"
+              style={{ background: "#7C3AED22", border: "1px solid #7C3AED55" }}
+            >
+              <BrainCircuit size={15} style={{ color: "#7C3AED" }} />
+            </div>
           </div>
 
           {/* Desktop breadcrumb */}
@@ -405,14 +441,14 @@ export const Layout = ({ children }) => {
                 <button
                   className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs transition-colors"
                   style={{
-                    border: "1px solid rgba(212,175,55,0.15)",
-                    color: "#D4AF37",
+                    border: "1px solid rgba(124,58,237,0.15)",
+                    color: "#7C3AED",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.border = "1px solid rgba(212,175,55,0.35)";
+                    e.currentTarget.style.border = "1px solid rgba(124,58,237,0.35)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.border = "1px solid rgba(212,175,55,0.15)";
+                    e.currentTarget.style.border = "1px solid rgba(124,58,237,0.15)";
                   }}
                 >
                   {model === "gemini" ? "Gemini 2.5" : model === "grok" ? "Grok 3" : "GPT-5.2"}
@@ -420,9 +456,10 @@ export const Layout = ({ children }) => {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-[#0A0A0A] border-white/10 text-white">
-                <DropdownMenuItem onClick={() => setModel("gpt")} className="text-sm cursor-pointer focus:bg-[#D4AF37]/10">GPT-5.2</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setModel("gemini")} className="text-sm cursor-pointer focus:bg-[#D4AF37]/10">Gemini 2.5 Flash</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setModel("grok")} className="text-sm cursor-pointer focus:bg-[#D4AF37]/10">Grok 3 (xAI)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setModel("gpt")} className="text-sm cursor-pointer focus:bg-[#7C3AED]/10">GPT-5.2</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setModel("gemini")} className="text-sm cursor-pointer focus:bg-[#7C3AED]/10">Gemini 2.5 Flash</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setModel("grok")} className="text-sm cursor-pointer focus:bg-[#7C3AED]/10">Grok 3 (xAI)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setModel("freetheai")} className="text-sm cursor-pointer focus:bg-[#7C3AED]/10">FreeTheAi (Gratis)</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -432,10 +469,10 @@ export const Layout = ({ children }) => {
                 <button
                   key={l}
                   onClick={() => setLang(l)}
-                  className={`px-2.5 py-1.5 transition-colors ${lang === l ? "text-black font-bold" : "text-zinc-500 hover:text-white"}`}
+                  className={`px-2.5 py-1.5 transition-colors ${lang === l ? "text-white font-bold" : "text-zinc-500 hover:text-white"}`}
                   style={
                     lang === l
-                      ? { background: "linear-gradient(135deg, #D4AF37, #B8972E)" }
+                      ? { background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }
                       : {}
                   }
                 >
@@ -443,6 +480,52 @@ export const Layout = ({ children }) => {
                 </button>
               ))}
             </div>
+
+            {/* Workspace switcher + logout */}
+            {isAuthenticated && (
+              <div className="flex items-center gap-2">
+                {activeWorkspace && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-xs text-white/80 border border-white/8 hover:border-white/20 transition-colors"
+                        title={lang === "DE" ? "Workspace wechseln" : "Switch workspace"}
+                      >
+                        <BrainCircuit size={13} style={{ color: "#7C3AED" }} />
+                        <span className="max-w-[140px] truncate">{activeWorkspace.name}</span>
+                        <ChevronDown size={12} className="text-zinc-500" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-[#0A0A0A] border-white/10 text-white min-w-[220px]">
+                      {workspaces.map((w) => (
+                        <DropdownMenuItem
+                          key={w.id}
+                          onClick={() => switchWorkspace(w.id)}
+                          className="text-sm cursor-pointer focus:bg-[#7C3AED]/15 flex items-center justify-between gap-2"
+                        >
+                          <span className="truncate">{w.name}</span>
+                          {w.id === activeWorkspaceId && <Check size={13} style={{ color: "#7C3AED" }} />}
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuItem
+                        onClick={handleNewWorkspace}
+                        className="text-sm cursor-pointer focus:bg-[#7C3AED]/15 text-[#7C3AED] mt-1 border-t border-white/5"
+                      >
+                        + {lang === "DE" ? "Neuer Workspace" : "New workspace"}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+                <button
+                  onClick={() => { logout(); navigate("/auth"); }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-xs text-zinc-400 hover:text-white border border-white/8 hover:border-white/20 transition-colors"
+                  title={lang === "DE" ? "Abmelden" : "Log out"}
+                >
+                  <LogOut size={13} />
+                  <span className="hidden sm:inline">{lang === "DE" ? "Abmelden" : "Log out"}</span>
+                </button>
+              </div>
+            )}
           </div>
         </header>
 

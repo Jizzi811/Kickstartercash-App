@@ -55,7 +55,7 @@ export default function SocialMedia() {
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             placeholder={t("topic_ph")}
-            className="bg-black/40 border-white/10 focus:border-[#D4AF37] focus-visible:ring-[#D4AF37]/40 text-white"
+            className="bg-black/40 border-white/10 focus:border-[#7C3AED] focus-visible:ring-[#7C3AED]/40 text-white"
           />
         </div>
         <div>
@@ -66,7 +66,7 @@ export default function SocialMedia() {
                 key={p}
                 data-testid={`platform-${p}`}
                 onClick={() => toggle(p)}
-                className={`px-4 py-2 rounded-sm text-sm border transition-all ${selected.includes(p) ? "bg-[#D4AF37] text-black border-[#D4AF37] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#D4AF37]/40"}`}
+                className={`px-4 py-2 rounded-sm text-sm border transition-all ${selected.includes(p) ? "bg-[#7C3AED] text-white border-[#7C3AED] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#7C3AED]/40"}`}
               >
                 {p}
               </button>
@@ -84,12 +84,12 @@ export default function SocialMedia() {
           title="Social Media Export"
         />
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <span className="text-xs text-zinc-500">{t("activeBrand")}: <span className="text-[#D4AF37]">{activeBrand?.name}</span></span>
+          <span className="text-xs text-zinc-500">{t("activeBrand")}: <span className="text-[#7C3AED]">{activeBrand?.name}</span></span>
           <button
             data-testid="social-generate-btn"
             disabled={loading}
             onClick={generate}
-            className="inline-flex items-center gap-2 bg-[#D4AF37] text-black px-7 py-2.5 rounded-sm font-bold hover:bg-[#F3E5AB] transition-colors disabled:opacity-60"
+            className="inline-flex items-center gap-2 bg-[#7C3AED] text-white px-7 py-2.5 rounded-sm font-bold hover:bg-[#C4B5FD] transition-colors disabled:opacity-60"
           >
             {loading ? <><Loader2 size={16} className="animate-spin" /> {t("generating")}</> : t("generate")}
           </button>
@@ -114,23 +114,23 @@ export default function SocialMedia() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06 }}
-              className="bg-[#0A0A0A] border border-white/10 rounded-md p-5 hover:border-[#D4AF37]/40 transition-colors"
+              className="bg-[#0A0A0A] border border-white/10 rounded-md p-5 hover:border-[#7C3AED]/40 transition-colors"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="font-display text-lg text-[#D4AF37]">{p.platform}</span>
+                <span className="font-display text-lg text-[#7C3AED]">{p.platform}</span>
                 <CopyButton testid={`social-copy-${p.platform}`} text={`${p.caption}\n\n${(p.hashtags || []).map((h) => "#" + h).join(" ")}\n\n${p.cta}`} label={t("copy")} copiedLabel={t("copied")} />
               </div>
               <p className="text-sm text-zinc-200 whitespace-pre-wrap leading-relaxed">{p.caption}</p>
               {p.hashtags?.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   {p.hashtags.map((h, j) => (
-                    <span key={`${h}-${j}`} className="text-xs text-[#D4AF37]/80 bg-[#D4AF37]/10 px-2 py-0.5 rounded">#{h}</span>
+                    <span key={`${h}-${j}`} className="text-xs text-[#7C3AED]/80 bg-[#7C3AED]/10 px-2 py-0.5 rounded">#{h}</span>
                   ))}
                 </div>
               )}
               {p.cta && (
                 <div className="mt-3 flex items-start gap-2 text-sm text-zinc-300">
-                  <Megaphone size={14} className="text-[#D4AF37] mt-0.5 shrink-0" /> {p.cta}
+                  <Megaphone size={14} className="text-[#7C3AED] mt-0.5 shrink-0" /> {p.cta}
                 </div>
               )}
               {p.image_idea && (

@@ -52,7 +52,7 @@ export default function ImageGenerator() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder={t("img_prompt_ph")}
-              className="bg-black/40 border-white/10 focus:border-[#D4AF37] focus-visible:ring-[#D4AF37]/40 text-white"
+              className="bg-black/40 border-white/10 focus:border-[#7C3AED] focus-visible:ring-[#7C3AED]/40 text-white"
             />
           </div>
           <div>
@@ -63,7 +63,7 @@ export default function ImageGenerator() {
                   key={s}
                   data-testid={`style-${s}`}
                   onClick={() => setStyle(s)}
-                  className={`px-3.5 py-1.5 rounded-sm text-sm border transition-all ${style === s ? "bg-[#D4AF37] text-black border-[#D4AF37] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#D4AF37]/40"}`}
+                  className={`px-3.5 py-1.5 rounded-sm text-sm border transition-all ${style === s ? "bg-[#7C3AED] text-white border-[#7C3AED] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#7C3AED]/40"}`}
                 >
                   {s}
                 </button>
@@ -82,7 +82,7 @@ export default function ImageGenerator() {
                   key={r.v}
                   data-testid={`ratio-${r.v.replace(":", "x")}`}
                   onClick={() => setRatio(r.v)}
-                  className={`px-3.5 py-1.5 rounded-sm text-sm border transition-all ${ratio === r.v ? "bg-[#D4AF37] text-black border-[#D4AF37] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#D4AF37]/40"}`}
+                  className={`px-3.5 py-1.5 rounded-sm text-sm border transition-all ${ratio === r.v ? "bg-[#7C3AED] text-white border-[#7C3AED] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#7C3AED]/40"}`}
                 >
                   {r.label} <span className="opacity-60 text-xs">· {r.desc}</span>
                 </button>
@@ -94,7 +94,7 @@ export default function ImageGenerator() {
             <button
               data-testid="image-apply-logo-toggle"
               onClick={() => setApplyLogo((v) => !v)}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs border transition-all ${applyLogo ? "bg-[#D4AF37] text-black border-[#D4AF37] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#D4AF37]/40"}`}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs border transition-all ${applyLogo ? "bg-[#7C3AED] text-white border-[#7C3AED] font-semibold" : "border-white/10 text-zinc-400 hover:border-[#7C3AED]/40"}`}
             >
               <Stamp size={13} /> {t("image_apply_logo")}
             </button>
@@ -103,11 +103,11 @@ export default function ImageGenerator() {
             data-testid="image-generate-btn"
             disabled={loading}
             onClick={generate}
-            className="w-full inline-flex items-center justify-center gap-2 bg-[#D4AF37] text-black px-7 py-3 rounded-sm font-bold hover:bg-[#F3E5AB] transition-colors disabled:opacity-60"
+            className="w-full inline-flex items-center justify-center gap-2 bg-[#7C3AED] text-white px-7 py-3 rounded-sm font-bold hover:bg-[#C4B5FD] transition-colors disabled:opacity-60"
           >
             {loading ? <><Loader2 size={16} className="animate-spin" /> {t("generating")}</> : t("generate")}
           </button>
-          <p className="text-xs text-zinc-600">{t("activeBrand")}: <span className="text-[#D4AF37]">{activeBrand?.name}</span></p>
+          <p className="text-xs text-zinc-600">{t("activeBrand")}: <span className="text-[#7C3AED]">{activeBrand?.name}</span></p>
         </div>
 
         {/* Output */}
@@ -130,7 +130,7 @@ export default function ImageGenerator() {
             <button
               data-testid="image-download-btn"
               onClick={download}
-              className="mt-4 inline-flex items-center justify-center gap-2 border border-[#D4AF37]/50 text-[#D4AF37] py-2.5 rounded-sm hover:bg-[#D4AF37]/10 transition-colors"
+              className="mt-4 inline-flex items-center justify-center gap-2 border border-[#7C3AED]/50 text-[#7C3AED] py-2.5 rounded-sm hover:bg-[#7C3AED]/10 transition-colors"
             >
               <Download size={16} /> {t("download")}
             </button>

@@ -9,11 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 
 const statusMeta = {
   pass: { icon: CheckCircle2, color: "#34D399", bg: "rgba(52,211,153,0.1)" },
-  warn: { icon: AlertTriangle, color: "#D4AF37", bg: "rgba(212,175,55,0.1)" },
+  warn: { icon: AlertTriangle, color: "#7C3AED", bg: "rgba(124,58,237,0.1)" },
   fail: { icon: XCircle, color: "#F87171", bg: "rgba(248,113,113,0.1)" },
 };
 
-const scoreColor = (s) => (s >= 80 ? "#34D399" : s >= 60 ? "#D4AF37" : "#F87171");
+const scoreColor = (s) => (s >= 80 ? "#34D399" : s >= 60 ? "#7C3AED" : "#F87171");
 
 function Gauge({ score }) {
   const r = 52;
@@ -43,7 +43,7 @@ function Stars({ score }) {
   return (
     <div className="flex gap-0.5">
       {[...Array(5)].map((_, i) => (
-        <Sparkles key={`star-${i}`} size={18} fill={i < filled ? "#D4AF37" : "none"} className={i < filled ? "text-[#D4AF37]" : "text-zinc-700"} />
+        <Sparkles key={`star-${i}`} size={18} fill={i < filled ? "#7C3AED" : "none"} className={i < filled ? "text-[#7C3AED]" : "text-zinc-700"} />
       ))}
     </div>
   );
@@ -99,14 +99,14 @@ export default function Guardian() {
       <div className="bg-[#0A0A0A] border border-white/10 rounded-md p-6 md:p-7 space-y-4">
         <div className="flex items-center justify-between">
           <label className="text-xs tracking-[0.12em] uppercase text-zinc-500">{t("guardian_input")}</label>
-          <button data-testid="guardian-loadlast-btn" onClick={loadLast} className="text-xs text-[#D4AF37] hover:underline">{t("guardian_loadlast")}</button>
+          <button data-testid="guardian-loadlast-btn" onClick={loadLast} className="text-xs text-[#7C3AED] hover:underline">{t("guardian_loadlast")}</button>
         </div>
         <Textarea data-testid="guardian-input" rows={6} value={content} onChange={(e) => setContent(e.target.value)}
-          placeholder={t("guardian_input_ph")} className="bg-black/40 border-white/10 focus:border-[#D4AF37] focus-visible:ring-[#D4AF37]/40 text-white" />
+          placeholder={t("guardian_input_ph")} className="bg-black/40 border-white/10 focus:border-[#7C3AED] focus-visible:ring-[#7C3AED]/40 text-white" />
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <span className="text-xs text-zinc-500">{t("activeBrand")}: <span className="text-[#D4AF37]">{activeBrand?.name}</span></span>
+          <span className="text-xs text-zinc-500">{t("activeBrand")}: <span className="text-[#7C3AED]">{activeBrand?.name}</span></span>
           <button data-testid="guardian-analyze-btn" disabled={loading} onClick={analyze}
-            className="inline-flex items-center gap-2 bg-[#D4AF37] text-black px-7 py-2.5 rounded-sm font-bold hover:bg-[#F3E5AB] transition-colors disabled:opacity-60">
+            className="inline-flex items-center gap-2 bg-[#7C3AED] text-white px-7 py-2.5 rounded-sm font-bold hover:bg-[#C4B5FD] transition-colors disabled:opacity-60">
             {loading ? <><Loader2 size={16} className="animate-spin" /> {t("generating")}</> : t("guardian_btn")}
           </button>
         </div>
@@ -119,7 +119,7 @@ export default function Guardian() {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-5" data-testid="guardian-result">
           {/* Score panel */}
           <div className="bg-[#0A0A0A] border border-white/10 rounded-md p-6 flex flex-col items-center text-center">
-            <div className="text-xs tracking-[0.12em] uppercase text-[#D4AF37] mb-4">{t("guardian_score")}</div>
+            <div className="text-xs tracking-[0.12em] uppercase text-[#7C3AED] mb-4">{t("guardian_score")}</div>
             <Gauge score={result.score || 0} />
             <div className="mt-4"><Stars score={result.score || 0} /></div>
             <p className="text-sm text-zinc-400 mt-4 leading-relaxed">{result.verdict}</p>
@@ -131,7 +131,7 @@ export default function Guardian() {
 
           {/* Brand checks */}
           <div className="bg-[#0A0A0A] border border-white/10 rounded-md p-6">
-            <div className="text-xs tracking-[0.12em] uppercase text-[#D4AF37] mb-4">{t("guardian_checks")}</div>
+            <div className="text-xs tracking-[0.12em] uppercase text-[#7C3AED] mb-4">{t("guardian_checks")}</div>
             <div className="space-y-3">
               {(result.checks || []).map((c, i) => {
                 const meta = statusMeta[c.status] || statusMeta.warn;
@@ -152,10 +152,10 @@ export default function Guardian() {
           {/* Improvements + strengths */}
           <div className="bg-[#0A0A0A] border border-white/10 rounded-md p-6 space-y-6">
             <div>
-              <div className="text-xs tracking-[0.12em] uppercase text-[#D4AF37] mb-3 flex items-center gap-1.5"><TrendingUp size={13} /> {t("guardian_improvements")}</div>
+              <div className="text-xs tracking-[0.12em] uppercase text-[#7C3AED] mb-3 flex items-center gap-1.5"><TrendingUp size={13} /> {t("guardian_improvements")}</div>
               <ul className="space-y-2">
                 {(result.improvements || []).map((imp, i) => (
-                  <li key={`imp-${i}-${String(imp).slice(0, 16)}`} className="text-sm text-zinc-300 flex gap-2"><span className="text-[#D4AF37]">→</span> {imp}</li>
+                  <li key={`imp-${i}-${String(imp).slice(0, 16)}`} className="text-sm text-zinc-300 flex gap-2"><span className="text-[#7C3AED]">→</span> {imp}</li>
                 ))}
               </ul>
             </div>

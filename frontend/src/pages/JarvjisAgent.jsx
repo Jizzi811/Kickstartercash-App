@@ -12,7 +12,7 @@ const DEPARTMENTS = [
     icon: TrendingUp,
     labelDE: "Marketing",
     labelEN: "Marketing",
-    color: "#D4AF37",
+    color: "#7C3AED",
     descDE: "Kampagnen, Social Media, Content-Strategie & Wachstum",
     descEN: "Campaigns, social media, content strategy & growth",
   },
@@ -404,7 +404,7 @@ export default function JarvjisAgent() {
 
   const ceoResponsesDE = {
     marketing: "Verstanden. Ich delegiere diese Aufgabe an das Marketing-Team. Strategie wird analysiert und ein detaillierter Aktionsplan wird entwickelt.",
-    design: "Klar. Das Design-Team übernimmt. Alle Materialien werden im Corporate Design von Kickstartercash.Club erstellt.",
+    design: "Klar. Das Design-Team übernimmt. Alle Materialien werden im Corporate Design von Brandmind erstellt.",
     video: "Ausgezeichnet. Video-Produktion wird gestartet. Das Team erstellt professionelle Inhalte für maximale Reichweite.",
     sales: "Perfekt. Sales-Optimierung beginnt jetzt. Der Funnel wird auf höchste Conversion-Rate ausgerichtet.",
     seo: "Verstanden. SEO-Analyse läuft. Keywords werden identifiziert und eine Ranking-Strategie wird entwickelt.",
@@ -425,7 +425,7 @@ export default function JarvjisAgent() {
 
   const ceoResponsesEN = {
     marketing: "Understood. Delegating to the marketing team. Strategy is being analyzed and a detailed action plan will be developed.",
-    design: "Clear. Design team is taking over. All materials will be created in Kickstartercash.Club corporate design.",
+    design: "Clear. Design team is taking over. All materials will be created in Brandmind corporate design.",
     video: "Excellent. Video production is starting. The team will create professional content for maximum reach.",
     sales: "Perfect. Sales optimization begins now. The funnel will be aligned for the highest conversion rate.",
     seo: "Understood. SEO analysis running. Keywords will be identified and a ranking strategy will be developed.",
@@ -457,7 +457,7 @@ export default function JarvjisAgent() {
   };
 
   const activeDeptObj = DEPARTMENTS.find((d) => d.id === activeDept);
-  const activeDeptColor = activeDeptObj ? activeDeptObj.color : "#D4AF37";
+  const activeDeptColor = activeDeptObj ? activeDeptObj.color : "#7C3AED";
 
   return (
     <div className="space-y-8">
@@ -473,20 +473,20 @@ export default function JarvjisAgent() {
           borderRadius: "8px",
           padding: "32px",
           marginBottom: "8px",
-          background: "linear-gradient(135deg, rgba(212,175,55,0.07) 0%, rgba(8,8,8,0) 60%)",
-          border: "1px solid rgba(212,175,55,0.15)",
+          background: "linear-gradient(135deg, rgba(124,58,237,0.07) 0%, rgba(8,8,8,0) 60%)",
+          border: "1px solid rgba(124,58,237,0.15)",
         }}
       >
         {/* Ambient glow */}
-        <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "200px", height: "200px", borderRadius: "50%", background: "radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "200px", height: "200px", borderRadius: "50%", background: "radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
 
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           {/* Animated Crown Orb */}
-          <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "linear-gradient(135deg, #D4AF37, #B8972E)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 30px rgba(212,175,55,0.4)", flexShrink: 0 }}>
+          <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "linear-gradient(135deg, #7C3AED, #6D28D9)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 30px rgba(124,58,237,0.4)", flexShrink: 0 }}>
             <Crown size={26} style={{ color: "#050505" }} />
           </div>
           <div>
-            <div style={{ fontSize: "10px", letterSpacing: "0.3em", textTransform: "uppercase", color: "#D4AF37", marginBottom: "4px" }}>
+            <div style={{ fontSize: "10px", letterSpacing: "0.3em", textTransform: "uppercase", color: "#7C3AED", marginBottom: "4px" }}>
               KI-Agentur · CEO Modus
             </div>
             <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 700, color: "#fff", margin: 0 }}>
@@ -521,20 +521,20 @@ export default function JarvjisAgent() {
           </div>
         </motion.div>
 
-        {/* CEO Agent Node */}
+        {/* Quantum Node */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.25 }}
           className="flex flex-col items-center"
         >
-          <div className="relative flex items-center gap-4 px-8 py-4 bg-[#D4AF37]/10 border-2 border-[#D4AF37]/60 rounded-sm min-w-[240px] justify-center">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-[#D4AF37] text-black text-[10px] font-bold tracking-widest uppercase rounded-full">
+          <div className="relative flex items-center gap-4 px-8 py-4 bg-[#7C3AED]/10 border-2 border-[#7C3AED]/60 rounded-sm min-w-[240px] justify-center">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-[#7C3AED] text-white text-[10px] font-bold tracking-widest uppercase rounded-full">
               CEO
             </div>
-            <Bot size={22} className="text-[#D4AF37]" />
+            <Bot size={22} className="text-[#7C3AED]" />
             <div>
-              <div className="text-base font-semibold text-[#D4AF37]">Kashbot Agent</div>
+              <div className="text-base font-semibold text-[#7C3AED]">Quantum</div>
               <div className="text-[11px] text-zinc-400">
                 {lang === "DE" ? "Orchestrator & Entscheider" : "Orchestrator & Decision Maker"}
               </div>
@@ -672,13 +672,13 @@ export default function JarvjisAgent() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          style={{ display: "flex", alignItems: "center", gap: "12px", padding: "16px 20px", borderRadius: "12px", background: "rgba(212,175,55,0.04)", border: "1px solid rgba(212,175,55,0.12)" }}
+          style={{ display: "flex", alignItems: "center", gap: "12px", padding: "16px 20px", borderRadius: "12px", background: "rgba(124,58,237,0.04)", border: "1px solid rgba(124,58,237,0.12)" }}
         >
           <div style={{ display: "flex", gap: "5px" }}>
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={i}
-                style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#D4AF37" }}
+                style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#7C3AED" }}
                 animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.1, 0.8] }}
                 transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }}
               />
@@ -698,15 +698,15 @@ export default function JarvjisAgent() {
           style={{
             padding: "20px",
             borderRadius: "12px",
-            background: "linear-gradient(135deg, rgba(212,175,55,0.06) 0%, rgba(255,255,255,0.02) 100%)",
-            border: "1px solid rgba(212,175,55,0.2)",
+            background: "linear-gradient(135deg, rgba(124,58,237,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+            border: "1px solid rgba(124,58,237,0.2)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-            <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "linear-gradient(135deg, #D4AF37, #B8972E)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "linear-gradient(135deg, #7C3AED, #6D28D9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Crown size={13} style={{ color: "#050505" }} />
             </div>
-            <span style={{ fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#D4AF37" }}>CEO Response</span>
+            <span style={{ fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#7C3AED" }}>CEO Response</span>
           </div>
           <p style={{ fontSize: "14px", color: "#d4d4d8", lineHeight: 1.7, margin: 0 }}>{ceoResponse}</p>
         </motion.div>
