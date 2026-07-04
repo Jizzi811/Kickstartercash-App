@@ -54,6 +54,7 @@ from app.services import intelligence as intel  # noqa: E402
 from app.gateway import gateway as ai_gateway  # noqa: E402
 from app.gateway import registry as gw_registry, capabilities as gw_caps, config as gw_config  # noqa: E402
 from app.identity import service as identity_service, schema as identity_schema  # noqa: E402
+from app.memory import registry as mem_registry, router as mem_router  # noqa: E402
 
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
@@ -3748,6 +3749,9 @@ async def run_agent_tool(req: AgentToolRunRequest, ws: Optional[str] = Depends(c
         f"Du nutzt gerade das Tool: {tool['label'] if lang == 'DE' else tool['label_en']}. "
         f"Sei präzise, strukturiert und sofort umsetzbar."
     )
+    _mem = await _agent_memory_context(req.agent_id, ws, lang)
+    if _mem:
+        system = f"{system}\n\n{_mem}"
     reply = await llm_text(req.model, system, full_prompt)
     return {
         "type": "text",
@@ -3780,9 +3784,11 @@ async def agent_chat(req: AgentChatRequest, ws: Optional[str] = Depends(current_
         except Exception:
             pass
 
+    _mem = await _agent_memory_context(req.agent_id, ws, lang)
     system = (
         f"{personality}\n\n"
         f"{_brand_context(brand, lang, req.agent_id)}\n\n"
+        f"{(_mem + chr(10) + chr(10)) if _mem else ''}"
         f"Antworte immer auf {lang_label}. "
         f"Du bist Teil des Quantum Multi-Agenten-Systems von Brandmind."
         f"{kb_context}"
@@ -4943,9 +4949,11 @@ async def mission_ceo_plan(req: CeoPlanRequest, ws: Optional[str] = Depends(curr
     personality = ceo.get("personality_de" if lang == "DE" else "personality_en", "")
     dept_list = ", ".join(d["id"] for d in MISSION_DEPARTMENTS)
 
+    _mem = await _agent_memory_context('ceo', ws, lang)
     system = (
         f"{personality}\n\n"
         f"{_brand_context(brand, lang, 'ceo')}\n\n"
+        f"{(_mem + chr(10) + chr(10)) if _mem else ''}"
         "Du bist der KI-CEO. Erstelle einen umsetzbaren Executive-Plan für das Ziel des Nutzers. "
         "WICHTIG: Nichts wird automatisch veröffentlicht oder ausgeführt – dein Plan ist ein Vorschlag, "
         "den ein Mensch freigeben muss. "
@@ -5120,8 +5128,10 @@ async def mission_team_chat_ask(plan_id: str, payload: TeamChatAskRequest,
         f"- {t.get('id')}: {t.get('department')} · {t.get('title')} · {t.get('status')} · {t.get('expected_output', '')}"
         for t in tasks[:20]
     )
+    _mem = await _agent_memory_context('ceo', ws, payload.language)
     system = (
         f"{_brand_context(brand, payload.language, 'ceo')}\n\n"
+        f"{(_mem + chr(10) + chr(10)) if _mem else ''}"
         "You are BrandMind's internal AI Team Chat for a Mission Control plan. "
         "The AI CEO moderates. Relevant agents respond with short role-specific critique, improvements and next actions. "
         "Agents may challenge or improve each other's suggestions. "
@@ -5734,6 +5744,203 @@ async def brand_identity_score(brand_id: str, payload: BrandScoreRequest,
     brand = await _resolve_brand(brand_id, ws)
     return identity_service.consistency_score(
         payload.content, brand, payload.language, payload.content_type)
+
+
+# ---------------------------------------------------------------------------
+# Multi-Brain Memory – Brand / Business / Experience brains + Memory Router
+# ---------------------------------------------------------------------------
+# Agents request memory through the router (_agent_memory_context), never reading
+# collections directly. Brand Brain is already injected via _brand_context; this
+# adds the Business and Experience brains an agent is entitled to. The Experience
+# Brain is aggregated from existing signals (history, mission_tasks, events).
+
+async def _business_entries(ws: Optional[str], category: Optional[str] = None) -> list:
+    if db is None:
+        return []
+    filt = dict(_scope_filter(ws))
+    if category:
+        filt["category"] = category
+    try:
+        rows = await db.business_memory.find(filt, {"_id": 0}).to_list(1000)
+    except Exception:
+        return []
+    rows.sort(key=lambda r: r.get("created_at", ""), reverse=True)
+    return rows
+
+
+async def _experience_signals(ws: Optional[str]) -> dict:
+    rec = await _gather_intel_records(ws)  # history, tasks, plans, events (scoped)
+    return {
+        "records": rec,
+        "aggregate": mem_router.experience_aggregate(
+            rec["history"], rec["tasks"], rec["plans"], rec["events"]),
+    }
+
+
+async def _agent_memory_context(agent_id: Optional[str], ws: Optional[str], language: str) -> str:
+    """Memory Router entry point every AI agent uses to fetch routed memory."""
+    if db is None:
+        return ""
+    brains = mem_registry.brains_for_agent(agent_id)
+    business = await _business_entries(ws) if mem_registry.BUSINESS in brains else []
+    exp = {"totals": {"assets": 0, "tasks": 0, "plans": 0}, "agent_performance": [],
+           "asset_types": {}, "weekday": {}, "approval_rate": 0, "recent_campaigns": [],
+           "feedback_count": 0, "approved": 0, "rejected": 0}
+    if mem_registry.EXPERIENCE in brains:
+        exp = (await _experience_signals(ws))["aggregate"]
+    try:
+        return mem_router.build_context(agent_id, business, exp, language)
+    except Exception as e:
+        logger.warning(f"Memory routing skipped: {e}")
+        return ""
+
+
+class BusinessMemoryCreate(BaseModel):
+    category: str
+    title: str
+    content: str = ""
+    tags: List[str] = []
+    brand_id: Optional[str] = None
+
+
+class BusinessMemoryUpdate(BaseModel):
+    category: Optional[str] = None
+    title: Optional[str] = None
+    content: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+
+class ExperienceRecordCreate(BaseModel):
+    category: str
+    title: str
+    outcome: str = "neutral"        # positive | negative | neutral
+    summary: str = ""
+    meta: dict = {}
+    brand_id: Optional[str] = None
+
+
+@api_router.get("/memory/registry")
+async def memory_registry():
+    return mem_registry.registry_payload()
+
+
+@api_router.get("/memory/business")
+async def memory_business_list(category: Optional[str] = None,
+                               ws: Optional[str] = Depends(current_workspace)):
+    return {"categories": mem_registry.BUSINESS_CATEGORIES,
+            "entries": await _business_entries(ws, category)}
+
+
+@api_router.post("/memory/business")
+async def memory_business_create(payload: BusinessMemoryCreate,
+                                 ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    if payload.category not in mem_registry.BUSINESS_CATEGORY_IDS:
+        raise HTTPException(status_code=400, detail="Invalid category")
+    brand = await _resolve_brand(payload.brand_id, ws)
+    entry = {
+        "id": str(uuid.uuid4()), "category": payload.category, "title": payload.title,
+        "content": payload.content, "tags": payload.tags,
+        "brand_id": brand.get("id", ""), "workspace_id": ws or "",
+        "created_at": _now_iso(), "updated_at": _now_iso(),
+    }
+    await db.business_memory.insert_one({**entry})
+    entry.pop("_id", None)
+    return entry
+
+
+@api_router.put("/memory/business/{entry_id}")
+async def memory_business_update(entry_id: str, payload: BusinessMemoryUpdate,
+                                 ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    doc = await db.business_memory.find_one({"id": entry_id, **_scope_filter(ws)}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    if "category" in updates and updates["category"] not in mem_registry.BUSINESS_CATEGORY_IDS:
+        raise HTTPException(status_code=400, detail="Invalid category")
+    updates["updated_at"] = _now_iso()
+    await db.business_memory.update_one({"id": entry_id, **_scope_filter(ws)}, {"$set": updates})
+    doc.update(updates)
+    return doc
+
+
+@api_router.delete("/memory/business/{entry_id}")
+async def memory_business_delete(entry_id: str, ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    await db.business_memory.delete_one({"id": entry_id, **_scope_filter(ws)})
+    return {"ok": True}
+
+
+@api_router.get("/memory/experience")
+async def memory_experience(ws: Optional[str] = Depends(current_workspace)):
+    sig = await _experience_signals(ws)
+    explicit = []
+    if db is not None:
+        try:
+            explicit = await db.experience_memory.find(_scope_filter(ws), {"_id": 0}).to_list(500)
+            explicit.sort(key=lambda r: r.get("created_at", ""), reverse=True)
+        except Exception:
+            explicit = []
+    return {"aggregate": sig["aggregate"], "records": explicit}
+
+
+@api_router.post("/memory/experience")
+async def memory_experience_record(payload: ExperienceRecordCreate,
+                                   ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    brand = await _resolve_brand(payload.brand_id, ws)
+    rec = {
+        "id": str(uuid.uuid4()), "category": payload.category, "title": payload.title,
+        "outcome": payload.outcome, "summary": payload.summary, "meta": payload.meta or {},
+        "brand_id": brand.get("id", ""), "workspace_id": ws or "", "created_at": _now_iso(),
+    }
+    await db.experience_memory.insert_one({**rec})
+    rec.pop("_id", None)
+    return rec
+
+
+@api_router.get("/memory/search")
+async def memory_search(q: str, language: str = "DE",
+                        ws: Optional[str] = Depends(current_workspace)):
+    brand = await _resolve_brand(None, ws)
+    business = await _business_entries(ws)
+    exp = (await _experience_signals(ws))["aggregate"]
+    return {"results": mem_router.search(q, brand, business, exp, language)}
+
+
+@api_router.get("/memory/timeline")
+async def memory_timeline(language: str = "DE", ws: Optional[str] = Depends(current_workspace)):
+    business = await _business_entries(ws)
+    rec = await _gather_intel_records(ws)
+    return {"events": mem_router.timeline(business, rec["history"], rec["tasks"], rec["plans"], language)}
+
+
+@api_router.get("/memory/insights")
+async def memory_insights(language: str = "DE", ws: Optional[str] = Depends(current_workspace)):
+    business = await _business_entries(ws)
+    exp = (await _experience_signals(ws))["aggregate"]
+    return {"insights": mem_router.insights(exp, business, language)}
+
+
+@api_router.get("/memory/summary")
+async def memory_summary(language: str = "DE", ws: Optional[str] = Depends(current_workspace)):
+    brand = await _resolve_brand(None, ws)
+    business = await _business_entries(ws)
+    exp = (await _experience_signals(ws))["aggregate"]
+    return mem_router.summarize(brand, business, exp, language)
+
+
+@api_router.get("/memory/context")
+async def memory_context(agent_id: Optional[str] = None, language: str = "DE",
+                         ws: Optional[str] = Depends(current_workspace)):
+    """Inspect the routed Memory Context an agent would receive."""
+    return {"agent_id": agent_id, "brains": mem_registry.brains_for_agent(agent_id),
+            "context": await _agent_memory_context(agent_id, ws, language)}
 
 
 app.include_router(api_router)
