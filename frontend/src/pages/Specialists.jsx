@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { API } from "@/context/AppContext";
+import { PageHeader } from "@/components/PageHeader";
 
 const ICON_MAP = {
   ceo:        { Icon: Target,      color: "#7C3AED" },
@@ -402,22 +403,14 @@ export default function Specialists() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-sm bg-[#7C3AED]/10 flex items-center justify-center">
-            <Sparkles size={20} className="text-[#7C3AED]" />
-          </div>
-          <h1 className="font-display text-2xl text-white">
-            {lang === "DE" ? "Brandmind Spezialisten" : "Brandmind Specialists"}
-          </h1>
-        </div>
-        <p className="text-sm text-zinc-500">
-          {lang === "DE"
-            ? "17 KI-Agenten mit eigener Persönlichkeit, spezialisierten Tools & KB-Zugriff."
-            : "17 AI agents with their own personality, specialized tools & KB access."}
-        </p>
-      </div>
+      <PageHeader
+        icon={Sparkles}
+        badge="Brandmind Specialists"
+        title={lang === "DE" ? "Brandmind Spezialisten" : "Brandmind Specialists"}
+        subtitle={lang === "DE"
+          ? "17 KI-Agenten mit eigener Persönlichkeit, spezialisierten Tools & KB-Zugriff."
+          : "17 AI agents with their own personality, specialized tools & KB access."}
+      />
 
       {/* Agent Grid */}
       {loading ? (
