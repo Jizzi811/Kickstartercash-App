@@ -192,21 +192,20 @@ export default function KnowledgeBase() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between gap-4">
-        <PageHeader
-          icon={Database}
-          color="#60A5FA"
-          title="Brandmind Wissensdatenbank"
-          subtitle="Alles, was Brandmind über deine Marke wissen muss — kein Halluzinieren, nur echtes Wissen."
-          badge="Knowledge"
-        />
-        <button
-          onClick={() => setModal("new")}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#7C3AED] text-white text-sm font-semibold rounded-sm hover:bg-[#C4B5FD] transition-colors whitespace-nowrap flex-shrink-0 mt-1"
-        >
-          <Plus size={15} /> Eintrag hinzufügen
-        </button>
-      </div>
+      <PageHeader
+        icon={Database}
+        title="Brandmind Wissensdatenbank"
+        subtitle="Alles, was Brandmind über deine Marke wissen muss — kein Halluzinieren, nur echtes Wissen."
+        badge="Knowledge"
+        actions={(
+          <button
+            onClick={() => setModal("new")}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#7C3AED] text-white text-sm font-semibold rounded-sm hover:bg-[#C4B5FD] transition-colors whitespace-nowrap"
+          >
+            <Plus size={15} /> Eintrag hinzufügen
+          </button>
+        )}
+      />
 
       {/* Category Overview */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
