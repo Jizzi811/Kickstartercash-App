@@ -76,7 +76,7 @@ import Billing from "@/pages/Billing";
 import Permissions from "@/pages/Permissions";
 
 // Agent system
-import JarvjisAgent from "@/pages/JarvjisAgent";   // CEO Orb – bleibt
+import QuantumAgent from "@/pages/QuantumAgent";   // Quantum Command
 import Specialists from "@/pages/Specialists";       // Agents overview
 
 // Studios
@@ -190,8 +190,8 @@ function AppShell() {
               <Route path="/knowledge" element={<KnowledgeBase />} />
               <Route path="/knowledge-graph" element={<KnowledgeExplorer />} />
 
-              {/* Jarvjis CEO Orb – bleibt */}
-              <Route path="/jarvjis" element={<JarvjisAgent />} />
+              {/* Quantum Command – bleibt */}
+              <Route path="/quantum" element={<QuantumAgent />} />
               <Route path="/builder" element={<AgentBuilder />} />
 
               {/* Ticket System */}

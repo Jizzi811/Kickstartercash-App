@@ -173,7 +173,7 @@
     <div id="jrv-logo">K</div>
     <div id="jrv-head-info">
       <h2>KASHBOT</h2>
-      <div id="jrv-tagline">Kickstartercash.Club · CEO Agent</div>
+      <div id="jrv-tagline">Kickstartercash.Club · Quantum AI</div>
       <div id="jrv-status">Online</div>
     </div>
     <button id="jrv-close" title="Schließen">✕</button>
@@ -439,7 +439,7 @@ function addMsg(type, text, agentKey, replyText) {
     el.className = `jm ${agentKey==='ceo'?'ceo':'agent'}`;
     if (agentKey !== 'ceo') el.style.cssText=`background:${agent.color}0d;border:1px solid ${agent.color}30`;
     const spk = replyText ? `<button class="spkbtn" data-text="${esc(replyText)}" title="Vorlesen">🔊</button>` : '';
-    el.innerHTML = `<div class="jlbl"><span class="agent-dot" style="background:${agent.color}"></span>${agent.name||'Kashbot'} · ${agent.role||'CEO Agent'}${spk}</div>${esc(text)}`;
+    el.innerHTML = `<div class="jlbl"><span class="agent-dot" style="background:${agent.color}"></span>${agent.name||'Kashbot'} · ${agent.role||'Quantum AI'}${spk}</div>${esc(text)}`;
     if (spk) el.querySelector('.spkbtn').addEventListener('click', function(){ speak(this.dataset.text); });
   }
 

@@ -393,7 +393,7 @@ const TASKS_EN = {
   ],
 };
 
-export default function JarvjisAgent() {
+export default function QuantumAgent() {
   const [activeDept, setActiveDept] = useState(null);
   const [activeTask, setActiveTask] = useState(null);
   const [ceoResponse, setCeoResponse] = useState(null);
@@ -487,10 +487,10 @@ export default function JarvjisAgent() {
           </div>
           <div>
             <div style={{ fontSize: "10px", letterSpacing: "0.3em", textTransform: "uppercase", color: "#7C3AED", marginBottom: "4px" }}>
-              KI-Agentur · CEO Modus
+              KI-Agentur · Quantum Command
             </div>
             <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 700, color: "#fff", margin: 0 }}>
-              {lang === "DE" ? "Dein CEO-Assistent" : "Your CEO Assistant"}
+              {lang === "DE" ? "Dein Quantum Intelligence Core" : "Your Quantum Intelligence Core"}
             </h1>
             <p style={{ fontSize: "13px", color: "#71717a", marginTop: "4px", marginBottom: 0 }}>
               {lang === "DE" ? "Delegiere Aufgaben an 18 KI-Spezialisten" : "Delegate tasks to 18 AI specialists"}
@@ -525,7 +525,7 @@ export default function JarvjisAgent() {
         </div>
         <div className="space-y-3 text-xs">
           {[
-            ["08:42", "🟢 CEO Agent", lang === "DE" ? "Aufgabe analysiert" : "Task analyzed"],
+            ["08:42", "🟢 Quantum AI", lang === "DE" ? "Aufgabe analysiert" : "Task analyzed"],
             ["08:43", "✔ Marketing Agent", lang === "DE" ? "Kampagnenstruktur erstellt" : "Campaign structure drafted"],
             ["08:44", "✔ Design Agent", lang === "DE" ? "Grafik-Briefing vorbereitet" : "Design brief prepared"],
             ["08:45", "… Video Agent", lang === "DE" ? "Reel wird geplant" : "Planning reel"],
@@ -569,7 +569,7 @@ export default function JarvjisAgent() {
         >
           <div className="relative flex items-center gap-4 px-8 py-4 bg-[#7C3AED]/10 border-2 border-[#7C3AED]/60 rounded-sm min-w-[240px] justify-center">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-[#7C3AED] text-white text-[10px] font-bold tracking-widest uppercase rounded-full">
-              CEO
+              CORE
             </div>
             <Bot size={22} className="text-[#7C3AED]" />
             <div>
@@ -724,12 +724,12 @@ export default function JarvjisAgent() {
             ))}
           </div>
           <span style={{ fontSize: "13px", color: "#71717a" }}>
-            {lang === "DE" ? "CEO analysiert die Aufgabe…" : "CEO is analyzing the task…"}
+            {lang === "DE" ? "Quantum analysiert die Aufgabe…" : "Quantum is analyzing the task…"}
           </span>
         </motion.div>
       )}
 
-      {/* CEO Response Box */}
+      {/* Quantum Response Box */}
       {ceoResponse && !isThinking && (
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
@@ -745,7 +745,7 @@ export default function JarvjisAgent() {
             <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "linear-gradient(135deg, #7C3AED, #6D28D9)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Crown size={13} style={{ color: "#050505" }} />
             </div>
-            <span style={{ fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#7C3AED" }}>CEO Response</span>
+            <span style={{ fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#7C3AED" }}>Quantum Response</span>
           </div>
           <p style={{ fontSize: "14px", color: "#d4d4d8", lineHeight: 1.7, margin: 0 }}>{ceoResponse}</p>
         </motion.div>

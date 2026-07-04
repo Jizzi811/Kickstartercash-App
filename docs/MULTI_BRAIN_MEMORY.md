@@ -49,7 +49,7 @@ and returns plain dicts/strings; DB access lives in `server.py`.
 | Designer / Video / Social | Brand · Experience |
 | SEO / Analytics | Business · Experience |
 | Marketing Director / Sales | Business · Experience · Brand |
-| CEO (Mission Control, Team Chat) | all three |
+| Quantum (Mission Control, Team Chat) | all three |
 | *(unknown)* | all three (safe superset) |
 
 `build_context(agent_id, business_entries, experience, lang)` returns the routed

@@ -45,7 +45,7 @@ Globale Effekte sind nun zentral konfigurierbar:
 - Standard
 - Immersive
 
-Gesteuert werden Ambient Orb, Cursor Trail, Page Particles und CEO-Orb/Toast über `frontend/src/design-system.js`.
+Gesteuert werden Ambient Orb, Cursor Trail, Page Particles und Quantum-Orb/Toast über `frontend/src/design-system.js`.
 
 ## Entfernte bzw. reduzierte Duplikate
 
