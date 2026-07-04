@@ -17,6 +17,7 @@ import KnowledgeBase from "@/pages/KnowledgeBase";
 import BrandBrain from "@/pages/BrandBrain";
 import Auth from "@/pages/Auth";
 import Billing from "@/pages/Billing";
+import Permissions from "@/pages/Permissions";
 
 // Agent system
 import JarvjisAgent from "@/pages/JarvjisAgent";   // CEO Orb – bleibt
@@ -116,6 +117,7 @@ function AppShell() {
               <Route path="/skills" element={<SkillsMarketplace />} />
               <Route path="/skills/:skillId" element={<SkillsMarketplace />} />
               <Route path="/billing" element={<Billing />} />
+              <Route path="/permissions" element={<Permissions />} />
               <Route path="/agents" element={<Specialists />} />
               <Route path="/design" element={<DesignStudio />} />
               <Route path="/video" element={<VideoStudio />} />

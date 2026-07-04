@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
-  Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare,
+  Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare, ShieldCheck,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
   TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target, Factory, Plug, Dna, Brain, Sparkles,
 } from "lucide-react";
@@ -25,6 +25,7 @@ const NAV = [
   { to: "/skills",     icon: Sparkles,   labelDE: "Skills",           labelEN: "Skills" },
   { to: "/output-factory", icon: Factory, labelDE: "Output Factory", labelEN: "Output Factory" },
   { to: "/billing",    icon: Crown,      labelDE: "Preise & Plan",    labelEN: "Pricing & Plan" },
+  { to: "/permissions", icon: ShieldCheck, labelDE: "Berechtigungen", labelEN: "Permissions" },
   { to: "/agents",     icon: Bot,        labelDE: "Agenten",          labelEN: "Agents" },
   { to: "/design",     icon: Palette,    labelDE: "Design Studio",    labelEN: "Design Studio" },
   { to: "/video",      icon: Film,       labelDE: "Video Studio",     labelEN: "Video Studio" },
@@ -62,6 +63,7 @@ const PAGE_NAMES = {
   "/skills": "Skills",
   "/output-factory": "Output Factory",
   "/billing": "Preise & Plan",
+  "/permissions": "Permissions",
   "/agents": "Agenten",
   "/design": "Design Studio",
   "/video": "Video Studio",
