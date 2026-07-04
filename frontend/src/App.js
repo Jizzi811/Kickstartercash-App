@@ -1,9 +1,63 @@
+import React from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AppProvider, useApp } from "@/context/AppContext";
 import { BRANDMIND } from "@/brandmind";
 import { Layout } from "@/components/Layout";
+
+function AppFallback({ title, message, error }) {
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center px-6 text-center"
+      style={{ background: BRANDMIND.colors.base, color: "#fff" }}
+    >
+      <div className="max-w-md rounded-2xl border border-white/10 bg-white/[0.04] p-8 shadow-2xl">
+        <div
+          className="mx-auto mb-5 h-12 w-12 rounded-full"
+          style={{ background: BRANDMIND.colors.glow, boxShadow: `0 0 40px ${BRANDMIND.colors.glow}` }}
+        />
+        <h1 className="text-xl font-semibold">{title}</h1>
+        <p className="mt-3 text-sm leading-6 text-zinc-400">{message}</p>
+        {error && (
+          <pre className="mt-4 max-h-40 overflow-auto rounded-lg bg-black/40 p-3 text-left text-xs text-red-300">
+            {error}
+          </pre>
+        )}
+      </div>
+    </div>
+  );
+}
+
+class AppErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error, info) {
+    // Keep the failure visible instead of leaving users on a black screen.
+    console.error("Brandmind app render failed", error, info);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <AppFallback
+          title="Brandmind konnte nicht geladen werden"
+          message="Bitte lade die Seite neu. Falls das Problem bleibt, kopiere die Fehlermeldung unten an den Support."
+          error={this.state.error?.message || String(this.state.error)}
+        />
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // Core pages
 import BrandMindHQ from "@/pages/BrandMindHQ";
@@ -66,7 +120,8 @@ import OutputFactory from "@/pages/OutputFactory";
 function App() {
   return (
     <div className="App">
-      <AppProvider>
+      <AppErrorBoundary>
+        <AppProvider>
         <BrowserRouter>
           <Routes>
             {/* Brandmind auth – standalone, no app chrome */}
@@ -77,6 +132,7 @@ function App() {
         </BrowserRouter>
         <Toaster theme="dark" position="top-right" richColors />
       </AppProvider>
+      </AppErrorBoundary>
     </div>
   );
 }
@@ -91,10 +147,13 @@ function AppShell() {
         className="min-h-screen flex items-center justify-center"
         style={{ background: BRANDMIND.colors.base }}
       >
-        <div
-          className="w-10 h-10 rounded-full animate-pulse"
-          style={{ background: BRANDMIND.colors.glow, filter: "blur(4px)" }}
-        />
+        <div className="text-center">
+          <div
+            className="mx-auto mb-4 w-10 h-10 rounded-full animate-pulse"
+            style={{ background: BRANDMIND.colors.glow, filter: "blur(4px)" }}
+          />
+          <p className="text-sm text-zinc-400">Brandmind wird geladen…</p>
+        </div>
       </div>
     );
   }
