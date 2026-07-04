@@ -42,7 +42,7 @@ function ResultCard({ result, color }) {
 }
 
 export default function AutomationStudio() {
-  const { lang, model } = useApp();
+  const { lang, model, activeBrandId } = useApp();
   const [toolLoading, setToolLoading] = useState(null);
   const [context, setContext] = useState("");
   const [result, setResult] = useState(null);
@@ -50,7 +50,7 @@ export default function AutomationStudio() {
   const runTool = async (tool) => {
     setToolLoading(tool.id); setResult(null);
     try {
-      const res = await axios.post(`${API}/agents/tools/run`, { agent_id: "automation", tool_id: tool.id, context, model, language: lang });
+      const res = await axios.post(`${API}/agents/tools/run`, { agent_id: "automation", tool_id: tool.id, context, model, language: lang, brand_id: activeBrandId });
       setResult({ label: lang === "DE" ? tool.label : tool.label_en, text: res.data.reply });
     } catch { toast.error("Fehler"); }
     finally { setToolLoading(null); }

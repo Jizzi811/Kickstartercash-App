@@ -80,7 +80,7 @@ function CopyBtn({ text }) {
 }
 
 export default function CampaignWorkflow() {
-  const { lang, model } = useApp();
+  const { lang, model, activeBrandId } = useApp();
   const [step, setStep] = useState(0);
   const fileRef = useRef(null);
 
@@ -136,6 +136,7 @@ export default function CampaignWorkflow() {
         context,
         model,
         language: lang,
+        brand_id: activeBrandId,
       });
       setGeneratedContent(res.data.reply || "");
     } catch {

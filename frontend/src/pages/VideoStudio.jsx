@@ -261,7 +261,7 @@ function GalleryPanel({ lang }) {
 
 // ── Main Export ──────────────────────────────────────────────────────────────
 export default function VideoStudio() {
-  const { lang, model } = useApp();
+  const { lang, model, activeBrandId } = useApp();
   const [toolLoading, setToolLoading] = useState(null);
   const [context, setContext] = useState("");
   const [result, setResult] = useState(null);
@@ -273,7 +273,7 @@ export default function VideoStudio() {
     setResult(null);
     try {
       const res = await axios.post(`${API}/agents/tools/run`, {
-        agent_id: "video", tool_id: tool.id, context, model, language: lang,
+        agent_id: "video", tool_id: tool.id, context, model, language: lang, brand_id: activeBrandId,
       });
       setResult({ label: lang === "DE" ? tool.labelDE : tool.labelEN, text: res.data.reply });
     } catch { toast.error("Fehler"); }

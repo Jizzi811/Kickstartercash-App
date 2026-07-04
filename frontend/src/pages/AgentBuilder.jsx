@@ -337,6 +337,7 @@ function AgentChatDrawer({ agent, onClose }) {
 }
 
 function AgentBuilderSection({ lang, model }) {
+  const { activeBrandId } = useApp();
   const [desc, setDesc] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -346,7 +347,7 @@ function AgentBuilderSection({ lang, model }) {
     if (!desc.trim()) return;
     setLoading(true); setResult(null);
     try {
-      const res = await axios.post(`${API}/agent-builder/generate`, { description: desc, model, language: lang });
+      const res = await axios.post(`${API}/agent-builder/generate`, { description: desc, model, language: lang, brand_id: activeBrandId });
       setResult(res.data.plan);
     } catch { toast.error("Fehler"); }
     finally { setLoading(false); }
