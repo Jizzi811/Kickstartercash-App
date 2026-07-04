@@ -9,7 +9,7 @@ export function PageHeader({ icon: Icon, color, title, subtitle, badge }) {
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className="relative overflow-hidden rounded-sm mb-8 px-6 py-5"
+      className="relative overflow-hidden rounded-2xl mb-8 p-8"
       style={{
         background: `linear-gradient(135deg, ${color}08 0%, rgba(8,8,8,0) 70%)`,
         border: `1px solid ${color}18`,
@@ -17,7 +17,7 @@ export function PageHeader({ icon: Icon, color, title, subtitle, badge }) {
     >
       <div className="flex items-center gap-4">
         <div
-          className="w-12 h-12 rounded-sm flex items-center justify-center flex-shrink-0"
+          className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
           style={{
             background: `${color}15`,
             border: `1px solid ${color}25`,
@@ -42,11 +42,11 @@ export function PageHeader({ icon: Icon, color, title, subtitle, badge }) {
               {badge}
             </div>
           )}
-          <h1 className="font-display text-2xl md:text-3xl font-light tracking-tight leading-tight purple-text">
+          <h1 className="bm-heading purple-text">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-xs text-zinc-500 mt-1 tracking-wide">{subtitle}</p>
+            <p className="bm-caption text-zinc-500 mt-2">{subtitle}</p>
           )}
         </div>
       </div>

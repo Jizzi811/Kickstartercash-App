@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Send, Loader2, Trash2 } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 import { PageTitle } from "@/components/PageTitle";
+import { Btn, ChatContainer } from "@/components/bm";
 
 export const ChatView = ({ model, title, subtitle, icon, accent }) => {
   const { t, lang } = useApp();
@@ -44,14 +45,13 @@ export const ChatView = ({ model, title, subtitle, icon, accent }) => {
       <div className="flex items-center justify-between">
         <PageTitle title={title} subtitle={subtitle} icon={icon} />
         {messages.length > 0 && (
-          <button data-testid="chat-clear-btn" onClick={() => { setMessages([]); setGrokExtraData(null); }}
-            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-sm border border-white/10 text-zinc-400 hover:text-red-400 hover:border-red-400/50">
+          <Btn data-testid="chat-clear-btn" variant="danger" size="sm" onClick={() => { setMessages([]); setGrokExtraData(null); }}>
             <Trash2 size={13} /> {t("chat_clear")}
-          </button>
+          </Btn>
         )}
       </div>
 
-      <div className="bg-[#0A0A0A] border border-white/10 rounded-md flex flex-col h-[calc(100vh-260px)] min-h-[420px]">
+      <ChatContainer>
         <div className="flex-1 overflow-y-auto p-5 space-y-4" data-testid="chat-messages">
           {messages.length === 0 && (
             <div className="h-full flex flex-col items-center justify-center text-center text-zinc-600">
@@ -87,14 +87,14 @@ export const ChatView = ({ model, title, subtitle, icon, accent }) => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKey}
             placeholder={t("chat_placeholder")}
-            className="flex-1 resize-none bg-black/40 border border-white/10 rounded-sm px-4 py-3 text-sm text-white focus:outline-none focus:border-[#7C3AED] max-h-36"
+            className="bm-input flex-1 resize-none max-h-36"
           />
           <button data-testid="chat-send-btn" onClick={send} disabled={loading || !input.trim()}
-            className="inline-flex items-center justify-center w-12 h-12 rounded-sm bg-[#7C3AED] text-white hover:bg-[#C4B5FD] transition-colors disabled:opacity-50 shrink-0">
+            className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[var(--bm-primary)] text-white hover:bg-[var(--bm-accent)] transition-colors disabled:opacity-50 shrink-0">
             {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
           </button>
         </div>
-      </div>
+      </ChatContainer>
     </div>
   );
 };

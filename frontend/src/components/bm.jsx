@@ -7,15 +7,19 @@
  * designer. Style direction: Linear/Vercel – more air, fewer borders, depth
  * via elevation instead of outlines.
  *
- * Typography scale (see index.css .bm-h1..bm-small):
- *   H1 56 · H2 40 · H3 28 · H4 22 · Body 16 · Small 14
- * Vertical rhythm: <Page> enforces one consistent gap between hero, stats
+ * Typography scale (see index.css):
+ *   Display XL 48 · Display 40 · Heading 32 · Section 24 · Card 20 · Body 16 · Caption 13
+ * Vertical rhythm: <Page> enforces one 8px-grid gap between hero, stats
  * and content sections on every page.
  */
 import React from "react";
 import { motion } from "framer-motion";
 
 export const V = "#7C3AED";
+export const ACCENT = "#A78BFA";
+export const SUCCESS = "#34D399";
+export const WARNING = "#FACC15";
+export const ERROR = "#F43F5E";
 export const SORA = "'Sora', sans-serif";
 
 export const fadeUp = (delay = 0) => ({
@@ -26,7 +30,7 @@ export const fadeUp = (delay = 0) => ({
 
 /* ─── Page – consistent vertical rhythm ──────────────────────────── */
 export function Page({ children, className = "" }) {
-  return <div className={`space-y-10 pb-12 ${className}`}>{children}</div>;
+  return <div className={`space-y-8 pb-12 ${className}`}>{children}</div>;
 }
 
 /* ─── Typography ─────────────────────────────────────────────────── */
@@ -54,7 +58,7 @@ export function Hero({ icon: Icon, badge, title, description, actions, chips, de
   return (
     <motion.section {...fadeUp(delay)}>
       <div
-        className="relative overflow-hidden rounded-xl"
+        className="relative overflow-hidden rounded-2xl"
         style={{
           background:
             "linear-gradient(135deg, rgba(124,58,237,0.08) 0%, rgba(8,8,8,0) 55%, rgba(124,58,237,0.05) 100%)",
@@ -65,7 +69,7 @@ export function Hero({ icon: Icon, badge, title, description, actions, chips, de
           className="absolute -top-28 -left-28 w-96 h-96 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%)" }}
         />
-        <div className="relative px-6 md:px-10 py-10 min-h-[220px] flex items-center">
+        <div className="relative p-8 min-h-[224px] flex items-center">
           <div className="flex-1 flex flex-col md:flex-row md:items-center md:justify-between gap-6 w-full">
             <div className="max-w-2xl">
               {badge && (
@@ -80,7 +84,7 @@ export function Hero({ icon: Icon, badge, title, description, actions, chips, de
                   {Icon && <Icon size={11} />} {badge}
                 </div>
               )}
-              <h1 className="bm-h1 mb-3" style={{ fontFamily: SORA }}>
+              <h1 className="bm-display mb-3" style={{ fontFamily: SORA }}>
                 <span
                   style={{
                     background: "linear-gradient(90deg, #7C3AED 0%, #C4B5FD 45%, #6D28D9 100%)",
@@ -93,7 +97,7 @@ export function Hero({ icon: Icon, badge, title, description, actions, chips, de
                 </span>
               </h1>
               {description && (
-                <p className="bm-small text-zinc-400 leading-relaxed">{description}</p>
+                <p className="bm-body text-zinc-400 leading-relaxed">{description}</p>
               )}
               {chips && <div className="flex flex-wrap items-center gap-2.5 mt-5">{chips}</div>}
             </div>
@@ -137,7 +141,7 @@ export function Section({ icon, title, right, children, delay = 0, className = "
 }
 
 /* ─── Card – exactly four sizes, no ad-hoc paddings ──────────────── */
-const CARD_PAD = { xs: "p-3", s: "p-4", m: "p-6", l: "p-8" };
+const CARD_PAD = { xs: "p-8", s: "p-8", m: "p-8", l: "p-8" };
 
 export function Card({ children, size = "m", tinted = false, className = "", style = {} }) {
   // Migration escape hatch: an explicit p-* in className overrides the size
@@ -145,13 +149,13 @@ export function Card({ children, size = "m", tinted = false, className = "", sty
   const pad = /\bp[xy]?-\d/.test(className) ? "" : CARD_PAD[size] || CARD_PAD.m;
   return (
     <div
-      className={`rounded-xl ${pad} ${className}`}
+      className={`rounded-2xl ${pad} ${className}`}
       style={{
         background: tinted
           ? "linear-gradient(145deg, rgba(124,58,237,0.05) 0%, rgba(255,255,255,0.02) 100%)"
           : "rgba(255,255,255,0.025)",
         border: `1px solid ${tinted ? "rgba(124,58,237,0.14)" : "rgba(255,255,255,0.06)"}`,
-        boxShadow: "0 1px 2px rgba(0,0,0,0.3)",
+        boxShadow: "var(--bm-shadow-card)",
         ...style,
       }}
     >
@@ -163,7 +167,7 @@ export function Card({ children, size = "m", tinted = false, className = "", sty
 /* ─── Metric / stat tile ─────────────────────────────────────────── */
 export function Metric({ icon: Icon, label, value, hint, color = V }) {
   return (
-    <Card size="s">
+    <Card size="s" className="min-h-[168px] flex flex-col justify-between">
       {Icon && (
         <div
           className="w-8 h-8 rounded-md flex items-center justify-center mb-2"
@@ -196,7 +200,7 @@ export function StatGrid({ children }) {
 
 /* ─── Buttons – primary / secondary / ghost / danger only ────────── */
 const BTN_BASE =
-  "inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-all duration-150 disabled:opacity-40 disabled:pointer-events-none";
+  "inline-flex items-center justify-center gap-2 font-semibold rounded-2xl transition-all duration-150 hover:-translate-y-0.5 disabled:opacity-40 disabled:pointer-events-none";
 const BTN_SIZE = { sm: "text-[12px] px-3 py-1.5", md: "text-[13px] px-4 py-2.5", lg: "text-sm px-6 py-3" };
 const BTN_VARIANT = {
   primary: { background: V, color: "#0A0A0A" },
@@ -259,6 +263,16 @@ export function EmptyState({ icon: Icon, title, description, actionLabel, onActi
           {secondaryLabel && <Btn variant="ghost" onClick={onSecondary}>{secondaryLabel}</Btn>}
         </div>
       )}
+    </Card>
+  );
+}
+
+
+/* ─── ChatContainer – shared shell for every agent chat ───────────── */
+export function ChatContainer({ children, className = "" }) {
+  return (
+    <Card size="l" className={`flex flex-col h-[calc(100vh-260px)] min-h-[420px] overflow-hidden ${className}`}>
+      {children}
     </Card>
   );
 }
