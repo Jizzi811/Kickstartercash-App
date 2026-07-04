@@ -21,7 +21,7 @@ const ICON_MAP = {
   designer:   { Icon: Palette,     color: "#C084FC" },
   video:      { Icon: Video,       color: "#F472B6" },
   seo:        { Icon: Globe,       color: "#34D399" },
-  social:     { Icon: Smartphone,  color: "#FBBF24" },
+  social:     { Icon: Smartphone,  color: "#7C3AED" },
   sales:      { Icon: Handshake,   color: "#FB923C" },
   analytics:  { Icon: TrendingUp,  color: "#A78BFA" },
   automation: { Icon: Bot,         color: "#F87171" },

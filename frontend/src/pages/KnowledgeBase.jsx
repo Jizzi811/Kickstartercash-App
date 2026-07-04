@@ -16,7 +16,7 @@ const CATEGORY_META = {
   "FAQs":                  { icon: HelpCircle,   color: "#60A5FA" },
   "PDFs & Schulung":       { icon: FileText,     color: "#34D399" },
   "Corporate Design":      { icon: Palette,      color: "#F472B6" },
-  "Texte & Landingpages":  { icon: BookOpen,     color: "#FBBF24" },
+  "Texte & Landingpages":  { icon: BookOpen,     color: "#7C3AED" },
   "Blogartikel":           { icon: Megaphone,    color: "#FB923C" },
   "Marketingstrategien":   { icon: BarChart2,    color: "#A78BFA" },
 };

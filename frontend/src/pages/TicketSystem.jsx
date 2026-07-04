@@ -15,7 +15,7 @@ const COLOR = "#7C3AED";
 
 const STATUS_CONFIG = {
   open:        { label: "Offen",         labelEN: "Open",        color: "#60A5FA", icon: Circle },
-  in_progress: { label: "In Bearbeitung", labelEN: "In Progress", color: "#FBBF24", icon: Clock },
+  in_progress: { label: "In Bearbeitung", labelEN: "In Progress", color: "#7C3AED", icon: Clock },
   resolved:    { label: "Gelöst",        labelEN: "Resolved",    color: "#34D399", icon: Check },
   closed:      { label: "Geschlossen",   labelEN: "Closed",      color: "#71717a", icon: X },
 };
@@ -23,7 +23,7 @@ const STATUS_CONFIG = {
 const PRIORITY_CONFIG = {
   low:    { label: "Niedrig",  labelEN: "Low",    color: "#71717a", icon: Circle },
   medium: { label: "Mittel",   labelEN: "Medium", color: "#60A5FA", icon: ChevronDown },
-  high:   { label: "Hoch",     labelEN: "High",   color: "#FBBF24", icon: AlertTriangle },
+  high:   { label: "Hoch",     labelEN: "High",   color: "#7C3AED", icon: AlertTriangle },
   urgent: { label: "Dringend", labelEN: "Urgent", color: "#F87171", icon: Zap },
 };
 
@@ -342,7 +342,7 @@ export default function TicketSystem() {
   const statCards = [
     { label: lang === "DE" ? "Gesamt" : "Total",       value: stats.total || 0,                          color: COLOR },
     { label: lang === "DE" ? "Offen" : "Open",         value: stats.by_status?.open || 0,                color: "#60A5FA" },
-    { label: lang === "DE" ? "In Arbeit" : "Active",   value: stats.by_status?.in_progress || 0,         color: "#FBBF24" },
+    { label: lang === "DE" ? "In Arbeit" : "Active",   value: stats.by_status?.in_progress || 0,         color: "#7C3AED" },
     { label: lang === "DE" ? "Dringend" : "Urgent",    value: stats.by_priority?.urgent || 0,            color: "#F87171" },
     { label: lang === "DE" ? "Gelöst" : "Resolved",    value: stats.by_status?.resolved || 0,            color: "#34D399" },
   ];

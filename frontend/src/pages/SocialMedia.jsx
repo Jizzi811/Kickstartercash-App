@@ -40,7 +40,7 @@ export default function SocialMedia() {
     <div>
       <PageHeader
         icon={Share2}
-        color="#FBBF24"
+        color="#7C3AED"
         title={t("social_title")}
         subtitle={t("social_sub")}
         badge="Social"
@@ -74,7 +74,7 @@ export default function SocialMedia() {
           </div>
         </div>
         <StudioContextArea
-          color="#FBBF24"
+          color="#7C3AED"
           context={refContext}
           setContext={setRefContext}
           label="Referenz / Datei hochladen"

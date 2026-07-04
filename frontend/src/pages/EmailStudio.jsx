@@ -7,7 +7,7 @@ import { useApp, API } from "@/context/AppContext";
 import { AgentChatPanel, ToolCard, StudioContextArea } from "@/components/StudioLayout";
 import { PageHeader } from "@/components/PageHeader";
 
-const COLOR = "#FBBF24";
+const COLOR = "#7C3AED";
 
 const TOOLS = [
   { id: "email_welcome", label: "Willkommens-Serie", label_en: "Welcome Series", emoji: "👋", type: "llm",
