@@ -112,7 +112,7 @@ const QUICK_ACTIONS = [
     labelEN: "Social Media",
     descDE: "Posts · Reels · Strategie",
     descEN: "Posts · Reels · Strategy",
-    color: "#FBBF24",
+    color: "#7C3AED",
   },
   {
     to: "/seo",
@@ -345,7 +345,7 @@ export default function Dashboard() {
           <div
             className="relative overflow-hidden rounded-sm"
             style={{
-              background: "linear-gradient(135deg, rgba(124,58,237,0.07) 0%, rgba(8,8,8,0) 55%, rgba(184,151,46,0.05) 100%)",
+              background: "linear-gradient(135deg, rgba(124,58,237,0.07) 0%, rgba(8,8,8,0) 55%, rgba(124,58,237,0.05) 100%)",
               border: "1px solid rgba(124,58,237,0.18)",
             }}
           >
@@ -367,7 +367,7 @@ export default function Dashboard() {
             <div className="absolute -top-28 -left-28 w-96 h-96 rounded-full pointer-events-none"
               style={{ background: "radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%)" }} />
             <div className="absolute -bottom-24 right-0 w-[28rem] h-[28rem] rounded-full pointer-events-none"
-              style={{ background: "radial-gradient(circle, rgba(184,151,46,0.06) 0%, transparent 70%)" }} />
+              style={{ background: "radial-gradient(circle, rgba(124,58,237,0.06) 0%, transparent 70%)" }} />
 
             <div className="relative px-7 md:px-12 py-11 md:py-16">
               {/* animated badge */}
@@ -394,7 +394,7 @@ export default function Dashboard() {
                 <div className="max-w-xl">
                   <h1
                     className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight mb-4"
-                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                    style={{ fontFamily: "'Sora', sans-serif" }}
                   >
                     <span
                       style={{
@@ -468,7 +468,7 @@ export default function Dashboard() {
                         <div
                           className="text-2xl md:text-3xl font-bold"
                           style={{
-                            fontFamily: "'Playfair Display', Georgia, serif",
+                            fontFamily: "'Sora', sans-serif",
                             background: "linear-gradient(180deg, #C4B5FD 0%, #7C3AED 100%)",
                             WebkitBackgroundClip: "text",
                             WebkitTextFillColor: "transparent",
@@ -495,7 +495,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-4 mb-6">
             <h2
               className="text-base font-semibold text-zinc-300 whitespace-nowrap"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+              style={{ fontFamily: "'Sora', sans-serif" }}
             >
               {lang === "DE" ? "Übersicht" : "Overview"}
             </h2>
@@ -567,7 +567,7 @@ export default function Dashboard() {
                     <div
                       className="text-3xl font-bold mb-1 leading-none"
                       style={{
-                        fontFamily: "'Playfair Display', Georgia, serif",
+                        fontFamily: "'Sora', sans-serif",
                         background: `linear-gradient(135deg, #fff 0%, ${card.color} 100%)`,
                         WebkitBackgroundClip: "text",
                         WebkitTextFillColor: "transparent",
@@ -613,7 +613,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-4 mb-7">
             <h2
               className="text-base font-semibold text-zinc-300 whitespace-nowrap"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+              style={{ fontFamily: "'Sora', sans-serif" }}
             >
               {lang === "DE" ? "Module" : "Modules"}
             </h2>
@@ -728,7 +728,7 @@ export default function Dashboard() {
               </div>
               <h3
                 className="text-sm font-semibold text-zinc-200"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                style={{ fontFamily: "'Sora', sans-serif" }}
               >
                 {lang === "DE" ? "Letzte Aktivitäten" : "Recent Activity"}
               </h3>
@@ -796,7 +796,7 @@ export default function Dashboard() {
               </div>
               <h3
                 className="text-sm font-semibold text-zinc-200"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                style={{ fontFamily: "'Sora', sans-serif" }}
               >
                 {lang === "DE" ? "Tipps & Neuigkeiten" : "Tips & What's New"}
               </h3>

@@ -12,12 +12,12 @@ const COLOR = "#7C3AED";
 
 const PRESET_CATEGORIES = [
   { label: "Immobilien", emoji: "🏠", role: "Immobilien-Experte", color: "#34D399" },
-  { label: "Crypto", emoji: "₿", role: "Crypto & Web3 Berater", color: "#F59E0B" },
+  { label: "Crypto", emoji: "₿", role: "Crypto & Web3 Berater", color: "#7C3AED" },
   { label: "Coach", emoji: "🎯", role: "Business Coach", color: "#A78BFA" },
   { label: "Steuerberater", emoji: "📊", role: "Steuer & Finanzen", color: "#60A5FA" },
   { label: "Makler", emoji: "🤝", role: "Makler & Vertrieb", color: "#F472B6" },
   { label: "Pflegedienst", emoji: "❤️", role: "Pflege & Soziales", color: "#F87171" },
-  { label: "E-Commerce", emoji: "🛒", role: "Online-Shop Experte", color: "#FBBF24" },
+  { label: "E-Commerce", emoji: "🛒", role: "Online-Shop Experte", color: "#7C3AED" },
   { label: "Fitness", emoji: "💪", role: "Fitness & Ernährung Coach", color: "#34D399" },
 ];
 

@@ -57,7 +57,7 @@ const DEPARTMENTS = [
     icon: Zap,
     labelDE: "Automation",
     labelEN: "Automation",
-    color: "#FBBF24",
+    color: "#7C3AED",
     descDE: "Workflows, E-Mail-Sequenzen & KI-Automatisierung",
     descEN: "Workflows, email sequences & AI automation",
   },
@@ -93,7 +93,7 @@ const DEPARTMENTS = [
     icon: Mail,
     labelDE: "E-Mail Marketing",
     labelEN: "Email Marketing",
-    color: "#FBBF24",
+    color: "#7C3AED",
     descDE: "Newsletter, Sequenzen, CRM & Deliverability",
     descEN: "Newsletter, sequences, CRM & deliverability",
   },
@@ -165,7 +165,7 @@ const DEPARTMENTS = [
     icon: FileText,
     labelDE: "Steuer",
     labelEN: "Tax",
-    color: "#F59E0B",
+    color: "#7C3AED",
     descDE: "Steueroptimierung, int. Steuerplanung & Compliance",
     descEN: "Tax optimization, international planning & compliance",
   },
@@ -489,7 +489,7 @@ export default function JarvjisAgent() {
             <div style={{ fontSize: "10px", letterSpacing: "0.3em", textTransform: "uppercase", color: "#7C3AED", marginBottom: "4px" }}>
               KI-Agentur · CEO Modus
             </div>
-            <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 700, color: "#fff", margin: 0 }}>
+            <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 700, color: "#fff", margin: 0 }}>
               {lang === "DE" ? "Dein CEO-Assistent" : "Your CEO Assistant"}
             </h1>
             <p style={{ fontSize: "13px", color: "#71717a", marginTop: "4px", marginBottom: 0 }}>

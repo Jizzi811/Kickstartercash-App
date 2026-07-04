@@ -7,7 +7,7 @@ import { useApp, API } from "@/context/AppContext";
 import { AgentChatPanel, ToolCard, StudioContextArea } from "@/components/StudioLayout";
 import { PageHeader } from "@/components/PageHeader";
 
-const COLOR = "#F59E0B";
+const COLOR = "#7C3AED";
 
 const TOOLS = [
   { id: "tax_strategy", label: "Steueroptimierung", label_en: "Tax Optimization", emoji: "🎯", type: "llm",

@@ -379,8 +379,8 @@ export function SalesSupportWidget() {
                     maxWidth: "80%", padding: "10px 13px", fontSize: "13px", lineHeight: 1.5,
                     borderRadius: "10px", whiteSpace: "pre-wrap",
                     ...(m.role === "user" ? {
-                      background: "linear-gradient(135deg, #7C3AED, #C49B2D)",
-                      color: "#000", fontWeight: 500, borderBottomRightRadius: "2px",
+                      background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
+                      color: "#fff", fontWeight: 500, borderBottomRightRadius: "2px",
                     } : {
                       background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
                       color: "#d4d4d4", borderTopLeftRadius: "2px",
