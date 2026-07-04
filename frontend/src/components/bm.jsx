@@ -227,6 +227,8 @@ const BADGE_TONE = {
   neutral: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", color: "#a1a1aa" },
   success: { background: "rgba(52,211,153,0.10)", border: "1px solid rgba(52,211,153,0.26)", color: "#34d399" },
   danger: { background: "rgba(244,63,94,0.10)", border: "1px solid rgba(244,63,94,0.26)", color: "#fb7185" },
+  warning: { background: "rgba(250,204,21,0.10)", border: "1px solid rgba(250,204,21,0.26)", color: "#FACC15" },
+  info: { background: "rgba(56,189,248,0.10)", border: "1px solid rgba(56,189,248,0.26)", color: "#38BDF8" },
 };
 
 export function BMBadge({ children, tone = "violet", icon: Icon }) {
@@ -275,4 +277,107 @@ export function ChatContainer({ children, className = "" }) {
       {children}
     </Card>
   );
+}
+
+/* ─── Design System 3.0 named exports ─────────────────────────────── */
+export const Button = Btn;
+export const ButtonPrimary = (props) => <Btn variant="primary" {...props} />;
+export const ButtonSecondary = (props) => <Btn variant="secondary" {...props} />;
+export const ButtonGhost = (props) => <Btn variant="ghost" {...props} />;
+export const ButtonDanger = (props) => <Btn variant="danger" {...props} />;
+
+export function CardHeader({ children, className = "" }) {
+  return <div className={`mb-6 ${className}`}>{children}</div>;
+}
+
+export function CardContent({ children, className = "" }) {
+  return <div className={`space-y-4 ${className}`}>{children}</div>;
+}
+
+export function CardFooter({ children, className = "" }) {
+  return <div className={`mt-6 flex items-center gap-3 ${className}`}>{children}</div>;
+}
+
+const fieldBase = "w-full rounded-2xl border px-4 py-3 bm-body transition disabled:opacity-50";
+const fieldStyle = {
+  background: "rgba(0,0,0,0.28)",
+  borderColor: "var(--bm-color-border)",
+  color: "var(--bm-color-text-primary)",
+};
+
+export function FieldLabel({ children, className = "", ...props }) {
+  return <label className={`block bm-caption font-semibold mb-2 text-zinc-300 ${className}`} {...props}>{children}</label>;
+}
+
+export function Input({ className = "", ...props }) {
+  return <input className={`${fieldBase} ${className}`} style={fieldStyle} {...props} />;
+}
+
+export function Textarea({ className = "", ...props }) {
+  return <textarea className={`${fieldBase} min-h-[132px] resize-y ${className}`} style={fieldStyle} {...props} />;
+}
+
+export function Select({ children, className = "", ...props }) {
+  return <select className={`${fieldBase} ${className}`} style={fieldStyle} {...props}>{children}</select>;
+}
+
+export function Checkbox({ label, className = "", ...props }) {
+  return (
+    <label className={`inline-flex items-center gap-3 bm-caption text-zinc-300 ${className}`}>
+      <input type="checkbox" className="h-4 w-4 rounded" style={{ accentColor: "var(--bm-color-brand-purple)" }} {...props} />
+      {label}
+    </label>
+  );
+}
+
+export function Toggle({ checked, label, className = "", ...props }) {
+  return (
+    <label className={`inline-flex items-center gap-3 bm-caption text-zinc-300 ${className}`}>
+      <span className="relative inline-flex h-6 w-11 rounded-full transition" style={{ background: checked ? "var(--bm-color-brand-purple)" : "var(--bm-color-surface-elevated)" }}>
+        <input type="checkbox" checked={checked} className="sr-only" {...props} />
+        <span className="absolute top-1 h-4 w-4 rounded-full transition" style={{ left: checked ? 22 : 4, background: "var(--bm-color-text-primary)" }} />
+      </span>
+      {label}
+    </label>
+  );
+}
+
+export function Radio({ label, className = "", ...props }) {
+  return (
+    <label className={`inline-flex items-center gap-3 bm-caption text-zinc-300 ${className}`}>
+      <input type="radio" className="h-4 w-4" style={{ accentColor: "var(--bm-color-brand-purple)" }} {...props} />
+      {label}
+    </label>
+  );
+}
+
+export function SearchInput(props) {
+  return <Input type="search" placeholder="Suchen…" {...props} />;
+}
+
+export function Upload({ label = "Datei hochladen", className = "", ...props }) {
+  return <input aria-label={label} type="file" className={`${fieldBase} ${className}`} style={fieldStyle} {...props} />;
+}
+
+export function BMTable({ columns = [], rows = [], empty, renderRow, className = "" }) {
+  if (!rows.length) return empty || <EmptyState title="Noch keine Daten." description="Sobald Inhalte existieren, erscheinen sie hier." />;
+  return (
+    <div className={`overflow-hidden rounded-2xl border ${className}`} style={{ borderColor: "var(--bm-color-border)" }}>
+      <table className="w-full bm-caption">
+        <thead style={{ background: "var(--bm-color-surface-elevated)", color: "var(--bm-color-text-secondary)" }}>
+          <tr>{columns.map((c) => <th key={c.key || c} className="px-4 py-3 text-left font-semibold">{c.label || c}</th>)}</tr>
+        </thead>
+        <tbody>{rows.map((row, index) => renderRow ? renderRow(row, index) : <tr key={row.id || index}>{columns.map((c) => <td key={c.key || c} className="px-4 py-3 border-t" style={{ borderColor: "var(--bm-color-divider)" }}>{row[c.key || c]}</td>)}</tr>)}</tbody>
+      </table>
+    </div>
+  );
+}
+
+export function Loader({ label = "Lädt…" }) {
+  return <div className="inline-flex items-center gap-3 bm-caption text-zinc-400"><span className="h-4 w-4 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "var(--bm-color-brand-purple)", borderTopColor: "transparent" }} />{label}</div>;
+}
+
+export function StatusBadge({ status = "neutral", children }) {
+  const map = { success: "success", warning: "warning", error: "danger", info: "info", neutral: "neutral", active: "success", draft: "neutral", blocked: "danger" };
+  return <BMBadge tone={map[status] || "neutral"}>{children || status}</BMBadge>;
 }
