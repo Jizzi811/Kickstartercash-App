@@ -53,6 +53,7 @@ from app.services.llm import (  # noqa: E402
 from app.services import intelligence as intel  # noqa: E402
 from app.gateway import gateway as ai_gateway  # noqa: E402
 from app.gateway import registry as gw_registry, capabilities as gw_caps, config as gw_config  # noqa: E402
+from app.identity import service as identity_service, schema as identity_schema  # noqa: E402
 
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
@@ -365,9 +366,16 @@ async def llm_image(prompt: str, reference_b64: Optional[str] = None) -> Optiona
     return None
 
 
-def _brand_context(brand: dict, language: str) -> str:
+def _brand_context(brand: dict, language: str, agent_id: Optional[str] = None) -> str:
+    """Brand guidelines + injected Brand Identity DNA.
+
+    This is the single chokepoint every AI entry point uses, so appending the
+    DNA subset here means *every* AI generation is DNA-grounded automatically.
+    Pass ``agent_id`` to receive only that agent's relevant DNA layers (the DNA
+    Injection map); omit it to inject the full identity (safe superset).
+    """
     lang = "Deutsch" if language == "DE" else "English"
-    return (
+    base = (
         f"BRAND GUIDELINES (always respect strictly):\n"
         f"- Brand name: {brand.get('name')}\n"
         f"- Slogan: {brand.get('slogan')}\n"
@@ -377,6 +385,12 @@ def _brand_context(brand: dict, language: str) -> str:
         f"- Visual / image style: {brand.get('image_style')}\n"
         f"Write everything in {lang}. Keep the brand's tonality consistent."
     )
+    try:
+        dna = identity_service.inject_context(brand, agent_id, language)
+    except Exception as e:  # never let DNA injection break a generation
+        logger.warning(f"DNA injection skipped: {e}")
+        dna = ""
+    return f"{base}\n\n{dna}" if dna else base
 
 
 # ---------------------------------------------------------------------------
@@ -400,6 +414,8 @@ class Brand(BaseModel):
     target_audience: str = ""
     products: str = ""
     social_accounts: str = ""
+    # Brand Identity Engine – four-layer DNA (visual / communication / business / psychology)
+    dna: dict = Field(default_factory=dict)
     onboarded: bool = False
     workspace_id: str = ""
     is_default: bool = False
@@ -925,10 +941,15 @@ def _build_image_prompt(brand: dict, subject: str, style: str) -> str:
     name = brand.get("name") or "the brand"
     colors = ", ".join([c for c in [brand.get("primary_color"), brand.get("secondary_color")] if c]) or "the brand's colors"
     extra = (brand.get("image_style") or "").strip()
+    try:
+        visual_dna = identity_service.visual_prompt_hint(brand)
+    except Exception:
+        visual_dna = ""
+    dna_clause = f"Visual brand DNA (follow closely): {visual_dna}. " if visual_dna else ""
     return (
         f"Create a premium, high-end advertising visual for the brand \"{name}\" – "
         f"the kind a world-class creative agency would deliver. Visual style: {style}. "
-        f"Brand color palette: {colors}. {extra} "
+        f"Brand color palette: {colors}. {extra} {dna_clause}"
         f"Theme: {subject}. "
         "Design a rich, detailed and FINISHED campaign scene – NOT a plain background with a caption. "
         "Give it a clear focal point with depth: a real person, a product, or a striking hero object "
@@ -3693,12 +3714,17 @@ async def run_agent_tool(req: AgentToolRunRequest, ws: Optional[str] = Depends(c
 
     if tool["type"] == "image":
         subject = req.context or f"{brand.get('name', 'Brand')} brand visual"
+        try:
+            _vdna = identity_service.visual_prompt_hint(brand)
+        except Exception:
+            _vdna = ""
         image_prompt = (
             f"Professional advertising image for '{brand.get('name')}'. "
             f"Visual style: {brand.get('image_style', 'modern, premium')}. "
             f"Subject: {subject}. "
             f"Brand colors: {brand.get('primary_color', '#7C3AED')} and {brand.get('secondary_color', '#0A0A0A')}. "
-            "High quality, commercial photography style."
+            + (f"Visual brand DNA (follow closely): {_vdna}. " if _vdna else "")
+            + "High quality, commercial photography style."
         )
         try:
             image_url = await brand_image(image_prompt, size="16:9")
@@ -3717,7 +3743,7 @@ async def run_agent_tool(req: AgentToolRunRequest, ws: Optional[str] = Depends(c
     lang_label = "Deutsch" if lang == "DE" else "English"
     system = (
         f"{personality}\n\n"
-        f"{_brand_context(brand, lang)}\n\n"
+        f"{_brand_context(brand, lang, req.agent_id)}\n\n"
         f"Antworte immer auf {lang_label}. "
         f"Du nutzt gerade das Tool: {tool['label'] if lang == 'DE' else tool['label_en']}. "
         f"Sei präzise, strukturiert und sofort umsetzbar."
@@ -3756,7 +3782,7 @@ async def agent_chat(req: AgentChatRequest, ws: Optional[str] = Depends(current_
 
     system = (
         f"{personality}\n\n"
-        f"{_brand_context(brand, lang)}\n\n"
+        f"{_brand_context(brand, lang, req.agent_id)}\n\n"
         f"Antworte immer auf {lang_label}. "
         f"Du bist Teil des Quantum Multi-Agenten-Systems von Brandmind."
         f"{kb_context}"
@@ -4919,7 +4945,7 @@ async def mission_ceo_plan(req: CeoPlanRequest, ws: Optional[str] = Depends(curr
 
     system = (
         f"{personality}\n\n"
-        f"{_brand_context(brand, lang)}\n\n"
+        f"{_brand_context(brand, lang, 'ceo')}\n\n"
         "Du bist der KI-CEO. Erstelle einen umsetzbaren Executive-Plan für das Ziel des Nutzers. "
         "WICHTIG: Nichts wird automatisch veröffentlicht oder ausgeführt – dein Plan ist ein Vorschlag, "
         "den ein Mensch freigeben muss. "
@@ -5095,7 +5121,7 @@ async def mission_team_chat_ask(plan_id: str, payload: TeamChatAskRequest,
         for t in tasks[:20]
     )
     system = (
-        f"{_brand_context(brand, payload.language)}\n\n"
+        f"{_brand_context(brand, payload.language, 'ceo')}\n\n"
         "You are BrandMind's internal AI Team Chat for a Mission Control plan. "
         "The AI CEO moderates. Relevant agents respond with short role-specific critique, improvements and next actions. "
         "Agents may challenge or improve each other's suggestions. "
@@ -5625,6 +5651,89 @@ async def gateway_chat_endpoint(req: GatewayChatRequest,
     if not result.ok:
         raise HTTPException(status_code=503, detail={"error": "gateway_all_failed", "attempts": result.attempts})
     return {"reply": result.output, "meta": result.to_meta()}
+
+
+# ---------------------------------------------------------------------------
+# Brand Identity Engine – four-layer DNA (extends Brand Brain, no duplication)
+# ---------------------------------------------------------------------------
+# The DNA lives inside the brand document (brand["dna"]) so it travels with every
+# _resolve_brand and is injected by _brand_context into every AI entry point. The
+# endpoints below edit the DNA, score completeness/consistency and expose the
+# schema for the editor.
+
+class BrandDnaUpdate(BaseModel):
+    dna: dict                                 # {layer: {field_id: value}}
+
+
+class BrandScoreRequest(BaseModel):
+    content: str
+    content_type: str = "text"
+    language: str = "DE"
+
+
+@api_router.get("/brand-identity/schema")
+async def brand_identity_schema():
+    """Field schema for the four DNA layers (drives the editor)."""
+    return identity_schema.schema_payload()
+
+
+@api_router.get("/brand-identity/{brand_id}")
+async def brand_identity_get(brand_id: str, language: str = "DE",
+                             ws: Optional[str] = Depends(current_workspace)):
+    brand = await _resolve_brand(brand_id, ws)
+    return {
+        "brand_id": brand.get("id"),
+        "brand_name": brand.get("name"),
+        "dna": identity_service.merged_dna(brand),
+        "stored_dna": brand.get("dna") or {},
+        "completeness": identity_service.completeness(brand),
+        "validation": identity_service.validate(brand),
+        "summary": identity_service.summary(brand, language),
+    }
+
+
+@api_router.put("/brand-identity/{brand_id}")
+async def brand_identity_put(brand_id: str, payload: BrandDnaUpdate,
+                             ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    existing = await db.brands.find_one({"id": brand_id, **_scope_filter(ws)}, {"_id": 0})
+    if not existing:
+        # fall back to unscoped by-id (e.g. legacy/default brand) but never leak
+        existing = await db.brands.find_one({"id": brand_id}, {"_id": 0})
+        if not existing:
+            raise HTTPException(status_code=404, detail="Brand not found")
+    # merge only known layers/fields; stored DNA holds just the user-authored deltas
+    stored = identity_service.normalize_dna(existing.get("dna"))
+    incoming = identity_service.normalize_dna(payload.dna)
+    for layer in identity_schema.LAYER_IDS:
+        stored.setdefault(layer, {})
+        stored[layer].update(incoming.get(layer, {}))
+        stored[layer] = {k: v for k, v in stored[layer].items() if v not in (None, "", [])}
+    await db.brands.update_one({"id": brand_id}, {"$set": {"dna": stored}})
+    existing["dna"] = stored
+    return {
+        "brand_id": brand_id, "dna": identity_service.merged_dna(existing),
+        "stored_dna": stored,
+        "completeness": identity_service.completeness(existing),
+        "validation": identity_service.validate(existing),
+    }
+
+
+@api_router.get("/brand-identity/{brand_id}/summary")
+async def brand_identity_summary(brand_id: str, language: str = "DE",
+                                 ws: Optional[str] = Depends(current_workspace)):
+    brand = await _resolve_brand(brand_id, ws)
+    return identity_service.summary(brand, language)
+
+
+@api_router.post("/brand-identity/{brand_id}/score")
+async def brand_identity_score(brand_id: str, payload: BrandScoreRequest,
+                               ws: Optional[str] = Depends(current_workspace)):
+    """Brand Consistency Score for a piece of content against the brand's DNA."""
+    brand = await _resolve_brand(brand_id, ws)
+    return identity_service.consistency_score(
+        payload.content, brand, payload.language, payload.content_type)
 
 
 app.include_router(api_router)
