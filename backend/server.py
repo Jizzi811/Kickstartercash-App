@@ -56,6 +56,7 @@ from app.gateway import registry as gw_registry, capabilities as gw_caps, config
 from app.identity import service as identity_service, schema as identity_schema  # noqa: E402
 from app.memory import registry as mem_registry, router as mem_router  # noqa: E402
 from app.skills import registry as skill_registry, service as skill_service  # noqa: E402
+from app.workflows import engine as workflow_engine  # noqa: E402
 from app import permissions as permission_framework  # noqa: E402
 
 if RESEND_API_KEY:
@@ -6001,6 +6002,77 @@ async def memory_context(agent_id: Optional[str] = None, language: str = "DE",
     """Inspect the routed Memory Context an agent would receive."""
     return {"agent_id": agent_id, "brains": mem_registry.brains_for_agent(agent_id),
             "context": await _agent_memory_context(agent_id, ws, language)}
+
+
+class WorkflowRunRequest(BaseModel):
+    template_id: Optional[str] = None
+    workflow: Optional[dict] = None
+    variables: dict = {}
+    context: dict = {}
+    brand_id: Optional[str] = None
+
+
+class WorkflowDefinitionRequest(BaseModel):
+    workflow: dict
+
+
+@api_router.get("/workflows/registry")
+async def workflows_registry():
+    """Workflow registry: templates, types and supported runtime capabilities."""
+    return workflow_engine.registry_payload()
+
+
+@api_router.get("/workflows/templates")
+async def workflows_templates(workflow_type: Optional[str] = None):
+    payload = workflow_engine.registry_payload()
+    templates = payload["templates"]
+    if workflow_type:
+        templates = [t for t in templates if t.get("type") == workflow_type]
+    return {"templates": templates}
+
+
+@api_router.get("/workflows/templates/{template_id}")
+async def workflows_template(template_id: str):
+    template = workflow_engine.get_template(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Workflow template not found")
+    return template
+
+
+@api_router.post("/workflows/validate")
+async def workflows_validate(payload: WorkflowDefinitionRequest):
+    workflow = payload.workflow or {}
+    errors = []
+    if not workflow.get("id"):
+        errors.append("workflow.id is required")
+    if workflow.get("type") not in workflow_engine.WORKFLOW_TYPES:
+        errors.append("workflow.type must be one of the registered workflow types")
+    if not workflow.get("stages"):
+        errors.append("workflow.stages must contain at least one stage")
+    for stage in workflow.get("stages", []):
+        if not stage.get("tasks"):
+            errors.append(f"stage {stage.get('id', '<missing>')} must contain tasks")
+    return {"ok": not errors, "errors": errors}
+
+
+@api_router.post("/workflows/run")
+async def workflows_run(req: WorkflowRunRequest, ws: Optional[str] = Depends(current_workspace)):
+    definition = req.workflow or (workflow_engine.get_template(req.template_id or "") if req.template_id else None)
+    if not definition:
+        raise HTTPException(status_code=404, detail="Workflow definition or template_id required")
+    context = {**(req.context or {}), "workspace_id": ws or "", "brand_id": req.brand_id or (req.context or {}).get("brand_id", "")}
+    result = await workflow_engine.WorkflowEngine().run(definition, variables=req.variables, context=context)
+    if db is not None:
+        await db.workflow_runs.insert_one({**result, "workspace_id": ws or "", "brand_id": context.get("brand_id", ""), "created_at": _now_iso()})
+    return result
+
+
+@api_router.get("/workflows/runs")
+async def workflows_runs(ws: Optional[str] = Depends(current_workspace), limit: int = 50):
+    if db is None:
+        return {"runs": []}
+    rows = await db.workflow_runs.find(_scope_filter(ws), {"_id": 0}).sort("created_at", -1).to_list(limit)
+    return {"runs": rows}
 
 
 app.include_router(api_router)
