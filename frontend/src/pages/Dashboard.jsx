@@ -7,7 +7,7 @@ import {
   ArrowRight, Sparkles, Bot, Palette, Film, Smartphone,
   Globe, BarChart2, Zap, Database, Wrench, MessageSquare,
   TrendingUp, Users, FileText, Cpu, Crown, ChevronRight,
-  Star, Activity, Clock, Layers, BrainCircuit,
+  Activity, Clock, Layers, BrainCircuit,
 } from "lucide-react";
 
 
@@ -83,8 +83,8 @@ const QUICK_ACTIONS = [
     icon: Bot,
     labelDE: "Agenten",
     labelEN: "Agents",
-    descDE: "17 KI-Spezialisten starten",
-    descEN: "Launch 17 AI specialists",
+    descDE: "KI-Spezialisten starten",
+    descEN: "Launch your AI specialists",
     color: "#7C3AED",
   },
   {
@@ -170,49 +170,7 @@ const QUICK_ACTIONS = [
   },
 ];
 
-/* ─── activity feed ──────────────────────────────────────────────── */
-const FEED = [
-  {
-    icon: Star,
-    color: "#7C3AED",
-    textDE: "Brandmind-System gestartet",
-    textEN: "Brandmind system launched",
-    timeDE: "Gerade eben",
-    timeEN: "Just now",
-  },
-  {
-    icon: Bot,
-    color: "#C084FC",
-    textDE: "Agenten-Wissensdatenbank aktualisiert",
-    textEN: "Agent knowledge base updated",
-    timeDE: "Vor 5 Min.",
-    timeEN: "5 min ago",
-  },
-  {
-    icon: Palette,
-    color: "#F472B6",
-    textDE: "3 neue Design-Assets generiert",
-    textEN: "3 new design assets generated",
-    timeDE: "Vor 18 Min.",
-    timeEN: "18 min ago",
-  },
-  {
-    icon: TrendingUp,
-    color: "#34D399",
-    textDE: "SEO-Report: +12 Ranking-Positionen",
-    textEN: "SEO report: +12 ranking positions",
-    timeDE: "Vor 1 Std.",
-    timeEN: "1 hr ago",
-  },
-  {
-    icon: Zap,
-    color: "#F87171",
-    textDE: "Automatisierungs-Workflow ausgeführt",
-    textEN: "Automation workflow executed",
-    timeDE: "Vor 2 Std.",
-    timeEN: "2 hrs ago",
-  },
-];
+/* Activity feed is loaded live from /mission/overview – no fabricated entries. */
 
 /* ─── tips data ──────────────────────────────────────────────────── */
 const TIPS = [
@@ -267,6 +225,7 @@ export default function Dashboard() {
   const [hovered, setHovered] = useState(null);
   const [tick, setTick] = useState(0);
   const [stats, setStats] = useState(null);
+  const [activityFeed, setActivityFeed] = useState(null);
 
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 3000);
@@ -275,6 +234,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     axios.get(`${API}/stats`).then(r => setStats(r.data)).catch(() => {});
+    // Real activity from Mission Control – no fabricated feed entries.
+    axios.get(`${API}/mission/overview`).then(r => setActivityFeed(r.data?.activity || [])).catch(() => setActivityFeed([]));
   }, []);
 
   const fmt = (n) => n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n ?? 0);
@@ -324,7 +285,8 @@ export default function Dashboard() {
       trend: `${stats.knowledge_docs} KB-Docs`,
       sparkPath: "M0,18 C12,16 22,20 36,14 C50,8 62,12 76,6 C84,3 88,1 90,0",
     },
-  ] : KPI_CARDS;
+  // While loading (or if stats are unavailable) show em-dashes – never invented numbers.
+  ] : KPI_CARDS.map((c) => ({ ...c, value: "—", trend: "…" }));
 
   const greetDE = () => {
     const h = new Date().getHours();
@@ -419,8 +381,8 @@ export default function Dashboard() {
                   </h1>
                   <p className="text-sm md:text-base text-zinc-400 leading-relaxed mb-8">
                     {lang === "DE"
-                      ? "17 spezialisierte KI-Agenten arbeiten für dich – mit echten Tools, deiner Wissensdatenbank und ohne Halluzinieren."
-                      : "17 specialized AI agents work for you – with real tools, your knowledge base, and zero hallucinations."}
+                      ? "Deine spezialisierten KI-Agenten arbeiten für dich – mit echten Tools, deiner Wissensdatenbank und ohne Halluzinieren."
+                      : "Your specialized AI agents work for you – with real tools, your knowledge base, and zero hallucinations."}
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <button
@@ -456,8 +418,8 @@ export default function Dashboard() {
                 {/* hero stats strip with vertical dividers */}
                 <div className="flex gap-0 flex-wrap">
                   {[
-                    { numDE: "17", numEN: "17", labelDE: "Agenten", labelEN: "Agents" },
-                    { numDE: "8", numEN: "8", labelDE: "Module", labelEN: "Modules" },
+                    { numDE: String(stats?.agents ?? "—"), numEN: String(stats?.agents ?? "—"), labelDE: "Agenten", labelEN: "Agents" },
+                    { numDE: String(QUICK_ACTIONS.length), numEN: String(QUICK_ACTIONS.length), labelDE: "Module", labelEN: "Modules" },
                     { numDE: "∞", numEN: "∞", labelDE: "Möglichkeiten", labelEN: "Possibilities" },
                   ].map((s, idx) => (
                     <div key={s.labelDE} className="flex items-stretch">
@@ -744,37 +706,30 @@ export default function Dashboard() {
               />
 
               <div className="space-y-0">
-                {FEED.map((item, i) => {
-                  const Icon = item.icon;
-                  return (
+                {(activityFeed || []).slice(0, 6).map((item, i) => (
+                  <div key={i} className="flex items-start gap-4 pb-5 group cursor-default">
                     <div
-                      key={i}
-                      className="flex items-start gap-4 pb-5 group cursor-default"
+                      className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 relative z-10 transition-transform duration-200 group-hover:scale-110"
+                      style={{ background: "rgba(124,58,237,0.10)", border: "1px solid rgba(124,58,237,0.28)" }}
                     >
-                      {/* timeline dot */}
-                      <div
-                        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 relative z-10 transition-transform duration-200 group-hover:scale-110"
-                        style={{
-                          background: `${item.color}18`,
-                          border: `1px solid ${item.color}40`,
-                        }}
-                      >
-                        <Icon size={12} style={{ color: item.color }} />
-                      </div>
-
-                      <div className="flex-1 min-w-0 pt-0.5">
-                        <p className="text-[13px] text-zinc-300 leading-snug">
-                          {lang === "DE" ? item.textDE : item.textEN}
-                        </p>
-                      </div>
-
-                      {/* timestamp right-aligned */}
-                      <div className="text-[10px] text-zinc-700 whitespace-nowrap pt-0.5 flex-shrink-0">
-                        {lang === "DE" ? item.timeDE : item.timeEN}
-                      </div>
+                      <Activity size={12} style={{ color: "#7C3AED" }} />
                     </div>
-                  );
-                })}
+                    <div className="flex-1 min-w-0 pt-0.5">
+                      <p className="text-[13px] text-zinc-300 leading-snug line-clamp-1">{item.text || "—"}</p>
+                      <p className="text-[10px] text-zinc-700">{item.meta} · {item.status}</p>
+                    </div>
+                    <div className="text-[10px] text-zinc-700 whitespace-nowrap pt-0.5 flex-shrink-0">
+                      {(item.at || "").slice(0, 10)}
+                    </div>
+                  </div>
+                ))}
+                {activityFeed !== null && activityFeed.length === 0 && (
+                  <p className="text-[13px] text-zinc-600 py-4 text-center">
+                    {lang === "DE"
+                      ? "Noch keine Aktivität – starte einen Plan in Mission Control."
+                      : "No activity yet – start a plan in Mission Control."}
+                  </p>
+                )}
               </div>
             </div>
           </div>

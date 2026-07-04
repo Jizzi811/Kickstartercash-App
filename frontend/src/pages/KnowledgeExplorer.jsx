@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { API } from "@/context/AppContext";
+import { PageHeader } from "@/components/PageHeader";
 import { Network, Search, Boxes, Link2, Image, Megaphone, Brain, ShieldCheck, Workflow, Eye, Wrench, Sparkles, Building2, Palette, Target, BarChart3, Bot, FileText, GitBranch, Database, ArrowRight, Clock3, CircleDot } from "lucide-react";
 
 const V = "#7C3AED";
@@ -48,12 +49,13 @@ export default function KnowledgeExplorer() {
   const activeEdges = useMemo(() => related.edges.map((e) => ({ ...e, other: e.from === selected?.id ? nodeById[e.to] : nodeById[e.from], direction: e.from === selected?.id ? "out" : "in" })).filter((e) => e.other), [related.edges, selected?.id, nodeById]);
 
   return <div className="space-y-8 pb-10 font-['Sora',ui-sans-serif,system-ui]">
-    <section className="relative overflow-hidden rounded-[28px] border border-[#7C3AED]/30 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.32),transparent_34%),linear-gradient(135deg,rgba(18,18,28,0.98),rgba(48,24,88,0.72))] p-7">
-      <div className="absolute right-6 top-6"><ViewToggle developerMode={developerMode} setDeveloperMode={setDeveloperMode} /></div>
-      <div className="inline-flex items-center gap-2 text-[10px] tracking-[0.22em] uppercase font-bold text-violet-200"><Network size={13}/> BrandMind Knowledge Graph</div>
-      <h1 className="mt-4 bg-gradient-to-r from-white via-violet-100 to-[#A78BFA] bg-clip-text text-4xl font-black text-transparent">Knowledge Explorer</h1>
-      <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-300">A premium business view of your workspace intelligence: brands, campaigns, assets, workflows, memories and AI systems — connected in one navigable knowledge layer.</p>
-    </section>
+    <PageHeader
+      icon={Network}
+      badge="Brandmind Knowledge Graph"
+      title="Knowledge Explorer"
+      subtitle="A premium business view of your workspace intelligence: brands, campaigns, assets, workflows, memories and AI systems — connected in one navigable knowledge layer."
+      actions={<ViewToggle developerMode={developerMode} setDeveloperMode={setDeveloperMode} />}
+    />
 
     <section className="grid grid-cols-1 md:grid-cols-4 gap-3">
       {[{icon: Boxes, label:"Entities", value: graph.nodes.length}, {icon: Link2, label:"Relationships", value: graph.edges.length}, {icon: Brain, label:"Memory Router", value: graph.integrations?.memory_router ? "On" : "Off"}, {icon: ShieldCheck, label:"Brand Identity", value: graph.integrations?.brand_identity_engine ? "On" : "Off"}].map(x => { const I=x.icon; return <Card key={x.label} className="p-4"><I size={16} style={{color:V}}/><div className="mt-3 text-xs text-zinc-500 uppercase tracking-wider">{x.label}</div><div className="mt-1 text-xl font-bold text-white">{x.value}</div></Card>; })}

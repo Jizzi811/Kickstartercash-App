@@ -3,13 +3,14 @@ import { useEffect, useRef } from "react";
 const PARTICLE_COUNT = 10;
 const GOLD = "212,175,55";
 
-export const CursorTrail = () => {
+export const CursorTrail = ({ enabled = true }) => {
   const canvasRef = useRef(null);
   const particles = useRef([]);
   const mouse = useRef({ x: -999, y: -999 });
   const rafRef = useRef(null);
 
   useEffect(() => {
+    if (!enabled) return;
     // Only on non-touch desktop
     if (window.matchMedia("(hover: none)").matches) return;
 
@@ -87,7 +88,9 @@ export const CursorTrail = () => {
       window.removeEventListener("mousemove", onMove);
       cancelAnimationFrame(rafRef.current);
     };
-  }, []);
+  }, [enabled]);
+
+  if (!enabled) return null;
 
   return (
     <canvas

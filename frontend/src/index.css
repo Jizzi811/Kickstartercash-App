@@ -7,52 +7,105 @@
 :root {
   color-scheme: dark;
   --bm-font-sans: 'Sora', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --bm-space-1: 0.25rem;
-  --bm-space-2: 0.5rem;
-  --bm-space-3: 0.75rem;
-  --bm-space-4: 1rem;
-  --bm-space-5: 1.25rem;
-  --bm-space-6: 1.5rem;
-  --bm-space-8: 2rem;
-  --bm-space-10: 2.5rem;
-  --bm-space-12: 3rem;
-  --bm-radius-sm: 0.5rem;
-  --bm-radius-md: 0.75rem;
-  --bm-radius-lg: 1rem;
-  --bm-radius-xl: 1.5rem;
+
+  /* BrandMind Design System 3.0 — only approved color tokens */
+  --bm-color-primary-background: #05040A;
+  --bm-color-secondary-background: #090811;
+  --bm-color-surface: #0F0D18;
+  --bm-color-surface-elevated: #161321;
+  --bm-color-brand-purple: #7C3AED;
+  --bm-color-brand-purple-hover: #6D28D9;
+  --bm-color-brand-purple-soft: rgba(124, 58, 237, 0.16);
+  --bm-color-text-primary: #F8FAFC;
+  --bm-color-text-secondary: #A1A1AA;
+  --bm-color-text-muted: #71717A;
+  --bm-color-success: #34D399;
+  --bm-color-warning: #FACC15;
+  --bm-color-error: #F43F5E;
+  --bm-color-info: #38BDF8;
+  --bm-color-border: rgba(255, 255, 255, 0.10);
+  --bm-color-divider: rgba(255, 255, 255, 0.06);
+
+  /* Spacing: 4, 8, 12, 16, 24, 32, 40, 48, 64, 80, 96 */
+  --bm-space-4: 0.25rem;
+  --bm-space-8: 0.5rem;
+  --bm-space-12: 0.75rem;
+  --bm-space-16: 1rem;
+  --bm-space-24: 1.5rem;
+  --bm-space-32: 2rem;
+  --bm-space-40: 2.5rem;
+  --bm-space-48: 3rem;
+  --bm-space-64: 4rem;
+  --bm-space-80: 5rem;
+  --bm-space-96: 6rem;
+
+  /* Official BrandMind radii */
+  --bm-radius-8: 0.5rem;
+  --bm-radius-12: 0.75rem;
+  --bm-radius-14: 0.875rem;
+  --bm-radius-16: 1rem;
+  --bm-radius-20: 1.25rem;
+  --bm-radius-24: 1.5rem;
   --bm-radius-full: 9999px;
-  --bm-bg: #05040a;
-  --bm-bg-soft: #090811;
-  --bm-surface: #0f0d18;
-  --bm-surface-raised: #161321;
+  --bm-radius-app-shell: var(--bm-radius-12);
+  --bm-radius-card: var(--bm-radius-20);
+  --bm-radius-button: var(--bm-radius-14);
+  --bm-radius-input: var(--bm-radius-14);
+  --bm-radius-badge: var(--bm-radius-full);
+  --bm-radius-dialog: var(--bm-radius-24);
+  --bm-radius-sm: var(--bm-radius-8);
+  --bm-radius-md: var(--bm-radius-app-shell);
+  --bm-radius-lg: var(--bm-radius-button);
+  --bm-radius-xl: var(--bm-radius-card);
+
+  /* Shadows + motion */
+  --bm-shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.22);
+  --bm-shadow-md: 0 16px 48px rgba(0, 0, 0, 0.28);
+  --bm-shadow-lg: 0 24px 80px rgba(0, 0, 0, 0.32);
+  --bm-shadow-xl: 0 32px 120px rgba(0, 0, 0, 0.42);
+  --bm-motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --bm-motion-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+  --bm-motion-duration-hover: 160ms;
+  --bm-motion-duration-tooltip: 140ms;
+  --bm-motion-duration-dropdown: 180ms;
+  --bm-motion-duration-dialog: 260ms;
+  --bm-motion-duration-page: 520ms;
+  --bm-motion-duration-loading: 1400ms;
+  --bm-motion-duration-feedback: 320ms;
+
+  /* Legacy aliases point at the approved tokens during migration. */
+  --bm-bg: var(--bm-color-primary-background);
+  --bm-bg-soft: var(--bm-color-secondary-background);
+  --bm-surface: var(--bm-color-surface);
+  --bm-surface-raised: var(--bm-color-surface-elevated);
   --bm-surface-glass: rgba(18, 16, 30, 0.72);
-  --bm-primary: #7c3aed;
-  --bm-primary-strong: #8b5cf6;
-  --bm-primary-soft: rgba(124, 58, 237, 0.16);
-  --bm-secondary: #a78bfa;
-  --bm-accent: #22d3ee;
-  --bm-accent-soft: rgba(34, 211, 238, 0.14);
-  --bm-success: #34d399;
-  --bm-warning: #f59e0b;
-  --bm-error: #f43f5e;
-  --bm-info: #38bdf8;
-  --bm-text: #f8fafc;
-  --bm-text-muted: #a1a1aa;
-  --bm-text-subtle: #71717a;
-  --bm-border: rgba(255, 255, 255, 0.10);
-  --bm-border-strong: rgba(167, 139, 250, 0.34);
+  --bm-primary: var(--bm-color-brand-purple);
+  --bm-primary-strong: var(--bm-color-brand-purple-hover);
+  --bm-primary-soft: var(--bm-color-brand-purple-soft);
+  --bm-secondary: var(--bm-color-text-secondary);
+  --bm-accent: var(--bm-color-brand-purple);
+  --bm-accent-soft: var(--bm-color-brand-purple-soft);
+  --bm-success: var(--bm-color-success);
+  --bm-warning: var(--bm-color-warning);
+  --bm-error: var(--bm-color-error);
+  --bm-info: var(--bm-color-info);
+  --bm-text: var(--bm-color-text-primary);
+  --bm-text-muted: var(--bm-color-text-secondary);
+  --bm-text-subtle: var(--bm-color-text-muted);
+  --bm-border: var(--bm-color-border);
+  --bm-border-strong: rgba(124, 58, 237, 0.34);
   --bm-hover: rgba(255, 255, 255, 0.06);
   --bm-disabled: rgba(255, 255, 255, 0.28);
-  --bm-focus: #22d3ee;
-  --bm-gradient-purple: linear-gradient(135deg, #c4b5fd 0%, #8b5cf6 42%, #7c3aed 100%);
-  --bm-shadow-card: 0 24px 80px rgba(0, 0, 0, 0.32);
-  --bm-shadow-focus: 0 0 0 3px rgba(34, 211, 238, 0.28);
+  --bm-focus: var(--bm-color-brand-purple);
+  --bm-gradient-purple: linear-gradient(135deg, var(--bm-color-brand-purple) 0%, var(--bm-color-brand-purple-hover) 100%);
+  --bm-shadow-card: var(--bm-shadow-lg);
+  --bm-shadow-focus: 0 0 0 3px rgba(124, 58, 237, 0.28);
 
   --kc-bg: var(--bm-bg);
   --kc-surface: var(--bm-surface);
   --kc-elevated: var(--bm-surface-raised);
   --kc-primary: var(--bm-primary);
-  --kc-primary-light: var(--bm-secondary);
+  --kc-primary-light: var(--bm-primary-strong);
 }
 
 @layer base {
@@ -115,28 +168,41 @@
 
 @layer components {
   .bm-page { @apply space-y-8 pb-10; }
-  .bm-section { @apply rounded-3xl border p-6 md:p-8; border-color: var(--bm-border); background: var(--bm-surface-glass); box-shadow: var(--bm-shadow-card); backdrop-filter: blur(18px); }
-  .bm-card { @apply rounded-2xl border p-5 transition-all duration-200; border-color: var(--bm-border); background: rgba(255,255,255,0.035); box-shadow: var(--bm-shadow-card); }
+  .bm-section { @apply rounded-2xl border p-8; border-color: var(--bm-border); background: var(--bm-surface-glass); box-shadow: var(--bm-shadow-card); backdrop-filter: blur(18px); }
+  .bm-card { @apply rounded-2xl border p-8 transition-all duration-[var(--bm-motion-duration-hover)]; min-height: 100%; border-color: var(--bm-border); background: rgba(255,255,255,0.035); box-shadow: var(--bm-shadow-card); }
   .bm-card-hover { @apply hover:-translate-y-0.5; }
   .bm-card-hover:hover { border-color: var(--bm-border-strong); background: rgba(255,255,255,0.055); }
   .bm-card-selected { border-color: var(--bm-primary); background: var(--bm-primary-soft); }
   .bm-card-danger { border-color: rgba(244,63,94,0.45); background: rgba(244,63,94,0.08); }
-  .bm-btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 disabled:pointer-events-none disabled:opacity-50; }
+  .bm-btn { @apply inline-flex items-center justify-center gap-2 rounded-[var(--bm-radius-button)] px-4 py-2 text-sm font-semibold transition-all duration-[var(--bm-motion-duration-hover)] disabled:pointer-events-none disabled:opacity-50; }
   .bm-btn-primary { @apply bm-btn text-white; background: var(--bm-gradient-purple); }
   .bm-btn-secondary { @apply bm-btn; color: var(--bm-text); background: var(--bm-surface-raised); border: 1px solid var(--bm-border); }
   .bm-btn-ghost { @apply bm-btn; color: var(--bm-text-muted); }
   .bm-btn-outline { @apply bm-btn bg-transparent; border: 1px solid var(--bm-border); color: var(--bm-text); }
   .bm-btn-danger { @apply bm-btn text-white; background: var(--bm-error); }
-  .bm-input { @apply w-full rounded-xl border px-3 py-2 text-sm transition; border-color: var(--bm-border); background: rgba(0,0,0,0.28); color: var(--bm-text); }
+  .bm-input { @apply w-full rounded-[var(--bm-radius-input)] border px-4 py-3 text-base transition; border-color: var(--bm-border); background: rgba(0,0,0,0.28); color: var(--bm-text); }
   .bm-input::placeholder { color: var(--bm-text-subtle); }
   .bm-table { @apply w-full overflow-hidden rounded-2xl border text-sm; border-color: var(--bm-border); }
   .bm-empty { @apply flex flex-col items-center justify-center rounded-3xl border border-dashed p-10 text-center; border-color: var(--bm-border); background: rgba(255,255,255,0.025); }
   .bm-kicker { @apply text-[11px] font-bold uppercase tracking-[0.22em]; color: var(--bm-secondary); }
 }
 
-@keyframes fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes bm-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes bm-slide-in { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-.animate-fade-up { animation: fade-up 0.5s ease-out forwards; }
-.animate-slide-in { animation: bm-slide-in 0.28s ease-out forwards; }
-.shimmer { background: linear-gradient(90deg, var(--bm-surface) 25%, var(--bm-surface-raised) 50%, var(--bm-surface) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+@keyframes bm-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes bm-feedback-pop { 0% { transform: scale(0.96); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.animate-fade-up { animation: bm-fade-up var(--bm-motion-duration-page) var(--bm-motion-ease-standard) forwards; }
+.animate-slide-in { animation: bm-slide-in var(--bm-motion-duration-dropdown) var(--bm-motion-ease-standard) forwards; }
+.animate-feedback { animation: bm-feedback-pop var(--bm-motion-duration-feedback) var(--bm-motion-ease-emphasized) forwards; }
+.shimmer { background: linear-gradient(90deg, var(--bm-surface) 25%, var(--bm-surface-raised) 50%, var(--bm-surface) 75%); background-size: 200% 100%; animation: bm-shimmer var(--bm-motion-duration-loading) infinite; }
+
+/* ── BrandMind typography scale (Design Sprint) ──────────────────────
+   H1 56 · H2 40 · H3 28 · H4 22 · Body 16 · Small 14 — the only sizes
+   allowed for headings/copy. Responsive clamp keeps H1 usable on mobile. */
+.bm-display-xl { font-size: clamp(2.5rem, 5vw, 3rem); line-height: 1.08; font-weight: 800; letter-spacing: -0.03em; }
+.bm-display, .bm-h1 { font-size: clamp(2.125rem, 4vw, 2.5rem); line-height: 1.1; font-weight: 750; letter-spacing: -0.025em; }
+.bm-heading, .bm-h2 { font-size: 2rem; line-height: 1.16; font-weight: 700; letter-spacing: -0.02em; }
+.bm-section-title, .bm-h3 { font-size: 1.5rem; line-height: 1.25; font-weight: 650; }
+.bm-card-title, .bm-h4 { font-size: 1.25rem; line-height: 1.3; font-weight: 650; }
+.bm-body { font-size: 1rem; line-height: 1.6; }
+.bm-caption, .bm-small { font-size: 0.8125rem; line-height: 1.55; }

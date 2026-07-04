@@ -13,46 +13,91 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CursorTrail } from "@/components/CursorTrail";
 import { AmbientOrb } from "@/components/AmbientOrb";
+import { DEFAULT_BM_APPEARANCE, getAppearanceConfig } from "@/design-system";
 
-const NAV = [
-  { to: "/",           icon: Building2,  labelDE: "BrandMind HQ",    labelEN: "BrandMind HQ", end: true },
-  { to: "/mission",    icon: Target,     labelDE: "Mission Control",  labelEN: "Mission Control" },
-  { to: "/intelligence", icon: TrendingUp, labelDE: "Intelligence",  labelEN: "Intelligence" },
-  { to: "/gateway",    icon: Plug,       labelDE: "AI Gateway",       labelEN: "AI Gateway" },
-  { to: "/modules",    icon: LayoutGrid, labelDE: "Module",           labelEN: "Modules" },
-  { to: "/brand-brain", icon: BrainCircuit, labelDE: "Brand Brain",   labelEN: "Brand Brain" },
-  { to: "/brand-identity", icon: Dna,       labelDE: "Brand Identity",  labelEN: "Brand Identity" },
-  { to: "/memory",     icon: Brain,      labelDE: "Memory",           labelEN: "Memory" },
-  { to: "/skills",     icon: Sparkles,   labelDE: "Skills",           labelEN: "Skills" },
-  { to: "/output-factory", icon: Factory, labelDE: "Output Factory", labelEN: "Output Factory" },
-  { to: "/billing",    icon: Crown,      labelDE: "Preise & Plan",    labelEN: "Pricing & Plan" },
-  { to: "/permissions", icon: ShieldCheck, labelDE: "Berechtigungen", labelEN: "Permissions" },
-  { to: "/agents",     icon: Bot,        labelDE: "Agenten",          labelEN: "Agents" },
-  { to: "/design",     icon: Palette,    labelDE: "Design Studio",    labelEN: "Design Studio" },
-  { to: "/video",      icon: Film,       labelDE: "Video Studio",     labelEN: "Video Studio" },
-  { to: "/social",     icon: Smartphone, labelDE: "Social Media",     labelEN: "Social Media" },
-  { to: "/seo",        icon: Globe,      labelDE: "SEO",              labelEN: "SEO" },
-  { to: "/analytics",  icon: BarChart2,  labelDE: "Analytics",        labelEN: "Analytics" },
-  { to: "/automation", icon: Zap,        labelDE: "Automationen",     labelEN: "Automations" },
-  { to: "/knowledge",  icon: Database,   labelDE: "Wissensdatenbank", labelEN: "Knowledge Base" },
-  { to: "/knowledge-graph", icon: Network, labelDE: "Knowledge Graph", labelEN: "Knowledge Graph" },
-  { to: "/tickets",    icon: Ticket,     labelDE: "Tickets",          labelEN: "Tickets" },
-  { to: "/builder",    icon: Wrench,     labelDE: "Eigene Agenten",   labelEN: "Custom Agents" },
-  { to: "/arena",      icon: MessageSquare, labelDE: "Chat Arena",    labelEN: "Chat Arena" },
-  { to: "/tiktok",     icon: Music,      labelDE: "TikTok Studio",    labelEN: "TikTok Studio" },
-  { to: "/seo-specialist", icon: Search, labelDE: "SEO Specialist",   labelEN: "SEO Specialist" },
-  { to: "/email",      icon: Mail,       labelDE: "E-Mail Marketing",  labelEN: "Email Marketing" },
-  { to: "/linkedin",   icon: Linkedin,   labelDE: "LinkedIn Studio",  labelEN: "LinkedIn Studio" },
-  { to: "/orchestrator", icon: Network,  labelDE: "Orchestrator",     labelEN: "Orchestrator" },
-  { to: "/workflow-architect", icon: Workflow, labelDE: "Workflow Architect", labelEN: "Workflow Architect" },
-  { to: "/finance-cfo", icon: TrendingUp, labelDE: "CFO Studio", labelEN: "CFO Studio" },
-  { to: "/finance-analyst", icon: BarChart2, labelDE: "Financial Analyst", labelEN: "Financial Analyst" },
-  { to: "/finance-fpa", icon: TrendingUp, labelDE: "FP&A Studio", labelEN: "FP&A Studio" },
-  { to: "/finance-bookkeeper", icon: BookOpen, labelDE: "Buchhaltung", labelEN: "Bookkeeper" },
-  { to: "/finance-tax", icon: FileText, labelDE: "Tax Studio", labelEN: "Tax Studio" },
-  { to: "/workflow", icon: Megaphone, labelDE: "Kampagnen-Flow", labelEN: "Campaign Flow" },
-  { to: "/tts", icon: Volume2, labelDE: "TTS Studio", labelEN: "TTS Studio" },
+const NAV_GROUPS = [
+  {
+    id: "headquarters",
+    labelDE: "Headquarters",
+    labelEN: "Headquarters",
+    items: [
+      { to: "/", icon: Building2, labelDE: "BrandMind HQ", labelEN: "BrandMind HQ", end: true },
+      { to: "/mission", icon: Target, labelDE: "Mission Control", labelEN: "Mission Control" },
+      { to: "/intelligence", icon: TrendingUp, labelDE: "Intelligence", labelEN: "Intelligence" },
+    ],
+  },
+  {
+    id: "company",
+    labelDE: "Company",
+    labelEN: "Company",
+    items: [
+      { to: "/brand-brain", icon: BrainCircuit, labelDE: "Brand Brain", labelEN: "Brand Brain" },
+      { to: "/brand-identity", icon: Dna, labelDE: "Identity", labelEN: "Identity" },
+      { to: "/knowledge-graph", icon: Network, labelDE: "Knowledge Graph", labelEN: "Knowledge Graph" },
+      { to: "/knowledge", icon: Database, labelDE: "Knowledge Base", labelEN: "Knowledge Base" },
+      { to: "/memory", icon: Brain, labelDE: "Memory", labelEN: "Memory" },
+    ],
+  },
+  {
+    id: "ai",
+    labelDE: "AI",
+    labelEN: "AI",
+    items: [
+      { to: "/agents", icon: Bot, labelDE: "Agents", labelEN: "Agents" },
+      { to: "/builder", icon: Wrench, labelDE: "Custom Agents", labelEN: "Custom Agents" },
+      { to: "/gateway", icon: Plug, labelDE: "Gateway", labelEN: "Gateway" },
+      { to: "/skills", icon: Sparkles, labelDE: "Skills", labelEN: "Skills" },
+      { to: "/modules", icon: LayoutGrid, labelDE: "Marketplace", labelEN: "Marketplace" },
+      { to: "/arena", icon: MessageSquare, labelDE: "Chat Arena", labelEN: "Chat Arena" },
+    ],
+  },
+  {
+    id: "studios",
+    labelDE: "Studios",
+    labelEN: "Studios",
+    items: [
+      { to: "/design", icon: Palette, labelDE: "Design", labelEN: "Design" },
+      { to: "/video", icon: Film, labelDE: "Video", labelEN: "Video" },
+      { to: "/seo", icon: Globe, labelDE: "SEO", labelEN: "SEO" },
+      { to: "/seo-specialist", icon: Search, labelDE: "SEO Specialist", labelEN: "SEO Specialist" },
+      { to: "/social", icon: Smartphone, labelDE: "Social", labelEN: "Social" },
+      { to: "/email", icon: Mail, labelDE: "Email", labelEN: "Email" },
+      { to: "/analytics", icon: BarChart2, labelDE: "Analytics", labelEN: "Analytics" },
+      { to: "/tiktok", icon: Music, labelDE: "TikTok", labelEN: "TikTok" },
+      { to: "/linkedin", icon: Linkedin, labelDE: "LinkedIn", labelEN: "LinkedIn" },
+      { to: "/tts", icon: Volume2, labelDE: "TTS", labelEN: "TTS" },
+      { to: "/output-factory", icon: Factory, labelDE: "Output Factory", labelEN: "Output Factory" },
+    ],
+  },
+  {
+    id: "workflow",
+    labelDE: "Workflow",
+    labelEN: "Workflow",
+    items: [
+      { to: "/automation", icon: Zap, labelDE: "Automation", labelEN: "Automation" },
+      { to: "/workflow-architect", icon: Workflow, labelDE: "Workflow Architect", labelEN: "Workflow Architect" },
+      { to: "/workflow", icon: Megaphone, labelDE: "Campaign Flow", labelEN: "Campaign Flow" },
+      { to: "/orchestrator", icon: Network, labelDE: "Orchestrator", labelEN: "Orchestrator" },
+      { to: "/tickets", icon: Ticket, labelDE: "Tickets", labelEN: "Tickets" },
+    ],
+  },
+  {
+    id: "settings",
+    labelDE: "Settings",
+    labelEN: "Settings",
+    items: [
+      { to: "/billing", icon: Crown, labelDE: "Plans", labelEN: "Plans" },
+      { to: "/permissions", icon: ShieldCheck, labelDE: "Permissions", labelEN: "Permissions" },
+      { to: "/finance-cfo", icon: TrendingUp, labelDE: "CFO Studio", labelEN: "CFO Studio" },
+      { to: "/finance-analyst", icon: BarChart2, labelDE: "Financial Analyst", labelEN: "Financial Analyst" },
+      { to: "/finance-fpa", icon: TrendingUp, labelDE: "FP&A Studio", labelEN: "FP&A Studio" },
+      { to: "/finance-bookkeeper", icon: BookOpen, labelDE: "Bookkeeper", labelEN: "Bookkeeper" },
+      { to: "/finance-tax", icon: FileText, labelDE: "Tax Studio", labelEN: "Tax Studio" },
+    ],
+  },
 ];
+
+const NAV = NAV_GROUPS.flatMap((group) => group.items);
 
 const PAGE_NAMES = {
   "/": "BrandMind HQ",
@@ -98,10 +143,14 @@ const PAGE_NAMES = {
 // ── Page-enter particles ──────────────────────────────────────────────────────
 const PAGE_PARTICLE_COUNT = 7;
 
-const PageParticles = ({ locationKey }) => {
+const PageParticles = ({ locationKey, enabled = true }) => {
   const [particles, setParticles] = useState([]);
 
   useEffect(() => {
+    if (!enabled) {
+      setParticles([]);
+      return;
+    }
     const list = Array.from({ length: PAGE_PARTICLE_COUNT }, (_, i) => ({
       id: `${locationKey}-${i}-${Date.now()}`,
       left: 10 + Math.random() * 80,
@@ -113,10 +162,13 @@ const PageParticles = ({ locationKey }) => {
 
     const timer = setTimeout(() => setParticles([]), 900);
     return () => clearTimeout(timer);
-  }, [locationKey]);
+  }, [enabled, locationKey]);
+
+  if (!enabled) return null;
 
   return (
     <div
+      className="bm-page-particles"
       style={{
         position: "fixed",
         top: 0,
@@ -157,14 +209,17 @@ const PageParticles = ({ locationKey }) => {
 };
 
 // ── Easter egg toast ──────────────────────────────────────────────────────────
-const CEOModeToast = ({ lang, onDone }) => {
+const CEOModeToast = ({ lang, onDone, enabled = true }) => {
   useEffect(() => {
     const t = setTimeout(onDone, 3000);
     return () => clearTimeout(t);
   }, [onDone]);
 
+  if (!enabled) return null;
+
   return (
     <div
+      className="bm-page-particles"
       style={{
         position: "fixed",
         bottom: 32,
@@ -219,6 +274,8 @@ export const Layout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const appearanceMode = activeWorkspace?.appearanceMode || DEFAULT_BM_APPEARANCE;
+  const appearance = getAppearanceConfig(appearanceMode);
 
   // Easter egg state
   const logoClickTimes = useRef([]);
@@ -251,14 +308,16 @@ export const Layout = ({ children }) => {
     </div>
   );
 
+  if (!enabled) return null;
+
   return (
     <div className="min-h-screen flex bg-[var(--bm-bg)] font-['Sora',ui-sans-serif,system-ui]">
       {/* Global whimsy layers */}
-      <AmbientOrb />
-      <CursorTrail />
-      <PageParticles locationKey={location.key} />
+      <AmbientOrb enabled={appearance.ambientOrb} />
+      <CursorTrail enabled={appearance.cursorTrail} />
+      <PageParticles locationKey={location.key} enabled={appearance.pageParticles} />
       {ceoMode && (
-        <CEOModeToast lang={lang} onDone={() => setCeoMode(false)} />
+        <CEOModeToast lang={lang} enabled={appearance.ceoOrb} onDone={() => setCeoMode(false)} />
       )}
 
       {/* Sidebar – desktop */}
@@ -306,31 +365,40 @@ export const Layout = ({ children }) => {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
-          {NAV.map(({ to, icon: Icon, labelDE, labelEN, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 ${
-                  isActive
-                    ? "text-[#7C3AED] border-l-2 border-[#7C3AED]"
-                    : "text-zinc-500 hover:text-zinc-200 hover:bg-white/4 border-l-2 border-transparent"
-                }`
-              }
-              style={({ isActive }) =>
-                isActive
-                  ? {
-                      background: "rgba(124,58,237,0.1)",
-                      boxShadow: "inset 3px 0 0 #7C3AED, inset 0 0 20px rgba(124,58,237,0.05)",
+        <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.id} className="space-y-1.5">
+              <div className="px-3 text-[10px] font-bold uppercase tracking-[0.22em] text-zinc-600">
+                {lang === "DE" ? group.labelDE : group.labelEN}
+              </div>
+              <div className="space-y-0.5">
+                {group.items.map(({ to, icon: Icon, labelDE, labelEN, end }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    end={end}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 ${
+                        isActive
+                          ? "text-violet-200 border-l-2 border-[var(--bm-primary)]"
+                          : "text-zinc-500 hover:text-zinc-200 hover:bg-white/4 border-l-2 border-transparent"
+                      }`
                     }
-                  : {}
-              }
-            >
-              <Icon size={16} strokeWidth={1.6} />
-              {lang === "DE" ? labelDE : labelEN}
-            </NavLink>
+                    style={({ isActive }) =>
+                      isActive
+                        ? {
+                            background: "rgba(124,58,237,0.12)",
+                            boxShadow: "inset 3px 0 0 var(--bm-primary), inset 0 0 20px rgba(124,58,237,0.05)",
+                          }
+                        : {}
+                    }
+                  >
+                    <Icon size={16} strokeWidth={1.6} />
+                    {lang === "DE" ? labelDE : labelEN}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
 
@@ -390,34 +458,43 @@ export const Layout = ({ children }) => {
                 <X size={18} />
               </button>
             </div>
-            <nav className="flex-1 px-2 py-4 space-y-0.5">
-              {NAV.map(({ to, icon: Icon, labelDE, labelEN, end }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  end={end}
-                  onClick={() => setMobileOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all ${
+        <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.id} className="space-y-1.5">
+              <div className="px-3 text-[10px] font-bold uppercase tracking-[0.22em] text-zinc-600">
+                {lang === "DE" ? group.labelDE : group.labelEN}
+              </div>
+              <div className="space-y-0.5">
+                {group.items.map(({ to, icon: Icon, labelDE, labelEN, end }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    end={end}
+                    onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 ${
+                        isActive
+                          ? "text-violet-200 border-l-2 border-[var(--bm-primary)]"
+                          : "text-zinc-500 hover:text-zinc-200 hover:bg-white/4 border-l-2 border-transparent"
+                      }`
+                    }
+                    style={({ isActive }) =>
                       isActive
-                        ? "text-[#7C3AED] border-l-2 border-[#7C3AED]"
-                        : "text-zinc-500 hover:text-zinc-200 hover:bg-white/4 border-l-2 border-transparent"
-                    }`
-                  }
-                  style={({ isActive }) =>
-                    isActive
-                      ? {
-                          background: "rgba(124,58,237,0.1)",
-                          boxShadow: "inset 3px 0 0 #7C3AED, inset 0 0 20px rgba(124,58,237,0.05)",
-                        }
-                      : {}
-                  }
-                >
-                  <Icon size={16} strokeWidth={1.6} />
-                  {lang === "DE" ? labelDE : labelEN}
-                </NavLink>
-              ))}
-            </nav>
+                        ? {
+                            background: "rgba(124,58,237,0.12)",
+                            boxShadow: "inset 3px 0 0 var(--bm-primary), inset 0 0 20px rgba(124,58,237,0.05)",
+                          }
+                        : {}
+                    }
+                  >
+                    <Icon size={16} strokeWidth={1.6} />
+                    {lang === "DE" ? labelDE : labelEN}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          ))}
+        </nav>
           </aside>
         </div>
       )}
@@ -569,7 +646,7 @@ export const Layout = ({ children }) => {
           </div>
         </header>
 
-        <main className="flex-1 px-5 md:px-10 py-8 max-w-[1400px] w-full mx-auto">
+        <main className="flex-1 px-5 md:px-10 py-8 max-w-[1600px] w-full mx-auto">
           {children}
         </main>
       </div>
