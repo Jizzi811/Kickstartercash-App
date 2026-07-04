@@ -99,6 +99,7 @@ function AppShell() {
       <Routes>
               {/* Phase 5 – Main Navigation */}
               <Route path="/" element={<MissionControl />} />
+              <Route path="/mission/plans/:planId" element={<MissionControl />} />
               <Route path="/modules" element={<Dashboard />} />
               <Route path="/brand-brain" element={<BrandBrain />} />
               <Route path="/billing" element={<Billing />} />

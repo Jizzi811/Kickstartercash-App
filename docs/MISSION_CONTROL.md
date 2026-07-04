@@ -36,7 +36,7 @@ The rich module launcher that used to live on `/` now lives at **`/modules`**
 3. Quantum returns strict JSON: `summary`, `strategy`, `target_audience`,
    `channels[]`, `required_assets[]`, `next_steps[]`, and `tasks[]`.
 4. The backend stores an `ExecutivePlan` (status `awaiting_approval`) and creates
-   4–8 `MissionTask` objects (status `proposed`), each stamped with
+   8 `MissionTask` collaboration objects (status `planned`), each stamped with
    `workspace_id` and `brand_id`.
 5. The plan appears immediately; the user approves/rejects/advances each task.
 
@@ -51,12 +51,11 @@ next_steps[], task_ids[], brand_id, brand_name, workspace_id,
 status (awaiting_approval), created_at`
 
 ### MissionTask (`mission_tasks`)
-`id, title, description, department, owner_agent, status, priority, due_date,
-plan_id, goal, brand_id, workspace_id, created_at, updated_at`
+`id, title, description, department, owner_agent, assigned_agent, status, priority, due_date, plan_id, linked_campaign, required_inputs, expected_output, comments, timeline, goal, brand_id, workspace_id, created_at, updated_at`
 
 - **department** ∈ `marketing, design, seo, video, sales, automation, analytics, support`
 - **owner_agent** – the agent that owns the department (from `MISSION_DEPARTMENTS`)
-- **status** ∈ `proposed → approved → in_progress → done` (or `rejected`)
+- **status** ∈ `planned → in_progress → needs_review → approved → completed` (or `rejected`)
 - **priority** ∈ `low, medium, high, urgent`
 - **linked** to a plan via `plan_id` and to the goal via `goal`
 
