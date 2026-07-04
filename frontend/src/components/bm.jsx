@@ -381,3 +381,90 @@ export function StatusBadge({ status = "neutral", children }) {
   const map = { success: "success", warning: "warning", error: "danger", info: "info", neutral: "neutral", active: "success", draft: "neutral", blocked: "danger" };
   return <BMBadge tone={map[status] || "neutral"}>{children || status}</BMBadge>;
 }
+
+/* ─── Official BrandMind component names (Sprint 4 foundation) ────── */
+export const bmMotion = Object.freeze({
+  page: { duration: 0.52, ease: [0.22, 1, 0.36, 1] },
+  hover: { duration: 0.16, ease: [0.22, 1, 0.36, 1] },
+  dialog: { duration: 0.26, ease: [0.16, 1, 0.3, 1] },
+  dropdown: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
+  feedback: { duration: 0.32, ease: [0.16, 1, 0.3, 1] },
+});
+
+export const BMPage = Page;
+export const BMSection = Section;
+export const BMCard = Card;
+export const BMMetricCard = Metric;
+export const BMButton = Btn;
+export const BMInput = Input;
+export const BMTextarea = Textarea;
+export const BMSelect = Select;
+export const BMEmptyState = EmptyState;
+export const BMStat = Metric;
+
+export function BMHero({ breadcrumbs, statusBadges, kpis, subtitle, description, ...props }) {
+  const chips = props.chips || (
+    <>
+      {breadcrumbs && <div className="bm-caption text-zinc-500">{breadcrumbs}</div>}
+      {statusBadges}
+    </>
+  );
+  return (
+    <div className="space-y-4">
+      <Hero {...props} description={description || subtitle} chips={chips} />
+      {kpis && <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">{kpis}</div>}
+    </div>
+  );
+}
+
+export function BMToolbar({ children, className = "" }) {
+  return (
+    <div className={`flex flex-wrap items-center justify-between gap-3 rounded-[var(--bm-radius-app-shell)] border px-4 py-3 ${className}`} style={{ borderColor: "var(--bm-color-border)", background: "var(--bm-surface-glass)" }}>
+      {children}
+    </div>
+  );
+}
+
+export function BMHeader({ title, eyebrow, description, actions, className = "" }) {
+  return (
+    <header className={`flex flex-col gap-4 md:flex-row md:items-end md:justify-between ${className}`}>
+      <div>
+        {eyebrow && <div className="bm-kicker mb-2">{eyebrow}</div>}
+        <GradientHeading as="h1" className="bm-h1">{title}</GradientHeading>
+        {description && <p className="bm-body mt-3 max-w-2xl text-zinc-400">{description}</p>}
+      </div>
+      {actions && <div className="flex items-center gap-3">{actions}</div>}
+    </header>
+  );
+}
+
+export function BMDialog({ open, title, description, children, footer, onClose, className = "" }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="presentation" onClick={onClose}>
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        initial={{ opacity: 0, y: 18, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={bmMotion.dialog}
+        className={`w-full max-w-lg rounded-[var(--bm-radius-dialog)] border p-6 ${className}`}
+        style={{ background: "var(--bm-color-surface)", borderColor: "var(--bm-color-border)", boxShadow: "var(--bm-shadow-xl)" }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mb-5">
+          {title && <GradientHeading as="h2" className="bm-h3">{title}</GradientHeading>}
+          {description && <p className="bm-caption mt-2 text-zinc-400">{description}</p>}
+        </div>
+        {children}
+        {footer && <div className="mt-6 flex items-center justify-end gap-3">{footer}</div>}
+      </motion.div>
+    </div>
+  );
+}
+
+// Legacy aliases remain available for existing pages only. New UI must use BM*.
+export const LegacyCard = Card;
+export const LegacyButton = Btn;
+export const LegacyEmptyState = EmptyState;

@@ -39,22 +39,39 @@
   --bm-space-80: 5rem;
   --bm-space-96: 6rem;
 
-  /* Radius: 8, 12, 16, 20 */
+  /* Official BrandMind radii */
   --bm-radius-8: 0.5rem;
   --bm-radius-12: 0.75rem;
+  --bm-radius-14: 0.875rem;
   --bm-radius-16: 1rem;
   --bm-radius-20: 1.25rem;
+  --bm-radius-24: 1.5rem;
   --bm-radius-full: 9999px;
+  --bm-radius-app-shell: var(--bm-radius-12);
+  --bm-radius-card: var(--bm-radius-20);
+  --bm-radius-button: var(--bm-radius-14);
+  --bm-radius-input: var(--bm-radius-14);
+  --bm-radius-badge: var(--bm-radius-full);
+  --bm-radius-dialog: var(--bm-radius-24);
   --bm-radius-sm: var(--bm-radius-8);
-  --bm-radius-md: var(--bm-radius-12);
-  --bm-radius-lg: var(--bm-radius-16);
-  --bm-radius-xl: var(--bm-radius-20);
+  --bm-radius-md: var(--bm-radius-app-shell);
+  --bm-radius-lg: var(--bm-radius-button);
+  --bm-radius-xl: var(--bm-radius-card);
 
-  /* Shadows: sm, md, lg, xl */
+  /* Shadows + motion */
   --bm-shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.22);
   --bm-shadow-md: 0 16px 48px rgba(0, 0, 0, 0.28);
   --bm-shadow-lg: 0 24px 80px rgba(0, 0, 0, 0.32);
   --bm-shadow-xl: 0 32px 120px rgba(0, 0, 0, 0.42);
+  --bm-motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --bm-motion-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+  --bm-motion-duration-hover: 160ms;
+  --bm-motion-duration-tooltip: 140ms;
+  --bm-motion-duration-dropdown: 180ms;
+  --bm-motion-duration-dialog: 260ms;
+  --bm-motion-duration-page: 520ms;
+  --bm-motion-duration-loading: 1400ms;
+  --bm-motion-duration-feedback: 320ms;
 
   /* Legacy aliases point at the approved tokens during migration. */
   --bm-bg: var(--bm-color-primary-background);
@@ -152,30 +169,32 @@
 @layer components {
   .bm-page { @apply space-y-8 pb-10; }
   .bm-section { @apply rounded-2xl border p-8; border-color: var(--bm-border); background: var(--bm-surface-glass); box-shadow: var(--bm-shadow-card); backdrop-filter: blur(18px); }
-  .bm-card { @apply rounded-2xl border p-8 transition-all duration-200; min-height: 100%; border-color: var(--bm-border); background: rgba(255,255,255,0.035); box-shadow: var(--bm-shadow-card); }
+  .bm-card { @apply rounded-2xl border p-8 transition-all duration-[var(--bm-motion-duration-hover)]; min-height: 100%; border-color: var(--bm-border); background: rgba(255,255,255,0.035); box-shadow: var(--bm-shadow-card); }
   .bm-card-hover { @apply hover:-translate-y-0.5; }
   .bm-card-hover:hover { border-color: var(--bm-border-strong); background: rgba(255,255,255,0.055); }
   .bm-card-selected { border-color: var(--bm-primary); background: var(--bm-primary-soft); }
   .bm-card-danger { border-color: rgba(244,63,94,0.45); background: rgba(244,63,94,0.08); }
-  .bm-btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 disabled:pointer-events-none disabled:opacity-50; }
+  .bm-btn { @apply inline-flex items-center justify-center gap-2 rounded-[var(--bm-radius-button)] px-4 py-2 text-sm font-semibold transition-all duration-[var(--bm-motion-duration-hover)] disabled:pointer-events-none disabled:opacity-50; }
   .bm-btn-primary { @apply bm-btn text-white; background: var(--bm-gradient-purple); }
   .bm-btn-secondary { @apply bm-btn; color: var(--bm-text); background: var(--bm-surface-raised); border: 1px solid var(--bm-border); }
   .bm-btn-ghost { @apply bm-btn; color: var(--bm-text-muted); }
   .bm-btn-outline { @apply bm-btn bg-transparent; border: 1px solid var(--bm-border); color: var(--bm-text); }
   .bm-btn-danger { @apply bm-btn text-white; background: var(--bm-error); }
-  .bm-input { @apply w-full rounded-2xl border px-4 py-3 text-base transition; border-color: var(--bm-border); background: rgba(0,0,0,0.28); color: var(--bm-text); }
+  .bm-input { @apply w-full rounded-[var(--bm-radius-input)] border px-4 py-3 text-base transition; border-color: var(--bm-border); background: rgba(0,0,0,0.28); color: var(--bm-text); }
   .bm-input::placeholder { color: var(--bm-text-subtle); }
   .bm-table { @apply w-full overflow-hidden rounded-2xl border text-sm; border-color: var(--bm-border); }
   .bm-empty { @apply flex flex-col items-center justify-center rounded-3xl border border-dashed p-10 text-center; border-color: var(--bm-border); background: rgba(255,255,255,0.025); }
   .bm-kicker { @apply text-[11px] font-bold uppercase tracking-[0.22em]; color: var(--bm-secondary); }
 }
 
-@keyframes fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes bm-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes bm-slide-in { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-.animate-fade-up { animation: fade-up 0.5s ease-out forwards; }
-.animate-slide-in { animation: bm-slide-in 0.28s ease-out forwards; }
-.shimmer { background: linear-gradient(90deg, var(--bm-surface) 25%, var(--bm-surface-raised) 50%, var(--bm-surface) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+@keyframes bm-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes bm-feedback-pop { 0% { transform: scale(0.96); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.animate-fade-up { animation: bm-fade-up var(--bm-motion-duration-page) var(--bm-motion-ease-standard) forwards; }
+.animate-slide-in { animation: bm-slide-in var(--bm-motion-duration-dropdown) var(--bm-motion-ease-standard) forwards; }
+.animate-feedback { animation: bm-feedback-pop var(--bm-motion-duration-feedback) var(--bm-motion-ease-emphasized) forwards; }
+.shimmer { background: linear-gradient(90deg, var(--bm-surface) 25%, var(--bm-surface-raised) 50%, var(--bm-surface) 75%); background-size: 200% 100%; animation: bm-shimmer var(--bm-motion-duration-loading) infinite; }
 
 /* ── BrandMind typography scale (Design Sprint) ──────────────────────
    H1 56 · H2 40 · H3 28 · H4 22 · Body 16 · Small 14 — the only sizes

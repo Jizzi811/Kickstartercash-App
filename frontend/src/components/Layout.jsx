@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CursorTrail } from "@/components/CursorTrail";
 import { AmbientOrb } from "@/components/AmbientOrb";
+import { DEFAULT_BM_APPEARANCE, getAppearanceConfig } from "@/design-system";
 
 const NAV_GROUPS = [
   {
@@ -142,10 +143,14 @@ const PAGE_NAMES = {
 // ── Page-enter particles ──────────────────────────────────────────────────────
 const PAGE_PARTICLE_COUNT = 7;
 
-const PageParticles = ({ locationKey }) => {
+const PageParticles = ({ locationKey, enabled = true }) => {
   const [particles, setParticles] = useState([]);
 
   useEffect(() => {
+    if (!enabled) {
+      setParticles([]);
+      return;
+    }
     const list = Array.from({ length: PAGE_PARTICLE_COUNT }, (_, i) => ({
       id: `${locationKey}-${i}-${Date.now()}`,
       left: 10 + Math.random() * 80,
@@ -157,10 +162,13 @@ const PageParticles = ({ locationKey }) => {
 
     const timer = setTimeout(() => setParticles([]), 900);
     return () => clearTimeout(timer);
-  }, [locationKey]);
+  }, [enabled, locationKey]);
+
+  if (!enabled) return null;
 
   return (
     <div
+      className="bm-page-particles"
       style={{
         position: "fixed",
         top: 0,
@@ -201,14 +209,17 @@ const PageParticles = ({ locationKey }) => {
 };
 
 // ── Easter egg toast ──────────────────────────────────────────────────────────
-const CEOModeToast = ({ lang, onDone }) => {
+const CEOModeToast = ({ lang, onDone, enabled = true }) => {
   useEffect(() => {
     const t = setTimeout(onDone, 3000);
     return () => clearTimeout(t);
   }, [onDone]);
 
+  if (!enabled) return null;
+
   return (
     <div
+      className="bm-page-particles"
       style={{
         position: "fixed",
         bottom: 32,
@@ -263,6 +274,8 @@ export const Layout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const appearanceMode = activeWorkspace?.appearanceMode || DEFAULT_BM_APPEARANCE;
+  const appearance = getAppearanceConfig(appearanceMode);
 
   // Easter egg state
   const logoClickTimes = useRef([]);
@@ -295,14 +308,16 @@ export const Layout = ({ children }) => {
     </div>
   );
 
+  if (!enabled) return null;
+
   return (
     <div className="min-h-screen flex bg-[var(--bm-bg)] font-['Sora',ui-sans-serif,system-ui]">
       {/* Global whimsy layers */}
-      <AmbientOrb />
-      <CursorTrail />
-      <PageParticles locationKey={location.key} />
+      <AmbientOrb enabled={appearance.ambientOrb} />
+      <CursorTrail enabled={appearance.cursorTrail} />
+      <PageParticles locationKey={location.key} enabled={appearance.pageParticles} />
       {ceoMode && (
-        <CEOModeToast lang={lang} onDone={() => setCeoMode(false)} />
+        <CEOModeToast lang={lang} enabled={appearance.ceoOrb} onDone={() => setCeoMode(false)} />
       )}
 
       {/* Sidebar – desktop */}
