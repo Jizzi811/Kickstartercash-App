@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
-  LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
+  LayoutGrid, Building2, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare, ShieldCheck,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
   TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target, Factory, Plug, Dna, Brain, Sparkles,
@@ -15,7 +15,8 @@ import { CursorTrail } from "@/components/CursorTrail";
 import { AmbientOrb } from "@/components/AmbientOrb";
 
 const NAV = [
-  { to: "/",           icon: Target,     labelDE: "Mission Control",  labelEN: "Mission Control", end: true },
+  { to: "/",           icon: Building2,  labelDE: "BrandMind HQ",    labelEN: "BrandMind HQ", end: true },
+  { to: "/mission",    icon: Target,     labelDE: "Mission Control",  labelEN: "Mission Control" },
   { to: "/intelligence", icon: TrendingUp, labelDE: "Intelligence",  labelEN: "Intelligence" },
   { to: "/gateway",    icon: Plug,       labelDE: "AI Gateway",       labelEN: "AI Gateway" },
   { to: "/modules",    icon: LayoutGrid, labelDE: "Module",           labelEN: "Modules" },
@@ -53,7 +54,8 @@ const NAV = [
 ];
 
 const PAGE_NAMES = {
-  "/": "Mission Control",
+  "/": "BrandMind HQ",
+  "/mission": "Mission Control",
   "/intelligence": "Intelligence",
   "/gateway": "AI Gateway",
   "/modules": "Module",
