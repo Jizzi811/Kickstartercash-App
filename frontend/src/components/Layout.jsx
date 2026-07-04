@@ -4,7 +4,7 @@ import {
   LayoutGrid, Building2, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare, ShieldCheck,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
-  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target, Factory, Plug, Dna, Brain, Sparkles,
+  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target, Factory, Plug, Dna, Brain, Sparkles, User, Bell, BriefcaseBusiness,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { SalesSupportWidget } from "@/components/SalesSupportWidget";
@@ -201,7 +201,7 @@ const CEOModeToast = ({ lang, onDone }) => {
 // ── Layout ────────────────────────────────────────────────────────────────────
 export const Layout = ({ children }) => {
   const {
-    t, lang, setLang, model, setModel,
+    t, lang, setLang, model, setModel, user, activeBrand,
     isAuthenticated, activeWorkspace, workspaces, activeWorkspaceId,
     switchWorkspace, createWorkspace, logout,
   } = useApp();
@@ -239,8 +239,20 @@ export const Layout = ({ children }) => {
 
   const currentPageName = PAGE_NAMES[location.pathname] ?? null;
 
+  const modelLabel = model === "gemini" ? "Gemini 2.5" : model === "grok" ? "Grok 3" : model === "freetheai" ? "FreeTheAI" : "GPT-5.2";
+  const userLabel = user?.name || user?.email || (lang === "DE" ? "Nutzer" : "User");
+  const brandLabel = activeBrand?.name || (lang === "DE" ? "Aktive Brand" : "Active Brand");
+
+  const TopContextPill = ({ icon: Icon, label, value, className = "" }) => (
+    <div className={`hidden lg:flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-1.5 text-xs text-zinc-300 ${className}`}>
+      <Icon size={13} className="text-violet-300" aria-hidden="true" />
+      <span className="text-zinc-500">{label}</span>
+      <span className="max-w-[130px] truncate font-semibold text-white">{value}</span>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen flex bg-[#050505]">
+    <div className="min-h-screen flex bg-[var(--bm-bg)] font-['Sora',ui-sans-serif,system-ui]">
       {/* Global whimsy layers */}
       <AmbientOrb />
       <CursorTrail />
@@ -250,7 +262,7 @@ export const Layout = ({ children }) => {
       )}
 
       {/* Sidebar – desktop */}
-      <aside className="hidden md:flex flex-col w-60 border-r border-white/8 bg-[#080808] fixed h-screen z-20">
+      <aside className="hidden md:flex flex-col w-60 border-r border-white/8 bg-[var(--bm-bg-soft)] fixed h-screen z-20">
         {/* Logo – Easter egg trigger */}
         <div
           style={{
@@ -262,7 +274,7 @@ export const Layout = ({ children }) => {
         >
           <div className="flex items-center gap-3 px-5 py-5">
             <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: "#7C3AED22", border: "1px solid #7C3AED55" }}
             >
               <BrainCircuit size={20} style={{ color: "#7C3AED" }} />
@@ -284,7 +296,7 @@ export const Layout = ({ children }) => {
               </div>
             </div>
           </div>
-          {/* Gold divider line */}
+          {/* Purple divider line */}
           <div
             style={{
               height: "1px",
@@ -301,7 +313,7 @@ export const Layout = ({ children }) => {
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-sm text-[13px] font-medium transition-all duration-150 ${
+                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 ${
                   isActive
                     ? "text-[#7C3AED] border-l-2 border-[#7C3AED]"
                     : "text-zinc-500 hover:text-zinc-200 hover:bg-white/4 border-l-2 border-transparent"
@@ -353,11 +365,11 @@ export const Layout = ({ children }) => {
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-40">
           <div className="absolute inset-0 bg-black/70" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute left-0 top-0 h-full w-64 bg-[#080808] border-r border-white/8 flex flex-col z-50">
+          <aside className="absolute left-0 top-0 h-full w-64 bg-[var(--bm-bg-soft)] border-r border-white/8 flex flex-col z-50">
             <div className="flex items-center justify-between px-5 py-5 border-b border-white/8">
               <div className="flex items-center gap-2.5" onClick={handleLogoClick}>
                 <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                  className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{ background: "#7C3AED22", border: "1px solid #7C3AED55" }}
                 >
                   <BrainCircuit size={17} style={{ color: "#7C3AED" }} />
@@ -386,7 +398,7 @@ export const Layout = ({ children }) => {
                   end={end}
                   onClick={() => setMobileOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-sm text-[13px] font-medium transition-all ${
+                    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all ${
                       isActive
                         ? "text-[#7C3AED] border-l-2 border-[#7C3AED]"
                         : "text-zinc-500 hover:text-zinc-200 hover:bg-white/4 border-l-2 border-transparent"
@@ -414,7 +426,7 @@ export const Layout = ({ children }) => {
       <div className="flex-1 md:ml-60 flex flex-col min-h-screen">
         {/* Top bar */}
         <header
-          className="sticky top-0 z-30 h-14 flex items-center px-5 md:px-8 gap-3"
+          className="sticky top-0 z-30 min-h-16 flex items-center px-5 md:px-8 gap-3"
           style={{
             background: "rgba(5,5,5,0.9)",
             backdropFilter: "blur(20px)",
@@ -456,11 +468,18 @@ export const Layout = ({ children }) => {
           )}
 
           <div className="flex items-center gap-2 ml-auto">
+            <TopContextPill icon={User} label={lang === "DE" ? "Nutzer" : "User"} value={userLabel} />
+            <TopContextPill icon={BriefcaseBusiness} label="Workspace" value={activeWorkspace?.name || "BrandMind"} />
+            <TopContextPill icon={BrainCircuit} label={lang === "DE" ? "Brand" : "Brand"} value={brandLabel} />
+            <TopContextPill icon={Bot} label={lang === "DE" ? "Modell" : "Model"} value={modelLabel} />
+            <button className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.035] text-zinc-400 transition hover:border-cyan-300/40 hover:text-white" aria-label={lang === "DE" ? "Benachrichtigungen" : "Notifications"}>
+              <Bell size={15} aria-hidden="true" />
+            </button>
             {/* Model dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs transition-colors"
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-colors"
                   style={{
                     border: "1px solid rgba(124,58,237,0.15)",
                     color: "#7C3AED",
@@ -472,7 +491,7 @@ export const Layout = ({ children }) => {
                     e.currentTarget.style.border = "1px solid rgba(124,58,237,0.15)";
                   }}
                 >
-                  {model === "gemini" ? "Gemini 2.5" : model === "grok" ? "Grok 3" : "GPT-5.2"}
+                  {modelLabel}
                   <ChevronDown size={12} className="text-zinc-600" />
                 </button>
               </DropdownMenuTrigger>
@@ -485,7 +504,7 @@ export const Layout = ({ children }) => {
             </DropdownMenu>
 
             {/* Lang toggle */}
-            <div className="flex items-center rounded-sm border border-white/8 overflow-hidden text-xs">
+            <div className="flex items-center rounded-xl border border-white/8 overflow-hidden text-xs">
               {["DE", "EN"].map((l) => (
                 <button
                   key={l}
@@ -509,7 +528,7 @@ export const Layout = ({ children }) => {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button
-                        className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-xs text-white/80 border border-white/8 hover:border-white/20 transition-colors"
+                        className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs text-white/80 border border-white/8 hover:border-white/20 transition-colors"
                         title={lang === "DE" ? "Workspace wechseln" : "Switch workspace"}
                       >
                         <BrainCircuit size={13} style={{ color: "#7C3AED" }} />
@@ -539,7 +558,7 @@ export const Layout = ({ children }) => {
                 )}
                 <button
                   onClick={() => { logout(); navigate("/auth"); }}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-xs text-zinc-400 hover:text-white border border-white/8 hover:border-white/20 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs text-zinc-400 hover:text-white border border-white/8 hover:border-white/20 transition-colors"
                   title={lang === "DE" ? "Abmelden" : "Log out"}
                 >
                   <LogOut size={13} />

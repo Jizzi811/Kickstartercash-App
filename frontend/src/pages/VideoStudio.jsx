@@ -119,8 +119,8 @@ function VeoPanel({ lang }) {
         setContext={setPrompt}
         label="Video Prompt"
         labelEN="Video Prompt"
-        placeholder="z.B. Ein elegantes Brandmind Produkt-Video, goldene Partikel, Dubai Skyline im Hintergrund, cinematic…"
-        placeholderEN="e.g. An elegant Brandmind product video, golden particles, Dubai skyline, cinematic…"
+        placeholder="z.B. Ein elegantes Brandmind Produkt-Video, violette Lichtpartikel, Dubai Skyline im Hintergrund, cinematic…"
+        placeholderEN="e.g. An elegant Brandmind product video, violet light particles, Dubai skyline, cinematic…"
         title="Veo Video Prompt"
       />
       <button

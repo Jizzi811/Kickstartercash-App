@@ -42,7 +42,7 @@ export function PageHeader({ icon: Icon, color, title, subtitle, badge }) {
               {badge}
             </div>
           )}
-          <h1 className="font-display text-2xl md:text-3xl font-light tracking-tight leading-tight gold-text">
+          <h1 className="font-display text-2xl md:text-3xl font-light tracking-tight leading-tight purple-text">
             {title}
           </h1>
           {subtitle && (
