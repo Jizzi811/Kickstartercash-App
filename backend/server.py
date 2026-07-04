@@ -56,6 +56,7 @@ from app.gateway import registry as gw_registry, capabilities as gw_caps, config
 from app.identity import service as identity_service, schema as identity_schema  # noqa: E402
 from app.memory import registry as mem_registry, router as mem_router  # noqa: E402
 from app.skills import registry as skill_registry, service as skill_service  # noqa: E402
+from app import permissions as permission_framework  # noqa: E402
 
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
@@ -3742,6 +3743,7 @@ async def run_agent_tool(req: AgentToolRunRequest, ws: Optional[str] = Depends(c
 
     _mem = await _agent_memory_context(req.agent_id, ws, lang)
     cfg = await _load_gateway_config(ws)
+    cfg["permission_policy"] = await _load_permission_policy(ws)
     result = await skill_service.execute_skill(
         req.tool_id, context=req.context, language=lang, agent=agent, brand=brand,
         memory_context=_mem, gateway_config=cfg, workspace_id=ws, db=db, model_choice=req.model,
@@ -5564,6 +5566,73 @@ class GatewayChatRequest(BaseModel):
     model_choice: Optional[str] = None
 
 
+class PermissionPolicyUpdate(BaseModel):
+    subscription: Optional[dict] = None
+    roles: Optional[dict] = None
+    feature_flags: Optional[dict] = None
+    role_assignments: Optional[dict] = None
+    departments: Optional[dict] = None
+    agents: Optional[dict] = None
+    skills: Optional[dict] = None
+    tools: Optional[dict] = None
+    providers: Optional[dict] = None
+    usage_limits: Optional[dict] = None
+
+
+async def _usage_snapshot(ws: Optional[str]) -> dict:
+    if db is None:
+        return {"daily_requests": 0, "monthly_requests": 0}
+    now = datetime.now(timezone.utc)
+    day = now.strftime("%Y-%m-%d")
+    month = now.strftime("%Y-%m")
+    rows = await db.gateway_usage.find(_scope_filter(ws), {"_id": 0, "created_at": 1}).to_list(50000)
+    return {
+        "daily_requests": len([r for r in rows if str(r.get("created_at", "")).startswith(day)]),
+        "monthly_requests": len([r for r in rows if str(r.get("created_at", "")).startswith(month)]),
+    }
+
+
+async def _load_permission_policy(ws: Optional[str]) -> dict:
+    base = permission_framework.default_policy(ws)
+    if db is None:
+        return base
+    doc = await db.permission_policies.find_one({"workspace_id": ws or ""}, {"_id": 0})
+    if doc:
+        base.update(doc)
+    base["usage_snapshot"] = await _usage_snapshot(ws)
+    return base
+
+
+@api_router.get("/permissions/registry")
+async def permissions_registry():
+    return permission_framework.registry_payload()
+
+
+@api_router.get("/permissions/policy")
+async def permissions_get_policy(ws: Optional[str] = Depends(current_workspace)):
+    return await _load_permission_policy(ws)
+
+
+@api_router.put("/permissions/policy")
+async def permissions_put_policy(payload: PermissionPolicyUpdate, ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    current = await _load_permission_policy(ws)
+    update = payload.model_dump(exclude_none=True)
+    current.update(update)
+    current["workspace_id"] = ws or ""
+    current["updated_at"] = _now_iso()
+    await db.permission_policies.update_one({"workspace_id": ws or ""}, {"$set": current}, upsert=True)
+    return current
+
+
+@api_router.post("/permissions/evaluate")
+async def permissions_evaluate(payload: dict, ws: Optional[str] = Depends(current_workspace)):
+    policy = await _load_permission_policy(ws)
+    decision = permission_framework.evaluate(policy, **payload)
+    return decision.to_dict()
+
+
 @api_router.get("/gateway/registry")
 async def gateway_registry():
     """Provider, model and capability registries (for the admin UI)."""
@@ -5646,6 +5715,7 @@ async def gateway_chat_endpoint(req: GatewayChatRequest,
                                 ws: Optional[str] = Depends(current_workspace)):
     """Run a chat through the gateway end-to-end (provider chosen by config)."""
     cfg = await _load_gateway_config(ws)
+    cfg["permission_policy"] = await _load_permission_policy(ws)
     result = await ai_gateway.chat(req.system, req.user, cfg, task=req.task,
                                    model_choice=req.model_choice, ws=ws)
     if not result.ok:

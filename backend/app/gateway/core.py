@@ -31,6 +31,7 @@ from app.services.llm import _cb_is_open, _cb_record_failure, _cb_record_success
 from .capabilities import CHAT, STRUCTURED_OUTPUT, EMBEDDINGS, TEXT_TO_SPEECH, IMAGE
 from .registry import PROVIDER_REGISTRY, resolve_model, default_model_for, capability_providers
 from .adapters import get_adapter, CapabilityNotSupported
+from app.permissions import default_policy, evaluate
 
 logger = logging.getLogger(__name__)
 
@@ -160,10 +161,21 @@ class AIGateway:
                    retry_max: int, out_text_of: Callable[[Any], str]) -> GatewayResult:
         enabled = cfg.get("enabled", {})
         result = GatewayResult(ok=False, capability=capability)
+        policy = cfg.get("permission_policy") or default_policy(ws)
+        preflight = evaluate(policy, capability=capability, tokens_in=tokens_in, usage=cfg.get("usage_snapshot") or {})
+        if not preflight.allowed:
+            result.error = preflight.reason
+            result.attempts.append({"ok": False, "error": preflight.reason, "permission": preflight.to_dict()})
+            await self._record_usage(ws, capability, "", "", 0, tokens_in, 0, 0.0, False)
+            return result
         chain = self._chain(task, capability, cfg, explicit_model)
 
         for provider, model in chain:
             spec = PROVIDER_REGISTRY[provider]
+            decision = evaluate(policy, capability=capability, provider=provider, tokens_in=tokens_in, usage=cfg.get("usage_snapshot") or {})
+            if not decision.allowed:
+                result.attempts.append({"provider": provider, "model": model, "ok": False, "error": decision.reason, "permission": decision.to_dict()})
+                continue
             if not enabled.get(provider, spec.enabled_by_default):
                 continue
             if not spec.is_configured():
