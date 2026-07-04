@@ -383,13 +383,13 @@ class Brand(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     slogan: str = ""
-    primary_color: str = "#D4AF37"
-    secondary_color: str = "#050505"
-    accent_color: str = "#F3E5AB"
-    font_heading: str = "Playfair Display"
-    font_body: str = "Manrope"
-    tone: str = "Premium, exklusiv, selbstbewusst"
-    image_style: str = "Luxuriös, schwarz-gold, cinematisch, hoher Kontrast"
+    primary_color: str = "#7C3AED"
+    secondary_color: str = "#0A0A0A"
+    accent_color: str = "#F5F5F7"
+    font_heading: str = "Space Grotesk"
+    font_body: str = "Inter"
+    tone: str = "Modern, klar, intelligent, selbstbewusst, inspirierend"
+    image_style: str = "Modern, hochwertig, violett-schwarz mit Off-White-Akzenten, cinematisch, klare Komposition, subtile Tech-/KI-Ästhetik, hoher Kontrast"
     logo_url: str = ""
     # Brand Brain fields
     industry: str = ""
@@ -406,13 +406,13 @@ class Brand(BaseModel):
 class BrandCreate(BaseModel):
     name: str
     slogan: str = ""
-    primary_color: str = "#D4AF37"
-    secondary_color: str = "#050505"
-    accent_color: str = "#F3E5AB"
-    font_heading: str = "Playfair Display"
-    font_body: str = "Manrope"
-    tone: str = "Premium, exklusiv, selbstbewusst"
-    image_style: str = "Luxuriös, schwarz-gold, cinematisch, hoher Kontrast"
+    primary_color: str = "#7C3AED"
+    secondary_color: str = "#0A0A0A"
+    accent_color: str = "#F5F5F7"
+    font_heading: str = "Space Grotesk"
+    font_body: str = "Inter"
+    tone: str = "Modern, klar, intelligent, selbstbewusst, inspirierend"
+    image_style: str = "Modern, hochwertig, violett-schwarz mit Off-White-Akzenten, cinematisch, klare Komposition, subtile Tech-/KI-Ästhetik, hoher Kontrast"
     logo_url: str = ""
     industry: str = ""
     website: str = ""
@@ -426,8 +426,8 @@ class BrandBrainOnboardRequest(BaseModel):
     name: str
     industry: str = ""
     logo_url: str = ""
-    primary_color: str = "#D4AF37"
-    secondary_color: str = "#050505"
+    primary_color: str = "#7C3AED"
+    secondary_color: str = "#0A0A0A"
     website: str = ""
     target_audience: str = ""
     tone: str = ""
@@ -729,8 +729,8 @@ async def brand_brain_onboard(req: BrandBrainOnboardRequest, ws: Optional[str] =
 
     is_en = req.language == "EN"
     lang_label = "English" if is_en else "Deutsch"
-    primary = _clean_hex(req.primary_color, "#D4AF37")
-    secondary = _clean_hex(req.secondary_color, "#050505")
+    primary = _clean_hex(req.primary_color, "#7C3AED")
+    secondary = _clean_hex(req.secondary_color, "#0A0A0A")
 
     facts = "\n".join([
         f"Company name: {req.name}",
@@ -787,9 +787,9 @@ async def brand_brain_onboard(req: BrandBrainOnboardRequest, ws: Optional[str] =
         "slogan": (data.get("slogan") or "").strip(),
         "primary_color": primary,
         "secondary_color": secondary,
-        "accent_color": _clean_hex(data.get("accent_color", ""), "#F3E5AB"),
-        "font_heading": (data.get("font_heading") or "Playfair Display").strip(),
-        "font_body": (data.get("font_body") or "Manrope").strip(),
+        "accent_color": _clean_hex(data.get("accent_color", ""), "#F5F5F7"),
+        "font_heading": (data.get("font_heading") or "Space Grotesk").strip(),
+        "font_body": (data.get("font_body") or "Inter").strip(),
         "tone": (data.get("tone") or req.tone or "Professionell, vertrauenswürdig").strip(),
         "image_style": (data.get("image_style") or "Modern, professionell, hochwertig").strip(),
         "logo_url": req.logo_url.strip(),
@@ -3035,7 +3035,7 @@ AGENTS = {
         "name": "Marco – Marketing Director",
         "role_de": "Senior Marketing Director & KI-Marketingstratege",
         "role_en": "Senior Marketing Director & AI Marketing Strategist",
-        "color": "#D4AF37",
+        "color": "#7C3AED",
         "personality_de": (
             "Du bist der offizielle Senior Marketing Director und KI-Marketingstratege von Brandmind. "
             "Du verfügst über Expertenwissen in: Digital Marketing, Performance Marketing, Social Media Marketing, "
@@ -3854,7 +3854,7 @@ class CustomAgent(BaseModel):
     emoji: str = "🤖"
     role: str
     personality: str
-    color: str = "#D4AF37"
+    color: str = "#7C3AED"
     category: str = ""
     created_at: str = Field(default_factory=_now_iso)
     updated_at: str = Field(default_factory=_now_iso)
@@ -3865,7 +3865,7 @@ class CustomAgentCreate(BaseModel):
     emoji: str = "🤖"
     role: str
     personality: str
-    color: str = "#D4AF37"
+    color: str = "#7C3AED"
     category: str = ""
 
 
