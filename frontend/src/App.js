@@ -15,6 +15,7 @@ import Memory from "@/pages/Memory";
 import SkillsMarketplace from "@/pages/SkillsMarketplace";
 import Dashboard from "@/pages/Dashboard";
 import KnowledgeBase from "@/pages/KnowledgeBase";
+import KnowledgeExplorer from "@/pages/KnowledgeExplorer";
 import BrandBrain from "@/pages/BrandBrain";
 import Auth from "@/pages/Auth";
 import Billing from "@/pages/Billing";
@@ -128,6 +129,7 @@ function AppShell() {
               <Route path="/analytics" element={<AnalyticsStudio />} />
               <Route path="/automation" element={<AutomationStudio />} />
               <Route path="/knowledge" element={<KnowledgeBase />} />
+              <Route path="/knowledge-graph" element={<KnowledgeExplorer />} />
 
               {/* Jarvjis CEO Orb – bleibt */}
               <Route path="/jarvjis" element={<JarvjisAgent />} />

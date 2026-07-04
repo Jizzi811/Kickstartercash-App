@@ -57,6 +57,7 @@ from app.identity import service as identity_service, schema as identity_schema 
 from app.memory import registry as mem_registry, router as mem_router  # noqa: E402
 from app.skills import registry as skill_registry, service as skill_service  # noqa: E402
 from app.workflows import engine as workflow_engine  # noqa: E402
+from app import knowledge_graph  # noqa: E402
 from app import permissions as permission_framework  # noqa: E402
 
 if RESEND_API_KEY:
@@ -6073,6 +6074,70 @@ async def workflows_runs(ws: Optional[str] = Depends(current_workspace), limit: 
         return {"runs": []}
     rows = await db.workflow_runs.find(_scope_filter(ws), {"_id": 0}).sort("created_at", -1).to_list(limit)
     return {"runs": rows}
+
+
+# ---------------------------------------------------------------------------
+# BrandMind Knowledge Graph – semantic facade over current persistence
+# ---------------------------------------------------------------------------
+async def _knowledge_snapshot(ws: Optional[str]) -> knowledge_graph.GraphSnapshot:
+    memory_context = ""
+    try:
+        memory_context = await _agent_memory_context("ceo", ws, "EN")
+    except Exception:
+        memory_context = ""
+    return await knowledge_graph.MongoGraphRepository().snapshot(
+        db=db, workspace_id=ws, scope_filter=_scope_filter(ws), memory_context=memory_context
+    )
+
+
+def _knowledge_permission(policy: dict) -> dict:
+    decision = permission_framework.evaluate(policy, capability="structured_output")
+    if not decision.allowed:
+        raise HTTPException(status_code=403, detail={"message": "Knowledge Graph access denied", "permission": decision.to_dict()})
+    return decision.to_dict()
+
+
+@api_router.get("/knowledge-graph/registry")
+async def knowledge_graph_registry(ws: Optional[str] = Depends(current_workspace)):
+    policy = await _load_permission_policy(ws)
+    return {**knowledge_graph.registry_payload(), "permission": _knowledge_permission(policy), "workspace_id": ws or ""}
+
+
+@api_router.get("/knowledge-graph")
+async def knowledge_graph_get(ws: Optional[str] = Depends(current_workspace)):
+    policy = await _load_permission_policy(ws)
+    _knowledge_permission(policy)
+    snap = await _knowledge_snapshot(ws)
+    return {"nodes": snap.nodes, "edges": snap.edges, "integrations": snap.integrations, "workspace_id": ws or ""}
+
+
+@api_router.get("/knowledge-graph/search")
+async def knowledge_graph_search(q: str = "", entity_type: Optional[str] = None, limit: int = 25,
+                                 ws: Optional[str] = Depends(current_workspace)):
+    policy = await _load_permission_policy(ws)
+    _knowledge_permission(policy)
+    snap = await _knowledge_snapshot(ws)
+    return {"results": knowledge_graph.search_graph(snap, q, entity_type, limit), "query": q}
+
+
+@api_router.get("/knowledge-graph/related/{node_id:path}")
+async def knowledge_graph_related(node_id: str, ws: Optional[str] = Depends(current_workspace)):
+    policy = await _load_permission_policy(ws)
+    _knowledge_permission(policy)
+    snap = await _knowledge_snapshot(ws)
+    return knowledge_graph.related(snap, node_id)
+
+
+@api_router.get("/knowledge-graph/visualization")
+async def knowledge_graph_visualization(ws: Optional[str] = Depends(current_workspace)):
+    policy = await _load_permission_policy(ws)
+    _knowledge_permission(policy)
+    snap = await _knowledge_snapshot(ws)
+    return {
+        "nodes": [{"id": n["id"], "label": n["label"], "group": n["type"], "type": n["type"]} for n in snap.nodes],
+        "links": [{"source": e["from"], "target": e["to"], "label": e["label"], "type": e["type"]} for e in snap.edges],
+        "workspace_id": ws or "",
+    }
 
 
 app.include_router(api_router)
