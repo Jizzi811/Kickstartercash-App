@@ -4,7 +4,7 @@ import {
   LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
-  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target, Factory,
+  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target, Factory, Plug,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { SalesSupportWidget } from "@/components/SalesSupportWidget";
@@ -17,6 +17,7 @@ import { AmbientOrb } from "@/components/AmbientOrb";
 const NAV = [
   { to: "/",           icon: Target,     labelDE: "Mission Control",  labelEN: "Mission Control", end: true },
   { to: "/intelligence", icon: TrendingUp, labelDE: "Intelligence",  labelEN: "Intelligence" },
+  { to: "/gateway",    icon: Plug,       labelDE: "AI Gateway",       labelEN: "AI Gateway" },
   { to: "/modules",    icon: LayoutGrid, labelDE: "Module",           labelEN: "Modules" },
   { to: "/brand-brain", icon: BrainCircuit, labelDE: "Brand Brain",   labelEN: "Brand Brain" },
   { to: "/output-factory", icon: Factory, labelDE: "Output Factory", labelEN: "Output Factory" },
@@ -50,6 +51,7 @@ const NAV = [
 const PAGE_NAMES = {
   "/": "Mission Control",
   "/intelligence": "Intelligence",
+  "/gateway": "AI Gateway",
   "/modules": "Module",
   "/brand-brain": "Brand Brain",
   "/output-factory": "Output Factory",

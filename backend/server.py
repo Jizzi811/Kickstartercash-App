@@ -51,6 +51,8 @@ from app.services.llm import (  # noqa: E402
     _HAS_EMERGENT, LlmChat, UserMessage,
 )
 from app.services import intelligence as intel  # noqa: E402
+from app.gateway import gateway as ai_gateway  # noqa: E402
+from app.gateway import registry as gw_registry, capabilities as gw_caps, config as gw_config  # noqa: E402
 
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
@@ -5500,6 +5502,129 @@ async def intelligence_put_preferences(payload: IntelPreferences,
     update["updated_at"] = _now_iso()
     await db.intelligence_preferences.update_one(key, {"$set": update}, upsert=True)
     return {"ok": True, "preferences": update}
+
+
+# ---------------------------------------------------------------------------
+# AI Provider Gateway – the single front door to every AI provider
+# ---------------------------------------------------------------------------
+# Business modules never call a provider directly; they go through the gateway,
+# which resolves provider+model from the (workspace-scoped) config and runs the
+# health → rate-limit → retry → fallback → cost → usage pipeline. Admins control
+# enabled providers, default/fallback and the preferred model per task.
+
+async def _load_gateway_config(ws: Optional[str]) -> dict:
+    stored = None
+    if db is not None:
+        try:
+            stored = await db.gateway_config.find_one({"workspace_id": ws or ""}, {"_id": 0})
+        except Exception:
+            stored = None
+    return gw_config.merge_config(stored)
+
+
+class GatewayConfigUpdate(BaseModel):
+    enabled: Optional[dict] = None
+    default_provider: Optional[str] = None
+    fallback_provider: Optional[str] = None
+    task_models: Optional[dict] = None
+    retry_max: Optional[int] = None
+    timeout_seconds: Optional[int] = None
+
+
+class GatewayChatRequest(BaseModel):
+    system: str = ""
+    user: str
+    task: str = "chat"
+    model_choice: Optional[str] = None
+
+
+@api_router.get("/gateway/registry")
+async def gateway_registry():
+    """Provider, model and capability registries (for the admin UI)."""
+    providers = []
+    for pid, spec in gw_registry.PROVIDER_REGISTRY.items():
+        providers.append({
+            "id": pid, "label": spec.label, "capabilities": spec.capabilities,
+            "openai_compatible": spec.openai_compatible, "keyless": spec.keyless,
+            "configured": spec.is_configured(), "rpm_limit": spec.rpm_limit,
+            "notes": spec.notes,
+            "models": [
+                {"id": m.id, "label": m.label, "capabilities": m.capabilities,
+                 "context": m.context, "cost_in": m.cost_in, "cost_out": m.cost_out}
+                for m in gw_registry.models_for(pid)
+            ],
+        })
+    return {
+        "providers": providers,
+        "capabilities": [
+            {"id": c, "label": gw_caps.CAPABILITY_LABELS.get(c, {})}
+            for c in gw_caps.ALL_CAPABILITIES
+        ],
+        "tasks": [{"id": t, **meta} for t, meta in gw_caps.TASKS.items()],
+    }
+
+
+@api_router.get("/gateway/config")
+async def gateway_get_config(ws: Optional[str] = Depends(current_workspace)):
+    return await _load_gateway_config(ws)
+
+
+@api_router.put("/gateway/config")
+async def gateway_put_config(payload: GatewayConfigUpdate,
+                             ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    merged = gw_config.merge_config(payload.model_dump(exclude_none=True))
+    merged["workspace_id"] = ws or ""
+    await db.gateway_config.update_one(
+        {"workspace_id": ws or ""}, {"$set": merged}, upsert=True)
+    return merged
+
+
+@api_router.get("/gateway/health")
+async def gateway_health(ws: Optional[str] = Depends(current_workspace)):
+    cfg = await _load_gateway_config(ws)
+    return {"providers": ai_gateway.health_report(cfg)}
+
+
+@api_router.get("/gateway/usage")
+async def gateway_usage(ws: Optional[str] = Depends(current_workspace), limit: int = 500):
+    if db is None:
+        return {"summary": {}, "by_provider": [], "recent": []}
+    rows = await db.gateway_usage.find(_scope_filter(ws), {"_id": 0}).to_list(5000)
+    rows.sort(key=lambda r: r.get("created_at", ""), reverse=True)
+    total = len(rows)
+    ok = len([r for r in rows if r.get("ok")])
+    cost = round(sum(r.get("cost_usd", 0) for r in rows), 4)
+    lat = [r.get("latency_ms", 0) for r in rows if r.get("ok")]
+    by_provider: dict = {}
+    for r in rows:
+        p = r.get("provider") or "—"
+        b = by_provider.setdefault(p, {"provider": p, "calls": 0, "cost_usd": 0.0, "ok": 0})
+        b["calls"] += 1
+        b["cost_usd"] = round(b["cost_usd"] + r.get("cost_usd", 0), 4)
+        if r.get("ok"):
+            b["ok"] += 1
+    return {
+        "summary": {
+            "calls": total, "ok": ok, "success_rate": round((ok / total) * 100) if total else 0,
+            "cost_usd": cost, "avg_latency_ms": round(sum(lat) / len(lat)) if lat else 0,
+        },
+        "by_provider": sorted(by_provider.values(), key=lambda x: -x["calls"]),
+        "recent": rows[:limit][:50],
+    }
+
+
+@api_router.post("/gateway/chat")
+async def gateway_chat_endpoint(req: GatewayChatRequest,
+                                ws: Optional[str] = Depends(current_workspace)):
+    """Run a chat through the gateway end-to-end (provider chosen by config)."""
+    cfg = await _load_gateway_config(ws)
+    result = await ai_gateway.chat(req.system, req.user, cfg, task=req.task,
+                                   model_choice=req.model_choice, ws=ws)
+    if not result.ok:
+        raise HTTPException(status_code=503, detail={"error": "gateway_all_failed", "attempts": result.attempts})
+    return {"reply": result.output, "meta": result.to_meta()}
 
 
 app.include_router(api_router)
