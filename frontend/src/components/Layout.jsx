@@ -16,6 +16,7 @@ import { AmbientOrb } from "@/components/AmbientOrb";
 
 const NAV = [
   { to: "/",           icon: Target,     labelDE: "Mission Control",  labelEN: "Mission Control", end: true },
+  { to: "/intelligence", icon: TrendingUp, labelDE: "Intelligence",  labelEN: "Intelligence" },
   { to: "/modules",    icon: LayoutGrid, labelDE: "Module",           labelEN: "Modules" },
   { to: "/brand-brain", icon: BrainCircuit, labelDE: "Brand Brain",   labelEN: "Brand Brain" },
   { to: "/billing",    icon: Crown,      labelDE: "Preise & Plan",    labelEN: "Pricing & Plan" },
@@ -47,6 +48,7 @@ const NAV = [
 
 const PAGE_NAMES = {
   "/": "Mission Control",
+  "/intelligence": "Intelligence",
   "/modules": "Module",
   "/brand-brain": "Brand Brain",
   "/billing": "Preise & Plan",

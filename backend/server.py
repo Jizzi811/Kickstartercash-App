@@ -50,6 +50,7 @@ from app.services.llm import (  # noqa: E402
     _anthropic_client, _HAS_GROK, GrokClient,
     _HAS_EMERGENT, LlmChat, UserMessage,
 )
+from app.services import intelligence as intel  # noqa: E402
 
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
@@ -4965,6 +4966,148 @@ async def mission_overview(ws: Optional[str] = Depends(current_workspace)):
         "suggestions": suggestions,
         "counts": counts,
     }
+
+
+# ---------------------------------------------------------------------------
+# Intelligence Engine – internal learning layer (no model training)
+# ---------------------------------------------------------------------------
+# The Intelligence Service gathers a workspace's own activity (assets, campaigns,
+# mission plans, approvals, interactions) and runs it through the pure engines in
+# app/services/intelligence.py to produce insights, recommendations, performance
+# trends and summaries. Everything is workspace-scoped and grounded in the active
+# Brand Brain. No external analytics.
+
+class IntelEvent(BaseModel):
+    kind: str                               # e.g. asset_approved, asset_rejected, published, interaction
+    subject: str = ""                       # what it was about (asset id, task id, plan id…)
+    label: str = ""                         # human label
+    meta: dict = {}
+    brand_id: Optional[str] = None
+
+
+class IntelPreferences(BaseModel):
+    writing_tone: Optional[str] = None
+    preferred_formats: Optional[List[str]] = None
+    visual_style: Optional[str] = None
+    best_publishing_days: Optional[List[str]] = None
+    notes: Optional[str] = None
+
+
+async def _gather_intel_records(ws: Optional[str]) -> dict:
+    """Fetch the workspace-scoped records the engines learn from."""
+    scope = _scope_filter(ws)
+    history, tasks, plans, events = [], [], [], []
+    if db is not None:
+        try:
+            history = await db.history.find(scope, {"_id": 0}).to_list(2000)
+        except Exception:
+            history = []
+        try:
+            tasks = await db.mission_tasks.find(scope, {"_id": 0}).to_list(2000)
+        except Exception:
+            tasks = []
+        try:
+            plans = await db.mission_plans.find(scope, {"_id": 0}).to_list(500)
+        except Exception:
+            plans = []
+        try:
+            events = await db.intelligence_events.find(scope, {"_id": 0}).to_list(5000)
+        except Exception:
+            events = []
+    return {"history": history, "tasks": tasks, "plans": plans, "events": events}
+
+
+@api_router.post("/intelligence/event")
+async def intelligence_record_event(payload: IntelEvent, ws: Optional[str] = Depends(current_workspace)):
+    """Record a learning signal (approval, rejection, publish, interaction)."""
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    brand = await _resolve_brand(payload.brand_id, ws)
+    record = {
+        "id": str(uuid.uuid4()),
+        "kind": payload.kind,
+        "subject": payload.subject,
+        "label": payload.label,
+        "meta": payload.meta or {},
+        "brand_id": brand.get("id", ""),
+        "workspace_id": ws or "",
+        "created_at": _now_iso(),
+    }
+    await db.intelligence_events.insert_one({**record})
+    record.pop("_id", None)
+    return {"ok": True, "event": record}
+
+
+@api_router.get("/intelligence/insights")
+async def intelligence_insights(ws: Optional[str] = Depends(current_workspace),
+                                brand_id: Optional[str] = None, language: str = "DE"):
+    """The Intelligence Service – full payload: insights, recommendations,
+    optimizations, metrics and trends for the active workspace + brand."""
+    brand = await _resolve_brand(brand_id, ws)
+    data = await _gather_intel_records(ws)
+    return intel.build_intelligence(
+        data["history"], data["tasks"], data["plans"], data["events"], brand, language,
+    )
+
+
+@api_router.get("/intelligence/summary")
+async def intelligence_summary(period: str = "weekly", language: str = "DE",
+                               ws: Optional[str] = Depends(current_workspace)):
+    """Daily / weekly / monthly rollup for the active workspace."""
+    if period not in ("daily", "weekly", "monthly"):
+        period = "weekly"
+    data = await _gather_intel_records(ws)
+    return intel.build_summary(data["history"], data["tasks"], data["plans"], period, language)
+
+
+@api_router.get("/intelligence/preferences")
+async def intelligence_get_preferences(ws: Optional[str] = Depends(current_workspace),
+                                       brand_id: Optional[str] = None, language: str = "DE"):
+    """Stored + engine-suggested preferences for the active workspace/brand."""
+    brand = await _resolve_brand(brand_id, ws)
+    stored = {}
+    if db is not None:
+        try:
+            doc = await db.intelligence_preferences.find_one(
+                {"workspace_id": ws or "", "brand_id": brand.get("id", "")}, {"_id": 0})
+            stored = doc or {}
+        except Exception:
+            stored = {}
+    # engine-suggested defaults derived from real activity
+    data = await _gather_intel_records(ws)
+    signals = intel.LearningEngine.signals(data["history"], data["tasks"], data["plans"], data["events"])
+    wc = signals["weekday_counts"]
+    days_src = intel.WEEKDAYS_DE if language == "DE" else intel.WEEKDAYS_EN
+    suggested_days = [days_src[i] for i, _ in wc.most_common(3)]
+    at = signals["asset_types"]
+    suggested_formats = [
+        intel.ASSET_LABELS.get(t, {}).get("de" if language == "DE" else "en", t)
+        for t, _ in at.most_common(3)
+    ]
+    return {
+        "stored": stored,
+        "suggested": {
+            "best_publishing_days": suggested_days,
+            "preferred_formats": suggested_formats,
+            "writing_tone": brand.get("tone", ""),
+            "visual_style": brand.get("image_style", ""),
+        },
+    }
+
+
+@api_router.put("/intelligence/preferences")
+async def intelligence_put_preferences(payload: IntelPreferences,
+                                        ws: Optional[str] = Depends(current_workspace),
+                                        brand_id: Optional[str] = None):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    brand = await _resolve_brand(brand_id, ws)
+    key = {"workspace_id": ws or "", "brand_id": brand.get("id", "")}
+    update = {k: v for k, v in payload.model_dump().items() if v is not None}
+    update.update(key)
+    update["updated_at"] = _now_iso()
+    await db.intelligence_preferences.update_one(key, {"$set": update}, upsert=True)
+    return {"ok": True, "preferences": update}
 
 
 app.include_router(api_router)

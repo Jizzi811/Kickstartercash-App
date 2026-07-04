@@ -101,6 +101,11 @@ function TaskRow({ task, lang, onUpdate }) {
     try {
       const res = await axios.patch(`${API}/mission/tasks/${task.id}`, { status });
       onUpdate?.(res.data);
+      // Feed the Intelligence Engine – a human decision is a learning signal.
+      axios.post(`${API}/intelligence/event`, {
+        kind: `task_${status}`, subject: task.id, label: task.title,
+        meta: { department: task.department, priority: task.priority },
+      }).catch(() => {});
     } catch { toast.error(lang === "DE" ? "Aktion fehlgeschlagen" : "Action failed"); }
     finally { setBusy(false); }
   };
