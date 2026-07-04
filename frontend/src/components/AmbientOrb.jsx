@@ -3,13 +3,14 @@ import { useEffect, useRef } from "react";
 const LERP = 0.05;
 const ORB_SIZE = 600;
 
-export const AmbientOrb = () => {
+export const AmbientOrb = ({ enabled = true }) => {
   const orbRef = useRef(null);
   const pos = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
   const target = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
   const rafRef = useRef(null);
 
   useEffect(() => {
+    if (!enabled) return;
     const onMove = (e) => {
       target.current.x = e.clientX;
       target.current.y = e.clientY;
@@ -32,7 +33,9 @@ export const AmbientOrb = () => {
       window.removeEventListener("mousemove", onMove);
       cancelAnimationFrame(rafRef.current);
     };
-  }, []);
+  }, [enabled]);
+
+  if (!enabled) return null;
 
   return (
     <div

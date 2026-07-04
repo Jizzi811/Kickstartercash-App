@@ -32,12 +32,17 @@ export const brandMindTokens = Object.freeze({
     },
   },
   spacing: { 4: "0.25rem", 8: "0.5rem", 12: "0.75rem", 16: "1rem", 24: "1.5rem", 32: "2rem", 40: "2.5rem", 48: "3rem", 64: "4rem", 80: "5rem", 96: "6rem" },
-  radius: { 8: "0.5rem", 12: "0.75rem", 16: "1rem", 20: "1.25rem" },
+  radius: { appShell: "0.75rem", card: "1.25rem", button: "0.875rem", input: "0.875rem", badge: "9999px", dialog: "1.5rem", 8: "0.5rem", 12: "0.75rem", 14: "0.875rem", 16: "1rem", 20: "1.25rem", 24: "1.5rem" },
   shadows: {
     sm: "0 8px 24px rgba(0, 0, 0, 0.22)",
     md: "0 16px 48px rgba(0, 0, 0, 0.28)",
     lg: "0 24px 80px rgba(0, 0, 0, 0.32)",
     xl: "0 32px 120px rgba(0, 0, 0, 0.42)",
+  },
+  motion: {
+    easeStandard: "cubic-bezier(0.22, 1, 0.36, 1)",
+    easeEmphasized: "cubic-bezier(0.16, 1, 0.3, 1)",
+    durations: { hover: "160ms", tooltip: "140ms", dropdown: "180ms", dialog: "260ms", page: "520ms", loading: "1400ms", feedback: "320ms" },
   },
 });
 
