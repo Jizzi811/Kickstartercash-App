@@ -4,7 +4,7 @@ import {
   LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
-  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target, Factory, Plug, Dna,
+  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target, Factory, Plug, Dna, Brain,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { SalesSupportWidget } from "@/components/SalesSupportWidget";
@@ -21,6 +21,7 @@ const NAV = [
   { to: "/modules",    icon: LayoutGrid, labelDE: "Module",           labelEN: "Modules" },
   { to: "/brand-brain", icon: BrainCircuit, labelDE: "Brand Brain",   labelEN: "Brand Brain" },
   { to: "/brand-identity", icon: Dna,       labelDE: "Brand Identity",  labelEN: "Brand Identity" },
+  { to: "/memory",     icon: Brain,      labelDE: "Memory",           labelEN: "Memory" },
   { to: "/output-factory", icon: Factory, labelDE: "Output Factory", labelEN: "Output Factory" },
   { to: "/billing",    icon: Crown,      labelDE: "Preise & Plan",    labelEN: "Pricing & Plan" },
   { to: "/agents",     icon: Bot,        labelDE: "Agenten",          labelEN: "Agents" },
@@ -56,6 +57,7 @@ const PAGE_NAMES = {
   "/modules": "Module",
   "/brand-brain": "Brand Brain",
   "/brand-identity": "Brand Identity",
+  "/memory": "Memory",
   "/output-factory": "Output Factory",
   "/billing": "Preise & Plan",
   "/agents": "Agenten",

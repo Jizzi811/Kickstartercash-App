@@ -10,6 +10,7 @@ import MissionControl from "@/pages/MissionControl";
 import IntelligenceStudio from "@/pages/IntelligenceStudio";
 import GatewayStudio from "@/pages/GatewayStudio";
 import BrandIdentity from "@/pages/BrandIdentity";
+import Memory from "@/pages/Memory";
 import Dashboard from "@/pages/Dashboard";
 import KnowledgeBase from "@/pages/KnowledgeBase";
 import BrandBrain from "@/pages/BrandBrain";
@@ -110,6 +111,7 @@ function AppShell() {
               <Route path="/output-factory" element={<OutputFactory />} />
               <Route path="/brand-brain" element={<BrandBrain />} />
               <Route path="/brand-identity" element={<BrandIdentity />} />
+              <Route path="/memory" element={<Memory />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/agents" element={<Specialists />} />
               <Route path="/design" element={<DesignStudio />} />
