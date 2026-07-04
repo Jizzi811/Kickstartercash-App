@@ -1,113 +1,252 @@
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
-  Activity, BarChart2, Bot, Brain, Building2, CheckCircle2, Clock, Crown,
-  Dna, Film, FlaskConical, HeartPulse, LifeBuoy, Megaphone, MessageSquare,
-  Palette, Rocket, Search, ShieldCheck, Sparkles, Target, TrendingUp, Users,
-  Zap,
+  Activity, BarChart2, Brain, Building2, Crown, Dna, Film, LifeBuoy,
+  Megaphone, MessageSquare, Palette, Rocket, Search, ShieldCheck, Sparkles,
+  Target, Users, Zap, ThumbsUp, ClipboardList,
 } from "lucide-react";
-import { useApp } from "@/context/AppContext";
+import { API, useApp } from "@/context/AppContext";
+import {
+  Page, Hero, Section, Card, Metric, StatGrid, Btn, BMBadge, EmptyState, SORA, V,
+} from "@/components/bm";
 
-const SORA = "'Sora', sans-serif";
+const DEPT_ICON = {
+  marketing: Megaphone, design: Palette, seo: Search, video: Film,
+  sales: Users, automation: Zap, analytics: BarChart2, support: LifeBuoy,
+};
 
-const departments = [
-  { name: "Marketing", icon: Megaphone, workflows: 4, agents: 3, tasks: "Campaign launch kit", status: "Scaling", approvals: 2, tone: "from-violet-500 to-fuchsia-400" },
-  { name: "Design", icon: Palette, workflows: 3, agents: 2, tasks: "Carousel + landing visuals", status: "Creating", approvals: 4, tone: "from-fuchsia-500 to-purple-300" },
-  { name: "Video", icon: Film, workflows: 2, agents: 2, tasks: "Short-form ad storyboard", status: "Rendering", approvals: 1, tone: "from-indigo-500 to-sky-300" },
-  { name: "SEO", icon: Search, workflows: 3, agents: 2, tasks: "Authority audit", status: "Auditing", approvals: 1, tone: "from-violet-600 to-emerald-300" },
-  { name: "Sales", icon: Users, workflows: 2, agents: 2, tasks: "Lead follow-up sequence", status: "Queued", approvals: 3, tone: "from-purple-500 to-green-300" },
-  { name: "Automation", icon: Zap, workflows: 5, agents: 2, tasks: "Approval routing", status: "Monitoring", approvals: 0, tone: "from-violet-500 to-amber-200" },
-  { name: "Analytics", icon: BarChart2, workflows: 2, agents: 2, tasks: "Growth signal report", status: "Analyzing", approvals: 0, tone: "from-indigo-500 to-violet-300" },
-  { name: "Support", icon: LifeBuoy, workflows: 1, agents: 1, tasks: "FAQ memory updates", status: "Triaging", approvals: 1, tone: "from-purple-500 to-cyan-300" },
-  { name: "Research", icon: FlaskConical, workflows: 2, agents: 2, tasks: "Market signal brief", status: "Investigating", approvals: 2, tone: "from-violet-600 to-pink-300" },
-];
-
-const activity = [
-  ["Designer created carousel", "2 min ago", Palette],
-  ["SEO finished audit", "8 min ago", Search],
-  ["Marketing started campaign", "14 min ago", Megaphone],
-  ["CEO approved strategy", "22 min ago", Crown],
-  ["Workflow completed", "31 min ago", CheckCircle2],
-];
-
-const insights = [
-  "Audience resonance is strongest around founder-led growth stories.",
-  "Two pending creative approvals are blocking campaign velocity.",
-  "SEO content depth improved; internal linking still needs attention.",
-];
-
-function ShellCard({ children, className = "" }) {
-  return <section className={`rounded-[1.35rem] border border-white/10 bg-white/[0.035] shadow-2xl shadow-violet-950/20 backdrop-blur-xl ${className}`}>{children}</section>;
-}
-
-function Metric({ label, value, icon: Icon }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
-      <div className="mb-3 flex items-center justify-between text-zinc-500"><span className="text-[10px] uppercase tracking-[0.22em]">{label}</span><Icon size={15} className="text-violet-300" /></div>
-      <div className="text-2xl font-semibold text-white" style={{ fontFamily: SORA }}>{value}</div>
-    </div>
-  );
-}
-
-function BrandMindHQ() {
+export default function BrandMindHQ() {
   const navigate = useNavigate();
-  const { activeBrand, activeWorkspace, model, user } = useApp();
-  const brandName = activeBrand?.name || "BrandMind Demo";
-  const workspaceName = activeWorkspace?.name || "Executive Workspace";
+  const { activeBrand, activeWorkspace, activeBrandId, user, lang } = useApp();
+  const de = lang === "DE";
+  const firstName = (user?.name || user?.email?.split("@")[0] || "").split(" ")[0];
+
+  // Live data only – nothing on this page is fabricated.
+  const [overview, setOverview] = useState(null);
+  const [intel, setIntel] = useState(null);
+  const [plans, setPlans] = useState([]);
+  const [dna, setDna] = useState(null);
+
+  const load = useCallback(async () => {
+    const settle = (p) => p.catch(() => null);
+    const [o, i, pl, d] = await Promise.all([
+      settle(axios.get(`${API}/mission/overview`)),
+      settle(axios.get(`${API}/intelligence/insights`, { params: { brand_id: activeBrandId, language: lang } })),
+      settle(axios.get(`${API}/mission/plans`)),
+      activeBrandId ? settle(axios.get(`${API}/brand-identity/${activeBrandId}`, { params: { language: lang } })) : Promise.resolve(null),
+    ]);
+    setOverview(o?.data || null);
+    setIntel(i?.data || null);
+    setPlans(pl?.data?.plans || []);
+    setDna(d?.data || null);
+  }, [activeBrandId, lang]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const greet = () => {
+    const h = new Date().getHours();
+    if (!de) return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+    return h < 12 ? "Guten Morgen" : h < 18 ? "Guten Tag" : "Guten Abend";
+  };
+
+  const counts = overview?.counts || {};
+  const metrics = intel?.metrics || {};
+  const dnaScore = dna?.completeness?.overall;
+  const departments = overview?.departments || [];
+  const activity = overview?.activity || [];
+  const suggestions = overview?.suggestions || [];
+  const insights = intel?.insights || [];
+  const recommendations = intel?.recommendations || [];
+  const activeGoals = plans.slice(0, 3);
 
   const actions = [
-    ["Create Goal", "/mission", Target],
-    ["Start Campaign", "/workflow", Rocket],
-    ["Launch Workflow", "/workflow-architect", Zap],
-    ["Review Assets", "/output-factory", ShieldCheck],
-    ["Open Team Chat", "/mission", MessageSquare],
+    [de ? "Ziel erstellen" : "Create Goal", "/mission", Target],
+    [de ? "Kampagne starten" : "Start Campaign", "/workflow", Rocket],
+    [de ? "Workflow starten" : "Launch Workflow", "/workflow-architect", Zap],
+    [de ? "Assets prüfen" : "Review Assets", "/output-factory", ShieldCheck],
+    [de ? "Team-Chat öffnen" : "Open Team Chat", "/mission", MessageSquare],
   ];
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#07050B] px-4 py-6 text-white sm:px-6 lg:px-8" style={{ fontFamily: SORA }}>
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(124,58,237,0.42),transparent_34%),radial-gradient(circle_at_80%_12%,rgba(192,132,252,0.22),transparent_30%),linear-gradient(180deg,rgba(12,10,18,0.2),#07050B_70%)]" />
-      <div className="relative mx-auto max-w-7xl space-y-6">
-        <header className="flex flex-col gap-5 rounded-[1.75rem] border border-violet-300/15 bg-black/30 p-6 shadow-2xl shadow-violet-950/40 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-300/20 bg-violet-400/10 px-4 py-2 text-[11px] uppercase tracking-[0.24em] text-violet-100"><Sparkles size={14} /> BrandMind HQ Alpha</div>
-            <h1 className="max-w-4xl text-4xl font-bold tracking-[-0.05em] sm:text-5xl lg:text-6xl">Enter your AI company.</h1>
-            <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-300">A new home experience that turns Mission Control, departments, intelligence, memory and approvals into one executive operating floor.</p>
-          </div>
-          <div className="grid min-w-[260px] grid-cols-2 gap-3">
-            <Metric label="Brand Health" value="91%" icon={HeartPulse} />
-            <Metric label="DNA Score" value="87" icon={Dna} />
-          </div>
-        </header>
+    <Page>
+      <Hero
+        icon={Building2}
+        badge="BrandMind HQ"
+        title={<>{greet()}, {firstName || (de ? "willkommen" : "there")}</>}
+        description={de
+          ? "Dein KI-Unternehmen auf einen Blick – Abteilungen, Ziele, Erkenntnisse und Freigaben an einem Ort."
+          : "Your AI company at a glance – departments, goals, insights and approvals in one place."}
+        chips={<>
+          <BMBadge icon={Dna}>{activeBrand?.name || "—"}</BMBadge>
+          <BMBadge tone="neutral" icon={Building2}>{activeWorkspace?.name || "—"}</BMBadge>
+        </>}
+      />
 
-        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-          <ShellCard className="p-6">
-            <div className="mb-5 flex items-center gap-3"><Crown className="text-violet-300" /><h2 className="text-xl font-semibold">AI CEO Office</h2></div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/10 p-5 ring-1 ring-violet-200/10"><p className="text-xs uppercase tracking-[0.22em] text-violet-200">Today&apos;s executive summary</p><p className="mt-3 text-sm leading-6 text-zinc-200">{brandName} is in active growth mode. Creative production is moving, SEO has delivered a fresh audit, and the next bottleneck is human approval on campaign assets.</p></div>
-              <div className="space-y-3"><p className="text-xs uppercase tracking-[0.22em] text-zinc-500">Active goals</p>{["Launch authority campaign", "Improve offer clarity", "Increase qualified lead flow"].map((x) => <div key={x} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-zinc-200"><Target size={14} className="text-violet-300" />{x}</div>)}</div>
-              <div><p className="mb-3 text-xs uppercase tracking-[0.22em] text-zinc-500">Recommendations</p><ul className="space-y-2 text-sm text-zinc-300">{["Approve top carousel before campaign launch.", "Turn SEO audit into three content tasks.", "Route sales objections into Brand Brain memory."].map((x) => <li key={x}>• {x}</li>)}</ul></div>
-              <div><p className="mb-3 text-xs uppercase tracking-[0.22em] text-zinc-500">Running initiatives</p><div className="space-y-2">{["Campaign Launch", "Brand DNA Refresh", "Workflow QA"].map((x) => <div key={x} className="flex items-center justify-between rounded-xl bg-black/25 p-3 text-sm"><span>{x}</span><span className="text-violet-300">Live</span></div>)}</div></div>
+      {/* Real KPIs – or em-dash while loading, never invented numbers */}
+      <StatGrid>
+        <Metric icon={Dna} label={de ? "DNA-Vollständigkeit" : "DNA completeness"}
+          value={dnaScore != null ? `${dnaScore}%` : "—"} color="#C084FC" />
+        <Metric icon={ThumbsUp} label={de ? "Freigabequote" : "Approval rate"}
+          value={metrics.approval_rate != null ? `${metrics.approval_rate}%` : "—"} color="#34d399" />
+        <Metric icon={ClipboardList} label={de ? "Offene Tasks" : "Open tasks"}
+          value={counts.tasks_open ?? "—"} />
+        <Metric icon={Rocket} label={de ? "Laufende Kampagnen" : "Running campaigns"}
+          value={counts.campaigns_running ?? "—"} color="#F472B6"
+          hint={counts.campaigns_running === 0 ? (de ? "Keine aktiven Workflows." : "No active workflows.") : undefined} />
+      </StatGrid>
+
+      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        {/* AI CEO Office – real goals + real recommendations */}
+        <Section icon={Crown} title="AI CEO Office" className="min-w-0">
+          <Card>
+            <div className="grid gap-5 md:grid-cols-2">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-600 mb-3">{de ? "Aktive Ziele" : "Active goals"}</p>
+                {activeGoals.length ? (
+                  <div className="space-y-2">
+                    {activeGoals.map((p) => (
+                      <button key={p.id} onClick={() => navigate(`/mission/plans/${p.id}`)}
+                        className="w-full flex items-center gap-3 rounded-lg bg-white/[0.03] p-3 text-left text-sm text-zinc-200 hover:bg-white/[0.06] transition-colors">
+                        <Target size={14} style={{ color: V }} className="flex-shrink-0" />
+                        <span className="line-clamp-1">{p.goal}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-zinc-600">
+                    {de ? "Noch keine Ziele. " : "No goals yet. "}
+                    <button className="text-[#a78bfa] hover:underline" onClick={() => navigate("/mission")}>
+                      {de ? "Erstes Ziel erstellen →" : "Create your first goal →"}
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-600 mb-3">{de ? "Empfehlungen" : "Recommendations"}</p>
+                {recommendations.length ? (
+                  <ul className="space-y-2 text-sm text-zinc-300">
+                    {recommendations.slice(0, 3).map((r) => <li key={r.id} className="leading-snug">• {r.title}</li>)}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-zinc-600">{de ? "Noch keine Empfehlungen – die Intelligence Engine lernt aus deiner Aktivität." : "No recommendations yet – the Intelligence Engine learns from your activity."}</p>
+                )}
+              </div>
+              {suggestions.length > 0 && (
+                <div className="md:col-span-2">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-600 mb-3">{de ? "Nächste Aktionen" : "Next actions"}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {suggestions.map((s, i) => <BMBadge key={i} tone="neutral">{de ? s.text_de : s.text_en}</BMBadge>)}
+                  </div>
+                </div>
+              )}
             </div>
-          </ShellCard>
+          </Card>
+        </Section>
 
-          <ShellCard className="p-6">
-            <div className="mb-5 flex items-center gap-3"><Activity className="text-violet-300" /><h2 className="text-xl font-semibold">Live Activity Feed</h2></div>
-            <div className="space-y-3">{activity.map(([text, time, Icon]) => <div key={text} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/25 p-3"><div className="rounded-xl bg-violet-400/10 p-2 text-violet-200"><Icon size={15} /></div><div className="flex-1"><p className="text-sm text-zinc-100">{text}</p><p className="text-xs text-zinc-600">{time}</p></div><span className="h-2 w-2 rounded-full bg-emerald-300" /></div>)}</div>
-          </ShellCard>
-        </div>
-
-        <ShellCard className="p-6">
-          <div className="mb-5 flex items-center gap-3"><Building2 className="text-violet-300" /><h2 className="text-xl font-semibold">Departments</h2></div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{departments.map((d) => <div key={d.name} className="rounded-2xl border border-white/10 bg-black/25 p-4"><div className="mb-4 flex items-center justify-between"><div className="flex items-center gap-3"><div className={`rounded-2xl bg-gradient-to-br ${d.tone} p-3`}><d.icon size={18} /></div><div><h3 className="font-semibold">{d.name}</h3><p className="text-xs text-zinc-500">{d.status}</p></div></div><Clock size={14} className="text-zinc-600" /></div><div className="grid grid-cols-3 gap-2 text-center"><Metric label="Workflows" value={d.workflows} icon={Zap} /><Metric label="Agents" value={d.agents} icon={Bot} /><Metric label="Approvals" value={d.approvals} icon={ShieldCheck} /></div><p className="mt-4 rounded-xl bg-white/[0.03] p-3 text-xs text-zinc-300"><span className="text-zinc-500">Current task:</span> {d.tasks}</p></div>)}</div>
-        </ShellCard>
-
-        <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <ShellCard className="p-6"><div className="mb-5 flex items-center gap-3"><Brain className="text-violet-300" /><h2 className="text-xl font-semibold">Intelligence Panel</h2></div><div className="space-y-4">{insights.map((x) => <p key={x} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-zinc-300">{x}</p>)}<div className="grid grid-cols-2 gap-3"><Metric label="Suggestions" value="7" icon={Sparkles} /><Metric label="Memory Updates" value="12" icon={Brain} /></div></div></ShellCard>
-          <ShellCard className="p-6"><div className="mb-5 flex items-center gap-3"><Rocket className="text-violet-300" /><h2 className="text-xl font-semibold">Mission Control Widget</h2></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{actions.map(([label, path, Icon]) => <button key={label} onClick={() => navigate(path)} className="group rounded-2xl border border-violet-300/15 bg-violet-400/10 p-4 text-left transition hover:-translate-y-0.5 hover:border-violet-200/35 hover:bg-violet-400/15"><Icon size={18} className="mb-4 text-violet-200" /><span className="text-sm font-semibold text-white">{label}</span></button>)}</div><div className="mt-5 rounded-2xl border border-white/10 bg-black/25 p-4"><p className="text-xs uppercase tracking-[0.22em] text-zinc-500">Workspace Overview</p><div className="mt-4 grid gap-3 text-sm text-zinc-300 sm:grid-cols-2"><span>Brand: {brandName}</span><span>Workspace: {workspaceName}</span><span>Subscription: Alpha Pro</span><span>Provider: Operational</span><span className="sm:col-span-2">Active AI models: {model}, brand-safe router, memory reviewer</span><span className="sm:col-span-2 text-zinc-600">Signed in as {user?.email || "workspace owner"}</span></div></div></ShellCard>
-        </div>
+        {/* Live activity – real events only */}
+        <Section icon={Activity} title={de ? "Aktivität" : "Live Activity"} className="min-w-0">
+          <Card className="h-full">
+            {activity.length ? (
+              <div className="space-y-3">
+                {activity.slice(0, 6).map((a, i) => (
+                  <div key={i} className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: V }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] text-zinc-300 leading-snug line-clamp-1">{a.text || "—"}</p>
+                      <p className="text-[10px] text-zinc-600">{a.meta} · {a.status}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-zinc-600 py-6 text-center">
+                {de ? "Noch keine Aktivität. Starte einen Plan oder generiere Assets." : "No activity yet. Start a plan or generate assets."}
+              </p>
+            )}
+          </Card>
+        </Section>
       </div>
-    </main>
+
+      {/* Departments – real task counts from Mission Control */}
+      <Section icon={Building2} title={de ? "Abteilungen" : "Departments"}>
+        {departments.length ? (
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+            {departments.map((d) => {
+              const Icon = DEPT_ICON[d.id] || Building2;
+              return (
+                <Card key={d.id} size="s" className="text-center">
+                  <div className="w-9 h-9 mx-auto mb-2 rounded-lg flex items-center justify-center relative"
+                    style={{ background: "rgba(124,58,237,0.10)" }}>
+                    <Icon size={15} style={{ color: V }} />
+                    {d.active && <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full" style={{ background: "#34d399" }} />}
+                  </div>
+                  <div className="text-[12px] font-medium text-zinc-200">{de ? d.label_de : d.label_en}</div>
+                  <div className="text-[10px] text-zinc-600 mt-0.5">
+                    {d.open > 0 ? `${d.open} ${de ? "offen" : "open"}` : (de ? "bereit" : "ready")}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            icon={Building2}
+            title={de ? "Dein Unternehmen wartet auf den ersten Auftrag" : "Your company awaits its first assignment"}
+            description={de ? "Erstelle in Mission Control ein Geschäftsziel – der KI-CEO verteilt die Arbeit an die Abteilungen." : "Create a business goal in Mission Control – the AI CEO delegates work to the departments."}
+            actionLabel={de ? "Erstes Ziel erstellen" : "Create first goal"}
+            onAction={() => navigate("/mission")}
+          />
+        )}
+      </Section>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Intelligence panel – real insights */}
+        <Section icon={Brain} title="Intelligence" className="min-w-0">
+          <Card tinted className="h-full">
+            {insights.length ? (
+              <div className="space-y-3">
+                {insights.slice(0, 3).map((c) => (
+                  <div key={c.id} className="rounded-lg bg-black/25 p-3.5">
+                    <p className="text-[13px] font-medium text-zinc-200 leading-snug">{c.title}</p>
+                    <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed line-clamp-2">{c.detail}</p>
+                  </div>
+                ))}
+                <Btn variant="ghost" size="sm" onClick={() => navigate("/intelligence")}>
+                  {de ? "Alle Erkenntnisse →" : "All insights →"}
+                </Btn>
+              </div>
+            ) : (
+              <p className="text-sm text-zinc-600 py-6 text-center">
+                {de ? "Noch nicht genug Daten für Erkenntnisse." : "Not enough data for insights yet."}
+              </p>
+            )}
+          </Card>
+        </Section>
+
+        {/* Quick actions + real workspace overview */}
+        <Section icon={Rocket} title={de ? "Schnellzugriff" : "Quick actions"} className="min-w-0">
+          <Card className="h-full">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {actions.map(([label, path, Icon]) => (
+                <button key={label} onClick={() => navigate(path)}
+                  className="group rounded-lg p-4 text-left transition-all hover:-translate-y-0.5"
+                  style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.16)" }}>
+                  <Icon size={17} className="mb-3" style={{ color: "#C4B5FD" }} />
+                  <span className="text-[13px] font-semibold text-white block" style={{ fontFamily: SORA }}>{label}</span>
+                </button>
+              ))}
+            </div>
+            <div className="mt-5 rounded-lg bg-black/25 p-4 grid gap-2 text-[13px] text-zinc-400 sm:grid-cols-2">
+              <span>{de ? "Marke" : "Brand"}: <span className="text-zinc-200">{activeBrand?.name || "—"}</span></span>
+              <span>Workspace: <span className="text-zinc-200">{activeWorkspace?.name || "—"}</span></span>
+              <span className="sm:col-span-2 text-zinc-600 flex items-center gap-1.5">
+                <Sparkles size={11} /> {user?.email || "—"}
+              </span>
+            </div>
+          </Card>
+        </Section>
+      </div>
+    </Page>
   );
 }
-
-export default BrandMindHQ;

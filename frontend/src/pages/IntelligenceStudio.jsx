@@ -8,14 +8,8 @@ import {
   Activity, Gauge,
 } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
+import { V, SORA, fadeUp, GradientHeading, Card, SectionHeader, Metric } from "@/components/bm";
 
-const V = "#7C3AED";
-const SORA = "'Sora', sans-serif";
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 18 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] },
-});
 
 const ICON = {
   layers: Layers, calendar: Calendar, "check-circle": CheckCircle2,
@@ -39,39 +33,8 @@ const ACTION_ROUTE = {
   open_studio: "/modules", open_calendar: "/calendar",
 };
 
-function GradientHeading({ children, className = "" }) {
-  return (
-    <h2 className={`font-semibold ${className}`} style={{ fontFamily: SORA }}>
-      <span style={{
-        background: "linear-gradient(90deg, #C4B5FD 0%, #7C3AED 50%, #6D28D9 100%)",
-        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-      }}>{children}</span>
-    </h2>
-  );
-}
 
-function SectionHeader({ icon: Icon, title, right }) {
-  return (
-    <div className="flex items-center gap-3 mb-5">
-      <div className="w-7 h-7 rounded-sm flex items-center justify-center flex-shrink-0"
-        style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}>
-        <Icon size={13} style={{ color: V }} />
-      </div>
-      <GradientHeading className="text-sm">{title}</GradientHeading>
-      <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, rgba(124,58,237,0.18), transparent)" }} />
-      {right}
-    </div>
-  );
-}
 
-function Card({ children, className = "", style = {} }) {
-  return (
-    <div className={`rounded-sm ${className}`}
-      style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", ...style }}>
-      {children}
-    </div>
-  );
-}
 
 /* mini sparkline from a [{date,value}] series */
 function Sparkline({ series, color = V }) {
@@ -91,24 +54,6 @@ function Sparkline({ series, color = V }) {
   );
 }
 
-function StatTile({ icon: Icon, label, value, color = V }) {
-  return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between mb-2">
-        <div className="w-8 h-8 rounded-sm flex items-center justify-center"
-          style={{ background: `${color}18`, border: `1px solid ${color}30` }}>
-          <Icon size={14} style={{ color }} />
-        </div>
-      </div>
-      <div className="text-2xl font-bold leading-none" style={{
-        fontFamily: SORA,
-        background: `linear-gradient(135deg, #fff 0%, ${color} 120%)`,
-        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-      }}>{value}</div>
-      <div className="text-[11px] text-zinc-500 mt-1">{label}</div>
-    </Card>
-  );
-}
 
 export default function IntelligenceStudio() {
   const { lang, activeBrandId, activeBrand } = useApp();
@@ -144,13 +89,13 @@ export default function IntelligenceStudio() {
     <div className="space-y-10 pb-10">
       {/* ══ HERO ════════════════════════════════════════════════════ */}
       <motion.section {...fadeUp(0)}>
-        <div className="relative overflow-hidden rounded-sm" style={{
+        <div className="relative overflow-hidden rounded-xl" style={{
           background: "linear-gradient(135deg, rgba(124,58,237,0.08) 0%, rgba(8,8,8,0) 55%, rgba(124,58,237,0.05) 100%)",
-          border: "1px solid rgba(124,58,237,0.18)",
+          border: "1px solid rgba(124,58,237,0.14)",
         }}>
           <div className="absolute -top-28 -left-28 w-96 h-96 rounded-full pointer-events-none"
             style={{ background: "radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%)" }} />
-          <div className="relative px-6 md:px-10 py-9 md:py-11">
+          <div className="relative px-6 md:px-10 py-10">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-5 text-[10px] tracking-[0.2em] uppercase font-semibold"
               style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.26)", color: V }}>
               <BrainCircuit size={11} /> Intelligence Engine
@@ -172,10 +117,10 @@ export default function IntelligenceStudio() {
 
       {/* ══ METRICS ═════════════════════════════════════════════════ */}
       <motion.section {...fadeUp(0.05)} className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatTile icon={ThumbsUp} label={lang === "DE" ? "Freigabequote" : "Approval rate"} value={`${m.approval_rate ?? 0}%`} color="#4ade80" />
-        <StatTile icon={Layers} label={lang === "DE" ? "Assets generiert" : "Assets generated"} value={m.assets_total ?? 0} />
-        <StatTile icon={Target} label={lang === "DE" ? "Executive-Pläne" : "Executive plans"} value={m.plans_total ?? 0} color="#C084FC" />
-        <StatTile icon={ClipboardList} label={lang === "DE" ? "Offene Vorschläge" : "Open proposals"} value={m.proposed_open ?? 0} color="#F472B6" />
+        <Metric icon={ThumbsUp} label={lang === "DE" ? "Freigabequote" : "Approval rate"} value={`${m.approval_rate ?? 0}%`} color="#4ade80" />
+        <Metric icon={Layers} label={lang === "DE" ? "Assets generiert" : "Assets generated"} value={m.assets_total ?? 0} />
+        <Metric icon={Target} label={lang === "DE" ? "Executive-Pläne" : "Executive plans"} value={m.plans_total ?? 0} color="#C084FC" />
+        <Metric icon={ClipboardList} label={lang === "DE" ? "Offene Vorschläge" : "Open proposals"} value={m.proposed_open ?? 0} color="#F472B6" />
       </motion.section>
 
       {/* ══ INSIGHT CARDS ═══════════════════════════════════════════ */}

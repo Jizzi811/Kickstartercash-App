@@ -7,49 +7,12 @@ import {
   Lightbulb, Loader2, Network,
 } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
+import { V, SORA, fadeUp, GradientHeading, Card, SectionHeader } from "@/components/bm";
 
-const V = "#7C3AED";
-const SORA = "'Sora', sans-serif";
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 18 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] },
-});
 
 const BRAIN_ICON = { brand: Palette, business: Briefcase, experience: Star };
 const BRAIN_COLOR = { brand: "#7C3AED", business: "#60A5FA", experience: "#4ade80" };
 
-function GradientHeading({ children, className = "" }) {
-  return (
-    <h2 className={`font-semibold ${className}`} style={{ fontFamily: SORA }}>
-      <span style={{
-        background: "linear-gradient(90deg, #C4B5FD 0%, #7C3AED 50%, #6D28D9 100%)",
-        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-      }}>{children}</span>
-    </h2>
-  );
-}
-function SectionHeader({ icon: Icon, title, right }) {
-  return (
-    <div className="flex items-center gap-3 mb-5">
-      <div className="w-7 h-7 rounded-sm flex items-center justify-center flex-shrink-0"
-        style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}>
-        <Icon size={13} style={{ color: V }} />
-      </div>
-      <GradientHeading className="text-sm">{title}</GradientHeading>
-      <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, rgba(124,58,237,0.18), transparent)" }} />
-      {right}
-    </div>
-  );
-}
-function Card({ children, className = "", style = {} }) {
-  return (
-    <div className={`rounded-sm ${className}`}
-      style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", ...style }}>
-      {children}
-    </div>
-  );
-}
 
 export default function Memory() {
   const { lang, activeBrandId } = useApp();
@@ -131,16 +94,16 @@ export default function Memory() {
   }
 
   return (
-    <div className="space-y-9 pb-10">
+    <div className="space-y-10 pb-12">
       {/* HERO */}
       <motion.section {...fadeUp(0)}>
-        <div className="relative overflow-hidden rounded-sm" style={{
+        <div className="relative overflow-hidden rounded-xl" style={{
           background: "linear-gradient(135deg, rgba(124,58,237,0.08) 0%, rgba(8,8,8,0) 55%, rgba(124,58,237,0.05) 100%)",
-          border: "1px solid rgba(124,58,237,0.18)",
+          border: "1px solid rgba(124,58,237,0.14)",
         }}>
           <div className="absolute -top-28 -left-28 w-96 h-96 rounded-full pointer-events-none"
             style={{ background: "radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%)" }} />
-          <div className="relative px-6 md:px-10 py-8 md:py-10">
+          <div className="relative px-6 md:px-10 py-10">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4 text-[10px] tracking-[0.2em] uppercase font-semibold"
               style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.26)", color: V }}>
               <Brain size={11} /> Multi-Brain Memory

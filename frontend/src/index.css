@@ -140,3 +140,13 @@
 .animate-fade-up { animation: fade-up 0.5s ease-out forwards; }
 .animate-slide-in { animation: bm-slide-in 0.28s ease-out forwards; }
 .shimmer { background: linear-gradient(90deg, var(--bm-surface) 25%, var(--bm-surface-raised) 50%, var(--bm-surface) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+
+/* ── BrandMind typography scale (Design Sprint) ──────────────────────
+   H1 56 · H2 40 · H3 28 · H4 22 · Body 16 · Small 14 — the only sizes
+   allowed for headings/copy. Responsive clamp keeps H1 usable on mobile. */
+.bm-h1 { font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.08; font-weight: 700; letter-spacing: -0.02em; }
+.bm-h2 { font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.15; font-weight: 700; letter-spacing: -0.015em; }
+.bm-h3 { font-size: 1.75rem; line-height: 1.2; font-weight: 600; }
+.bm-h4 { font-size: 1.375rem; line-height: 1.3; font-weight: 600; }
+.bm-body { font-size: 1rem; line-height: 1.6; }
+.bm-small { font-size: 0.875rem; line-height: 1.6; }

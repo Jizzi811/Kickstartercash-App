@@ -1,0 +1,264 @@
+/**
+ * BrandMind UI Kit – the ONE component library every page is built from.
+ *
+ * Hard rule (Design Sprint): no page may define its own hero, card, button,
+ * badge, section header or empty state. Pages compose exclusively from here,
+ * so every screen looks like it was designed on the same day by the same
+ * designer. Style direction: Linear/Vercel – more air, fewer borders, depth
+ * via elevation instead of outlines.
+ *
+ * Typography scale (see index.css .bm-h1..bm-small):
+ *   H1 56 · H2 40 · H3 28 · H4 22 · Body 16 · Small 14
+ * Vertical rhythm: <Page> enforces one consistent gap between hero, stats
+ * and content sections on every page.
+ */
+import React from "react";
+import { motion } from "framer-motion";
+
+export const V = "#7C3AED";
+export const SORA = "'Sora', sans-serif";
+
+export const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 18 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] },
+});
+
+/* ─── Page – consistent vertical rhythm ──────────────────────────── */
+export function Page({ children, className = "" }) {
+  return <div className={`space-y-10 pb-12 ${className}`}>{children}</div>;
+}
+
+/* ─── Typography ─────────────────────────────────────────────────── */
+export function GradientHeading({ children, className = "", as: Tag = "h2" }) {
+  return (
+    <Tag className={`font-semibold ${className}`} style={{ fontFamily: SORA }}>
+      <span
+        style={{
+          background: "linear-gradient(90deg, #C4B5FD 0%, #7C3AED 50%, #6D28D9 100%)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+        }}
+      >
+        {children}
+      </span>
+    </Tag>
+  );
+}
+
+/* ─── Hero – identical on every page ─────────────────────────────────
+   Badge → H1 → description → (optional context chips) · actions right.
+   Fixed padding + min-height so no page hero "feels" different.        */
+export function Hero({ icon: Icon, badge, title, description, actions, chips, delay = 0 }) {
+  return (
+    <motion.section {...fadeUp(delay)}>
+      <div
+        className="relative overflow-hidden rounded-xl"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(124,58,237,0.08) 0%, rgba(8,8,8,0) 55%, rgba(124,58,237,0.05) 100%)",
+          border: "1px solid rgba(124,58,237,0.14)",
+        }}
+      >
+        <div
+          className="absolute -top-28 -left-28 w-96 h-96 rounded-full pointer-events-none"
+          style={{ background: "radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%)" }}
+        />
+        <div className="relative px-6 md:px-10 py-10 min-h-[220px] flex items-center">
+          <div className="flex-1 flex flex-col md:flex-row md:items-center md:justify-between gap-6 w-full">
+            <div className="max-w-2xl">
+              {badge && (
+                <div
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-5 text-[10px] tracking-[0.2em] uppercase font-semibold"
+                  style={{
+                    background: "rgba(124,58,237,0.08)",
+                    border: "1px solid rgba(124,58,237,0.26)",
+                    color: V,
+                  }}
+                >
+                  {Icon && <Icon size={11} />} {badge}
+                </div>
+              )}
+              <h1 className="bm-h1 mb-3" style={{ fontFamily: SORA }}>
+                <span
+                  style={{
+                    background: "linear-gradient(90deg, #7C3AED 0%, #C4B5FD 45%, #6D28D9 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  {title}
+                </span>
+              </h1>
+              {description && (
+                <p className="bm-small text-zinc-400 leading-relaxed">{description}</p>
+              )}
+              {chips && <div className="flex flex-wrap items-center gap-2.5 mt-5">{chips}</div>}
+            </div>
+            {actions && <div className="flex items-center gap-3 flex-shrink-0">{actions}</div>}
+          </div>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
+/* ─── Section header – icon + gradient title + hairline + right slot ─ */
+export function SectionHeader({ icon: Icon, title, right }) {
+  return (
+    <div className="flex items-center gap-3 mb-5">
+      {Icon && (
+        <div
+          className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
+          style={{ background: "rgba(124,58,237,0.10)" }}
+        >
+          <Icon size={13} style={{ color: V }} />
+        </div>
+      )}
+      <GradientHeading className="bm-h4">{title}</GradientHeading>
+      <div
+        className="flex-1 h-px"
+        style={{ background: "linear-gradient(to right, rgba(124,58,237,0.16), transparent)" }}
+      />
+      {right}
+    </div>
+  );
+}
+
+export function Section({ icon, title, right, children, delay = 0, className = "" }) {
+  return (
+    <motion.section {...fadeUp(delay)} className={className}>
+      {title && <SectionHeader icon={icon} title={title} right={right} />}
+      {children}
+    </motion.section>
+  );
+}
+
+/* ─── Card – exactly four sizes, no ad-hoc paddings ──────────────── */
+const CARD_PAD = { xs: "p-3", s: "p-4", m: "p-6", l: "p-8" };
+
+export function Card({ children, size = "m", tinted = false, className = "", style = {} }) {
+  // Migration escape hatch: an explicit p-* in className overrides the size
+  // padding (legacy pages). New code must use the size prop only.
+  const pad = /\bp[xy]?-\d/.test(className) ? "" : CARD_PAD[size] || CARD_PAD.m;
+  return (
+    <div
+      className={`rounded-xl ${pad} ${className}`}
+      style={{
+        background: tinted
+          ? "linear-gradient(145deg, rgba(124,58,237,0.05) 0%, rgba(255,255,255,0.02) 100%)"
+          : "rgba(255,255,255,0.025)",
+        border: `1px solid ${tinted ? "rgba(124,58,237,0.14)" : "rgba(255,255,255,0.06)"}`,
+        boxShadow: "0 1px 2px rgba(0,0,0,0.3)",
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ─── Metric / stat tile ─────────────────────────────────────────── */
+export function Metric({ icon: Icon, label, value, hint, color = V }) {
+  return (
+    <Card size="s">
+      {Icon && (
+        <div
+          className="w-8 h-8 rounded-md flex items-center justify-center mb-2"
+          style={{ background: `${color}14` }}
+        >
+          <Icon size={14} style={{ color }} />
+        </div>
+      )}
+      <div
+        className="text-2xl font-bold leading-none"
+        style={{
+          fontFamily: SORA,
+          background: `linear-gradient(135deg, #fff 0%, ${color} 120%)`,
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+        }}
+      >
+        {value}
+      </div>
+      <div className="text-[11px] text-zinc-500 mt-1">{label}</div>
+      {hint && <div className="text-[10px] text-zinc-700 mt-0.5">{hint}</div>}
+    </Card>
+  );
+}
+
+export function StatGrid({ children }) {
+  return <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{children}</div>;
+}
+
+/* ─── Buttons – primary / secondary / ghost / danger only ────────── */
+const BTN_BASE =
+  "inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-all duration-150 disabled:opacity-40 disabled:pointer-events-none";
+const BTN_SIZE = { sm: "text-[12px] px-3 py-1.5", md: "text-[13px] px-4 py-2.5", lg: "text-sm px-6 py-3" };
+const BTN_VARIANT = {
+  primary: { background: V, color: "#0A0A0A" },
+  secondary: { background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.3)", color: "#a78bfa" },
+  ghost: { background: "transparent", border: "1px solid rgba(255,255,255,0.10)", color: "#a1a1aa" },
+  danger: { background: "rgba(244,63,94,0.12)", border: "1px solid rgba(244,63,94,0.3)", color: "#fb7185" },
+};
+
+export function Btn({ variant = "primary", size = "md", className = "", style = {}, children, ...props }) {
+  return (
+    <button
+      className={`${BTN_BASE} ${BTN_SIZE[size] || BTN_SIZE.md} ${className}`}
+      style={{ ...(BTN_VARIANT[variant] || BTN_VARIANT.primary), ...style }}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* ─── Badge – one component, three tones ─────────────────────────── */
+const BADGE_TONE = {
+  violet: { background: "rgba(124,58,237,0.10)", border: "1px solid rgba(124,58,237,0.26)", color: "#a78bfa" },
+  neutral: { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", color: "#a1a1aa" },
+  success: { background: "rgba(52,211,153,0.10)", border: "1px solid rgba(52,211,153,0.26)", color: "#34d399" },
+  danger: { background: "rgba(244,63,94,0.10)", border: "1px solid rgba(244,63,94,0.26)", color: "#fb7185" },
+};
+
+export function BMBadge({ children, tone = "violet", icon: Icon }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium"
+      style={BADGE_TONE[tone] || BADGE_TONE.violet}
+    >
+      {Icon && <Icon size={11} />}
+      {children}
+    </span>
+  );
+}
+
+/* ─── Empty state – the ONLY way to show "no data yet" ───────────────
+   Never demo data: icon + short explanation + primary CTA (+ optional
+   secondary CTA). Business data is never fabricated.                   */
+export function EmptyState({ icon: Icon, title, description, actionLabel, onAction, secondaryLabel, onSecondary }) {
+  return (
+    <Card size="l" className="text-center">
+      {Icon && (
+        <div
+          className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center"
+          style={{ background: "rgba(124,58,237,0.10)" }}
+        >
+          <Icon size={24} style={{ color: V }} />
+        </div>
+      )}
+      <div className="bm-h4 text-zinc-100 mb-2" style={{ fontFamily: SORA }}>{title}</div>
+      {description && <p className="bm-small text-zinc-500 max-w-md mx-auto leading-relaxed">{description}</p>}
+      {(actionLabel || secondaryLabel) && (
+        <div className="flex items-center justify-center gap-3 mt-6">
+          {actionLabel && <Btn onClick={onAction}>{actionLabel}</Btn>}
+          {secondaryLabel && <Btn variant="ghost" onClick={onSecondary}>{secondaryLabel}</Btn>}
+        </div>
+      )}
+    </Card>
+  );
+}

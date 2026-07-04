@@ -313,7 +313,7 @@ export const Layout = ({ children }) => {
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 ${
+                `flex items-center gap-3 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 ${
                   isActive
                     ? "text-[#7C3AED] border-l-2 border-[#7C3AED]"
                     : "text-zinc-500 hover:text-zinc-200 hover:bg-white/4 border-l-2 border-transparent"
@@ -569,7 +569,7 @@ export const Layout = ({ children }) => {
           </div>
         </header>
 
-        <main className="flex-1 px-5 md:px-10 py-8 max-w-[1400px] w-full mx-auto">
+        <main className="flex-1 px-5 md:px-10 py-8 max-w-[1600px] w-full mx-auto">
           {children}
         </main>
       </div>
