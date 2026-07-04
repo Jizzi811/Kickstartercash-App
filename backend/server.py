@@ -3856,6 +3856,7 @@ class CustomAgent(BaseModel):
     personality: str
     color: str = "#7C3AED"
     category: str = ""
+    workspace_id: str = ""
     created_at: str = Field(default_factory=_now_iso)
     updated_at: str = Field(default_factory=_now_iso)
 
@@ -3892,8 +3893,8 @@ class AgentBuilderRequest(BaseModel):
 
 
 @api_router.get("/custom-agents")
-async def list_custom_agents():
-    docs = await db.custom_agents.find({}, {"_id": 0}).to_list(200)
+async def list_custom_agents(ws: Optional[str] = Depends(current_workspace)):
+    docs = await db.custom_agents.find(_scope_filter(ws), {"_id": 0}).to_list(200)
     docs.sort(key=lambda d: d.get("created_at", ""), reverse=True)
     for agent in docs:
         doc_count = await db.custom_agent_docs.count_documents({"agent_id": agent["id"]})
@@ -3902,35 +3903,39 @@ async def list_custom_agents():
 
 
 @api_router.post("/custom-agents", response_model=CustomAgent)
-async def create_custom_agent(payload: CustomAgentCreate):
+async def create_custom_agent(payload: CustomAgentCreate, ws: Optional[str] = Depends(current_workspace)):
     agent = CustomAgent(**payload.model_dump())
+    if ws:
+        agent.workspace_id = ws
     await db.custom_agents.insert_one(agent.model_dump())
     return agent
 
 
 @api_router.put("/custom-agents/{agent_id}", response_model=CustomAgent)
-async def update_custom_agent(agent_id: str, payload: CustomAgentUpdate):
-    doc = await db.custom_agents.find_one({"id": agent_id}, {"_id": 0})
+async def update_custom_agent(agent_id: str, payload: CustomAgentUpdate, ws: Optional[str] = Depends(current_workspace)):
+    scope = {"id": agent_id, **_scope_filter(ws)}
+    doc = await db.custom_agents.find_one(scope, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Agent not found")
     updates = {k: v for k, v in payload.model_dump().items() if v is not None}
     updates["updated_at"] = _now_iso()
-    await db.custom_agents.update_one({"id": agent_id}, {"$set": updates})
+    await db.custom_agents.update_one(scope, {"$set": updates})
     doc.update(updates)
     return doc
 
 
 @api_router.delete("/custom-agents/{agent_id}")
-async def delete_custom_agent(agent_id: str):
-    await db.custom_agents.delete_one({"id": agent_id})
-    await db.custom_agent_docs.delete_many({"agent_id": agent_id})
-    return {"ok": True}
+async def delete_custom_agent(agent_id: str, ws: Optional[str] = Depends(current_workspace)):
+    res = await db.custom_agents.delete_one({"id": agent_id, **_scope_filter(ws)})
+    if res.deleted_count:
+        await db.custom_agent_docs.delete_many({"agent_id": agent_id})
+    return {"ok": bool(res.deleted_count)}
 
 
 @api_router.post("/custom-agents/{agent_id}/documents")
-async def upload_document(agent_id: str, request: Request):
+async def upload_document(agent_id: str, request: Request, ws: Optional[str] = Depends(current_workspace)):
     from fastapi import UploadFile, File
-    agent = await db.custom_agents.find_one({"id": agent_id}, {"_id": 0})
+    agent = await db.custom_agents.find_one({"id": agent_id, **_scope_filter(ws)}, {"_id": 0})
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
 
@@ -3983,14 +3988,18 @@ async def list_documents(agent_id: str):
 
 
 @api_router.delete("/custom-agents/{agent_id}/documents/{doc_id}")
-async def delete_document(agent_id: str, doc_id: str):
+async def delete_document(agent_id: str, doc_id: str, ws: Optional[str] = Depends(current_workspace)):
+    # Only allow deleting docs of an agent that belongs to the active workspace.
+    owner = await db.custom_agents.find_one({"id": agent_id, **_scope_filter(ws)}, {"_id": 0, "id": 1})
+    if not owner:
+        raise HTTPException(status_code=404, detail="Agent not found")
     await db.custom_agent_docs.delete_one({"id": doc_id, "agent_id": agent_id})
     return {"ok": True}
 
 
 @api_router.post("/custom-agents/{agent_id}/chat")
-async def custom_agent_chat(agent_id: str, req: CustomAgentChatRequest):
-    agent = await db.custom_agents.find_one({"id": agent_id}, {"_id": 0})
+async def custom_agent_chat(agent_id: str, req: CustomAgentChatRequest, ws: Optional[str] = Depends(current_workspace)):
+    agent = await db.custom_agents.find_one({"id": agent_id, **_scope_filter(ws)}, {"_id": 0})
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
 

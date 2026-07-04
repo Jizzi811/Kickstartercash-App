@@ -380,7 +380,7 @@ export function SalesSupportWidget() {
                     borderRadius: "10px", whiteSpace: "pre-wrap",
                     ...(m.role === "user" ? {
                       background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
-                      color: "#000", fontWeight: 500, borderBottomRightRadius: "2px",
+                      color: "#fff", fontWeight: 500, borderBottomRightRadius: "2px",
                     } : {
                       background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
                       color: "#d4d4d4", borderTopLeftRadius: "2px",
