@@ -3,6 +3,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { ShieldCheck, Users, Grid3X3, Crown, Plug, Sparkles, Save, LockKeyhole } from "lucide-react";
 import { API, useApp } from "@/context/AppContext";
+import { PageHeader } from "@/components/PageHeader";
 
 const V = "#7C3AED";
 const Card = ({ children, className = "" }) => <div className={`rounded-sm border border-white/10 bg-white/[0.025] ${className}`}>{children}</div>;
@@ -36,14 +37,15 @@ export default function Permissions() {
   const usage = policy.usage_snapshot || {};
 
   return <div className="space-y-8 pb-10">
-    <section className="rounded-sm border border-[#7C3AED]/25 bg-[#7C3AED]/[0.06] p-7 flex flex-wrap items-start justify-between gap-5">
-      <div>
-        <div className="inline-flex items-center gap-2 text-[10px] tracking-[0.22em] uppercase font-bold text-[#7C3AED]"><ShieldCheck size={13}/> BrandMind Permission Layer</div>
-        <h1 className="mt-3 text-3xl font-bold text-white">{lang === "DE" ? "Capability & Permission Framework" : "Capability & Permission Framework"}</h1>
-        <p className="mt-2 max-w-2xl text-sm text-zinc-400">Workspace → Roles → Agents → Skills → Tools → Providers. Every gateway AI request is preflighted against this workspace-scoped policy before provider execution.</p>
-      </div>
-      <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 rounded-sm bg-[#7C3AED] px-5 py-2.5 text-sm font-bold text-black disabled:opacity-50"><Save size={15}/>{saving ? "Saving…" : "Save policy"}</button>
-    </section>
+    <PageHeader
+      icon={ShieldCheck}
+      badge="BrandMind Permission Layer"
+      title={lang === "DE" ? "Capability & Permission Framework" : "Capability & Permission Framework"}
+      subtitle="Workspace → Roles → Agents → Skills → Tools → Providers. Every gateway AI request is preflighted against this workspace-scoped policy before provider execution."
+      actions={(
+        <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 rounded-sm bg-[#7C3AED] px-5 py-2.5 text-sm font-bold text-black disabled:opacity-50"><Save size={15}/>{saving ? "Saving…" : "Save policy"}</button>
+      )}
+    />
 
     <section className="grid grid-cols-1 md:grid-cols-4 gap-3">
       {[{icon: Crown, label:"Plan", value: policy.subscription?.plan}, {icon: LockKeyhole, label:"Daily usage", value:`${usage.daily_requests || 0}/${policy.usage_limits?.daily_requests}`}, {icon: Grid3X3, label:"Monthly usage", value:`${usage.monthly_requests || 0}/${policy.usage_limits?.monthly_requests}`}, {icon: Sparkles, label:"Premium", value: policy.subscription?.premium ? "Enabled" : "Locked"}].map(x => { const I=x.icon; return <Card key={x.label} className="p-4"><I size={16} style={{color:V}}/><div className="mt-3 text-xs text-zinc-500 uppercase tracking-wider">{x.label}</div><div className="mt-1 text-xl font-bold text-white">{x.value}</div></Card>; })}
