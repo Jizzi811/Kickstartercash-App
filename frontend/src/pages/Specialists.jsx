@@ -78,7 +78,7 @@ function ToolResultCard({ result, color }) {
 }
 
 function AgentChat({ agent, onClose }) {
-  const { model } = useApp();
+  const { model, activeBrandId } = useApp();
   const lang = localStorage.getItem("kc_lang") || "DE";
   const { Icon, color } = ICON_MAP[agent.id] || { Icon: Bot, color: "#7C3AED" };
   const [messages, setMessages] = useState([]);
@@ -111,6 +111,7 @@ function AgentChat({ agent, onClose }) {
         model,
         language: lang,
         use_knowledge: useKb,
+        brand_id: activeBrandId,
       });
       setMessages((prev) => [...prev, { role: "assistant", content: res.data.reply }]);
     } catch {
@@ -118,7 +119,7 @@ function AgentChat({ agent, onClose }) {
     } finally {
       setLoading(false);
     }
-  }, [input, loading, messages, agent.id, model, lang, useKb]);
+  }, [input, loading, messages, agent.id, model, lang, useKb, activeBrandId]);
 
   const runTool = useCallback(async (tool) => {
     const context = input.trim() || (messages.length > 0 ? messages[messages.length - 1]?.content?.slice(0, 200) : "");
@@ -140,6 +141,7 @@ function AgentChat({ agent, onClose }) {
         context,
         model,
         language: lang,
+        brand_id: activeBrandId,
       });
 
       if (res.data.type === "image") {
@@ -162,7 +164,7 @@ function AgentChat({ agent, onClose }) {
     } finally {
       setToolLoading(null);
     }
-  }, [input, messages, agent.id, model, lang]);
+  }, [input, messages, agent.id, model, lang, activeBrandId]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-stretch bg-black/80 backdrop-blur-sm">

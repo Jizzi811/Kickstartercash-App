@@ -876,6 +876,48 @@ async def _get_brand_or_404(brand_id: str) -> dict:
     return doc
 
 
+async def _resolve_brand(brand_id: Optional[str], ws: Optional[str] = None) -> dict:
+    """Resolve a usable brand context for a generation request – never raises.
+
+    Fallback chain so brand context is *always* present:
+      1. the requested brand_id (if it exists),
+      2. the active workspace's own brand (its default, else newest),
+      3. the global DEFAULT_BRAND (Brandmind) as a last resort.
+
+    This guarantees every AI generation endpoint runs with a coherent brand
+    identity even when the client forgets to send a brand_id, sends a stale/
+    deleted one, or the workspace has no brands yet.
+    """
+    if db is not None:
+        # 1) explicit brand id
+        if brand_id:
+            doc = await db.brands.find_one({"id": brand_id}, {"_id": 0})
+            if doc:
+                return doc
+        # 2) the active workspace's brand (prefer the one marked default)
+        if ws:
+            try:
+                ws_brands = await db.brands.find(
+                    {"workspace_id": ws}, {"_id": 0}
+                ).to_list(200)
+                if ws_brands:
+                    ws_brands.sort(
+                        key=lambda b: (not b.get("is_default"), b.get("created_at", "")),
+                    )
+                    return ws_brands[0]
+            except Exception as e:
+                logger.warning(f"Workspace brand lookup failed: {e}")
+        # 3) the seeded default brand (Brandmind)
+        try:
+            doc = await db.brands.find_one({"id": DEFAULT_BRAND["id"]}, {"_id": 0})
+            if doc:
+                return doc
+        except Exception:
+            pass
+    # absolute last resort: in-memory default (db unavailable)
+    return {k: v for k, v in DEFAULT_BRAND.items() if k != "_id"}
+
+
 def _build_image_prompt(brand: dict, subject: str, style: str) -> str:
     name = brand.get("name") or "the brand"
     colors = ", ".join([c for c in [brand.get("primary_color"), brand.get("secondary_color")] if c]) or "the brand's colors"
@@ -913,7 +955,7 @@ def _fetch_logo_b64(brand: dict) -> Optional[str]:
 
 @api_router.post("/generate/social")
 async def generate_social(req: SocialRequest, ws: Optional[str] = Depends(current_workspace)):
-    brand = await _get_brand_or_404(req.brand_id)
+    brand = await _resolve_brand(req.brand_id, ws)
     ctx = _brand_context(brand, req.language)
     platforms = ", ".join(req.platforms)
     system = (
@@ -948,7 +990,7 @@ async def generate_social(req: SocialRequest, ws: Optional[str] = Depends(curren
 
 @api_router.post("/generate/copy")
 async def generate_copy(req: CopyRequest, ws: Optional[str] = Depends(current_workspace)):
-    brand = await _get_brand_or_404(req.brand_id)
+    brand = await _resolve_brand(req.brand_id, ws)
     ctx = _brand_context(brand, req.language)
     system = (
         "You are an elite direct-response copywriter. Return strictly valid JSON and nothing else."
@@ -981,7 +1023,7 @@ async def generate_copy(req: CopyRequest, ws: Optional[str] = Depends(current_wo
 
 @api_router.post("/generate/image")
 async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_workspace)):
-    brand = await _get_brand_or_404(req.brand_id)
+    brand = await _resolve_brand(req.brand_id, ws)
     full_prompt = _build_image_prompt(brand, req.prompt, req.style)
     image_urls = None
     brand_logo = (brand.get("logo_url") or "").strip()
@@ -1042,7 +1084,7 @@ async def optimize_prompt(req: PromptOptimizeRequest):
 
 @api_router.post("/generate/campaign")
 async def generate_campaign(req: CampaignRequest, ws: Optional[str] = Depends(current_workspace)):
-    brand = await _get_brand_or_404(req.brand_id)
+    brand = await _resolve_brand(req.brand_id, ws)
     ctx = _brand_context(brand, req.language)
     platforms = ", ".join(req.platforms)
 
@@ -1119,7 +1161,7 @@ async def generate_campaign(req: CampaignRequest, ws: Optional[str] = Depends(cu
 
 @api_router.post("/generate/calendar")
 async def generate_calendar(req: CalendarRequest, ws: Optional[str] = Depends(current_workspace)):
-    brand = await _get_brand_or_404(req.brand_id)
+    brand = await _resolve_brand(req.brand_id, ws)
     ctx = _brand_context(brand, req.language)
     days = req.days if req.days in (30, 60, 90) else 30
     count = {30: 15, 60: 22, 90: 30}[days]
@@ -1153,7 +1195,7 @@ async def generate_calendar(req: CalendarRequest, ws: Optional[str] = Depends(cu
 
 @api_router.post("/generate/landingpage")
 async def generate_landingpage(req: LandingpageRequest, ws: Optional[str] = Depends(current_workspace)):
-    brand = await _get_brand_or_404(req.brand_id)
+    brand = await _resolve_brand(req.brand_id, ws)
     ctx = _brand_context(brand, req.language)
     system = "You are an elite conversion copywriter and web strategist. Return strictly valid JSON and nothing else."
     user = (
@@ -1190,7 +1232,7 @@ async def delete_history(item_id: str):
 
 @api_router.post("/analyze/content")
 async def analyze_content(req: AnalyzeRequest, ws: Optional[str] = Depends(current_workspace)):
-    brand = await _get_brand_or_404(req.brand_id)
+    brand = await _resolve_brand(req.brand_id, ws)
     ctx = _brand_context(brand, req.language)
     lang = "Deutsch" if req.language == "DE" else "English"
     system = (
@@ -3600,6 +3642,7 @@ class AgentChatRequest(BaseModel):
     model: str = "claude-sonnet-4-6"
     language: str = "DE"
     use_knowledge: bool = True
+    brand_id: Optional[str] = None
 
 
 class AgentToolRunRequest(BaseModel):
@@ -3629,7 +3672,7 @@ async def get_agent_tools(agent_id: str):
 
 
 @api_router.post("/agents/tools/run")
-async def run_agent_tool(req: AgentToolRunRequest):
+async def run_agent_tool(req: AgentToolRunRequest, ws: Optional[str] = Depends(current_workspace)):
     agent = AGENTS.get(req.agent_id)
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
@@ -3642,11 +3685,10 @@ async def run_agent_tool(req: AgentToolRunRequest):
     tool_prompt = tool.get("prompt_de" if lang == "DE" else "prompt_en", "")
     full_prompt = f"{tool_prompt}{req.context}".strip()
 
+    # Every specialist tool runs inside the active brand's context (never blind).
+    brand = await _resolve_brand(req.brand_id, ws)
+
     if tool["type"] == "image":
-        brand = await db.brands.find_one({"id": req.brand_id}, {"_id": 0})
-        if not brand:
-            brand = {"name": "die Marke", "primary_color": "#7C3AED", "secondary_color": "#0A0A0A",
-                     "tone": "professionell", "image_style": "modern, hochwertig, kommerziell"}
         subject = req.context or f"{brand.get('name', 'Brand')} brand visual"
         image_prompt = (
             f"Professional advertising image for '{brand.get('name')}'. "
@@ -3672,6 +3714,7 @@ async def run_agent_tool(req: AgentToolRunRequest):
     lang_label = "Deutsch" if lang == "DE" else "English"
     system = (
         f"{personality}\n\n"
+        f"{_brand_context(brand, lang)}\n\n"
         f"Antworte immer auf {lang_label}. "
         f"Du nutzt gerade das Tool: {tool['label'] if lang == 'DE' else tool['label_en']}. "
         f"Sei präzise, strukturiert und sofort umsetzbar."
@@ -3694,6 +3737,9 @@ async def agent_chat(req: AgentChatRequest, ws: Optional[str] = Depends(current_
     personality = agent["personality_de"] if lang == "DE" else agent["personality_en"]
     lang_label = "Deutsch" if lang == "DE" else "English"
 
+    # Ground every agent reply in the caller's active brand identity.
+    brand = await _resolve_brand(req.brand_id, ws)
+
     kb_context = ""
     if req.use_knowledge and db is not None:
         try:
@@ -3707,6 +3753,7 @@ async def agent_chat(req: AgentChatRequest, ws: Optional[str] = Depends(current_
 
     system = (
         f"{personality}\n\n"
+        f"{_brand_context(brand, lang)}\n\n"
         f"Antworte immer auf {lang_label}. "
         f"Du bist Teil des Quantum Multi-Agenten-Systems von Brandmind."
         f"{kb_context}"
@@ -3890,6 +3937,7 @@ class AgentBuilderRequest(BaseModel):
     description: str
     model: str = "gpt"
     language: str = "DE"
+    brand_id: Optional[str] = None
 
 
 @api_router.get("/custom-agents")
@@ -4036,10 +4084,12 @@ async def custom_agent_chat(agent_id: str, req: CustomAgentChatRequest, ws: Opti
 
 # Phase 7 – Agent Builder (natural language → workflow plan)
 @api_router.post("/agent-builder/generate")
-async def generate_agent_workflow(req: AgentBuilderRequest):
+async def generate_agent_workflow(req: AgentBuilderRequest, ws: Optional[str] = Depends(current_workspace)):
     lang_label = "Deutsch" if req.language == "DE" else "English"
+    brand = await _resolve_brand(req.brand_id, ws)
     system = (
-        "Du bist ein KI-Architekten-Assistent für das Jarvjis Agent-System. "
+        "Du bist ein KI-Architekten-Assistent für das Brandmind Agent-System. "
+        f"{_brand_context(brand, req.language)}\n"
         "Wenn ein Benutzer einen Workflow beschreibt, antwortest du mit:\n"
         "1. **Agent-Konfiguration**: Name, Persönlichkeit, Rolle des zu erstellenden Agenten\n"
         "2. **Workflow-Schritte**: Nummerierte Schritt-für-Schritt Automatisierung\n"

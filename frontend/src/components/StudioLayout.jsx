@@ -225,7 +225,7 @@ function CopyBtn({ text }) {
 }
 
 export function AgentChatPanel({ agentId, agentName, agentEmoji, color, tools = [], placeholder }) {
-  const { model } = useApp();
+  const { model, activeBrandId } = useApp();
   const lang = localStorage.getItem("kc_lang") || "DE";
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -246,12 +246,13 @@ export function AgentChatPanel({ agentId, agentName, agentEmoji, color, tools = 
       const res = await axios.post(`${API}/agents/chat`, {
         agent_id: agentId, message: msg,
         history: messages.slice(-10), model, language: lang, use_knowledge: useKb,
+        brand_id: activeBrandId,
       });
       setMessages((p) => [...p, { role: "assistant", content: res.data.reply }]);
     } catch {
       setMessages((p) => [...p, { role: "assistant", content: "Fehler. Bitte erneut versuchen." }]);
     } finally { setLoading(false); }
-  }, [input, loading, toolLoading, agentId, model, lang, useKb]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [input, loading, toolLoading, agentId, model, lang, useKb, activeBrandId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const runTool = useCallback(async (tool) => {
     const context = input.trim() || "";
@@ -262,6 +263,7 @@ export function AgentChatPanel({ agentId, agentName, agentEmoji, color, tools = 
     try {
       const res = await axios.post(`${API}/agents/tools/run`, {
         agent_id: agentId, tool_id: tool.id, context, model, language: lang,
+        brand_id: activeBrandId,
       });
       if (res.data.type === "image") {
         setMessages((p) => [...p, { role: "assistant", toolLabel: label, image: res.data.image_url, prompt: res.data.prompt_used }]);
@@ -271,7 +273,7 @@ export function AgentChatPanel({ agentId, agentName, agentEmoji, color, tools = 
     } catch {
       setMessages((p) => [...p, { role: "assistant", content: "Tool-Fehler." }]);
     } finally { setToolLoading(null); }
-  }, [input, agentId, model, lang]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [input, agentId, model, lang, activeBrandId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex flex-col h-full">

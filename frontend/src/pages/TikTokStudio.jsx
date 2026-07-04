@@ -25,7 +25,7 @@ const TOOLS = [
 ];
 
 export default function TikTokStudio() {
-  const { lang } = useApp();
+  const { lang, activeBrandId } = useApp();
   const [toolLoading, setToolLoading] = useState(null);
   const [context, setContext] = useState("");
 
@@ -33,7 +33,7 @@ export default function TikTokStudio() {
     setToolLoading(tool.id);
     try {
       const res = await axios.post(`${API}/agents/tools/run`, {
-        agent_id: "tiktok", tool_id: tool.id, context, model: "gpt", language: lang,
+        agent_id: "tiktok", tool_id: tool.id, context, model: "gpt", language: lang, brand_id: activeBrandId,
       });
       if (res.data.reply) {
         setContext((p) => p + (p ? "\n\n---\n\n" : "") + `[${lang === "DE" ? tool.label : tool.label_en}]\n${res.data.reply}`);
