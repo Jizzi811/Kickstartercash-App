@@ -89,7 +89,7 @@ export const translations = {
     image_sub: "Werbebilder im Markenstil – mit einem Klick.",
     style: "Stil-Vorlage",
     apply_logo: "Logo integrieren",
-    img_prompt_ph: "z.B. Premium Hundetraining-Kurs, Hund springt durch goldenen Reifen",
+    img_prompt_ph: "z.B. Premium Hundetraining-Kurs, Hund springt durch violetten Reifen",
     // copy
     copy_title: "KI Copywriter",
     copy_sub: "Verkaufstexte, die konvertieren – in deiner Markenstimme.",
@@ -270,7 +270,7 @@ export const translations = {
     image_sub: "Brand-styled ad images – with one click.",
     style: "Style template",
     apply_logo: "Integrate logo",
-    img_prompt_ph: "e.g. Premium dog training course, dog jumping through a golden hoop",
+    img_prompt_ph: "e.g. Premium dog training course, dog jumping through a violet hoop",
     copy_title: "AI Copywriter",
     copy_sub: "Sales copy that converts – in your brand voice.",
     format: "Text format",
@@ -362,7 +362,7 @@ export const translations = {
 
 export const IMAGE_STYLES = [
   "Luxuriös", "Modern", "Minimalistisch", "Business", "Premium",
-  "Gold", "Schwarz", "Neon", "Corporate", "Cartoon", "Comic", "Anime", "Futuristisch",
+  "Violett", "Schwarz", "Neon", "Corporate", "Cartoon", "Comic", "Anime", "Futuristisch",
 ];
 
 export const SOCIAL_PLATFORMS = [

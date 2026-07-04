@@ -8,9 +8,10 @@ module.exports = {
   theme: {
     extend: {
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)'
+        lg: 'var(--bm-radius-lg)',
+        md: 'var(--bm-radius-md)',
+        sm: 'var(--bm-radius-sm)',
+        xl: 'var(--bm-radius-xl)'
       },
       colors: {
         background: 'hsl(var(--background))',

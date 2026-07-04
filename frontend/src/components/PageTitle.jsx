@@ -8,7 +8,7 @@ export const PageTitle = ({ title, subtitle, icon: Icon }) => (
           <Icon size={20} strokeWidth={1.6} />
         </span>
       )}
-      <h1 className="font-display text-3xl md:text-4xl font-light tracking-tight gold-text">{title}</h1>
+      <h1 className="font-display text-3xl md:text-4xl font-light tracking-tight purple-text">{title}</h1>
     </div>
     {subtitle && <p className="text-zinc-500 text-base">{subtitle}</p>}
   </div>
