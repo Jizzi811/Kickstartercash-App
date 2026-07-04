@@ -10,7 +10,7 @@ import sys
 import aiohttp
 from collections import defaultdict
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Header
@@ -4556,6 +4556,415 @@ async def ticket_stats():
     by_priority = {r["_id"]: r["count"] for r in rows2}
     total = await db.tickets.count_documents({})
     return {"total": total, "by_status": by_status, "by_priority": by_priority}
+
+
+# ---------------------------------------------------------------------------
+# Mission Control – AI CEO executive planning + department tasks
+# ---------------------------------------------------------------------------
+# The dashboard's command center. The AI CEO (Quantum) turns a business goal
+# into an executive plan and a set of department task objects. NOTHING is
+# auto-published or executed – every task starts as a proposal that a human
+# must approve. All records are workspace-scoped and carry the active brand.
+
+# Canonical departments and the agent that owns each one.
+MISSION_DEPARTMENTS = [
+    {"id": "marketing", "label_de": "Marketing", "label_en": "Marketing", "agent": "marketing", "emoji": "📣"},
+    {"id": "design", "label_de": "Design", "label_en": "Design", "agent": "designer", "emoji": "🎨"},
+    {"id": "seo", "label_de": "SEO", "label_en": "SEO", "agent": "seo", "emoji": "🔍"},
+    {"id": "video", "label_de": "Video", "label_en": "Video", "agent": "video", "emoji": "🎬"},
+    {"id": "sales", "label_de": "Sales", "label_en": "Sales", "agent": "sales", "emoji": "💰"},
+    {"id": "automation", "label_de": "Automation", "label_en": "Automation", "agent": "automation", "emoji": "⚡"},
+    {"id": "analytics", "label_de": "Analytics", "label_en": "Analytics", "agent": "analytics", "emoji": "📊"},
+    {"id": "support", "label_de": "Support", "label_en": "Support", "agent": "sales", "emoji": "🛟"},
+]
+_DEPT_IDS = {d["id"] for d in MISSION_DEPARTMENTS}
+_VALID_TASK_STATUS = {"proposed", "approved", "in_progress", "done", "rejected"}
+_VALID_PRIORITY = {"low", "medium", "high", "urgent"}
+
+
+class MissionTask(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    description: str = ""
+    department: str = "marketing"          # one of MISSION_DEPARTMENTS ids
+    owner_agent: str = ""                   # agent id that owns the task
+    status: str = "proposed"               # human approval required to advance
+    priority: str = "medium"
+    due_date: Optional[str] = None          # ISO date string
+    plan_id: Optional[str] = None           # linked executive plan
+    goal: str = ""                          # linked business goal (denormalized)
+    brand_id: str = ""
+    workspace_id: str = ""
+    created_at: str = Field(default_factory=_now_iso)
+    updated_at: str = Field(default_factory=_now_iso)
+
+
+class ExecutivePlan(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    goal: str
+    summary: str = ""
+    strategy: str = ""
+    target_audience: str = ""
+    channels: List[str] = []
+    required_assets: List[str] = []
+    next_steps: List[str] = []
+    task_ids: List[str] = []
+    brand_id: str = ""
+    brand_name: str = ""
+    workspace_id: str = ""
+    status: str = "awaiting_approval"       # never auto-executed
+    created_at: str = Field(default_factory=_now_iso)
+
+
+class CeoPlanRequest(BaseModel):
+    goal: str
+    brand_id: Optional[str] = None
+    model: str = "claude"
+    language: str = "DE"
+
+
+class MissionTaskCreate(BaseModel):
+    title: str
+    description: str = ""
+    department: str = "marketing"
+    priority: str = "medium"
+    due_date: Optional[str] = None
+    plan_id: Optional[str] = None
+    goal: str = ""
+    brand_id: Optional[str] = None
+
+
+class MissionTaskUpdate(BaseModel):
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    due_date: Optional[str] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    department: Optional[str] = None
+
+
+def _dept_for(dept_id: str) -> dict:
+    return next((d for d in MISSION_DEPARTMENTS if d["id"] == dept_id), MISSION_DEPARTMENTS[0])
+
+
+@api_router.post("/mission/ceo/plan")
+async def mission_ceo_plan(req: CeoPlanRequest, ws: Optional[str] = Depends(current_workspace)):
+    """AI CEO (Quantum) turns a business goal into an executive plan + tasks.
+
+    Uses the active brand + workspace context. Stores the plan and the derived
+    department tasks. NOTHING is executed – every task is a proposal awaiting
+    human approval.
+    """
+    goal = (req.goal or "").strip()
+    if not goal:
+        raise HTTPException(status_code=400, detail="Goal is required")
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+
+    brand = await _resolve_brand(req.brand_id, ws)
+    ceo = AGENTS.get("ceo", {})
+    lang = req.language
+    lang_label = "Deutsch" if lang == "DE" else "English"
+    personality = ceo.get("personality_de" if lang == "DE" else "personality_en", "")
+    dept_list = ", ".join(d["id"] for d in MISSION_DEPARTMENTS)
+
+    system = (
+        f"{personality}\n\n"
+        f"{_brand_context(brand, lang)}\n\n"
+        "Du bist der KI-CEO. Erstelle einen umsetzbaren Executive-Plan für das Ziel des Nutzers. "
+        "WICHTIG: Nichts wird automatisch veröffentlicht oder ausgeführt – dein Plan ist ein Vorschlag, "
+        "den ein Mensch freigeben muss. "
+        f"Antworte AUSSCHLIESSLICH mit gültigem JSON in {lang_label}, ohne Markdown, mit exakt diesen Schlüsseln:\n"
+        "{\n"
+        '  "summary": "1-2 Sätze Kernaussage",\n'
+        '  "strategy": "die übergeordnete Strategie (3-5 Sätze)",\n'
+        '  "target_audience": "konkrete Zielgruppe",\n'
+        '  "channels": ["empfohlene Kanäle"],\n'
+        '  "required_assets": ["benötigte Assets, z.B. Landingpage, 5 Reels, E-Mail-Sequenz"],\n'
+        '  "next_steps": ["nächste konkrete Schritte in Reihenfolge"],\n'
+        '  "tasks": [\n'
+        '    {"title": "...", "description": "...", "department": "einer von: ' + dept_list + '", '
+        '"priority": "low|medium|high|urgent", "due_in_days": 7}\n'
+        "  ]\n"
+        "}\n"
+        "Erzeuge 4-8 Tasks, die sinnvoll auf die Abteilungen verteilt sind."
+    )
+    user = f"Geschäftsziel: {goal}"
+
+    raw = await llm_text(req.model, system, user)
+    data = _extract_json(raw) or {}
+
+    plan = ExecutivePlan(
+        goal=goal,
+        summary=str(data.get("summary", "")).strip(),
+        strategy=str(data.get("strategy", "")).strip(),
+        target_audience=str(data.get("target_audience", "")).strip(),
+        channels=[str(c) for c in (data.get("channels") or []) if str(c).strip()],
+        required_assets=[str(a) for a in (data.get("required_assets") or []) if str(a).strip()],
+        next_steps=[str(s) for s in (data.get("next_steps") or []) if str(s).strip()],
+        brand_id=brand.get("id", ""),
+        brand_name=brand.get("name", ""),
+        workspace_id=ws or "",
+    )
+
+    # Build department task objects (proposals only).
+    now = datetime.now(timezone.utc)
+    tasks: List[MissionTask] = []
+    for raw_task in (data.get("tasks") or [])[:12]:
+        if not isinstance(raw_task, dict):
+            continue
+        title = str(raw_task.get("title", "")).strip()
+        if not title:
+            continue
+        dept_id = str(raw_task.get("department", "marketing")).strip().lower()
+        if dept_id not in _DEPT_IDS:
+            dept_id = "marketing"
+        priority = str(raw_task.get("priority", "medium")).strip().lower()
+        if priority not in _VALID_PRIORITY:
+            priority = "medium"
+        due = None
+        try:
+            days = int(raw_task.get("due_in_days", 7))
+            due = (now + timedelta(days=max(0, days))).date().isoformat()
+        except Exception:
+            due = None
+        tasks.append(MissionTask(
+            title=title,
+            description=str(raw_task.get("description", "")).strip(),
+            department=dept_id,
+            owner_agent=_dept_for(dept_id)["agent"],
+            status="proposed",
+            priority=priority,
+            due_date=due,
+            plan_id=plan.id,
+            goal=goal,
+            brand_id=brand.get("id", ""),
+            workspace_id=ws or "",
+        ))
+
+    plan.task_ids = [t.id for t in tasks]
+
+    try:
+        await db.mission_plans.insert_one(plan.model_dump())
+        if tasks:
+            await db.mission_tasks.insert_many([t.model_dump() for t in tasks])
+    except Exception as e:
+        logger.error(f"Mission plan persist failed: {e}")
+        raise HTTPException(status_code=500, detail="Could not store plan")
+
+    return {"plan": plan.model_dump(), "tasks": [t.model_dump() for t in tasks]}
+
+
+@api_router.get("/mission/plans")
+async def mission_list_plans(ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        return {"plans": []}
+    plans = await db.mission_plans.find(_scope_filter(ws), {"_id": 0}).to_list(200)
+    plans.sort(key=lambda p: p.get("created_at", ""), reverse=True)
+    return {"plans": plans}
+
+
+@api_router.get("/mission/plans/{plan_id}")
+async def mission_get_plan(plan_id: str, ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    plan = await db.mission_plans.find_one({"id": plan_id, **_scope_filter(ws)}, {"_id": 0})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    tasks = await db.mission_tasks.find({"plan_id": plan_id, **_scope_filter(ws)}, {"_id": 0}).to_list(100)
+    return {"plan": plan, "tasks": tasks}
+
+
+@api_router.get("/mission/tasks")
+async def mission_list_tasks(status: Optional[str] = None, department: Optional[str] = None,
+                             ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        return {"tasks": []}
+    filt: dict = dict(_scope_filter(ws))
+    if status:
+        filt["status"] = status
+    if department:
+        filt["department"] = department
+    tasks = await db.mission_tasks.find(filt, {"_id": 0}).to_list(500)
+    # sort: open first, then priority, then due date
+    prio_rank = {"urgent": 0, "high": 1, "medium": 2, "low": 3}
+    status_rank = {"in_progress": 0, "approved": 1, "proposed": 2, "done": 3, "rejected": 4}
+    tasks.sort(key=lambda t: (status_rank.get(t.get("status"), 9),
+                              prio_rank.get(t.get("priority"), 9),
+                              t.get("due_date") or "9999"))
+    return {"tasks": tasks}
+
+
+@api_router.post("/mission/tasks", response_model=MissionTask)
+async def mission_create_task(payload: MissionTaskCreate, ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    dept_id = payload.department if payload.department in _DEPT_IDS else "marketing"
+    priority = payload.priority if payload.priority in _VALID_PRIORITY else "medium"
+    brand = await _resolve_brand(payload.brand_id, ws)
+    task = MissionTask(
+        title=payload.title,
+        description=payload.description,
+        department=dept_id,
+        owner_agent=_dept_for(dept_id)["agent"],
+        priority=priority,
+        due_date=payload.due_date,
+        plan_id=payload.plan_id,
+        goal=payload.goal,
+        brand_id=brand.get("id", ""),
+        workspace_id=ws or "",
+    )
+    await db.mission_tasks.insert_one(task.model_dump())
+    return task
+
+
+@api_router.patch("/mission/tasks/{task_id}")
+async def mission_update_task(task_id: str, payload: MissionTaskUpdate,
+                              ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    existing = await db.mission_tasks.find_one({"id": task_id, **_scope_filter(ws)}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Task not found")
+    updates: dict = {}
+    if payload.status is not None:
+        if payload.status not in _VALID_TASK_STATUS:
+            raise HTTPException(status_code=400, detail="Invalid status")
+        updates["status"] = payload.status
+    if payload.priority is not None:
+        if payload.priority not in _VALID_PRIORITY:
+            raise HTTPException(status_code=400, detail="Invalid priority")
+        updates["priority"] = payload.priority
+    if payload.due_date is not None:
+        updates["due_date"] = payload.due_date
+    if payload.title is not None:
+        updates["title"] = payload.title
+    if payload.description is not None:
+        updates["description"] = payload.description
+    if payload.department is not None and payload.department in _DEPT_IDS:
+        updates["department"] = payload.department
+        updates["owner_agent"] = _dept_for(payload.department)["agent"]
+    updates["updated_at"] = _now_iso()
+    await db.mission_tasks.update_one({"id": task_id, **_scope_filter(ws)}, {"$set": updates})
+    existing.update(updates)
+    return existing
+
+
+@api_router.get("/mission/overview")
+async def mission_overview(ws: Optional[str] = Depends(current_workspace)):
+    """Aggregated command-center snapshot for the active workspace."""
+    if db is None:
+        return {"priorities": [], "campaigns": [], "departments": [], "activity": [],
+                "suggestions": [], "counts": {}}
+
+    scope = _scope_filter(ws)
+    tasks = await db.mission_tasks.find(scope, {"_id": 0}).to_list(1000)
+    plans = await db.mission_plans.find(scope, {"_id": 0}).to_list(200)
+
+    open_tasks = [t for t in tasks if t.get("status") in ("proposed", "approved", "in_progress")]
+    today = datetime.now(timezone.utc).date().isoformat()
+
+    # Today's priorities: due today/overdue or urgent/high, still open.
+    def _is_priority(t):
+        return (t.get("priority") in ("urgent", "high")) or (t.get("due_date") and t["due_date"] <= today)
+    prio_rank = {"urgent": 0, "high": 1, "medium": 2, "low": 3}
+    priorities = sorted([t for t in open_tasks if _is_priority(t)],
+                        key=lambda t: (t.get("due_date") or "9999", prio_rank.get(t.get("priority"), 9)))[:8]
+
+    # Running campaigns: plans that have been approved / are in progress + generated campaigns.
+    running_plans = [p for p in plans if p.get("status") in ("approved", "in_progress")]
+    campaign_history = []
+    try:
+        ch = await db.history.find({"type": "campaign", **scope}, {"_id": 0}).to_list(50)
+        ch.sort(key=lambda h: h.get("created_at", ""), reverse=True)
+        campaign_history = ch[:6]
+    except Exception:
+        pass
+    campaigns = []
+    for p in running_plans[:6]:
+        p_tasks = [t for t in tasks if t.get("plan_id") == p.get("id")]
+        done = len([t for t in p_tasks if t.get("status") == "done"])
+        campaigns.append({
+            "id": p.get("id"), "goal": p.get("goal"), "summary": p.get("summary"),
+            "status": p.get("status"), "brand_name": p.get("brand_name"),
+            "task_total": len(p_tasks), "task_done": done, "source": "plan",
+        })
+    for h in campaign_history:
+        campaigns.append({
+            "id": h.get("id"), "goal": h.get("topic") or h.get("title") or "Kampagne",
+            "summary": "", "status": "generated", "brand_name": "",
+            "created_at": h.get("created_at"), "source": "studio",
+        })
+
+    # Department / team status.
+    departments = []
+    for d in MISSION_DEPARTMENTS:
+        d_tasks = [t for t in tasks if t.get("department") == d["id"]]
+        d_open = [t for t in d_tasks if t.get("status") in ("proposed", "approved", "in_progress")]
+        departments.append({
+            "id": d["id"], "label_de": d["label_de"], "label_en": d["label_en"],
+            "emoji": d["emoji"], "agent": d["agent"],
+            "open": len(d_open), "total": len(d_tasks),
+            "active": len([t for t in d_tasks if t.get("status") == "in_progress"]) > 0,
+        })
+
+    # Recent activity: newest tasks + plans + studio history merged.
+    activity = []
+    for t in tasks:
+        activity.append({"kind": "task", "text": t.get("title"), "meta": t.get("department"),
+                         "status": t.get("status"), "at": t.get("updated_at") or t.get("created_at")})
+    for p in plans:
+        activity.append({"kind": "plan", "text": p.get("goal"), "meta": "Executive-Plan",
+                         "status": p.get("status"), "at": p.get("created_at")})
+    activity.sort(key=lambda a: a.get("at") or "", reverse=True)
+    activity = activity[:10]
+
+    # Suggested next actions – derived, human-in-the-loop.
+    suggestions = []
+    proposed = [t for t in tasks if t.get("status") == "proposed"]
+    if proposed:
+        suggestions.append({
+            "text_de": f"{len(proposed)} vorgeschlagene Tasks warten auf deine Freigabe",
+            "text_en": f"{len(proposed)} proposed tasks are awaiting your approval",
+            "action": "review_tasks",
+        })
+    if not plans:
+        suggestions.append({
+            "text_de": "Formuliere dein erstes Geschäftsziel – der KI-CEO erstellt den Plan",
+            "text_en": "Enter your first business goal – the AI CEO drafts the plan",
+            "action": "create_plan",
+        })
+    overdue = [t for t in open_tasks if t.get("due_date") and t["due_date"] < today]
+    if overdue:
+        suggestions.append({
+            "text_de": f"{len(overdue)} Tasks sind überfällig",
+            "text_en": f"{len(overdue)} tasks are overdue",
+            "action": "review_tasks",
+        })
+    approved_ready = [t for t in tasks if t.get("status") == "approved"]
+    if approved_ready:
+        suggestions.append({
+            "text_de": f"{len(approved_ready)} freigegebene Tasks können gestartet werden",
+            "text_en": f"{len(approved_ready)} approved tasks are ready to start",
+            "action": "start_tasks",
+        })
+
+    counts = {
+        "plans": len(plans),
+        "tasks_open": len(open_tasks),
+        "tasks_total": len(tasks),
+        "tasks_proposed": len(proposed),
+        "campaigns_running": len(running_plans),
+    }
+
+    return {
+        "priorities": priorities,
+        "campaigns": campaigns,
+        "departments": departments,
+        "activity": activity,
+        "suggestions": suggestions,
+        "counts": counts,
+    }
 
 
 app.include_router(api_router)

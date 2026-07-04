@@ -4,7 +4,7 @@ import {
   LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
-  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2,
+  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { SalesSupportWidget } from "@/components/SalesSupportWidget";
@@ -15,7 +15,8 @@ import { CursorTrail } from "@/components/CursorTrail";
 import { AmbientOrb } from "@/components/AmbientOrb";
 
 const NAV = [
-  { to: "/",           icon: LayoutGrid, labelDE: "Dashboard",       labelEN: "Dashboard",       end: true },
+  { to: "/",           icon: Target,     labelDE: "Mission Control",  labelEN: "Mission Control", end: true },
+  { to: "/modules",    icon: LayoutGrid, labelDE: "Module",           labelEN: "Modules" },
   { to: "/brand-brain", icon: BrainCircuit, labelDE: "Brand Brain",   labelEN: "Brand Brain" },
   { to: "/billing",    icon: Crown,      labelDE: "Preise & Plan",    labelEN: "Pricing & Plan" },
   { to: "/agents",     icon: Bot,        labelDE: "Agenten",          labelEN: "Agents" },
@@ -45,7 +46,8 @@ const NAV = [
 ];
 
 const PAGE_NAMES = {
-  "/": "Dashboard",
+  "/": "Mission Control",
+  "/modules": "Module",
   "/brand-brain": "Brand Brain",
   "/billing": "Preise & Plan",
   "/agents": "Agenten",
