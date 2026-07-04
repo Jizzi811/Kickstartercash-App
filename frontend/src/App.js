@@ -11,6 +11,7 @@ import IntelligenceStudio from "@/pages/IntelligenceStudio";
 import GatewayStudio from "@/pages/GatewayStudio";
 import BrandIdentity from "@/pages/BrandIdentity";
 import Memory from "@/pages/Memory";
+import SkillsMarketplace from "@/pages/SkillsMarketplace";
 import Dashboard from "@/pages/Dashboard";
 import KnowledgeBase from "@/pages/KnowledgeBase";
 import BrandBrain from "@/pages/BrandBrain";
@@ -112,6 +113,8 @@ function AppShell() {
               <Route path="/brand-brain" element={<BrandBrain />} />
               <Route path="/brand-identity" element={<BrandIdentity />} />
               <Route path="/memory" element={<Memory />} />
+              <Route path="/skills" element={<SkillsMarketplace />} />
+              <Route path="/skills/:skillId" element={<SkillsMarketplace />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/agents" element={<Specialists />} />
               <Route path="/design" element={<DesignStudio />} />
