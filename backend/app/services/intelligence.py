@@ -31,9 +31,14 @@ from typing import Any, Dict, List, Optional
 WEEKDAYS_DE = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
 WEEKDAYS_EN = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
-# task statuses that count as "the suggestion was accepted"
-_ACCEPTED = {"approved", "in_progress", "done"}
+# Mission Control task statuses (see server.py _VALID_TASK_STATUS):
+#   planned -> in_progress -> needs_review -> approved -> completed  (or rejected)
+# A task that left "planned" toward work counts as accepted; only "rejected" is a
+# no; "planned" is still undecided.
+_OPEN = {"planned", "in_progress", "needs_review", "approved"}
+_ACCEPTED = {"approved", "completed", "in_progress", "needs_review"}
 _DECIDED = _ACCEPTED | {"rejected"}
+_DONE = "completed"
 
 # nice labels for history asset types
 ASSET_LABELS = {
@@ -122,7 +127,7 @@ class LearningEngine:
         # completed tasks per ISO week (velocity)
         velocity: Counter = Counter()
         for t in tasks:
-            if t.get("status") == "done":
+            if t.get("status") == _DONE:
                 dt = _parse_iso(t.get("updated_at") or t.get("created_at"))
                 if dt:
                     iso = dt.isocalendar()
@@ -164,7 +169,7 @@ class PerformanceEngine:
             "approval_rate": _pct(accepted, decided),
             "decided_tasks": decided,
             "rejected": status.get("rejected", 0),
-            "proposed_open": status.get("proposed", 0),
+            "proposed_open": status.get("planned", 0),
             "assets_total": signals["totals"]["assets"],
             "plans_total": signals["totals"]["plans"],
         }

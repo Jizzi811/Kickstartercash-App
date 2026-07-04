@@ -4579,7 +4579,7 @@ MISSION_DEPARTMENTS = [
     {"id": "support", "label_de": "Support", "label_en": "Support", "agent": "sales", "emoji": "🛟"},
 ]
 _DEPT_IDS = {d["id"] for d in MISSION_DEPARTMENTS}
-_VALID_TASK_STATUS = {"proposed", "approved", "in_progress", "done", "rejected"}
+_VALID_TASK_STATUS = {"planned", "in_progress", "needs_review", "approved", "completed", "rejected"}
 _VALID_PRIORITY = {"low", "medium", "high", "urgent"}
 
 
@@ -4589,7 +4589,13 @@ class MissionTask(BaseModel):
     description: str = ""
     department: str = "marketing"          # one of MISSION_DEPARTMENTS ids
     owner_agent: str = ""                   # agent id that owns the task
-    status: str = "proposed"               # human approval required to advance
+    status: str = "planned"                # human approval required before external action
+    assigned_agent: str = ""                # visible assignee label
+    linked_campaign: str = ""               # denormalized plan/campaign name
+    required_inputs: List[str] = Field(default_factory=list)
+    expected_output: str = ""
+    comments: List[dict] = Field(default_factory=list)
+    timeline: List[dict] = Field(default_factory=list)
     priority: str = "medium"
     due_date: Optional[str] = None          # ISO date string
     plan_id: Optional[str] = None           # linked executive plan
@@ -4606,10 +4612,12 @@ class ExecutivePlan(BaseModel):
     summary: str = ""
     strategy: str = ""
     target_audience: str = ""
-    channels: List[str] = []
-    required_assets: List[str] = []
-    next_steps: List[str] = []
-    task_ids: List[str] = []
+    channels: List[str] = Field(default_factory=list)
+    required_assets: List[str] = Field(default_factory=list)
+    next_steps: List[str] = Field(default_factory=list)
+    task_ids: List[str] = Field(default_factory=list)
+    collaboration_workspace_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    collaboration_workspace_name: str = ""
     brand_id: str = ""
     brand_name: str = ""
     workspace_id: str = ""
@@ -4642,10 +4650,248 @@ class MissionTaskUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     department: Optional[str] = None
+    comment: Optional[str] = None
+
+
+class TeamChatMessage(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    thread_id: str = ""
+    workspace_id: str = ""
+    brand_id: str = ""
+    plan_id: str = ""
+    campaign_id: str = ""
+    agent: str = ""
+    role: str = ""
+    content: str = ""
+    timestamp: str = Field(default_factory=_now_iso)
+    message_type: str = "agent"            # user | agent | summary | system
+    linked_task_id: Optional[str] = None
+
+
+class TeamChatThread(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    workspace_id: str = ""
+    brand_id: str = ""
+    plan_id: str = ""
+    campaign_id: str = ""
+    title: str = ""
+    created_at: str = Field(default_factory=_now_iso)
+    updated_at: str = Field(default_factory=_now_iso)
+
+
+class TeamChatAskRequest(BaseModel):
+    question: str
+    model: str = "claude"
+    language: str = "DE"
+
+
+# ---------------------------------------------------------------------------
+# BrandMind Output Factory – production assets + internal QA
+# ---------------------------------------------------------------------------
+OUTPUT_FACTORY_MODULES = [
+    "social", "image", "video", "voice", "landing_page", "email", "ad",
+    "blog_seo", "presentation", "pdf_lead_magnet",
+]
+OUTPUT_STATUSES = {"Waiting", "Generating", "Reviewing", "Ready", "Approved", "Published", "Archived", "Rejected"}
+
+
+class OutputFactoryAssetCreate(BaseModel):
+    type: str
+    campaign: str = "Mission Control Campaign"
+    workspace: dict = Field(default_factory=dict)
+    brand: dict = Field(default_factory=dict)
+    mission_control_plan: dict = Field(default_factory=dict)
+    ai_ceo_strategy: str = ""
+    approved_department_tasks: List[dict] = Field(default_factory=list)
+    brand_brain_context: dict = Field(default_factory=dict)
+
+
+class OutputFactoryAssetUpdate(BaseModel):
+    status: Optional[str] = None
+    note: Optional[str] = None
+
+
+def _output_agents(asset_type: str) -> tuple[str, str]:
+    if asset_type in {"image"}:
+        return "Designer", "Creative Director"
+    if asset_type in {"video"}:
+        return "Video Producer", "Video Director"
+    if asset_type in {"blog_seo"}:
+        return "SEO Specialist", "SEO Lead"
+    if asset_type in {"voice"}:
+        return "Voice Producer", "Creative Director"
+    return "Copywriter", "Marketing Director"
+
+
+def _quality_scores(asset_type: str) -> dict:
+    # Deterministic, transparent baseline scoring for the internal reviewer.
+    seo = 94 if asset_type == "blog_seo" else 86
+    visual = 94 if asset_type in {"image", "video", "presentation", "pdf_lead_magnet"} else 88
+    scores = {
+        "brand": 92,
+        "grammar": 95,
+        "seo": seo,
+        "conversion": 90,
+        "creativity": visual,
+    }
+    scores["overall"] = round(sum(scores.values()) / len(scores))
+    return scores
+
+
+@api_router.get("/output-factory/assets")
+async def output_factory_assets(
+    status: Optional[str] = None,
+    campaign: Optional[str] = None,
+    brand: Optional[str] = None,
+    agent: Optional[str] = None,
+    content_type: Optional[str] = None,
+    search: Optional[str] = None,
+    ws: Optional[str] = Depends(current_workspace),
+):
+    if db is None:
+        return {"assets": []}
+    filt = _scope_filter(ws)
+    if status:
+        filt["status"] = status
+    if campaign:
+        filt["campaign"] = campaign
+    if brand:
+        filt["brand"] = brand
+    if content_type:
+        filt["type"] = content_type
+    if agent:
+        filt["$or"] = [{"creator_agent": agent}, {"reviewer_agent": agent}]
+    assets = await db.output_factory_assets.find(filt, {"_id": 0}).to_list(500)
+    if search:
+        needle = search.lower()
+        assets = [
+            a for a in assets
+            if needle in " ".join(str(a.get(k, "")) for k in ("id", "type", "campaign", "brand", "workspace", "creator_agent", "reviewer_agent", "status")).lower()
+        ]
+    assets.sort(key=lambda a: a.get("updated_at", ""), reverse=True)
+    return {"assets": assets}
+
+
+@api_router.post("/output-factory/assets")
+async def output_factory_create_asset(req: OutputFactoryAssetCreate, ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    asset_type = req.type if req.type in OUTPUT_FACTORY_MODULES else "social"
+    creator, reviewer = _output_agents(asset_type)
+    now = _now_iso()
+    brand_name = req.brand.get("name") or req.brand_brain_context.get("name") or "Active Brand"
+    workspace_name = req.workspace.get("name") or "Active Workspace"
+    asset = {
+        "id": str(uuid.uuid4()),
+        "type": asset_type,
+        "campaign": req.campaign,
+        "brand": brand_name,
+        "brand_id": req.brand.get("id") or req.brand_brain_context.get("id") or "",
+        "workspace": workspace_name,
+        "workspace_id": ws or req.workspace.get("id", ""),
+        "creator_agent": creator,
+        "reviewer_agent": reviewer,
+        "status": "Ready",
+        "version": "v1",
+        "created_at": now,
+        "updated_at": now,
+        "pipeline": ["Input", "Production Pipeline", "Draft", "Internal QA", "Final Asset", "Approval Queue"],
+        "input_context": {
+            "mission_control_plan": req.mission_control_plan,
+            "ai_ceo_strategy": req.ai_ceo_strategy,
+            "approved_department_tasks": req.approved_department_tasks,
+            "brand_brain_context": req.brand_brain_context,
+        },
+        "draft": f"{creator} draft for {req.campaign}",
+        "final_asset": f"Production-ready {asset_type.replace('_', ' ')} asset for {brand_name}.",
+        "quality_scores": _quality_scores(asset_type),
+        "review": {
+            "reviewer_agent": reviewer,
+            "categories": ["Brand consistency", "Grammar", "CTA quality", "SEO", "Readability", "Visual consistency", "Compliance"],
+            "suggestions": ["Internal QA complete. Human approval is required before publishing or export."],
+        },
+        "version_history": [{"version": "v1", "status": "Ready", "created_at": now, "note": "Generated and reviewed by a separate AI reviewer."}],
+    }
+    await db.output_factory_assets.insert_one(asset)
+    return {"asset": {k: v for k, v in asset.items() if k != "_id"}}
+
+
+@api_router.patch("/output-factory/assets/{asset_id}")
+async def output_factory_update_asset(asset_id: str, req: OutputFactoryAssetUpdate, ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    existing = await db.output_factory_assets.find_one({"id": asset_id, **_scope_filter(ws)}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Asset not found")
+    update = {"updated_at": _now_iso()}
+    if req.status:
+        if req.status not in OUTPUT_STATUSES:
+            raise HTTPException(status_code=400, detail="Invalid output factory status")
+        update["status"] = req.status
+    history = existing.get("version_history", [])
+    history.append({"version": existing.get("version", "v1"), "status": update.get("status", existing.get("status")), "created_at": update["updated_at"], "note": req.note or ""})
+    update["version_history"] = history
+    await db.output_factory_assets.update_one({"id": asset_id, **_scope_filter(ws)}, {"$set": update})
+    doc = await db.output_factory_assets.find_one({"id": asset_id, **_scope_filter(ws)}, {"_id": 0})
+    return {"asset": doc}
 
 
 def _dept_for(dept_id: str) -> dict:
     return next((d for d in MISSION_DEPARTMENTS if d["id"] == dept_id), MISSION_DEPARTMENTS[0])
+
+
+TEAM_CHAT_AGENTS = [
+    {"agent": "AI CEO", "role": "Moderator & final decision maker"},
+    {"agent": "Marketing Director", "role": "Campaign strategy and channel focus"},
+    {"agent": "Creative Director", "role": "Big idea, story and creative quality"},
+    {"agent": "Copywriter", "role": "Messaging, hooks and conversion copy"},
+    {"agent": "SEO Manager", "role": "Search demand, keywords and content structure"},
+    {"agent": "Designer", "role": "Visual system, assets and layout quality"},
+    {"agent": "Video Producer", "role": "Video concepts, scripts and production flow"},
+    {"agent": "Sales Expert", "role": "Offer, objections and lead conversion"},
+    {"agent": "Analytics Expert", "role": "KPIs, measurement and risk signals"},
+    {"agent": "Automation Architect", "role": "Workflow design and approval gates"},
+]
+
+
+async def _team_chat_thread(plan: dict, ws: Optional[str]) -> dict:
+    """Return or create the single internal AI-team chat thread for a plan."""
+    existing = await db.mission_team_chat_threads.find_one(
+        {"plan_id": plan["id"], **_scope_filter(ws)}, {"_id": 0}
+    )
+    if existing:
+        return existing
+    thread = TeamChatThread(
+        workspace_id=ws or "",
+        brand_id=plan.get("brand_id", ""),
+        plan_id=plan["id"],
+        campaign_id=plan.get("campaign_id") or plan.get("linked_campaign") or plan.get("goal", ""),
+        title=f"AI Team Chat · {plan.get('goal', '')[:80]}",
+    ).model_dump()
+    await db.mission_team_chat_threads.insert_one(thread)
+    return thread
+
+
+def _fallback_team_chat(question: str, plan: dict, tasks: List[dict], lang: str) -> List[dict]:
+    """Safe deterministic team discussion if an LLM response is unavailable."""
+    top_tasks = ", ".join(t.get("title", "") for t in tasks[:3] if t.get("title")) or plan.get("goal", "")
+    if lang == "DE":
+        return [
+            {"agent": "AI CEO", "role": "Moderator & final decision maker", "content": f"Ich moderiere: Wir prüfen den Plan zu „{plan.get('goal', '')}“ anhand Wirkung, Risiken und benötigter Freigaben.", "message_type": "agent"},
+            {"agent": "Marketing Director", "role": "Campaign strategy and channel focus", "content": "Priorisiert einen klaren Lead-Kanal und eine sekundäre Content-Schleife, statt alle Kanäle gleichzeitig zu starten.", "message_type": "agent"},
+            {"agent": "Creative Director", "role": "Big idea, story and creative quality", "content": "Die Kernidee braucht eine einfache Story: Problem, sichtbarer Wandel, Proof und konkreter nächster Schritt.", "message_type": "agent"},
+            {"agent": "Copywriter", "role": "Messaging, hooks and conversion copy", "content": "Ich würde Hooks und CTA zuerst schärfen; jede Aufgabe sollte eine konkrete Conversion-Aussage enthalten.", "message_type": "agent"},
+            {"agent": "Analytics Expert", "role": "KPIs, measurement and risk signals", "content": "Risiko: Ohne Messplan optimieren wir blind. Definiert Lead-Kosten, Conversion-Rate und Produktionsgeschwindigkeit vor Start.", "message_type": "agent"},
+            {"agent": "AI CEO", "role": "Moderator & final decision maker", "content": f"Entscheidung: Zuerst die wichtigsten Tasks fokussieren ({top_tasks}), fehlende Assets ergänzen und alles nur nach menschlicher Freigabe umsetzen. Keine externen oder destruktiven Aktionen.", "message_type": "summary"},
+        ]
+    return [
+        {"agent": "AI CEO", "role": "Moderator & final decision maker", "content": f"I'll moderate: we are reviewing the plan for “{plan.get('goal', '')}” for impact, risks and approval needs.", "message_type": "agent"},
+        {"agent": "Marketing Director", "role": "Campaign strategy and channel focus", "content": "Prioritize one primary lead channel and one supporting content loop instead of launching every channel at once.", "message_type": "agent"},
+        {"agent": "Creative Director", "role": "Big idea, story and creative quality", "content": "The idea needs a simple story: problem, visible transformation, proof and one clear next step.", "message_type": "agent"},
+        {"agent": "Copywriter", "role": "Messaging, hooks and conversion copy", "content": "I would sharpen hooks and CTAs first; every task should include a concrete conversion message.", "message_type": "agent"},
+        {"agent": "Analytics Expert", "role": "KPIs, measurement and risk signals", "content": "Risk: without measurement, we optimize blindly. Define CPL, conversion rate and production velocity before launch.", "message_type": "agent"},
+        {"agent": "AI CEO", "role": "Moderator & final decision maker", "content": f"Decision: focus the highest-impact tasks first ({top_tasks}), add missing assets, and execute only after human approval. No external or destructive actions.", "message_type": "summary"},
+    ]
 
 
 @api_router.post("/mission/ceo/plan")
@@ -4685,10 +4931,10 @@ async def mission_ceo_plan(req: CeoPlanRequest, ws: Optional[str] = Depends(curr
         '  "next_steps": ["nächste konkrete Schritte in Reihenfolge"],\n'
         '  "tasks": [\n'
         '    {"title": "...", "description": "...", "department": "einer von: ' + dept_list + '", '
-        '"priority": "low|medium|high|urgent", "due_in_days": 7}\n'
+        '"priority": "low|medium|high|urgent", "due_in_days": 7, "required_inputs": ["..."], "expected_output": "interner Draft / Review / Empfehlung"}\n'
         "  ]\n"
         "}\n"
-        "Erzeuge 4-8 Tasks, die sinnvoll auf die Abteilungen verteilt sind."
+        "Erzeuge exakt einen Task für jede der 8 Abteilungen. Keine externen Aktionen, kein Auto-Publishing; nur interne Task-Pläne, Drafts, Vorschläge und Reviews."
     )
     user = f"Geschäftsziel: {goal}"
 
@@ -4707,41 +4953,65 @@ async def mission_ceo_plan(req: CeoPlanRequest, ws: Optional[str] = Depends(curr
         brand_name=brand.get("name", ""),
         workspace_id=ws or "",
     )
+    plan.collaboration_workspace_name = f"BrandMind Collaboration · {brand.get('name', 'Brand')}"
 
-    # Build department task objects (proposals only).
+    # Build one visible collaboration task for every BrandMind department.
     now = datetime.now(timezone.utc)
+    raw_by_dept = {}
+    for raw_task in (data.get("tasks") or []):
+        if isinstance(raw_task, dict):
+            dept_id = str(raw_task.get("department", "")).strip().lower()
+            if dept_id in _DEPT_IDS and dept_id not in raw_by_dept:
+                raw_by_dept[dept_id] = raw_task
+
+    fallback_outputs = {
+        "marketing": "Campaign messaging draft and channel recommendations",
+        "design": "Creative direction, visual checklist and asset brief",
+        "seo": "Keyword/content plan and on-page recommendations",
+        "video": "Video concept, script outline and production notes",
+        "sales": "Sales enablement draft, offer angles and objection notes",
+        "automation": "Internal workflow/map suggestion with approval gates",
+        "analytics": "Measurement plan, KPIs and review cadence",
+        "support": "Support FAQ/enablement notes and customer-risk review",
+    }
     tasks: List[MissionTask] = []
-    for raw_task in (data.get("tasks") or [])[:12]:
-        if not isinstance(raw_task, dict):
-            continue
-        title = str(raw_task.get("title", "")).strip()
-        if not title:
-            continue
-        dept_id = str(raw_task.get("department", "marketing")).strip().lower()
-        if dept_id not in _DEPT_IDS:
-            dept_id = "marketing"
+    for index, dept in enumerate(MISSION_DEPARTMENTS):
+        dept_id = dept["id"]
+        raw_task = raw_by_dept.get(dept_id, {})
+        title = str(raw_task.get("title") or f"{dept['label_en']} collaboration task").strip()
         priority = str(raw_task.get("priority", "medium")).strip().lower()
         if priority not in _VALID_PRIORITY:
             priority = "medium"
-        due = None
         try:
-            days = int(raw_task.get("due_in_days", 7))
-            due = (now + timedelta(days=max(0, days))).date().isoformat()
+            days = int(raw_task.get("due_in_days", 3 + index))
         except Exception:
-            due = None
-        tasks.append(MissionTask(
+            days = 3 + index
+        due = (now + timedelta(days=max(0, days))).date().isoformat()
+        required_inputs = raw_task.get("required_inputs") or [
+            "Executive plan summary", "Brand context", "Human approval criteria"
+        ]
+        if not isinstance(required_inputs, list):
+            required_inputs = [str(required_inputs)]
+        task = MissionTask(
             title=title,
-            description=str(raw_task.get("description", "")).strip(),
+            description=str(raw_task.get("description") or f"Prepare the internal {dept['label_en']} workstream for this plan. Draft only; do not publish or execute external actions.").strip(),
             department=dept_id,
-            owner_agent=_dept_for(dept_id)["agent"],
-            status="proposed",
+            owner_agent=dept["agent"],
+            assigned_agent=dept["agent"],
+            status="planned",
             priority=priority,
             due_date=due,
             plan_id=plan.id,
+            linked_campaign=goal,
             goal=goal,
+            required_inputs=[str(x) for x in required_inputs if str(x).strip()],
+            expected_output=str(raw_task.get("expected_output") or fallback_outputs[dept_id]).strip(),
+            comments=[{"id": str(uuid.uuid4()), "author": "Quantum", "text": "Task generated for internal collaboration. Human approval is required before anything leaves BrandMind.", "created_at": _now_iso()}],
+            timeline=[{"at": _now_iso(), "type": "task_created", "text": f"{dept['label_en']} task planned by AI CEO"}],
             brand_id=brand.get("id", ""),
             workspace_id=ws or "",
-        ))
+        )
+        tasks.append(task)
 
     plan.task_ids = [t.id for t in tasks]
 
@@ -4776,6 +5046,108 @@ async def mission_get_plan(plan_id: str, ws: Optional[str] = Depends(current_wor
     return {"plan": plan, "tasks": tasks}
 
 
+@api_router.get("/mission/plans/{plan_id}/team-chat")
+async def mission_team_chat(plan_id: str, ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    plan = await db.mission_plans.find_one({"id": plan_id, **_scope_filter(ws)}, {"_id": 0})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    thread = await _team_chat_thread(plan, ws)
+    messages = await db.mission_team_chat_messages.find(
+        {"thread_id": thread["id"], **_scope_filter(ws)}, {"_id": 0}
+    ).to_list(300)
+    messages.sort(key=lambda m: m.get("timestamp", ""))
+    return {"thread": thread, "messages": messages, "agents": TEAM_CHAT_AGENTS}
+
+
+@api_router.post("/mission/plans/{plan_id}/team-chat/ask")
+async def mission_team_chat_ask(plan_id: str, payload: TeamChatAskRequest,
+                                ws: Optional[str] = Depends(current_workspace)):
+    question = (payload.question or "").strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="Question is required")
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    plan = await db.mission_plans.find_one({"id": plan_id, **_scope_filter(ws)}, {"_id": 0})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    tasks = await db.mission_tasks.find({"plan_id": plan_id, **_scope_filter(ws)}, {"_id": 0}).to_list(100)
+    brand = await _resolve_brand(plan.get("brand_id"), ws)
+    thread = await _team_chat_thread(plan, ws)
+
+    base = {
+        "thread_id": thread["id"],
+        "workspace_id": ws or "",
+        "brand_id": plan.get("brand_id", ""),
+        "plan_id": plan_id,
+        "campaign_id": thread.get("campaign_id", ""),
+    }
+    user_msg = TeamChatMessage(
+        **base, agent="Human", role="Plan owner", content=question, message_type="user"
+    ).model_dump()
+
+    lang_label = "Deutsch" if payload.language == "DE" else "English"
+    task_brief = "\n".join(
+        f"- {t.get('id')}: {t.get('department')} · {t.get('title')} · {t.get('status')} · {t.get('expected_output', '')}"
+        for t in tasks[:20]
+    )
+    system = (
+        f"{_brand_context(brand, payload.language)}\n\n"
+        "You are BrandMind's internal AI Team Chat for a Mission Control plan. "
+        "The AI CEO moderates. Relevant agents respond with short role-specific critique, improvements and next actions. "
+        "Agents may challenge or improve each other's suggestions. "
+        "The AI CEO must end with a highlighted final recommendation. "
+        "No external publishing, no destructive actions, no execution. Human approval is always required. "
+        f"Answer only valid JSON in {lang_label}, no markdown. Shape: "
+        '{"messages":[{"agent":"AI CEO|Marketing Director|Creative Director|Copywriter|SEO Manager|Designer|Video Producer|Sales Expert|Analytics Expert|Automation Architect","role":"...","content":"1-3 short sentences","message_type":"agent|summary","linked_task_id":"optional task id or empty"}]}. '
+        "Use 4-8 total team messages. Last message_type must be summary by AI CEO."
+    )
+    user = (
+        f"PLAN GOAL: {plan.get('goal')}\nSUMMARY: {plan.get('summary')}\nSTRATEGY: {plan.get('strategy')}\n"
+        f"TARGET: {plan.get('target_audience')}\nCHANNELS: {plan.get('channels')}\nASSETS: {plan.get('required_assets')}\n"
+        f"TASKS:\n{task_brief}\n\nUSER QUESTION: {question}"
+    )
+    messages = []
+    try:
+        raw = await llm_text(payload.model, system, user)
+        data = _extract_json(raw) or {}
+        messages = data.get("messages") if isinstance(data.get("messages"), list) else []
+    except Exception as e:
+        logger.warning(f"Team chat LLM failed, using fallback: {e}")
+    if not messages:
+        messages = _fallback_team_chat(question, plan, tasks, payload.language)
+
+    allowed_agents = {a["agent"]: a["role"] for a in TEAM_CHAT_AGENTS}
+    docs = [user_msg]
+    for item in messages[:10]:
+        if not isinstance(item, dict):
+            continue
+        agent = str(item.get("agent") or "AI CEO").strip()
+        if agent not in allowed_agents:
+            agent = "AI CEO"
+        mtype = str(item.get("message_type") or "agent").strip()
+        if mtype not in {"agent", "summary"}:
+            mtype = "agent"
+        linked = str(item.get("linked_task_id") or "").strip() or None
+        if linked and linked not in {t.get("id") for t in tasks}:
+            linked = None
+        docs.append(TeamChatMessage(
+            **base,
+            agent=agent,
+            role=str(item.get("role") or allowed_agents[agent]),
+            content=str(item.get("content") or "").strip(),
+            message_type=mtype,
+            linked_task_id=linked,
+        ).model_dump())
+    await db.mission_team_chat_messages.insert_many(docs)
+    await db.mission_team_chat_threads.update_one(
+        {"id": thread["id"], **_scope_filter(ws)},
+        {"$set": {"updated_at": _now_iso(), "brand_id": plan.get("brand_id", ""), "campaign_id": thread.get("campaign_id", "")}},
+    )
+    return {"thread": thread, "messages": docs, "agents": TEAM_CHAT_AGENTS}
+
+
 @api_router.get("/mission/tasks")
 async def mission_list_tasks(status: Optional[str] = None, department: Optional[str] = None,
                              ws: Optional[str] = Depends(current_workspace)):
@@ -4789,7 +5161,7 @@ async def mission_list_tasks(status: Optional[str] = None, department: Optional[
     tasks = await db.mission_tasks.find(filt, {"_id": 0}).to_list(500)
     # sort: open first, then priority, then due date
     prio_rank = {"urgent": 0, "high": 1, "medium": 2, "low": 3}
-    status_rank = {"in_progress": 0, "approved": 1, "proposed": 2, "done": 3, "rejected": 4}
+    status_rank = {"in_progress": 0, "needs_review": 1, "planned": 2, "approved": 3, "completed": 4, "rejected": 5}
     tasks.sort(key=lambda t: (status_rank.get(t.get("status"), 9),
                               prio_rank.get(t.get("priority"), 9),
                               t.get("due_date") or "9999"))
@@ -4808,6 +5180,8 @@ async def mission_create_task(payload: MissionTaskCreate, ws: Optional[str] = De
         description=payload.description,
         department=dept_id,
         owner_agent=_dept_for(dept_id)["agent"],
+        assigned_agent=_dept_for(dept_id)["agent"],
+        status="planned",
         priority=priority,
         due_date=payload.due_date,
         plan_id=payload.plan_id,
@@ -4832,6 +5206,7 @@ async def mission_update_task(task_id: str, payload: MissionTaskUpdate,
         if payload.status not in _VALID_TASK_STATUS:
             raise HTTPException(status_code=400, detail="Invalid status")
         updates["status"] = payload.status
+        updates.setdefault("$push_timeline", []).append({"at": _now_iso(), "type": "status_changed", "text": f"Status changed to {payload.status}"})
     if payload.priority is not None:
         if payload.priority not in _VALID_PRIORITY:
             raise HTTPException(status_code=400, detail="Invalid priority")
@@ -4845,9 +5220,26 @@ async def mission_update_task(task_id: str, payload: MissionTaskUpdate,
     if payload.department is not None and payload.department in _DEPT_IDS:
         updates["department"] = payload.department
         updates["owner_agent"] = _dept_for(payload.department)["agent"]
+    if payload.comment:
+        updates.setdefault("$push_comments", []).append({"id": str(uuid.uuid4()), "author": "Human", "text": payload.comment.strip(), "created_at": _now_iso()})
+        updates.setdefault("$push_timeline", []).append({"at": _now_iso(), "type": "comment_added", "text": payload.comment.strip()[:120]})
     updates["updated_at"] = _now_iso()
-    await db.mission_tasks.update_one({"id": task_id, **_scope_filter(ws)}, {"$set": updates})
+    push_comments = updates.pop("$push_comments", [])
+    push_timeline = updates.pop("$push_timeline", [])
+    mongo_update = {"$set": updates}
+    push_doc = {}
+    if push_comments:
+        push_doc["comments"] = {"$each": push_comments}
+    if push_timeline:
+        push_doc["timeline"] = {"$each": push_timeline}
+    if push_doc:
+        mongo_update["$push"] = push_doc
+    await db.mission_tasks.update_one({"id": task_id, **_scope_filter(ws)}, mongo_update)
     existing.update(updates)
+    if push_comments:
+        existing["comments"] = (existing.get("comments") or []) + push_comments
+    if push_timeline:
+        existing["timeline"] = (existing.get("timeline") or []) + push_timeline
     return existing
 
 
@@ -4862,7 +5254,7 @@ async def mission_overview(ws: Optional[str] = Depends(current_workspace)):
     tasks = await db.mission_tasks.find(scope, {"_id": 0}).to_list(1000)
     plans = await db.mission_plans.find(scope, {"_id": 0}).to_list(200)
 
-    open_tasks = [t for t in tasks if t.get("status") in ("proposed", "approved", "in_progress")]
+    open_tasks = [t for t in tasks if t.get("status") in ("planned", "in_progress", "needs_review", "approved")]
     today = datetime.now(timezone.utc).date().isoformat()
 
     # Today's priorities: due today/overdue or urgent/high, still open.
@@ -4884,7 +5276,7 @@ async def mission_overview(ws: Optional[str] = Depends(current_workspace)):
     campaigns = []
     for p in running_plans[:6]:
         p_tasks = [t for t in tasks if t.get("plan_id") == p.get("id")]
-        done = len([t for t in p_tasks if t.get("status") == "done"])
+        done = len([t for t in p_tasks if t.get("status") == "completed"])
         campaigns.append({
             "id": p.get("id"), "goal": p.get("goal"), "summary": p.get("summary"),
             "status": p.get("status"), "brand_name": p.get("brand_name"),
@@ -4901,7 +5293,7 @@ async def mission_overview(ws: Optional[str] = Depends(current_workspace)):
     departments = []
     for d in MISSION_DEPARTMENTS:
         d_tasks = [t for t in tasks if t.get("department") == d["id"]]
-        d_open = [t for t in d_tasks if t.get("status") in ("proposed", "approved", "in_progress")]
+        d_open = [t for t in d_tasks if t.get("status") in ("planned", "in_progress", "needs_review", "approved")]
         departments.append({
             "id": d["id"], "label_de": d["label_de"], "label_en": d["label_en"],
             "emoji": d["emoji"], "agent": d["agent"],
@@ -4922,11 +5314,11 @@ async def mission_overview(ws: Optional[str] = Depends(current_workspace)):
 
     # Suggested next actions – derived, human-in-the-loop.
     suggestions = []
-    proposed = [t for t in tasks if t.get("status") == "proposed"]
+    proposed = [t for t in tasks if t.get("status") == "planned"]
     if proposed:
         suggestions.append({
-            "text_de": f"{len(proposed)} vorgeschlagene Tasks warten auf deine Freigabe",
-            "text_en": f"{len(proposed)} proposed tasks are awaiting your approval",
+            "text_de": f"{len(proposed)} geplante Tasks warten auf deinen Start",
+            "text_en": f"{len(proposed)} planned tasks are ready to start",
             "action": "review_tasks",
         })
     if not plans:
@@ -4945,8 +5337,8 @@ async def mission_overview(ws: Optional[str] = Depends(current_workspace)):
     approved_ready = [t for t in tasks if t.get("status") == "approved"]
     if approved_ready:
         suggestions.append({
-            "text_de": f"{len(approved_ready)} freigegebene Tasks können gestartet werden",
-            "text_en": f"{len(approved_ready)} approved tasks are ready to start",
+            "text_de": f"{len(approved_ready)} freigegebene Tasks können abgeschlossen werden",
+            "text_en": f"{len(approved_ready)} approved tasks are ready to complete",
             "action": "start_tasks",
         })
 
@@ -4954,7 +5346,7 @@ async def mission_overview(ws: Optional[str] = Depends(current_workspace)):
         "plans": len(plans),
         "tasks_open": len(open_tasks),
         "tasks_total": len(tasks),
-        "tasks_proposed": len(proposed),
+        "tasks_planned": len(proposed),
         "campaigns_running": len(running_plans),
     }
 

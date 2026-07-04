@@ -54,6 +54,7 @@ import Campaign from "@/pages/Campaign";
 import CampaignWorkflow from "@/pages/CampaignWorkflow";
 import AgentBuilder from "@/pages/AgentBuilder";
 import TTSStudio from "@/pages/TTSStudio";
+import OutputFactory from "@/pages/OutputFactory";
 
 function App() {
   return (
@@ -101,7 +102,9 @@ function AppShell() {
               {/* Phase 5 – Main Navigation */}
               <Route path="/" element={<MissionControl />} />
               <Route path="/intelligence" element={<IntelligenceStudio />} />
+              <Route path="/mission/plans/:planId" element={<MissionControl />} />
               <Route path="/modules" element={<Dashboard />} />
+              <Route path="/output-factory" element={<OutputFactory />} />
               <Route path="/brand-brain" element={<BrandBrain />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/agents" element={<Specialists />} />
