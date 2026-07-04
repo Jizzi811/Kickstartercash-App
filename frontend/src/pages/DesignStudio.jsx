@@ -99,8 +99,8 @@ export default function DesignStudio() {
               setContext={setPrompt}
               label="Prompt / Beschreibung"
               labelEN="Prompt / Description"
-              placeholder="z.B. Luxuriöses Brandmind Werbebanner, Gold & Schwarz, moderner Business-Stil…"
-              placeholderEN="e.g. Luxurious Brandmind advertising banner, gold & black, modern business style…"
+              placeholder="z.B. Luxuriöses Brandmind Werbebanner, Violett & dunklem Premium-Kontrast, moderner Business-Stil…"
+              placeholderEN="e.g. Luxurious Brandmind advertising banner, violet & dark premium contrast, modern business style…"
               title="Design Studio"
             />
             <div className="flex items-center gap-3">

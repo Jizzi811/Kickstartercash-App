@@ -55,6 +55,10 @@ from app.gateway import gateway as ai_gateway  # noqa: E402
 from app.gateway import registry as gw_registry, capabilities as gw_caps, config as gw_config  # noqa: E402
 from app.identity import service as identity_service, schema as identity_schema  # noqa: E402
 from app.memory import registry as mem_registry, router as mem_router  # noqa: E402
+from app.skills import registry as skill_registry, service as skill_service  # noqa: E402
+from app.workflows import engine as workflow_engine  # noqa: E402
+from app import knowledge_graph  # noqa: E402
+from app import permissions as permission_framework  # noqa: E402
 
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
@@ -3684,7 +3688,9 @@ async def list_agents():
     result = []
     for a in AGENTS.values():
         entry = dict(a)
-        entry["tools"] = AGENT_TOOLS.get(a["id"], [])
+        skills = skill_registry.skills_for_agent(a["id"])
+        entry["skills"] = skills
+        entry["tools"] = skills  # backwards-compatible UI palette, loaded from Skill Registry
         result.append(entry)
     return result
 
@@ -3693,7 +3699,34 @@ async def list_agents():
 async def get_agent_tools(agent_id: str):
     if agent_id not in AGENTS:
         raise HTTPException(status_code=404, detail="Agent not found")
-    return AGENT_TOOLS.get(agent_id, [])
+    return skill_registry.skills_for_agent(agent_id)
+
+
+@api_router.get("/skills/registry")
+async def skills_registry(category: Optional[str] = None, q: str = ""):
+    payload = skill_registry.registry_payload()
+    payload["skills"] = skill_registry.list_skills(category, q)
+    return payload
+
+
+@api_router.get("/skills")
+async def skills_list(category: Optional[str] = None, q: str = ""):
+    return {"categories": skill_registry.CATEGORIES, "skills": skill_registry.list_skills(category, q)}
+
+
+@api_router.get("/skills/{skill_id}")
+async def skill_detail(skill_id: str):
+    skill = skill_registry.get_skill(skill_id)
+    if not skill:
+        raise HTTPException(status_code=404, detail="Skill not found")
+    return skill
+
+
+@api_router.get("/skills/{skill_id}/logs")
+async def skill_logs(skill_id: str, ws: Optional[str] = Depends(current_workspace), limit: int = 50):
+    rows = await db.skill_logs.find({"skill_id": skill_id, **_scope_filter(ws)}, {"_id": 0}).to_list(limit)
+    rows.sort(key=lambda r: r.get("created_at", ""), reverse=True)
+    return rows[:limit]
 
 
 @api_router.post("/agents/tools/run")
@@ -3701,63 +3734,24 @@ async def run_agent_tool(req: AgentToolRunRequest, ws: Optional[str] = Depends(c
     agent = AGENTS.get(req.agent_id)
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
-    tools = AGENT_TOOLS.get(req.agent_id, [])
-    tool = next((t for t in tools if t["id"] == req.tool_id), None)
-    if not tool:
-        raise HTTPException(status_code=404, detail="Tool not found")
+    tool = skill_registry.get_skill(req.tool_id)
+    if not tool or req.agent_id not in tool.get("agent_ids", []):
+        raise HTTPException(status_code=404, detail="Skill not found for this agent")
 
     lang = req.language
-    tool_prompt = tool.get("prompt_de" if lang == "DE" else "prompt_en", "")
-    full_prompt = f"{tool_prompt}{req.context}".strip()
 
-    # Every specialist tool runs inside the active brand's context (never blind).
+    # Every specialist skill runs inside the active brand's context (never blind).
     brand = await _resolve_brand(req.brand_id, ws)
 
-    if tool["type"] == "image":
-        subject = req.context or f"{brand.get('name', 'Brand')} brand visual"
-        try:
-            _vdna = identity_service.visual_prompt_hint(brand)
-        except Exception:
-            _vdna = ""
-        image_prompt = (
-            f"Professional advertising image for '{brand.get('name')}'. "
-            f"Visual style: {brand.get('image_style', 'modern, premium')}. "
-            f"Subject: {subject}. "
-            f"Brand colors: {brand.get('primary_color', '#7C3AED')} and {brand.get('secondary_color', '#0A0A0A')}. "
-            + (f"Visual brand DNA (follow closely): {_vdna}. " if _vdna else "")
-            + "High quality, commercial photography style."
-        )
-        try:
-            image_url = await brand_image(image_prompt, size="16:9")
-            if image_url:
-                return {
-                    "type": "image",
-                    "tool_label": tool["label"] if lang == "DE" else tool["label_en"],
-                    "image_url": image_url,
-                    "prompt_used": image_prompt,
-                }
-        except Exception as e:
-            logger.error(f"Tool image generation error: {e}")
-        return {"type": "error", "message": "Bildgenerierung fehlgeschlagen. Bitte später erneut versuchen."}
-
-    personality = agent["personality_de"] if lang == "DE" else agent["personality_en"]
-    lang_label = "Deutsch" if lang == "DE" else "English"
-    system = (
-        f"{personality}\n\n"
-        f"{_brand_context(brand, lang, req.agent_id)}\n\n"
-        f"Antworte immer auf {lang_label}. "
-        f"Du nutzt gerade das Tool: {tool['label'] if lang == 'DE' else tool['label_en']}. "
-        f"Sei präzise, strukturiert und sofort umsetzbar."
-    )
     _mem = await _agent_memory_context(req.agent_id, ws, lang)
-    if _mem:
-        system = f"{system}\n\n{_mem}"
-    reply = await llm_text(req.model, system, full_prompt)
-    return {
-        "type": "text",
-        "tool_label": tool["label"] if lang == "DE" else tool["label_en"],
-        "reply": reply.strip(),
-    }
+    cfg = await _load_gateway_config(ws)
+    cfg["permission_policy"] = await _load_permission_policy(ws)
+    result = await skill_service.execute_skill(
+        req.tool_id, context=req.context, language=lang, agent=agent, brand=brand,
+        memory_context=_mem, gateway_config=cfg, workspace_id=ws, db=db, model_choice=req.model,
+    )
+    result["tool_label"] = tool["label"] if lang == "DE" else tool["label_en"]
+    return result
 
 
 @api_router.post("/agents/chat")
@@ -5574,6 +5568,73 @@ class GatewayChatRequest(BaseModel):
     model_choice: Optional[str] = None
 
 
+class PermissionPolicyUpdate(BaseModel):
+    subscription: Optional[dict] = None
+    roles: Optional[dict] = None
+    feature_flags: Optional[dict] = None
+    role_assignments: Optional[dict] = None
+    departments: Optional[dict] = None
+    agents: Optional[dict] = None
+    skills: Optional[dict] = None
+    tools: Optional[dict] = None
+    providers: Optional[dict] = None
+    usage_limits: Optional[dict] = None
+
+
+async def _usage_snapshot(ws: Optional[str]) -> dict:
+    if db is None:
+        return {"daily_requests": 0, "monthly_requests": 0}
+    now = datetime.now(timezone.utc)
+    day = now.strftime("%Y-%m-%d")
+    month = now.strftime("%Y-%m")
+    rows = await db.gateway_usage.find(_scope_filter(ws), {"_id": 0, "created_at": 1}).to_list(50000)
+    return {
+        "daily_requests": len([r for r in rows if str(r.get("created_at", "")).startswith(day)]),
+        "monthly_requests": len([r for r in rows if str(r.get("created_at", "")).startswith(month)]),
+    }
+
+
+async def _load_permission_policy(ws: Optional[str]) -> dict:
+    base = permission_framework.default_policy(ws)
+    if db is None:
+        return base
+    doc = await db.permission_policies.find_one({"workspace_id": ws or ""}, {"_id": 0})
+    if doc:
+        base.update(doc)
+    base["usage_snapshot"] = await _usage_snapshot(ws)
+    return base
+
+
+@api_router.get("/permissions/registry")
+async def permissions_registry():
+    return permission_framework.registry_payload()
+
+
+@api_router.get("/permissions/policy")
+async def permissions_get_policy(ws: Optional[str] = Depends(current_workspace)):
+    return await _load_permission_policy(ws)
+
+
+@api_router.put("/permissions/policy")
+async def permissions_put_policy(payload: PermissionPolicyUpdate, ws: Optional[str] = Depends(current_workspace)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    current = await _load_permission_policy(ws)
+    update = payload.model_dump(exclude_none=True)
+    current.update(update)
+    current["workspace_id"] = ws or ""
+    current["updated_at"] = _now_iso()
+    await db.permission_policies.update_one({"workspace_id": ws or ""}, {"$set": current}, upsert=True)
+    return current
+
+
+@api_router.post("/permissions/evaluate")
+async def permissions_evaluate(payload: dict, ws: Optional[str] = Depends(current_workspace)):
+    policy = await _load_permission_policy(ws)
+    decision = permission_framework.evaluate(policy, **payload)
+    return decision.to_dict()
+
+
 @api_router.get("/gateway/registry")
 async def gateway_registry():
     """Provider, model and capability registries (for the admin UI)."""
@@ -5656,6 +5717,7 @@ async def gateway_chat_endpoint(req: GatewayChatRequest,
                                 ws: Optional[str] = Depends(current_workspace)):
     """Run a chat through the gateway end-to-end (provider chosen by config)."""
     cfg = await _load_gateway_config(ws)
+    cfg["permission_policy"] = await _load_permission_policy(ws)
     result = await ai_gateway.chat(req.system, req.user, cfg, task=req.task,
                                    model_choice=req.model_choice, ws=ws)
     if not result.ok:
@@ -5941,6 +6003,141 @@ async def memory_context(agent_id: Optional[str] = None, language: str = "DE",
     """Inspect the routed Memory Context an agent would receive."""
     return {"agent_id": agent_id, "brains": mem_registry.brains_for_agent(agent_id),
             "context": await _agent_memory_context(agent_id, ws, language)}
+
+
+class WorkflowRunRequest(BaseModel):
+    template_id: Optional[str] = None
+    workflow: Optional[dict] = None
+    variables: dict = {}
+    context: dict = {}
+    brand_id: Optional[str] = None
+
+
+class WorkflowDefinitionRequest(BaseModel):
+    workflow: dict
+
+
+@api_router.get("/workflows/registry")
+async def workflows_registry():
+    """Workflow registry: templates, types and supported runtime capabilities."""
+    return workflow_engine.registry_payload()
+
+
+@api_router.get("/workflows/templates")
+async def workflows_templates(workflow_type: Optional[str] = None):
+    payload = workflow_engine.registry_payload()
+    templates = payload["templates"]
+    if workflow_type:
+        templates = [t for t in templates if t.get("type") == workflow_type]
+    return {"templates": templates}
+
+
+@api_router.get("/workflows/templates/{template_id}")
+async def workflows_template(template_id: str):
+    template = workflow_engine.get_template(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Workflow template not found")
+    return template
+
+
+@api_router.post("/workflows/validate")
+async def workflows_validate(payload: WorkflowDefinitionRequest):
+    workflow = payload.workflow or {}
+    errors = []
+    if not workflow.get("id"):
+        errors.append("workflow.id is required")
+    if workflow.get("type") not in workflow_engine.WORKFLOW_TYPES:
+        errors.append("workflow.type must be one of the registered workflow types")
+    if not workflow.get("stages"):
+        errors.append("workflow.stages must contain at least one stage")
+    for stage in workflow.get("stages", []):
+        if not stage.get("tasks"):
+            errors.append(f"stage {stage.get('id', '<missing>')} must contain tasks")
+    return {"ok": not errors, "errors": errors}
+
+
+@api_router.post("/workflows/run")
+async def workflows_run(req: WorkflowRunRequest, ws: Optional[str] = Depends(current_workspace)):
+    definition = req.workflow or (workflow_engine.get_template(req.template_id or "") if req.template_id else None)
+    if not definition:
+        raise HTTPException(status_code=404, detail="Workflow definition or template_id required")
+    context = {**(req.context or {}), "workspace_id": ws or "", "brand_id": req.brand_id or (req.context or {}).get("brand_id", "")}
+    result = await workflow_engine.WorkflowEngine().run(definition, variables=req.variables, context=context)
+    if db is not None:
+        await db.workflow_runs.insert_one({**result, "workspace_id": ws or "", "brand_id": context.get("brand_id", ""), "created_at": _now_iso()})
+    return result
+
+
+@api_router.get("/workflows/runs")
+async def workflows_runs(ws: Optional[str] = Depends(current_workspace), limit: int = 50):
+    if db is None:
+        return {"runs": []}
+    rows = await db.workflow_runs.find(_scope_filter(ws), {"_id": 0}).sort("created_at", -1).to_list(limit)
+    return {"runs": rows}
+
+
+# ---------------------------------------------------------------------------
+# BrandMind Knowledge Graph – semantic facade over current persistence
+# ---------------------------------------------------------------------------
+async def _knowledge_snapshot(ws: Optional[str]) -> knowledge_graph.GraphSnapshot:
+    memory_context = ""
+    try:
+        memory_context = await _agent_memory_context("ceo", ws, "EN")
+    except Exception:
+        memory_context = ""
+    return await knowledge_graph.MongoGraphRepository().snapshot(
+        db=db, workspace_id=ws, scope_filter=_scope_filter(ws), memory_context=memory_context
+    )
+
+
+def _knowledge_permission(policy: dict) -> dict:
+    decision = permission_framework.evaluate(policy, capability="structured_output")
+    if not decision.allowed:
+        raise HTTPException(status_code=403, detail={"message": "Knowledge Graph access denied", "permission": decision.to_dict()})
+    return decision.to_dict()
+
+
+@api_router.get("/knowledge-graph/registry")
+async def knowledge_graph_registry(ws: Optional[str] = Depends(current_workspace)):
+    policy = await _load_permission_policy(ws)
+    return {**knowledge_graph.registry_payload(), "permission": _knowledge_permission(policy), "workspace_id": ws or ""}
+
+
+@api_router.get("/knowledge-graph")
+async def knowledge_graph_get(ws: Optional[str] = Depends(current_workspace)):
+    policy = await _load_permission_policy(ws)
+    _knowledge_permission(policy)
+    snap = await _knowledge_snapshot(ws)
+    return {"nodes": snap.nodes, "edges": snap.edges, "integrations": snap.integrations, "workspace_id": ws or ""}
+
+
+@api_router.get("/knowledge-graph/search")
+async def knowledge_graph_search(q: str = "", entity_type: Optional[str] = None, limit: int = 25,
+                                 ws: Optional[str] = Depends(current_workspace)):
+    policy = await _load_permission_policy(ws)
+    _knowledge_permission(policy)
+    snap = await _knowledge_snapshot(ws)
+    return {"results": knowledge_graph.search_graph(snap, q, entity_type, limit), "query": q}
+
+
+@api_router.get("/knowledge-graph/related/{node_id:path}")
+async def knowledge_graph_related(node_id: str, ws: Optional[str] = Depends(current_workspace)):
+    policy = await _load_permission_policy(ws)
+    _knowledge_permission(policy)
+    snap = await _knowledge_snapshot(ws)
+    return knowledge_graph.related(snap, node_id)
+
+
+@api_router.get("/knowledge-graph/visualization")
+async def knowledge_graph_visualization(ws: Optional[str] = Depends(current_workspace)):
+    policy = await _load_permission_policy(ws)
+    _knowledge_permission(policy)
+    snap = await _knowledge_snapshot(ws)
+    return {
+        "nodes": [{"id": n["id"], "label": n["label"], "group": n["type"], "type": n["type"]} for n in snap.nodes],
+        "links": [{"source": e["from"], "target": e["to"], "label": e["label"], "type": e["type"]} for e in snap.edges],
+        "workspace_id": ws or "",
+    }
 
 
 app.include_router(api_router)

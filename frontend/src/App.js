@@ -6,16 +6,20 @@ import { BRANDMIND } from "@/brandmind";
 import { Layout } from "@/components/Layout";
 
 // Core pages
+import BrandMindHQ from "@/pages/BrandMindHQ";
 import MissionControl from "@/pages/MissionControl";
 import IntelligenceStudio from "@/pages/IntelligenceStudio";
 import GatewayStudio from "@/pages/GatewayStudio";
 import BrandIdentity from "@/pages/BrandIdentity";
 import Memory from "@/pages/Memory";
+import SkillsMarketplace from "@/pages/SkillsMarketplace";
 import Dashboard from "@/pages/Dashboard";
 import KnowledgeBase from "@/pages/KnowledgeBase";
+import KnowledgeExplorer from "@/pages/KnowledgeExplorer";
 import BrandBrain from "@/pages/BrandBrain";
 import Auth from "@/pages/Auth";
 import Billing from "@/pages/Billing";
+import Permissions from "@/pages/Permissions";
 
 // Agent system
 import JarvjisAgent from "@/pages/JarvjisAgent";   // CEO Orb – bleibt
@@ -103,7 +107,8 @@ function AppShell() {
     <Layout>
       <Routes>
               {/* Phase 5 – Main Navigation */}
-              <Route path="/" element={<MissionControl />} />
+              <Route path="/" element={<BrandMindHQ />} />
+              <Route path="/mission" element={<MissionControl />} />
               <Route path="/intelligence" element={<IntelligenceStudio />} />
               <Route path="/gateway" element={<GatewayStudio />} />
               <Route path="/mission/plans/:planId" element={<MissionControl />} />
@@ -112,7 +117,10 @@ function AppShell() {
               <Route path="/brand-brain" element={<BrandBrain />} />
               <Route path="/brand-identity" element={<BrandIdentity />} />
               <Route path="/memory" element={<Memory />} />
+              <Route path="/skills" element={<SkillsMarketplace />} />
+              <Route path="/skills/:skillId" element={<SkillsMarketplace />} />
               <Route path="/billing" element={<Billing />} />
+              <Route path="/permissions" element={<Permissions />} />
               <Route path="/agents" element={<Specialists />} />
               <Route path="/design" element={<DesignStudio />} />
               <Route path="/video" element={<VideoStudio />} />
@@ -121,6 +129,7 @@ function AppShell() {
               <Route path="/analytics" element={<AnalyticsStudio />} />
               <Route path="/automation" element={<AutomationStudio />} />
               <Route path="/knowledge" element={<KnowledgeBase />} />
+              <Route path="/knowledge-graph" element={<KnowledgeExplorer />} />
 
               {/* Jarvjis CEO Orb – bleibt */}
               <Route path="/jarvjis" element={<JarvjisAgent />} />

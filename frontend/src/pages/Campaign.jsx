@@ -66,7 +66,7 @@ export default function Campaign() {
     <div>
       <PageTitle title={t("campaign_title")} subtitle={t("campaign_sub")} icon={Zap} />
 
-      <div className="bg-[#0A0A0A] border border-[#7C3AED]/30 rounded-md p-6 md:p-7 space-y-5 gold-glow">
+      <div className="bg-[#0A0A0A] border border-[#7C3AED]/30 rounded-md p-6 md:p-7 space-y-5 purple-glow">
         <div className="space-y-1.5">
           <label className="text-xs tracking-[0.12em] uppercase text-zinc-500">{t("topic")}</label>
           <Textarea
