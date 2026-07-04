@@ -574,17 +574,17 @@ class FunnelLead(BaseModel):
 # Brand endpoints
 # ---------------------------------------------------------------------------
 DEFAULT_BRAND = {
-    "id": "kickstartercash",
-    "name": "Kickstartercash.Club",
-    "slogan": "Exclusivity starts with your membership",
-    "primary_color": "#D4AF37",
-    "secondary_color": "#050505",
-    "accent_color": "#F3E5AB",
-    "font_heading": "Playfair Display",
-    "font_body": "Manrope",
-    "tone": "Premium, exklusiv, luxuriös, selbstbewusst, motivierend",
-    "image_style": "Luxuriös, schwarz-gold, cinematisch, Dubai-Skyline-Ästhetik, hoher Kontrast, goldene Lichteffekte",
-    "logo_url": "https://customer-assets.emergentagent.com/job_5234ef58-250d-4475-b61a-24b76051aa69/artifacts/nwxii717_bloom-generated-1782456245045.png",
+    "id": "kickstartercash",  # internal id kept for backward-compat; display is Brandmind
+    "name": "Brandmind",
+    "slogan": "Das Gehirn deiner Marke",
+    "primary_color": "#7C3AED",
+    "secondary_color": "#0A0A0A",
+    "accent_color": "#F5F5F7",
+    "font_heading": "Space Grotesk",
+    "font_body": "Inter",
+    "tone": "Modern, klar, intelligent, selbstbewusst, inspirierend",
+    "image_style": "Modern, hochwertig, violett-schwarz mit Off-White-Akzenten, cinematisch, klare Komposition, subtile Tech-/KI-Ästhetik, hoher Kontrast",
+    "logo_url": "",
     "is_default": True,
     "created_at": _now_iso(),
 }
@@ -599,7 +599,18 @@ async def seed_default_brand():
         existing = await db.brands.find_one({"id": DEFAULT_BRAND["id"]})
         if not existing:
             await db.brands.insert_one({**DEFAULT_BRAND})
-            logger.info("Seeded default Kickstartercash.Club brand")
+            logger.info("Seeded default Brandmind brand")
+        elif existing.get("name") == "Kickstartercash.Club":
+            # Legacy seed – rebrand the untouched default from Kickstartercash to
+            # Brandmind so studios stop injecting gold/Dubai identity into images.
+            fields = ["name", "slogan", "primary_color", "secondary_color",
+                      "accent_color", "font_heading", "font_body", "tone",
+                      "image_style", "logo_url"]
+            await db.brands.update_one(
+                {"id": DEFAULT_BRAND["id"]},
+                {"$set": {k: DEFAULT_BRAND[k] for k in fields}},
+            )
+            logger.info("Migrated legacy Kickstartercash seed brand -> Brandmind")
     except Exception as e:
         logger.error(f"DB seed failed: {e}")
     # Start daily KASH report scheduler
