@@ -11,21 +11,20 @@ const buttonVariants = cva(
       variant: {
         default:
           "bg-primary text-primary-foreground shadow-[0_12px_32px_rgba(124,58,237,0.28)] hover:bg-primary/90 hover:-translate-y-0.5",
-        destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
-        outline:
-          "border border-input bg-transparent text-foreground shadow-sm hover:border-primary/60 hover:bg-primary/10",
+        primary:
+          "bg-primary text-primary-foreground shadow-[0_12px_32px_rgba(124,58,237,0.28)] hover:bg-primary/90 hover:-translate-y-0.5",
         secondary:
-          "bg-secondary/15 text-secondary border border-secondary/20 shadow-sm hover:bg-secondary/25",
-        ghost: "text-muted-foreground hover:bg-white/5 hover:text-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        icon: "border border-input bg-card hover:border-primary/60 hover:bg-primary/10",
-        loading: "bg-primary/70 text-primary-foreground cursor-wait",
+          "bg-secondary/15 text-secondary border border-secondary/20 shadow-sm hover:bg-secondary/25 hover:-translate-y-0.5",
+        ghost: "text-muted-foreground border border-transparent hover:border-white/10 hover:bg-white/5 hover:text-foreground",
+        danger:
+          "bg-destructive/15 text-destructive border border-destructive/30 shadow-sm hover:bg-destructive/25",
+        destructive:
+          "bg-destructive/15 text-destructive border border-destructive/30 shadow-sm hover:bg-destructive/25",
       },
       size: {
         default: "h-10 px-4 py-2",
-        sm: "h-8 rounded-lg px-3 text-xs",
-        lg: "h-11 rounded-xl px-8",
+        sm: "h-8 rounded-xl px-3 text-xs",
+        lg: "h-12 rounded-2xl px-8",
         icon: "h-10 w-10",
       },
     },
