@@ -30,6 +30,7 @@ import EmailStudio from "@/pages/EmailStudio";
 import LinkedInStudio from "@/pages/LinkedInStudio";
 import OrchestratorStudio from "@/pages/OrchestratorStudio";
 import WorkflowStudio from "@/pages/WorkflowStudio";
+import WorkflowEngine from "@/pages/WorkflowEngine";
 import FinanceCFOStudio from "@/pages/FinanceCFOStudio";
 import FinanceAnalystStudio from "@/pages/FinanceAnalystStudio";
 import FinanceFPAStudio from "@/pages/FinanceFPAStudio";
@@ -128,6 +129,7 @@ function AppShell() {
               <Route path="/linkedin" element={<LinkedInStudio />} />
               <Route path="/orchestrator" element={<OrchestratorStudio />} />
               <Route path="/workflow-architect" element={<WorkflowStudio />} />
+              <Route path="/workflows" element={<WorkflowEngine />} />
               <Route path="/finance-cfo" element={<FinanceCFOStudio />} />
               <Route path="/finance-analyst" element={<FinanceAnalystStudio />} />
               <Route path="/finance-fpa" element={<FinanceFPAStudio />} />

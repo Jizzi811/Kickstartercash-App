@@ -5370,6 +5370,15 @@ try:
 except Exception as _bm_err:
     logging.getLogger(__name__).warning(f"Brandmind router not mounted: {_bm_err}")
 
+# BrandMind generic workflow engine foundation
+try:
+    from workflows import router as workflows_router, init_workflows
+    init_workflows(db)
+    app.include_router(workflows_router)
+    logger.info("BrandMind workflow engine router mounted")
+except Exception as _wf_err:
+    logging.getLogger(__name__).warning(f"BrandMind workflow router not mounted: {_wf_err}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

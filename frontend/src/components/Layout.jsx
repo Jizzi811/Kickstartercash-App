@@ -4,7 +4,7 @@ import {
   LayoutGrid, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
-  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target, Factory,
+  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target, Factory, GitBranch,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { SalesSupportWidget } from "@/components/SalesSupportWidget";
@@ -37,6 +37,7 @@ const NAV = [
   { to: "/linkedin",   icon: Linkedin,   labelDE: "LinkedIn Studio",  labelEN: "LinkedIn Studio" },
   { to: "/orchestrator", icon: Network,  labelDE: "Orchestrator",     labelEN: "Orchestrator" },
   { to: "/workflow-architect", icon: Workflow, labelDE: "Workflow Architect", labelEN: "Workflow Architect" },
+  { to: "/workflows", icon: GitBranch, labelDE: "Workflow Engine", labelEN: "Workflow Engine" },
   { to: "/finance-cfo", icon: TrendingUp, labelDE: "CFO Studio", labelEN: "CFO Studio" },
   { to: "/finance-analyst", icon: BarChart2, labelDE: "Financial Analyst", labelEN: "Financial Analyst" },
   { to: "/finance-fpa", icon: TrendingUp, labelDE: "FP&A Studio", labelEN: "FP&A Studio" },
@@ -70,6 +71,7 @@ const PAGE_NAMES = {
   "/linkedin": "LinkedIn Studio",
   "/orchestrator": "Orchestrator",
   "/workflow-architect": "Workflow Architect",
+  "/workflows": "Workflow Engine",
   "/finance-cfo": "CFO Studio",
   "/finance-analyst": "Financial Analyst",
   "/finance-fpa": "FP&A Studio",
