@@ -6,6 +6,7 @@ import { BRANDMIND } from "@/brandmind";
 import { Layout } from "@/components/Layout";
 
 // Core pages
+import MissionControl from "@/pages/MissionControl";
 import Dashboard from "@/pages/Dashboard";
 import KnowledgeBase from "@/pages/KnowledgeBase";
 import BrandBrain from "@/pages/BrandBrain";
@@ -97,7 +98,8 @@ function AppShell() {
     <Layout>
       <Routes>
               {/* Phase 5 – Main Navigation */}
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/" element={<MissionControl />} />
+              <Route path="/modules" element={<Dashboard />} />
               <Route path="/brand-brain" element={<BrandBrain />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/agents" element={<Specialists />} />
