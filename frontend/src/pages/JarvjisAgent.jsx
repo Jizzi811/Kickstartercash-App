@@ -499,6 +499,45 @@ export default function JarvjisAgent() {
         </div>
       </motion.div>
 
+
+
+      <div className="grid gap-4 lg:grid-cols-4">
+        {[
+          { labelDE: "Prioritäten", labelEN: "Priorities", itemsDE: ["Kampagnenziel schärfen", "Team-Agenten auswählen"], itemsEN: ["Sharpen campaign goal", "Select team agents"] },
+          { labelDE: "Chancen", labelEN: "Opportunities", itemsDE: ["Facebook-Kampagne bündeln", "Design + Copy parallelisieren"], itemsEN: ["Bundle Facebook campaign", "Parallelize design + copy"] },
+          { labelDE: "Risiken", labelEN: "Risks", itemsDE: ["Briefing-Lücken vermeiden", "Freigaben früh setzen"], itemsEN: ["Avoid briefing gaps", "Set approvals early"] },
+          { labelDE: "Automationen", labelEN: "Automations", itemsDE: ["Asset-Export vorbereiten", "Analytics-Check anhängen"], itemsEN: ["Prepare asset export", "Attach analytics check"] },
+        ].map((block) => (
+          <div key={block.labelDE} className="rounded-sm border border-[#7C3AED]/20 bg-[#0A0A0A] p-4">
+            <div className="mb-3 text-[10px] uppercase tracking-[0.2em] text-[#A78BFA]">
+              {lang === "DE" ? block.labelDE : block.labelEN}
+            </div>
+            <ul className="space-y-2 text-xs text-zinc-400">
+              {(lang === "DE" ? block.itemsDE : block.itemsEN).map((item) => <li key={item}>• {item}</li>)}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-sm border border-white/8 bg-black/30 p-5">
+        <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
+          <GitBranch size={16} className="text-[#7C3AED]" /> Agent Timeline
+        </div>
+        <div className="space-y-3 text-xs">
+          {[
+            ["08:42", "🟢 CEO Agent", lang === "DE" ? "Aufgabe analysiert" : "Task analyzed"],
+            ["08:43", "✔ Marketing Agent", lang === "DE" ? "Kampagnenstruktur erstellt" : "Campaign structure drafted"],
+            ["08:44", "✔ Design Agent", lang === "DE" ? "Grafik-Briefing vorbereitet" : "Design brief prepared"],
+            ["08:45", "… Video Agent", lang === "DE" ? "Reel wird geplant" : "Planning reel"],
+            ["08:46", "🔵 Analytics Agent", lang === "DE" ? "wartet auf Zielgruppe" : "waiting for audience"],
+          ].map(([time, agent, state]) => (
+            <div key={time} className="grid grid-cols-[52px_1fr_1.4fr] gap-3 border-l border-[#7C3AED]/25 pl-4 text-zinc-500">
+              <span>{time}</span><span className="text-zinc-200">{agent}</span><span>{state}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Workflow Diagram */}
       <div className="flex flex-col items-center gap-0">
 

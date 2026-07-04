@@ -377,3 +377,22 @@ export function AgentChatPanel({ agentId, agentName, agentEmoji, color, tools = 
     </div>
   );
 }
+
+export function StudioFlowRail({ color = "#7C3AED", lang = "DE", active = "Workspace" }) {
+  const steps = ["Hero", "Workspace", "Tool Cards", "Chat", "Ergebnis", "Export"];
+  return (
+    <div className="rounded-sm border border-white/8 bg-[#0A0A0A] p-3">
+      <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-zinc-600">
+        {(lang === "DE" ? ["Hero", "Workspace", "Tools", "Chat", "Ergebnis", "Export"] : steps).map((step, index) => {
+          const isActive = active === steps[index] || active === step;
+          return (
+            <React.Fragment key={step}>
+              <span className="rounded-full border px-2.5 py-1" style={{ borderColor: isActive ? `${color}70` : "rgba(255,255,255,0.08)", color: isActive ? color : undefined, background: isActive ? `${color}12` : undefined }}>{step}</span>
+              {index < steps.length - 1 && <span className="text-zinc-800">↓</span>}
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

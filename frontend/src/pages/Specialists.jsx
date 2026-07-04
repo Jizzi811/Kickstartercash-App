@@ -10,7 +10,7 @@ import {
   RefreshCw, FileBarChart, Map, ListChecks, Type, BookOpen,
   Mail, MousePointer, Layout, Wand2, PenTool, Clapperboard,
   Code, Braces, FileEdit, Calendar, User, Globe2, Workflow,
-  Plug, Box, Terminal, Webhook,
+  Plug, Box, Terminal, Webhook, Activity, Clock3,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { API } from "@/context/AppContext";
@@ -389,6 +389,13 @@ function AgentChat({ agent, onClose }) {
   );
 }
 
+const STATUS_META = [
+  { key: "active", dot: "🟢", color: "#34D399", labelDE: "Aktiv", labelEN: "Active", activityDE: "nimmt neue Aufgaben an", activityEN: "accepting new work" },
+  { key: "working", dot: "🟡", color: "#FBBF24", labelDE: "Arbeitet", labelEN: "Working", activityDE: "bearbeitet einen Auftrag", activityEN: "processing a task" },
+  { key: "waiting", dot: "🔵", color: "#60A5FA", labelDE: "Wartet", labelEN: "Waiting", activityDE: "wartet auf Freigabe", activityEN: "waiting for approval" },
+  { key: "error", dot: "🔴", color: "#F87171", labelDE: "Fehler", labelEN: "Error", activityDE: "braucht Aufmerksamkeit", activityEN: "needs attention" },
+];
+
 export default function Specialists() {
   const lang = localStorage.getItem("kc_lang") || "DE";
   const [agents, setAgents] = useState([]);
@@ -401,6 +408,8 @@ export default function Specialists() {
       .catch(() => setLoading(false));
   }, []);
 
+  const liveAgents = agents.slice(0, 6).map((agent, index) => ({ agent, status: STATUS_META[index % STATUS_META.length] }));
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -411,6 +420,34 @@ export default function Specialists() {
           ? "17 KI-Agenten mit eigener Persönlichkeit, spezialisierten Tools & KB-Zugriff."
           : "17 AI agents with their own personality, specialized tools & KB access."}
       />
+
+      <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="rounded-sm border border-[#7C3AED]/20 bg-[#0A0A0A] p-5">
+          <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white"><Activity size={16} className="text-[#7C3AED]" />{lang === "DE" ? "Agentenzentrale" : "Agent Command Center"}</div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {STATUS_META.map((s) => (
+              <div key={s.key} className="rounded-sm border border-white/8 bg-white/[0.03] p-3">
+                <div className="text-lg">{s.dot}</div>
+                <div className="mt-1 text-xs font-medium text-zinc-200">{lang === "DE" ? s.labelDE : s.labelEN}</div>
+                <div className="text-[10px] text-zinc-600">{lang === "DE" ? s.activityDE : s.activityEN}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-sm border border-white/8 bg-[#0A0A0A] p-5">
+          <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white"><Clock3 size={16} className="text-[#7C3AED]" />Live-Aktivitäten</div>
+          <div className="space-y-3">
+            {(liveAgents.length ? liveAgents : []).map(({ agent, status }, index) => (
+              <div key={agent.id} className="flex items-center gap-3 text-xs">
+                <span className="w-10 text-zinc-600">08:{String(42 + index).padStart(2, "0")}</span>
+                <span>{status.dot}</span>
+                <span className="min-w-0 flex-1 truncate text-zinc-300">{agent.name} · {lang === "DE" ? status.activityDE : status.activityEN}</span>
+              </div>
+            ))}
+            {!liveAgents.length && <p className="text-xs text-zinc-600">{lang === "DE" ? "Lade Live-Aktivitäten…" : "Loading live activity…"}</p>}
+          </div>
+        </div>
+      </div>
 
       {/* Agent Grid */}
       {loading ? (
@@ -440,10 +477,13 @@ export default function Specialists() {
                     style={{ backgroundColor: `${color}18` }}>
                     <Icon size={20} style={{ color }} />
                   </div>
-                  <span className="text-xl">{agent.emoji}</span>
+                  <span className="flex items-center gap-1 text-xl">{agent.emoji}<span className="text-xs">{STATUS_META[i % STATUS_META.length].dot}</span></span>
                 </div>
                 <h3 className="text-sm font-semibold text-white mb-1">{agent.name}</h3>
                 <p className="text-[11px] text-zinc-500 leading-relaxed mb-3">{role}</p>
+                <div className="mb-3 rounded-sm border border-white/8 bg-white/[0.03] px-2 py-1.5 text-[10px] text-zinc-500">
+                  {lang === "DE" ? STATUS_META[i % STATUS_META.length].labelDE : STATUS_META[i % STATUS_META.length].labelEN} · {lang === "DE" ? STATUS_META[i % STATUS_META.length].activityDE : STATUS_META[i % STATUS_META.length].activityEN}
+                </div>
 
                 {/* Tool chips preview */}
                 {tools.length > 0 && (
