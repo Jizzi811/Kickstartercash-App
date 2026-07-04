@@ -8,6 +8,7 @@ import { Layout } from "@/components/Layout";
 // Core pages
 import MissionControl from "@/pages/MissionControl";
 import IntelligenceStudio from "@/pages/IntelligenceStudio";
+import GatewayStudio from "@/pages/GatewayStudio";
 import Dashboard from "@/pages/Dashboard";
 import KnowledgeBase from "@/pages/KnowledgeBase";
 import BrandBrain from "@/pages/BrandBrain";
@@ -102,6 +103,7 @@ function AppShell() {
               {/* Phase 5 – Main Navigation */}
               <Route path="/" element={<MissionControl />} />
               <Route path="/intelligence" element={<IntelligenceStudio />} />
+              <Route path="/gateway" element={<GatewayStudio />} />
               <Route path="/mission/plans/:planId" element={<MissionControl />} />
               <Route path="/modules" element={<Dashboard />} />
               <Route path="/output-factory" element={<OutputFactory />} />
