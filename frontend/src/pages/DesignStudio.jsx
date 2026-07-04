@@ -48,18 +48,18 @@ export default function DesignStudio() {
   const [toolLoading, setToolLoading] = useState(null);
   const [prompt, setPrompt] = useState("");
   const [style, setStyle] = useState("Luxuriös");
-  const [generatedImage, setGeneratedImage] = useState(null);
+  const [generatedImages, setGeneratedImages] = useState([]);
 
   const runTool = async (tool) => {
     if (tool.id === "gpt_image") {
       if (!prompt.trim()) { toast.error(lang === "DE" ? "Bitte Prompt eingeben" : "Please enter a prompt"); return; }
       setToolLoading(tool.id);
-      setGeneratedImage(null);
+      setGeneratedImages([]);
       try {
         const res = await axios.post(`${API}/generate/image`, {
-          prompt, style, brand_id: activeBrandId, language: lang, apply_logo: false, size: "16:9",
+          prompt, style, brand_id: activeBrandId, language: lang, apply_logo: false, size: "16:9", count: 3,
         });
-        setGeneratedImage(res.data.image);
+        setGeneratedImages(res.data.images || (res.data.image ? [res.data.image] : []));
       } catch (e) {
         toast.error(e?.response?.data?.detail || "Fehler bei der Bildgenerierung");
       } finally { setToolLoading(null); }
@@ -137,22 +137,29 @@ export default function DesignStudio() {
             </div>
           </div>
 
-          {/* Generated Image */}
-          {(toolLoading === "gpt_image" || generatedImage) && (
-            <div className="bg-[#0A0A0A] border border-white/8 rounded-sm overflow-hidden">
+          {/* Generated variants */}
+          {(toolLoading === "gpt_image" || generatedImages.length > 0) && (
+            <div className="bg-[#0A0A0A] border border-white/8 rounded-sm overflow-hidden p-3">
               {toolLoading === "gpt_image" ? (
                 <div className="flex items-center justify-center py-16 gap-3 text-zinc-500">
                   <Loader2 size={18} className="animate-spin text-[#C084FC]" />
-                  <span className="text-sm">{lang === "DE" ? "Bild wird generiert…" : "Generating image…"}</span>
+                  <span className="text-sm">{lang === "DE" ? "3 Varianten werden generiert…" : "Generating 3 variants…"}</span>
                 </div>
-              ) : generatedImage && (
+              ) : (
                 <>
-                  <img src={generatedImage} alt="Generated" className="w-full" />
-                  <div className="flex justify-end p-3">
-                    <a href={generatedImage} download="design.png"
-                      className="flex items-center gap-2 text-xs px-3 py-1.5 border border-white/10 rounded-sm text-zinc-400 hover:text-white transition-colors">
-                      <Download size={12} /> Download
-                    </a>
+                  <p className="text-[10px] text-zinc-600 uppercase tracking-widest mb-2 px-1">
+                    {lang === "DE" ? "Varianten — bestes auswählen & laden" : "Variants — pick & download the best"}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {generatedImages.map((img, i) => (
+                      <div key={i} className="group relative border border-white/8 rounded-sm overflow-hidden">
+                        <img src={img} alt={`Variant ${i + 1}`} className="w-full" />
+                        <a href={img} download={`brandmind-design-${i + 1}.png`}
+                          className="absolute bottom-2 right-2 flex items-center gap-1 text-[11px] px-2 py-1 rounded-sm bg-black/70 border border-white/15 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Download size={11} /> {lang === "DE" ? "Laden" : "Save"}
+                        </a>
+                      </div>
+                    ))}
                   </div>
                 </>
               )}

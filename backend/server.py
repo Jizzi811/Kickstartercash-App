@@ -462,6 +462,7 @@ class ImageRequest(BaseModel):
     language: str = "DE"
     apply_logo: bool = False
     size: str = "1:1"
+    count: int = 1   # number of variants to generate (1-4)
 
 
 class PromptOptimizeRequest(BaseModel):
@@ -889,7 +890,11 @@ def _build_image_prompt(brand: dict, subject: str, style: str) -> str:
         "interacting with the theme, set in a polished, cinematic environment with supporting details "
         "(atmosphere, lighting effects, subtle graphic or holographic UI elements). "
         "Photorealistic or premium 3D render, dramatic lighting, sharp focus, professional composition, "
-        "shallow depth of field. If any text appears, spell it correctly and keep it minimal and elegant."
+        "shallow depth of field. "
+        # Consistency anchors – raise the hit-rate for a cohesive, on-brand look.
+        "Editorial ad-campaign quality with cohesive color grading strictly in the brand palette; "
+        "ONE strong focal subject; clean, uncluttered background with deliberate negative space for a short headline; "
+        "no busy collages, no stock-photo feel. If any text appears, spell it correctly and keep it minimal and elegant."
     )
 
 
@@ -987,9 +992,24 @@ async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_
         )
         image_urls = [brand_logo]
 
-    image_url, img_status = await brand_image_verbose(full_prompt, size=req.size, image_urls=image_urls)
-    if not image_url:
-        detail = "Bildgenerierung fehlgeschlagen. " + " · ".join(f"{k}: {v}" for k, v in img_status.items())
+    count = min(max(req.count or 1, 1), 4)
+    results = await asyncio.gather(
+        *[brand_image_verbose(full_prompt, size=req.size, image_urls=image_urls) for _ in range(count)],
+        return_exceptions=True,
+    )
+    images = []
+    last_status = {}
+    for r in results:
+        if isinstance(r, tuple):
+            img, status = r
+            if img:
+                images.append(img)
+            else:
+                last_status = status
+        elif isinstance(r, Exception):
+            last_status = {"error": str(r)[:160]}
+    if not images:
+        detail = "Bildgenerierung fehlgeschlagen. " + " · ".join(f"{k}: {v}" for k, v in last_status.items())
         raise HTTPException(status_code=502, detail=detail[:500])
 
     record = {
@@ -998,7 +1018,8 @@ async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_
         "prompt": req.prompt,
         "style": req.style,
         "brand_id": req.brand_id,
-        "image": image_url,
+        "image": images[0],
+        "images": images,
         "created_at": _now_iso(),
     }
     record["workspace_id"] = ws or ""
