@@ -69,7 +69,7 @@ entry point already uses — `_brand_context(brand, language, agent_id)` in
 | Video | Visual · Psychology · Communication |
 | Social / TikTok | Visual · Psychology · Communication |
 | Sales | Psychology · Business · Communication |
-| CEO (Mission Control, Team Chat) | all four |
+| Quantum (Mission Control, Team Chat) | all four |
 | *(unknown / generic generate)* | all four (safe superset) |
 
 **Hard rules** (no-go words, formality, emoji rule) always surface, even if their

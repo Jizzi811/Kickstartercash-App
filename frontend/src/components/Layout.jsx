@@ -124,7 +124,7 @@ const PAGE_NAMES = {
   "/tickets": "Tickets",
   "/builder": "Eigene Agenten",
   "/arena": "Chat Arena",
-  "/jarvjis": "Quantum",
+  "/quantum": "Quantum",
   "/tiktok": "TikTok Studio",
   "/seo-specialist": "SEO Specialist",
   "/email": "E-Mail Marketing",
@@ -241,8 +241,8 @@ const CEOModeToast = ({ lang, onDone, enabled = true }) => {
       }}
     >
       {lang === "DE"
-        ? "✦ Du hast den CEO-Modus entdeckt 🏆"
-        : "✦ You found CEO mode 🏆"}
+        ? "✦ Du hast den Quantum Command entdeckt 🏆"
+        : "✦ You found Quantum Command 🏆"}
       <style>{`
         @keyframes ceoToastIn {
           from { opacity: 0; transform: translateX(-50%) translateY(16px) scale(0.92); }

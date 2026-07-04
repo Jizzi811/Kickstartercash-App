@@ -8,9 +8,9 @@ BrandMind HQ does not replace existing workflows. It sits above them as an execu
 
 ## Alpha scope
 
-### AI CEO Office
+### Quantum Command
 
-The AI CEO Office summarizes the day at an executive level:
+The Quantum Command summarizes the day at an executive level:
 
 - Today's executive summary
 - Active goals
@@ -40,7 +40,7 @@ The feed uses company-style activity events such as:
 - Designer created carousel
 - SEO finished audit
 - Marketing started campaign
-- CEO approved strategy
+- Quantum approved strategy
 - Workflow completed
 
 ### Intelligence Panel

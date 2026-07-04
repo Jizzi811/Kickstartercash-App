@@ -63,7 +63,7 @@ export default function BrandMindHQ() {
     ...d,
     state: [de ? "arbeitet" : "working", de ? "prüft" : "reviewing", de ? "wartet" : "waiting", de ? "aktiv" : "active"][i % 4],
   }));
-  const jarvjisPriorities = [
+  const quantumPriorities = [
     { icon: Target, label: de ? "Priorität" : "Priority", text: recommendations[0]?.title || (de ? "Heute ein klares Kampagnenziel definieren." : "Define one clear campaign goal today.") },
     { icon: Sparkles, label: de ? "Chance" : "Opportunity", text: insights[0]?.title || (de ? "Brand-DNA schärfen und in neue Assets übersetzen." : "Sharpen brand DNA and translate it into new assets.") },
     { icon: AlertTriangle, label: de ? "Risiko" : "Risk", text: counts.tasks_open ? (de ? `${counts.tasks_open} offene Aufgaben können den Flow bremsen.` : `${counts.tasks_open} open tasks may slow the flow.`) : (de ? "Keine kritischen Risiken sichtbar." : "No critical risks visible.") },
@@ -111,7 +111,7 @@ export default function BrandMindHQ() {
         <Section icon={Users} title={de ? "Dein Team arbeitet gerade…" : "Your team is working on…"}>
           <Card className="h-full">
             <div className="space-y-3">
-              {(teamPulse.length ? teamPulse : [{ id: "ceo", label_de: "Jarvjis", label_en: "Jarvjis", state: de ? "bereit" : "ready" }]).map((member, i) => {
+              {(teamPulse.length ? teamPulse : [{ id: "ceo", label_de: "Quantum", label_en: "Quantum", state: de ? "bereit" : "ready" }]).map((member, i) => {
                 const Icon = DEPT_ICON[member.id] || Crown;
                 return (
                   <div key={member.id} className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/[0.03] p-3">
@@ -131,10 +131,10 @@ export default function BrandMindHQ() {
           </Card>
         </Section>
 
-        <Section icon={Crown} title={de ? "Tagesempfehlungen von Jarvjis" : "Jarvjis daily recommendations"}>
+        <Section icon={Crown} title={de ? "Quantum Intelligence Empfehlungen" : "Quantum Intelligence recommendations"}>
           <Card tinted className="h-full">
             <div className="grid gap-3 md:grid-cols-3">
-              {jarvjisPriorities.map(({ icon: Icon, label, text }) => (
+              {quantumPriorities.map(({ icon: Icon, label, text }) => (
                 <div key={label} className="rounded-xl border border-violet-400/15 bg-black/25 p-4">
                   <div className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-violet-300"><Icon size={12} />{label}</div>
                   <p className="text-sm leading-relaxed text-zinc-300">{text}</p>
@@ -146,8 +146,8 @@ export default function BrandMindHQ() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        {/* AI CEO Office – real goals + real recommendations */}
-        <Section icon={Crown} title="AI CEO Office" className="min-w-0">
+        {/* Quantum Command – real goals + real recommendations */}
+        <Section icon={Crown} title="Quantum Command" className="min-w-0">
           <Card>
             <div className="grid gap-5 md:grid-cols-2">
               <div>
@@ -242,7 +242,7 @@ export default function BrandMindHQ() {
           <EmptyState
             icon={Building2}
             title={de ? "Dein Unternehmen wartet auf den ersten Auftrag" : "Your company awaits its first assignment"}
-            description={de ? "Erstelle in Mission Control ein Geschäftsziel – der KI-CEO verteilt die Arbeit an die Abteilungen." : "Create a business goal in Mission Control – the AI CEO delegates work to the departments."}
+            description={de ? "Erstelle in Mission Control ein Geschäftsziel – der Quantum Intelligence verteilt die Arbeit an die Abteilungen." : "Create a business goal in Mission Control – the Quantum Intelligence delegates work to the departments."}
             actionLabel={de ? "Erstes Ziel erstellen" : "Create first goal"}
             onAction={() => navigate("/mission")}
           />

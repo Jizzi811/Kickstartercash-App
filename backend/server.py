@@ -2685,11 +2685,11 @@ AGENTS = {
         "id": "ceo",
         "emoji": "🎯",
         "name": "Quantum",
-        "role_de": "KI-CEO & Orchestrator",
-        "role_en": "AI CEO & Orchestrator",
+        "role_de": "Quantum AI & Orchestrator",
+        "role_en": "Quantum AI & Orchestrator",
         "color": "#7C3AED",
         "personality_de": (
-            "Du bist Quantum, der KI-CEO des digitalen Mitarbeiterstabs deines Nutzers. "
+            "Du bist Quantum, die zentrale Intelligenz des digitalen Mitarbeiterstabs deines Nutzers. "
             "Du kennst die Marke, Zielgruppe und Angebote aus dem Brand Brain (Wissensdatenbank) "
             "und richtest jede Empfehlung strikt daran aus. "
             "Du denkst strategisch, erkennst Chancen sofort und delegierst mit Präzision an die Spezialisten-Agenten. "
@@ -2697,7 +2697,7 @@ AGENTS = {
             "Du analysierst die Anfrage und gibst eine klare Entscheidung + Aktionsplan."
         ),
         "personality_en": (
-            "You are Quantum, the AI CEO of the user's digital staff. "
+            "You are Quantum, the intelligence core of the user's digital staff. "
             "You know the brand, audience and offers from the Brand Brain (knowledge base) "
             "and align every recommendation strictly with it. "
             "You think strategically, spot opportunities instantly and delegate with precision to the specialist agents. "
@@ -3551,7 +3551,7 @@ AGENTS = {
         "personality_de": (
             "Du bist Orion, der offizielle Multi-Agent-Orchestrator und KI-Systemarchitekt von Brandmind. "
             "Du bist der Dirigent des gesamten Brandmind AI Operating Systems. "
-            "Du koordinierst alle Agenten (CEO, Marketing, Content, Design, Video, SEO, TikTok, "
+            "Du koordinierst alle Agenten (Quantum, Marketing, Content, Design, Video, SEO, TikTok, "
             "E-Mail, LinkedIn, Automation, Analytics, Sales, Coding) und orchestrierst sie für "
             "komplexe, mehrstufige Aufgaben. "
             "\n\nDEINE KERNFÄHIGKEITEN: "
@@ -3584,7 +3584,7 @@ AGENTS = {
         "personality_en": (
             "You are Orion, the official Multi-Agent Orchestrator and AI System Architect of Brandmind. "
             "You are the conductor of the entire Brandmind AI Operating System. "
-            "You coordinate all agents (CEO, Marketing, Content, Design, Video, SEO, TikTok, "
+            "You coordinate all agents (Quantum, Marketing, Content, Design, Video, SEO, TikTok, "
             "Email, LinkedIn, Automation, Analytics, Sales, Coding) for complex, multi-step tasks. "
             "Patterns: Sequential Chain, Parallel Dispatch, Hierarchical, Feedback Loop, Specialist Swarm. "
             "For every request: understand goal → decompose into atomic tasks → assign optimal agent → "
@@ -3907,7 +3907,7 @@ async def search_knowledge(payload: KbSearchRequest):
         f"[{d['category']}] {d['title']}:\n{d['content']}" for d in docs[:30]
     )
     system = (
-        "Du bist Jarvjis, der KI-Agent von Brandmind. "
+        "Du bist Quantum, der KI-Agent von Brandmind. "
         "Beantworte Fragen ausschließlich auf Basis der folgenden Wissensdatenbank. "
         "Halluziniere nichts. Zitiere die Quelle (Titel) wenn möglich.\n\n"
         f"WISSENSDATENBANK:\n{context}"
@@ -4588,9 +4588,9 @@ async def ticket_stats():
 
 
 # ---------------------------------------------------------------------------
-# Mission Control – AI CEO executive planning + department tasks
+# Mission Control – Quantum AI executive planning + department tasks
 # ---------------------------------------------------------------------------
-# The dashboard's command center. The AI CEO (Quantum) turns a business goal
+# The dashboard's command center. The Quantum Intelligence turns a business goal
 # into an executive plan and a set of department task objects. NOTHING is
 # auto-published or executed – every task starts as a proposal that a human
 # must approve. All records are workspace-scoped and carry the active brand.
@@ -4869,7 +4869,7 @@ def _dept_for(dept_id: str) -> dict:
 
 
 TEAM_CHAT_AGENTS = [
-    {"agent": "AI CEO", "role": "Moderator & final decision maker"},
+    {"agent": "Quantum AI", "role": "Moderator & final decision maker"},
     {"agent": "Marketing Director", "role": "Campaign strategy and channel focus"},
     {"agent": "Creative Director", "role": "Big idea, story and creative quality"},
     {"agent": "Copywriter", "role": "Messaging, hooks and conversion copy"},
@@ -4905,26 +4905,26 @@ def _fallback_team_chat(question: str, plan: dict, tasks: List[dict], lang: str)
     top_tasks = ", ".join(t.get("title", "") for t in tasks[:3] if t.get("title")) or plan.get("goal", "")
     if lang == "DE":
         return [
-            {"agent": "AI CEO", "role": "Moderator & final decision maker", "content": f"Ich moderiere: Wir prüfen den Plan zu „{plan.get('goal', '')}“ anhand Wirkung, Risiken und benötigter Freigaben.", "message_type": "agent"},
+            {"agent": "Quantum AI", "role": "Moderator & final decision maker", "content": f"Ich moderiere: Wir prüfen den Plan zu „{plan.get('goal', '')}“ anhand Wirkung, Risiken und benötigter Freigaben.", "message_type": "agent"},
             {"agent": "Marketing Director", "role": "Campaign strategy and channel focus", "content": "Priorisiert einen klaren Lead-Kanal und eine sekundäre Content-Schleife, statt alle Kanäle gleichzeitig zu starten.", "message_type": "agent"},
             {"agent": "Creative Director", "role": "Big idea, story and creative quality", "content": "Die Kernidee braucht eine einfache Story: Problem, sichtbarer Wandel, Proof und konkreter nächster Schritt.", "message_type": "agent"},
             {"agent": "Copywriter", "role": "Messaging, hooks and conversion copy", "content": "Ich würde Hooks und CTA zuerst schärfen; jede Aufgabe sollte eine konkrete Conversion-Aussage enthalten.", "message_type": "agent"},
             {"agent": "Analytics Expert", "role": "KPIs, measurement and risk signals", "content": "Risiko: Ohne Messplan optimieren wir blind. Definiert Lead-Kosten, Conversion-Rate und Produktionsgeschwindigkeit vor Start.", "message_type": "agent"},
-            {"agent": "AI CEO", "role": "Moderator & final decision maker", "content": f"Entscheidung: Zuerst die wichtigsten Tasks fokussieren ({top_tasks}), fehlende Assets ergänzen und alles nur nach menschlicher Freigabe umsetzen. Keine externen oder destruktiven Aktionen.", "message_type": "summary"},
+            {"agent": "Quantum AI", "role": "Moderator & final decision maker", "content": f"Entscheidung: Zuerst die wichtigsten Tasks fokussieren ({top_tasks}), fehlende Assets ergänzen und alles nur nach menschlicher Freigabe umsetzen. Keine externen oder destruktiven Aktionen.", "message_type": "summary"},
         ]
     return [
-        {"agent": "AI CEO", "role": "Moderator & final decision maker", "content": f"I'll moderate: we are reviewing the plan for “{plan.get('goal', '')}” for impact, risks and approval needs.", "message_type": "agent"},
+        {"agent": "Quantum AI", "role": "Moderator & final decision maker", "content": f"I'll moderate: we are reviewing the plan for “{plan.get('goal', '')}” for impact, risks and approval needs.", "message_type": "agent"},
         {"agent": "Marketing Director", "role": "Campaign strategy and channel focus", "content": "Prioritize one primary lead channel and one supporting content loop instead of launching every channel at once.", "message_type": "agent"},
         {"agent": "Creative Director", "role": "Big idea, story and creative quality", "content": "The idea needs a simple story: problem, visible transformation, proof and one clear next step.", "message_type": "agent"},
         {"agent": "Copywriter", "role": "Messaging, hooks and conversion copy", "content": "I would sharpen hooks and CTAs first; every task should include a concrete conversion message.", "message_type": "agent"},
         {"agent": "Analytics Expert", "role": "KPIs, measurement and risk signals", "content": "Risk: without measurement, we optimize blindly. Define CPL, conversion rate and production velocity before launch.", "message_type": "agent"},
-        {"agent": "AI CEO", "role": "Moderator & final decision maker", "content": f"Decision: focus the highest-impact tasks first ({top_tasks}), add missing assets, and execute only after human approval. No external or destructive actions.", "message_type": "summary"},
+        {"agent": "Quantum AI", "role": "Moderator & final decision maker", "content": f"Decision: focus the highest-impact tasks first ({top_tasks}), add missing assets, and execute only after human approval. No external or destructive actions.", "message_type": "summary"},
     ]
 
 
 @api_router.post("/mission/ceo/plan")
 async def mission_ceo_plan(req: CeoPlanRequest, ws: Optional[str] = Depends(current_workspace)):
-    """AI CEO (Quantum) turns a business goal into an executive plan + tasks.
+    """Quantum Intelligence turns a business goal into an executive plan + tasks.
 
     Uses the active brand + workspace context. Stores the plan and the derived
     department tasks. NOTHING is executed – every task is a proposal awaiting
@@ -4948,7 +4948,7 @@ async def mission_ceo_plan(req: CeoPlanRequest, ws: Optional[str] = Depends(curr
         f"{personality}\n\n"
         f"{_brand_context(brand, lang, 'ceo')}\n\n"
         f"{(_mem + chr(10) + chr(10)) if _mem else ''}"
-        "Du bist der KI-CEO. Erstelle einen umsetzbaren Executive-Plan für das Ziel des Nutzers. "
+        "Du bist Quantum Intelligence. Erstelle einen umsetzbaren Executive-Plan für das Ziel des Nutzers. "
         "WICHTIG: Nichts wird automatisch veröffentlicht oder ausgeführt – dein Plan ist ein Vorschlag, "
         "den ein Mensch freigeben muss. "
         f"Antworte AUSSCHLIESSLICH mit gültigem JSON in {lang_label}, ohne Markdown, mit exakt diesen Schlüsseln:\n"
@@ -5037,7 +5037,7 @@ async def mission_ceo_plan(req: CeoPlanRequest, ws: Optional[str] = Depends(curr
             required_inputs=[str(x) for x in required_inputs if str(x).strip()],
             expected_output=str(raw_task.get("expected_output") or fallback_outputs[dept_id]).strip(),
             comments=[{"id": str(uuid.uuid4()), "author": "Quantum", "text": "Task generated for internal collaboration. Human approval is required before anything leaves BrandMind.", "created_at": _now_iso()}],
-            timeline=[{"at": _now_iso(), "type": "task_created", "text": f"{dept['label_en']} task planned by AI CEO"}],
+            timeline=[{"at": _now_iso(), "type": "task_created", "text": f"{dept['label_en']} task planned by Quantum AI"}],
             brand_id=brand.get("id", ""),
             workspace_id=ws or "",
         )
@@ -5127,13 +5127,13 @@ async def mission_team_chat_ask(plan_id: str, payload: TeamChatAskRequest,
         f"{_brand_context(brand, payload.language, 'ceo')}\n\n"
         f"{(_mem + chr(10) + chr(10)) if _mem else ''}"
         "You are BrandMind's internal AI Team Chat for a Mission Control plan. "
-        "The AI CEO moderates. Relevant agents respond with short role-specific critique, improvements and next actions. "
+        "Quantum moderates. Relevant agents respond with short role-specific critique, improvements and next actions. "
         "Agents may challenge or improve each other's suggestions. "
-        "The AI CEO must end with a highlighted final recommendation. "
+        "The Quantum AI must end with a highlighted final recommendation. "
         "No external publishing, no destructive actions, no execution. Human approval is always required. "
         f"Answer only valid JSON in {lang_label}, no markdown. Shape: "
-        '{"messages":[{"agent":"AI CEO|Marketing Director|Creative Director|Copywriter|SEO Manager|Designer|Video Producer|Sales Expert|Analytics Expert|Automation Architect","role":"...","content":"1-3 short sentences","message_type":"agent|summary","linked_task_id":"optional task id or empty"}]}. '
-        "Use 4-8 total team messages. Last message_type must be summary by AI CEO."
+        '{"messages":[{"agent":"Quantum AI|Marketing Director|Creative Director|Copywriter|SEO Manager|Designer|Video Producer|Sales Expert|Analytics Expert|Automation Architect","role":"...","content":"1-3 short sentences","message_type":"agent|summary","linked_task_id":"optional task id or empty"}]}. '
+        "Use 4-8 total team messages. Last message_type must be summary by Quantum AI."
     )
     user = (
         f"PLAN GOAL: {plan.get('goal')}\nSUMMARY: {plan.get('summary')}\nSTRATEGY: {plan.get('strategy')}\n"
@@ -5155,9 +5155,9 @@ async def mission_team_chat_ask(plan_id: str, payload: TeamChatAskRequest,
     for item in messages[:10]:
         if not isinstance(item, dict):
             continue
-        agent = str(item.get("agent") or "AI CEO").strip()
+        agent = str(item.get("agent") or "Quantum AI").strip()
         if agent not in allowed_agents:
-            agent = "AI CEO"
+            agent = "Quantum AI"
         mtype = str(item.get("message_type") or "agent").strip()
         if mtype not in {"agent", "summary"}:
             mtype = "agent"
@@ -5355,8 +5355,8 @@ async def mission_overview(ws: Optional[str] = Depends(current_workspace)):
         })
     if not plans:
         suggestions.append({
-            "text_de": "Formuliere dein erstes Geschäftsziel – der KI-CEO erstellt den Plan",
-            "text_en": "Enter your first business goal – the AI CEO drafts the plan",
+            "text_de": "Formuliere dein erstes Geschäftsziel – der Quantum Intelligence erstellt den Plan",
+            "text_en": "Enter your first business goal – the Quantum Intelligence drafts the plan",
             "action": "create_plan",
         })
     overdue = [t for t in open_tasks if t.get("due_date") and t["due_date"] < today]
