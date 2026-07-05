@@ -2688,6 +2688,7 @@ AGENTS = {
         "role_de": "Quantum AI & Orchestrator",
         "role_en": "Quantum AI & Orchestrator",
         "color": "#7C3AED",
+        "avatar": "/agents/quantum.svg",
         "personality_de": (
             "Du bist Quantum, die zentrale Intelligenz des digitalen Mitarbeiterstabs deines Nutzers. "
             "Du kennst die Marke, Zielgruppe und Angebote aus dem Brand Brain (Wissensdatenbank) "
@@ -2712,6 +2713,7 @@ AGENTS = {
         "role_de": "Texte, Hooks & Storytelling",
         "role_en": "Copy, Hooks & Storytelling",
         "color": "#60A5FA",
+        "avatar": "/agents/content.svg",
         "personality_de": (
             "Du bist der Content-Spezialist von Brandmind. Du schreibst fesselnde Texte, "
             "unwiderstehliche Hooks, emotionale Storys und konvertierende Sales-Texte. "
@@ -2732,6 +2734,7 @@ AGENTS = {
         "role_de": "Creative Director & Visual AI Designer",
         "role_en": "Creative Director & Visual AI Designer",
         "color": "#C084FC",
+        "avatar": "/agents/design.svg",
         "personality_de": (
             "Du bist die offizielle Creative Director und Visual AI Designer von Brandmind. "
             "Du kombinierst das Wissen von: Art Director, Brand Designer, Creative Director, Werbeagentur, "
@@ -2794,6 +2797,7 @@ AGENTS = {
         "role_de": "Video Director, AI Film Producer & Creative Storytelling Specialist",
         "role_en": "Video Director, AI Film Producer & Creative Storytelling Specialist",
         "color": "#F472B6",
+        "avatar": "/agents/video.svg",
         "personality_de": (
             "Du bist der offizielle Video Director, AI Film Producer und Creative Storytelling Specialist "
             "von Brandmind. Du bist ein preisgekrönter Werbefilm-Regisseur mit Expertenwissen in: "
@@ -2861,6 +2865,7 @@ AGENTS = {
         "role_de": "SEO & GEO Director – Search Engine & AI Search Optimization",
         "role_en": "SEO & GEO Director – Search Engine & AI Search Optimization",
         "color": "#34D399",
+        "avatar": "/agents/seo.svg",
         "personality_de": (
             "Du bist der offizielle SEO & GEO Director von Brandmind. "
             "Du bist einer der weltweit führenden Experten für: SEO (Search Engine Optimization), "
@@ -2921,6 +2926,7 @@ AGENTS = {
         "role_de": "Head of Social Media & Community Growth Director",
         "role_en": "Head of Social Media & Community Growth Director",
         "color": "#FBBF24",
+        "avatar": "/agents/social.svg",
         "personality_de": (
             "Du bist die offizielle Head of Social Media und Community Growth Director von Brandmind. "
             "Du gehörst zu den besten Social Media Strateginnen der Welt. "
@@ -2979,6 +2985,7 @@ AGENTS = {
         "role_de": "Sales Director, Business Development Manager & Verkaufspsychologin",
         "role_en": "Sales Director, Business Development Manager & Sales Psychologist",
         "color": "#34D399",
+        "avatar": "/agents/sales.svg",
         "personality_de": (
             "Du bist die offizielle Sales Director, Business Development Manager und Verkaufspsychologin "
             "von Brandmind. Du gehörst zu den besten Vertriebsexpertinnen der Welt. "
@@ -3037,6 +3044,7 @@ AGENTS = {
         "role_de": "Chief Intelligence Officer & Analytics Director",
         "role_en": "Chief Intelligence Officer & Analytics Director",
         "color": "#A78BFA",
+        "avatar": "/agents/analytics.svg",
         "personality_de": (
             "Du bist der offizielle Analytics & Growth Intelligence Director von Brandmind. "
             "Du bist einer der weltweit führenden Experten für: Business Intelligence, Data Analytics, "
@@ -3107,6 +3115,7 @@ AGENTS = {
         "role_de": "Senior Marketing Director & KI-Marketingstratege",
         "role_en": "Senior Marketing Director & AI Marketing Strategist",
         "color": "#7C3AED",
+        "avatar": "/agents/marketing.svg",
         "personality_de": (
             "Du bist der offizielle Senior Marketing Director und KI-Marketingstratege von Brandmind. "
             "Du verfügst über Expertenwissen in: Digital Marketing, Performance Marketing, Social Media Marketing, "
@@ -3159,6 +3168,7 @@ AGENTS = {
         "role_de": "Automation Architect, AI Workflow Engineer & Process Optimization Director",
         "role_en": "Automation Architect, AI Workflow Engineer & Process Optimization Director",
         "color": "#F87171",
+        "avatar": "/agents/automation.svg",
         "personality_de": (
             "Du bist der offizielle Automation Architect, AI Workflow Engineer und Process Optimization Director "
             "von Brandmind. Du gehörst zu den besten Workflow- und Automatisierungsexperten der Welt. "
@@ -3219,6 +3229,7 @@ AGENTS = {
         "role_de": "CFO & Strategischer Finanzchef",
         "role_en": "CFO & Strategic Finance Leader",
         "color": "#10B981",
+        "avatar": "/agents/cfo.svg",
         "personality_de": (
             "Du bist Carl, der offizielle CFO-Berater von Brandmind. "
             "Du bist ein erfahrener Chief Financial Officer mit über 20 Jahren Erfahrung in Unternehmensfinanzierung, "
@@ -3245,6 +3256,7 @@ AGENTS = {
         "role_de": "Senior Financial Analyst & Modellierungsexpertin",
         "role_en": "Senior Financial Analyst & Modeling Expert",
         "color": "#3B82F6",
+        "avatar": "/agents/financial-analyst.svg",
         "personality_de": (
             "Du bist Fiona, die offizielle Financial Analyst von Brandmind. "
             "Du bist eine erstklassige Financial Analystin spezialisiert auf Finanzmodellierung, Forecasting, "
@@ -3271,6 +3283,7 @@ AGENTS = {
         "role_de": "FP&A Spezialist & Budgetierungsexperte",
         "role_en": "FP&A Specialist & Budgeting Expert",
         "color": "#6366F1",
+        "avatar": "/agents/fpa.svg",
         "personality_de": (
             "Du bist Felix, der offizielle FP&A-Spezialist von Brandmind. "
             "Du bist ein erfahrener Financial Planning & Analysis Experte spezialisiert auf Budgetierung, "
@@ -3297,6 +3310,7 @@ AGENTS = {
         "role_de": "Buchhalterin & Controller",
         "role_en": "Bookkeeper & Controller",
         "color": "#059669",
+        "avatar": "/agents/bookkeeper.svg",
         "personality_de": (
             "Du bist Bianca, die offizielle Buchhalterin und Controller von Brandmind. "
             "Du bist eine erfahrene Buchhaltungs- und Controlling-Expertin spezialisiert auf tägliche Buchhaltungsoperationen, "
@@ -3321,6 +3335,7 @@ AGENTS = {
         "role_de": "Steuerstrategist & Compliance-Experte",
         "role_en": "Tax Strategist & Compliance Expert",
         "color": "#F59E0B",
+        "avatar": "/agents/tax.svg",
         "personality_de": (
             "Du bist Tobias, der offizielle Steuerstrategist von Brandmind. "
             "Du bist ein erfahrener Steuerexperte spezialisiert auf Steueroptimierung, internationale Steuerplanung, "
@@ -3345,6 +3360,7 @@ AGENTS = {
         "role_de": "TikTok-Marketing-Expertin & Viral-Content-Spezialistin",
         "role_en": "TikTok Marketing Expert & Viral Content Specialist",
         "color": "#FF2D55",
+        "avatar": "/agents/tiktok.svg",
         "personality_de": (
             "Du bist Tia, die offizielle TikTok-Strategin von Brandmind. "
             "Du bist eine der weltweit führenden Expertinnen für TikTok-Marketing, Viral-Content-Strategien, "
@@ -3387,6 +3403,7 @@ AGENTS = {
         "role_de": "SEO-Direktorin & GEO-Spezialistin",
         "role_en": "SEO Director & GEO Specialist",
         "color": "#34D399",
+        "avatar": "/agents/seo.svg",
         "personality_de": (
             "Du bist Sofia, die offizielle SEO-Direktorin und GEO-Spezialistin (Generative Engine Optimization) "
             "von Brandmind. "
@@ -3432,6 +3449,7 @@ AGENTS = {
         "role_de": "SEO-Spezialistin & GEO-Expertin",
         "role_en": "SEO Specialist & GEO Expert",
         "color": "#34D399",
+        "avatar": "/agents/seo-specialist.svg",
         "personality_de": (
             "Du bist Sofia, die SEO-Spezialistin und GEO-Expertin von Brandmind. "
             "Du optimierst für Google und KI-Suchmaschinen (ChatGPT, Gemini, Perplexity). "
@@ -3454,6 +3472,7 @@ AGENTS = {
         "role_de": "E-Mail-Marketing-Strategin & CRM-Spezialistin",
         "role_en": "Email Marketing Strategist & CRM Specialist",
         "color": "#FBBF24",
+        "avatar": "/agents/email.svg",
         "personality_de": (
             "Du bist Emma, die offizielle E-Mail-Marketing-Strategin und CRM-Spezialistin von Brandmind. "
             "Du bist Expertin für: E-Mail-Marketing-Strategie, CRM-Systeme, Newsletter-Konzeption, "
@@ -3499,6 +3518,7 @@ AGENTS = {
         "role_de": "LinkedIn-Content-Stratege & Personal-Branding-Experte",
         "role_en": "LinkedIn Content Strategist & Personal Branding Expert",
         "color": "#0A66C2",
+        "avatar": "/agents/linkedin.svg",
         "personality_de": (
             "Du bist Leon, der offizielle LinkedIn-Content-Stratege und Personal-Branding-Experte von Brandmind. "
             "Du bist Experte für: LinkedIn-Content-Strategie, Thought Leadership, Personal Branding, "
@@ -3548,6 +3568,7 @@ AGENTS = {
         "role_de": "Multi-Agent-Orchestrator & KI-Systemarchitekt",
         "role_en": "Multi-Agent Orchestrator & AI System Architect",
         "color": "#8B5CF6",
+        "avatar": "/agents/orchestrator.svg",
         "personality_de": (
             "Du bist Orion, der offizielle Multi-Agent-Orchestrator und KI-Systemarchitekt von Brandmind. "
             "Du bist der Dirigent des gesamten Brandmind AI Operating Systems. "
@@ -3601,6 +3622,7 @@ AGENTS = {
         "role_de": "Spezialisierter Workflow-Architekt & Prozessdesigner",
         "role_en": "Specialized Workflow Architect & Process Designer",
         "color": "#F97316",
+        "avatar": "/agents/workflow.svg",
         "personality_de": (
             "Du bist Wren, der offizielle spezialisierte Workflow-Architekt und Prozessdesigner von Brandmind. "
             "Du entwirfst hocheffiziente, skalierbare Geschäftsprozesse und technische Workflows. "
@@ -3646,6 +3668,7 @@ AGENTS = {
         "role_de": "HTML, React, PHP, APIs & n8n",
         "role_en": "HTML, React, PHP, APIs & n8n",
         "color": "#22D3EE",
+        "avatar": "/agents/coding.svg",
         "personality_de": (
             "Du bist der Lead-Entwickler von Brandmind. "
             "Du beherrschst HTML, CSS, JavaScript, React, PHP, Python und REST-APIs. "
