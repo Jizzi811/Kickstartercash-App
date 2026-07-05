@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { AGENT_REGISTRY, DEMO_PROMPTS, orchestrateQuantumWorkflow } from "@/lib/quantumOrchestrator";
+import { createMemoryPreviewFromWorkflow, memoryManager } from "@/lib/memory/memoryManager";
+import { MEMORY_TYPE_DEFINITIONS } from "@/lib/memory/memoryTypes";
 import { completeNextWorkflowStep, createWorkflow, startWorkflow, WORKFLOW_STATUSES } from "@/lib/workflowEngine";
 import ActivityFeed from "@/components/quantum/ActivityFeed";
 import OutputSummary from "@/components/quantum/OutputSummary";
@@ -10,7 +12,7 @@ import {
   Bot, TrendingUp, Palette, Video, ShoppingCart, Search, Zap, Headphones,
   ChevronDown, ArrowDown, User, Cpu, GitBranch, Crown, Music, Mail, Linkedin,
   Network, Workflow, BarChart2, BookOpen, FileText, CheckCircle2, Gauge, Coins, Sparkles,
-  PlayCircle, Clock3, Target,
+  PlayCircle, Clock3, Target, Database, ShieldCheck, ToggleLeft,
 } from "lucide-react";
 
 const DEPARTMENTS = [
@@ -417,9 +419,14 @@ export default function QuantumAgent() {
   const [orchestratorResult, setOrchestratorResult] = useState(null);
   const [orchestratorThinking, setOrchestratorThinking] = useState(false);
   const [workflow, setWorkflow] = useState(null);
+  const [autoMemory, setAutoMemory] = useState(false);
+  const [memoryApprovalReady, setMemoryApprovalReady] = useState(false);
   const lang = localStorage.getItem("kc_lang") || "DE";
 
   const tasks = lang === "DE" ? TASKS_DE : TASKS_EN;
+  const memoryProvider = memoryManager.getProvider();
+  const memoryFoundationCards = Object.entries(MEMORY_TYPE_DEFINITIONS);
+  const memoryPreview = useMemo(() => createMemoryPreviewFromWorkflow(orchestratorResult), [orchestratorResult]);
 
   const ceoResponsesDE = {
     marketing: "Verstanden. Ich delegiere diese Aufgabe an das Marketing-Team. Strategie wird analysiert und ein detaillierter Aktionsplan wird entwickelt.",
@@ -490,10 +497,12 @@ export default function QuantumAgent() {
     setOrchestratorThinking(true);
     setOrchestratorResult(null);
     setWorkflow(null);
+    setMemoryApprovalReady(false);
     setTimeout(() => {
       const result = orchestrateQuantumWorkflow(prompt);
       setOrchestratorResult(result);
       setWorkflow(createWorkflow(result));
+      setMemoryApprovalReady(true);
       setOrchestratorThinking(false);
     }, 900);
   };
@@ -576,6 +585,39 @@ export default function QuantumAgent() {
         ))}
       </div>
 
+
+
+      <div className="rounded-sm border border-[#7C3AED]/20 bg-[#070707] p-5">
+        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-white"><Database size={16} className="text-[#7C3AED]" /> Quantum Memory Foundation</div>
+            <p className="mt-1 text-xs text-zinc-500">{lang === "DE" ? "Austauschbare Memory-Schicht für BrandMind-Wissen, Projektlernen und spätere agimem/MCP-Anbindung." : "Swappable memory layer for BrandMind knowledge, project learning and future agimem/MCP integration."}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-emerald-300">Status: {memoryProvider.label}</span>
+            <span className="rounded-full border border-[#7C3AED]/25 bg-[#7C3AED]/10 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#C4B5FD]">Future: agimem / MCP-ready</span>
+          </div>
+        </div>
+        <div className="grid gap-3 lg:grid-cols-4">
+          {memoryFoundationCards.map(([type, definition]) => (
+            <div key={type} className="rounded-sm border border-white/8 bg-black/35 p-4">
+              <div className="mb-2 text-sm font-semibold text-white">{definition.label}</div>
+              <p className="mb-3 text-xs leading-5 text-zinc-500">{definition.description}</p>
+              <div className="mb-3 flex flex-wrap gap-1.5">{definition.fields.slice(0, 4).map((field) => <span key={field} className="rounded-full border border-white/10 px-2 py-1 text-[10px] text-zinc-400">{field}</span>)}</div>
+              <ul className="space-y-1 text-[11px] text-zinc-500">{definition.examples.map((example) => <li key={example}>• {example}</li>)}</ul>
+              <div className="mt-4 space-y-1 text-[10px] uppercase tracking-[0.16em] text-[#A78BFA]"><div>Status: Local Demo Provider</div><div>Zukunft: agimem / MCP-ready</div></div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 rounded-sm border border-white/8 bg-white/[0.02] p-4">
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-white"><ShieldCheck size={14} className="text-[#A78BFA]" /> Human Approval Vorbereitung</div>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <p className="text-xs text-zinc-500">{lang === "DE" ? "Memory wird in diesem Sprint nur als Vorschau erzeugt. Speichern ist später erst nach Nutzerfreigabe oder aktivem Auto Memory vorgesehen." : "This sprint only generates memory previews. Later saves require user approval or enabled Auto Memory."}</p>
+            <button type="button" onClick={() => setAutoMemory((value) => !value)} className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] ${autoMemory ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200" : "border-white/10 bg-black/30 text-zinc-400"}`}><ToggleLeft size={14} /> Auto Memory: {autoMemory ? "On" : "Off"}</button>
+          </div>
+        </div>
+      </div>
+
       <div className="rounded-sm border border-[#7C3AED]/20 bg-[#070707] p-5">
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
@@ -595,6 +637,13 @@ export default function QuantumAgent() {
           <div className="grid gap-3 lg:grid-cols-2">{orchestratorResult.selectedAgents.map((agent) => <div key={agent.id} className="rounded-sm border border-white/8 bg-white/[0.02] p-4"><div className="mb-2 flex items-center justify-between"><div className="font-semibold text-white">{agent.name}</div><span className="text-xs text-[#A78BFA]">{agent.matchScore}% match</span></div><div className="mb-2 text-xs text-zinc-400">{agent.selectionReason}</div><div className="text-[11px] text-zinc-500">{lang === "DE" ? "Rolle" : "Role"}: {agent.recommendedRole} · {lang === "DE" ? "Passend" : "Matching"}: {agent.matchingSkills.join(", ") || "—"}</div></div>)}</div>
           <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]"><WorkflowTimeline workflow={workflow} /><ActivityFeed workflow={workflow} /></div>
           <div className="grid gap-4 xl:grid-cols-[1fr_1fr]"><OutputSummary workflow={workflow} /><WorkflowInspector workflow={workflow} /></div>
+          {memoryPreview.length > 0 && <div className="rounded-sm border border-[#7C3AED]/25 bg-[#7C3AED]/5 p-4">
+            <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div><div className="text-sm font-semibold text-white">{lang === "DE" ? "Was Quantum daraus speichern würde" : "What Quantum would store from this"}</div><div className="mt-1 text-xs text-zinc-500">Preview only · {memoryApprovalReady ? "Human Approval pending" : "No workflow preview"} · Auto Memory {autoMemory ? "On" : "Off"}</div></div>
+              <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-amber-200">Nicht automatisch gespeichert</span>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">{memoryPreview.map((block) => <div key={block.type} className="rounded-sm border border-white/8 bg-black/35 p-3"><div className="mb-2 text-xs font-semibold text-[#C4B5FD]">{block.title}</div><ul className="space-y-1 text-xs text-zinc-500">{block.items.map((item) => <li key={item}>• {item}</li>)}</ul></div>)}</div>
+          </div>}
         </motion.div>}
       </div>
 
