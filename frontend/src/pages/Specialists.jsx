@@ -29,6 +29,30 @@ const ICON_MAP = {
   coding:     { Icon: Code2,       color: "#22D3EE" },
 };
 
+
+const AGENT_VISUALS = {
+  ceo: { badge: "CORE", archetypeDE: "Zentrale AI", archetypeEN: "Core AI" },
+  content: { badge: "COPY", archetypeDE: "Story Architect", archetypeEN: "Story Architect" },
+  designer: { badge: "ART", archetypeDE: "Creative Director", archetypeEN: "Creative Director" },
+  video: { badge: "FILM", archetypeDE: "Video Director", archetypeEN: "Video Director" },
+  seo: { badge: "GEO", archetypeDE: "Search Strategist", archetypeEN: "Search Strategist" },
+  social: { badge: "SOC", archetypeDE: "Community Lead", archetypeEN: "Community Lead" },
+  sales: { badge: "REV", archetypeDE: "Sales Director", archetypeEN: "Sales Director" },
+  analytics: { badge: "INT", archetypeDE: "Intelligence Lead", archetypeEN: "Intelligence Lead" },
+  automation: { badge: "OPS", archetypeDE: "Automation Architect", archetypeEN: "Automation Architect" },
+  coding: { badge: "DEV", archetypeDE: "Tech Builder", archetypeEN: "Tech Builder" },
+  marketing: { badge: "MKT", archetypeDE: "Growth Strategist", archetypeEN: "Growth Strategist" },
+};
+
+function getAgentVisual(agent, Icon) {
+  return AGENT_VISUALS[agent.id] || {
+    badge: getAgentInitials(agent),
+    archetypeDE: agent.name,
+    archetypeEN: agent.name,
+    Icon,
+  };
+}
+
 const LUCIDE_ICONS = {
   GitBranch, Map, ListChecks, BarChart2, Zap, Type, BookOpen, Mail,
   MousePointer, Image: ImageIcon, Layout, Wand2, Sparkles, PenTool, Palette,
@@ -60,49 +84,60 @@ function getAgentDescription(agent, lang) {
     .slice(0, 128);
 }
 
-function AgentAvatar({ agent, Icon, color, className = "" }) {
+function AgentAvatar({ agent, Icon, color, status, className = "" }) {
   const [imageFailed, setImageFailed] = useState(false);
   const avatar = agent.avatar;
   const initials = getAgentInitials(agent);
+  const isQuantum = agent.id === "ceo" || agent.id === "quantum";
 
   useEffect(() => {
     setImageFailed(false);
   }, [avatar]);
 
   return (
-    <div className={`relative h-16 w-16 sm:h-20 sm:w-20 ${className}`}>
+    <div className={`relative h-24 w-24 sm:h-28 sm:w-28 ${className}`}>
       <div
-        className="absolute -inset-1 rounded-full opacity-80 blur-md transition-opacity group-hover:opacity-100"
-        style={{ background: `radial-gradient(circle, ${color}70 0%, #7C3AED30 48%, transparent 72%)` }}
+        className="absolute -inset-5 rounded-full opacity-75 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
+        style={{ background: `radial-gradient(circle, ${color}75 0%, #A855F735 42%, transparent 72%)` }}
       />
       <div
-        className="relative h-full w-full overflow-hidden rounded-full border-2 bg-[#111118] shadow-[0_0_28px_rgba(124,58,237,0.25)]"
-        style={{ borderColor: `${color}80` }}
+        className="absolute -inset-2 rounded-full border border-white/10 opacity-80"
+        style={{ boxShadow: `0 0 28px ${color}55, inset 0 0 24px ${color}20` }}
+      />
+      <div
+        className="relative h-full w-full overflow-hidden rounded-full border bg-[#08070D] shadow-[0_22px_45px_rgba(0,0,0,0.45)]"
+        style={{ borderColor: `${color}D0` }}
       >
-        {avatar && !imageFailed ? (
+        {isQuantum ? (
+          <div className="relative flex h-full w-full items-center justify-center overflow-hidden" style={{ background: `radial-gradient(circle at 50% 42%, ${color}55 0%, #12091f 52%, #030306 100%)` }}>
+            <div className="absolute h-[82%] w-[82%] rounded-full border border-[#C4B5FD]/35" style={{ boxShadow: `0 0 24px ${color}90` }} />
+            <div className="absolute h-[58%] w-[58%] rounded-full border border-dashed border-[#F0ABFC]/45 animate-spin" style={{ animationDuration: "14s" }} />
+            <div className="h-[46%] w-[46%] rounded-full bg-[#C4B5FD]" style={{ boxShadow: `0 0 18px #C4B5FD, 0 0 42px ${color}` }} />
+            <Sparkles size={22} className="absolute text-white/90" />
+          </div>
+        ) : avatar && !imageFailed ? (
           <img
             src={avatar}
             alt={`${agent.name} avatar`}
-            className="h-full w-full object-cover"
+            className="h-full w-full scale-110 object-cover object-top transition-transform duration-300 group-hover:scale-[1.16]"
             loading="lazy"
             onError={() => setImageFailed(true)}
           />
         ) : (
           <div
-            className="flex h-full w-full items-center justify-center text-lg font-bold text-white sm:text-2xl"
-            style={{
-              background: `radial-gradient(circle at 35% 25%, ${color}70, #18181b 58%, #050505 100%)`,
-            }}
+            className="flex h-full w-full items-center justify-center text-2xl font-bold text-white sm:text-3xl"
+            style={{ background: `radial-gradient(circle at 35% 25%, ${color}80, #18181b 58%, #050505 100%)` }}
           >
             {initials}
           </div>
         )}
       </div>
+      <div className="absolute -left-1 top-2 h-4 w-4 rounded-full border-2 border-[#050505]" style={{ backgroundColor: status?.color || "#34D399", boxShadow: `0 0 14px ${status?.color || "#34D399"}` }} />
       <div
-        className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border border-black bg-[#0A0A0A] sm:h-7 sm:w-7"
-        style={{ boxShadow: `0 0 14px ${color}70` }}
+        className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border border-black bg-[#0A0A0A] sm:h-9 sm:w-9"
+        style={{ boxShadow: `0 0 18px ${color}90` }}
       >
-        <Icon size={13} style={{ color }} />
+        <Icon size={16} style={{ color }} />
       </div>
     </div>
   );
@@ -528,6 +563,8 @@ export default function Specialists() {
             const tools = agent.tools || [];
             const status = STATUS_META[i % STATUS_META.length];
             const description = getAgentDescription(agent, lang);
+            const visual = getAgentVisual(agent, Icon);
+            const archetype = lang === "DE" ? visual.archetypeDE : visual.archetypeEN;
             return (
               <motion.button
                 key={agent.id}
@@ -535,12 +572,19 @@ export default function Specialists() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
                 onClick={() => setActiveAgent(agent)}
-                className="group min-w-0 text-left bg-[#0A0A0A] border border-white/8 rounded-sm p-4 sm:p-5 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/[0.035]"
+                className="group relative mt-12 min-w-0 overflow-visible rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(124,58,237,0.13),rgba(10,10,10,0.96)_38%)] p-4 pt-0 text-left shadow-[0_18px_55px_rgba(0,0,0,0.28)] transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.035] sm:p-5 sm:pt-0"
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${color}50`; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = ""; }}
               >
                 <div className="mb-4 flex flex-col items-center text-center">
-                  <AgentAvatar agent={agent} Icon={Icon} color={color} />
+                  <AgentAvatar agent={agent} Icon={Icon} color={color} status={status} className="-mt-12" />
+                  <span
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-300"
+                    style={{ boxShadow: `0 0 18px ${color}25` }}
+                  >
+                    <Icon size={10} style={{ color }} />
+                    {visual.badge} · {archetype}
+                  </span>
                   <span
                     className="mt-4 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em]"
                     style={{ borderColor: `${status.color}45`, color: status.color, backgroundColor: `${status.color}12` }}
@@ -549,7 +593,7 @@ export default function Specialists() {
                     {lang === "DE" ? status.labelDE : status.labelEN}
                   </span>
                 </div>
-                <h3 className="mb-1 break-words text-center text-sm font-semibold text-white">{agent.name}</h3>
+                <h3 className="mb-1 break-words text-center text-base font-semibold text-white">{agent.name}</h3>
                 <p className="mb-3 text-center text-[11px] leading-relaxed text-zinc-400">{role}</p>
                 {description && (
                   <p className="mb-3 min-h-[42px] text-[11px] leading-relaxed text-zinc-500">
