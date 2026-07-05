@@ -114,6 +114,7 @@ import ExportCenter from "@/pages/ExportCenter";
 import Campaign from "@/pages/Campaign";
 import CampaignWorkflow from "@/pages/CampaignWorkflow";
 import AgentBuilder from "@/pages/AgentBuilder";
+import CharacterStudio from "@/pages/CharacterStudio";
 import TTSStudio from "@/pages/TTSStudio";
 import OutputFactory from "@/pages/OutputFactory";
 
@@ -193,6 +194,7 @@ function AppShell() {
               {/* Quantum Command – bleibt */}
               <Route path="/quantum" element={<QuantumAgent />} />
               <Route path="/builder" element={<AgentBuilder />} />
+              <Route path="/character-studio" element={<CharacterStudio />} />
 
               {/* Ticket System */}
               <Route path="/tickets" element={<TicketSystem />} />
