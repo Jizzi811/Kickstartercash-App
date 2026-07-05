@@ -463,7 +463,7 @@
       audioPayload=pickAudioPayload(j);
     }catch(_){ reply=raw; }
     if(typeof reply!=='string') reply=JSON.stringify(reply);
-    reply=reply.trim()||'Ich habe eine leere Antwort bekommen. Sehr mysterioes, aber nicht besonders hilfreich.';
+    reply=reply.trim()||'Der n8n-Workflow hat eine leere Antwort geliefert. Am einfachsten: OpenAI-Key in der Konfiguration eintragen, dann antworte ich direkt ueber GPT mit Onyx-Stimme.';
     if(!res.ok){ addMsg('sys','n8n '+res.status+': '+raw.slice(0,200)); reply='Der Workflow meldete einen Fehler.'; }
     return {reply:reply,audioPayload:audioPayload};
   }
@@ -481,6 +481,7 @@
         addMsg('ai',reply);
         await speak(reply);
       }else{
+        addMsg('sys','Hinweis: Kein OpenAI-Key eingetragen - ich frage den n8n-Workflow. Fuer GPT + Onyx-Stimme unter "J.A.R.V.I.S. konfigurieren" den Key (sk-...) eintragen und speichern.');
         const r=await askN8n(text);
         addMsg('ai',r.reply);
         await playAssistantAudio(r.audioPayload,r.reply);
