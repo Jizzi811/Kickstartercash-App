@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { BRANDMIND_AGENTS } from "@/constants/agents";
 import { AGENT_REGISTRY, DEMO_PROMPTS, orchestrateQuantumWorkflow } from "@/lib/quantumOrchestrator";
 import { createMemoryPreviewFromWorkflow, memoryManager } from "@/lib/memory/memoryManager";
 import { MEMORY_TYPE_DEFINITIONS } from "@/lib/memory/memoryTypes";
@@ -12,8 +13,51 @@ import {
   Bot, TrendingUp, Palette, Video, ShoppingCart, Search, Zap, Headphones,
   ChevronDown, ArrowDown, User, Cpu, GitBranch, Crown, Music, Mail, Linkedin,
   Network, Workflow, BarChart2, BookOpen, FileText, CheckCircle2, Gauge, Coins, Sparkles,
-  PlayCircle, Clock3, Target, Database, ShieldCheck, ToggleLeft,
+  PlayCircle, Clock3, Target, Database, ShieldCheck, ToggleLeft, Megaphone, PenTool,
+  MessageCircle, Settings, BarChart3, MessagesSquare,
 } from "lucide-react";
+
+const AGENT_ICON_MAP = {
+  BarChart3,
+  BookOpen,
+  Cpu,
+  FileText,
+  Megaphone,
+  MessageCircle,
+  MessagesSquare,
+  PenTool,
+  Search,
+  Settings,
+  TrendingUp,
+  Video,
+};
+
+function AgentAvatar({ agent }) {
+  const [hasImageError, setHasImageError] = useState(false);
+  const initial = agent.name.charAt(0);
+
+  if (hasImageError || !agent.avatar) {
+    return (
+      <div
+        className="flex h-28 w-28 items-center justify-center rounded-full border bg-black/50 text-4xl font-bold text-white sm:h-32 sm:w-32"
+        style={{ borderColor: agent.color, boxShadow: `0 0 32px ${agent.color}55` }}
+        aria-label={`${agent.name} Avatar Fallback`}
+      >
+        {initial}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={agent.avatar}
+      alt={`${agent.name} Avatar`}
+      className="h-28 w-28 rounded-full object-cover sm:h-32 sm:w-32"
+      style={{ filter: `drop-shadow(0 0 22px ${agent.color}66)` }}
+      onError={() => setHasImageError(true)}
+    />
+  );
+}
 
 const DEPARTMENTS = [
   {
@@ -564,6 +608,49 @@ export default function QuantumAgent() {
           </div>
         </div>
       </motion.div>
+
+      <section className="min-w-0 rounded-sm border border-[#7C3AED]/20 bg-[#070707] p-4 sm:p-5">
+        <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.22em] text-[#A78BFA]">BrandMind Quantum</div>
+            <h2 className="mt-1 text-2xl font-bold text-white">{lang === "DE" ? "Agenten" : "Agents"}</h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              {lang === "DE" ? "BrandMind Agenten arbeiten zusammen, um deine Ziele zu erreichen." : "BrandMind agents work together to achieve your goals."}
+            </p>
+          </div>
+          <span className="rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/10 px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-[#C4B5FD]">
+            {BRANDMIND_AGENTS.length} {lang === "DE" ? "aktive Agenten" : "active agents"}
+          </span>
+        </div>
+
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {BRANDMIND_AGENTS.map((agent) => {
+            const Icon = AGENT_ICON_MAP[agent.icon] || Bot;
+
+            return (
+              <motion.article
+                key={agent.id}
+                whileHover={{ y: -4, scale: 1.01 }}
+                className="group relative min-w-0 overflow-hidden rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-5 text-center shadow-2xl shadow-black/30 transition-colors hover:border-[#7C3AED]/50"
+              >
+                <div className="pointer-events-none absolute inset-x-8 top-6 h-24 rounded-full blur-3xl opacity-25 transition-opacity group-hover:opacity-45" style={{ backgroundColor: agent.color }} />
+                <div className="relative mx-auto mb-4 flex justify-center">
+                  <AgentAvatar agent={agent} />
+                  <div
+                    className="absolute bottom-0 right-[calc(50%-68px)] flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-white shadow-lg"
+                    style={{ background: `linear-gradient(135deg, ${agent.color}, #4C1D95)` }}
+                  >
+                    <Icon size={22} />
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-white">{agent.name}</h3>
+                <p className="mx-auto mt-2 max-w-[15rem] text-sm leading-6 text-zinc-400">{agent.description}</p>
+              </motion.article>
+            );
+          })}
+        </div>
+      </section>
+
 
 
 
