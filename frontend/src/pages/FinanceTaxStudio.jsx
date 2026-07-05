@@ -43,12 +43,12 @@ export default function FinanceTaxStudio() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 space-y-6 pb-6 sm:space-y-8">
       <PageHeader icon={FileText} color={COLOR} title="Tax Studio" badge="Finance"
         subtitle={lang === "DE" ? "Tobias – Steuerstrategist · Optimierung · International · Compliance" : "Tobias – Tax Strategist · Optimization · International · Compliance"} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-3 space-y-5">
+      <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-5 lg:gap-6">
+        <div className="min-w-0 space-y-5 lg:col-span-3">
           <StudioContextArea color={COLOR} context={context} setContext={setContext}
             label="Unternehmen / Steuerlicher Kontext" labelEN="Company / Tax Context" title="Tax Studio"
             placeholder="z.B. GmbH & Co. KG, Deutschland + UAE, 3 Mio. Gewinn, Expansion nach Österreich geplant…"
@@ -57,7 +57,7 @@ export default function FinanceTaxStudio() {
             <p className="text-[10px] text-zinc-700 uppercase tracking-widest mb-3">
               {lang === "DE" ? "Tools — Kontext eingeben, dann klicken" : "Tools — enter context above, then click"}
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2 sm:grid-cols-3">
               {TOOLS.map((tool) => (
                 <motion.div key={tool.id} whileHover={{ y: -2 }} transition={{ duration: 0.18 }}>
                   <ToolCard tool={tool} color={COLOR} onRun={runTool} isRunning={toolLoading === tool.id} disabled={!!toolLoading} />
@@ -66,7 +66,7 @@ export default function FinanceTaxStudio() {
             </div>
           </div>
         </div>
-        <div className="lg:col-span-2 bg-[#0A0A0A] border border-white/8 rounded-sm flex flex-col" style={{ minHeight: "520px" }}>
+        <div className="flex min-h-[70vh] min-w-0 flex-col rounded-sm border border-white/8 bg-[#0A0A0A] lg:col-span-2 lg:min-h-[520px]">
           <AgentChatPanel agentId="tax" agentName="Tobias – Tax Strategist" agentEmoji="🧾" color={COLOR}
             placeholder={lang === "DE" ? "Steuerfragen stellen…" : "Ask tax questions…"} />
         </div>

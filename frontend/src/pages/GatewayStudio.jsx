@@ -11,7 +11,7 @@ import { V, SORA, fadeUp, GradientHeading, Card, SectionHeader } from "@/compone
 
 
 
-const selCls = "bg-[#0A0A0A] border border-white/10 rounded-sm px-2.5 py-1.5 text-[12px] text-zinc-200 outline-none focus:border-[#7C3AED]/50";
+const selCls = "min-w-0 bg-[#0A0A0A] border border-white/10 rounded-sm px-2.5 py-2 sm:py-1.5 text-[12px] text-zinc-200 outline-none focus:border-[#7C3AED]/50";
 
 export default function GatewayStudio() {
   const { lang } = useApp();
@@ -93,7 +93,7 @@ export default function GatewayStudio() {
   const s = usage?.summary || {};
 
   return (
-    <div className="space-y-10 pb-10">
+    <div className="min-w-0 space-y-7 pb-10 sm:space-y-10">
       {/* HERO */}
       <motion.section {...fadeUp(0)}>
         <div className="relative overflow-hidden rounded-xl" style={{
@@ -102,13 +102,13 @@ export default function GatewayStudio() {
         }}>
           <div className="absolute -top-28 -left-28 w-96 h-96 rounded-full pointer-events-none"
             style={{ background: "radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%)" }} />
-          <div className="relative px-6 md:px-10 py-10 flex items-start justify-between gap-6 flex-wrap">
-            <div>
+          <div className="relative flex flex-col gap-6 px-4 py-7 sm:px-6 sm:py-10 md:px-10 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-5 text-[10px] tracking-[0.2em] uppercase font-semibold"
                 style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.26)", color: V }}>
                 <Plug size={11} /> AI Provider Gateway
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-3" style={{ fontFamily: SORA }}>
+              <h1 className="text-2xl font-bold leading-tight mb-3 sm:text-3xl md:text-4xl" style={{ fontFamily: SORA }}>
                 <span style={{
                   background: "linear-gradient(90deg, #7C3AED 0%, #C4B5FD 45%, #6D28D9 100%)",
                   WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
@@ -121,7 +121,7 @@ export default function GatewayStudio() {
               </p>
             </div>
             <button onClick={save} disabled={saving}
-              className="inline-flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-sm transition-all disabled:opacity-40"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-sm px-5 py-3 text-sm font-bold transition-all disabled:opacity-40 sm:w-auto sm:py-2.5 lg:shrink-0"
               style={{ background: V, color: "#0A0A0A" }}>
               {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
               {lang === "DE" ? "Speichern" : "Save"}
@@ -131,7 +131,7 @@ export default function GatewayStudio() {
       </motion.section>
 
       {/* USAGE SUMMARY */}
-      <motion.section {...fadeUp(0.05)} className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <motion.section {...fadeUp(0.05)} className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2 lg:grid-cols-4">
         {[
           { icon: Activity, label: lang === "DE" ? "Aufrufe" : "Calls", value: s.calls ?? 0, color: V },
           { icon: CheckCircle2, label: lang === "DE" ? "Erfolgsrate" : "Success rate", value: `${s.success_rate ?? 0}%`, color: "#4ade80" },
@@ -159,7 +159,7 @@ export default function GatewayStudio() {
       {/* ROUTING: default + fallback */}
       <motion.section {...fadeUp(0.1)}>
         <SectionHeader icon={Zap} title={lang === "DE" ? "Routing" : "Routing"} />
-        <div className="grid sm:grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <Card className="p-4">
             <div className="text-[11px] uppercase tracking-widest text-zinc-600 mb-2">{lang === "DE" ? "Standard-Anbieter" : "Default provider"}</div>
             <select className={selCls + " w-full"} value={cfg.default_provider}
@@ -225,7 +225,8 @@ export default function GatewayStudio() {
       {/* PREFERRED MODEL PER TASK */}
       <motion.section {...fadeUp(0.18)}>
         <SectionHeader icon={CircleDot} title={lang === "DE" ? "Bevorzugtes Modell pro Aufgabe" : "Preferred model per task"} />
-        <Card className="p-2 overflow-x-auto">
+        <Card className="p-0 sm:p-2">
+          <div className="overflow-x-auto rounded-sm">
           <table className="w-full text-[12px]" style={{ minWidth: 560 }}>
             <thead>
               <tr className="text-zinc-600 text-[10px] uppercase tracking-widest">
@@ -259,6 +260,7 @@ export default function GatewayStudio() {
               })}
             </tbody>
           </table>
+          </div>
         </Card>
       </motion.section>
 
@@ -269,7 +271,7 @@ export default function GatewayStudio() {
           {usage?.by_provider?.length ? (
             <div className="space-y-2">
               {usage.by_provider.map((b) => (
-                <div key={b.provider} className="flex items-center justify-between p-2.5 rounded-sm"
+                <div key={b.provider} className="flex flex-col gap-2 rounded-sm p-2.5 sm:flex-row sm:items-center sm:justify-between"
                   style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
                   <span className="text-[12px] text-zinc-200">{b.provider}</span>
                   <div className="flex items-center gap-4 text-[11px] text-zinc-500">
@@ -290,17 +292,17 @@ export default function GatewayStudio() {
           border: "1px solid rgba(124,58,237,0.14)",
         }}>
           <SectionHeader icon={Send} title={lang === "DE" ? "Gateway testen" : "Test the gateway"} />
-          <div className="flex gap-2 mb-2">
-            <select className={selCls} value={testTask} onChange={(e) => setTestTask(e.target.value)}>
+          <div className="mb-2 grid gap-2 sm:grid-cols-[auto_1fr_auto]">
+            <select className={selCls + " w-full"} value={testTask} onChange={(e) => setTestTask(e.target.value)}>
               {reg.tasks.filter((t) => ["chat", "structured", "video_prompt"].includes(t.id)).map((t) =>
                 <option key={t.id} value={t.id}>{lang === "DE" ? t.de : t.en}</option>)}
             </select>
             <input value={testMsg} onChange={(e) => setTestMsg(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") runTest(); }}
               placeholder={lang === "DE" ? "Testnachricht…" : "Test message…"}
-              className="flex-1 bg-[#0A0A0A] border border-white/10 rounded-sm px-3 py-1.5 text-[12px] text-zinc-200 outline-none focus:border-[#7C3AED]/50" />
+              className="min-w-0 bg-[#0A0A0A] border border-white/10 rounded-sm px-3 py-2 sm:py-1.5 text-[12px] text-zinc-200 outline-none focus:border-[#7C3AED]/50" />
             <button onClick={runTest} disabled={testing || !testMsg.trim()}
-              className="px-3 py-1.5 rounded-sm text-[12px] font-semibold disabled:opacity-40"
+              className="flex min-h-9 items-center justify-center rounded-sm px-3 py-2 text-[12px] font-semibold disabled:opacity-40 sm:py-1.5"
               style={{ background: V, color: "#0A0A0A" }}>
               {testing ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
             </button>

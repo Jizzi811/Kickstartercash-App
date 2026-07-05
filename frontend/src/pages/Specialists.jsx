@@ -411,7 +411,7 @@ export default function Specialists() {
   const liveAgents = agents.slice(0, 6).map((agent, index) => ({ agent, status: STATUS_META[index % STATUS_META.length] }));
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 space-y-6 pb-6 sm:space-y-8">
       <PageHeader
         icon={Sparkles}
         badge="Brandmind Specialists"
@@ -421,10 +421,10 @@ export default function Specialists() {
           : "17 AI agents with their own personality, specialized tools & KB access."}
       />
 
-      <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-sm border border-[#7C3AED]/20 bg-[#0A0A0A] p-5">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="min-w-0 rounded-sm border border-[#7C3AED]/20 bg-[#0A0A0A] p-4 sm:p-5">
           <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white"><Activity size={16} className="text-[#7C3AED]" />{lang === "DE" ? "Agentenzentrale" : "Agent Command Center"}</div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2 sm:grid-cols-4">
             {STATUS_META.map((s) => (
               <div key={s.key} className="rounded-sm border border-white/8 bg-white/[0.03] p-3">
                 <div className="text-lg">{s.dot}</div>
@@ -434,14 +434,14 @@ export default function Specialists() {
             ))}
           </div>
         </div>
-        <div className="rounded-sm border border-white/8 bg-[#0A0A0A] p-5">
+        <div className="min-w-0 rounded-sm border border-white/8 bg-[#0A0A0A] p-4 sm:p-5">
           <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white"><Clock3 size={16} className="text-[#7C3AED]" />Live-Aktivitäten</div>
           <div className="space-y-3">
             {(liveAgents.length ? liveAgents : []).map(({ agent, status }, index) => (
-              <div key={agent.id} className="flex items-center gap-3 text-xs">
-                <span className="w-10 text-zinc-600">08:{String(42 + index).padStart(2, "0")}</span>
+              <div key={agent.id} className="flex min-w-0 items-start gap-2 text-xs sm:items-center sm:gap-3">
+                <span className="w-9 shrink-0 text-zinc-600 sm:w-10">08:{String(42 + index).padStart(2, "0")}</span>
                 <span>{status.dot}</span>
-                <span className="min-w-0 flex-1 truncate text-zinc-300">{agent.name} · {lang === "DE" ? status.activityDE : status.activityEN}</span>
+                <span className="min-w-0 flex-1 break-words text-zinc-300 sm:truncate">{agent.name} · {lang === "DE" ? status.activityDE : status.activityEN}</span>
               </div>
             ))}
             {!liveAgents.length && <p className="text-xs text-zinc-600">{lang === "DE" ? "Lade Live-Aktivitäten…" : "Loading live activity…"}</p>}
@@ -455,7 +455,7 @@ export default function Specialists() {
           <Loader2 size={20} className="animate-spin text-[#7C3AED]" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="grid min-w-0 grid-cols-1 gap-3 min-[430px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 xl:gap-4">
           {agents.map((agent, i) => {
             const meta = ICON_MAP[agent.id] || { Icon: Bot, color: "#7C3AED" };
             const { Icon, color } = meta;
@@ -468,19 +468,19 @@ export default function Specialists() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
                 onClick={() => setActiveAgent(agent)}
-                className="group text-left bg-[#0A0A0A] border border-white/8 rounded-sm p-5 transition-all duration-200"
+                className="group min-w-0 text-left bg-[#0A0A0A] border border-white/8 rounded-sm p-4 sm:p-5 transition-all duration-200"
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${color}50`; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = ""; }}
               >
-                <div className="flex items-start justify-between mb-4">
+                <div className="mb-4 flex items-start justify-between gap-3">
                   <div className="w-11 h-11 rounded-sm flex items-center justify-center"
                     style={{ backgroundColor: `${color}18` }}>
                     <Icon size={20} style={{ color }} />
                   </div>
-                  <span className="flex items-center gap-1 text-xl">{agent.emoji}<span className="text-xs">{STATUS_META[i % STATUS_META.length].dot}</span></span>
+                  <span className="flex shrink-0 items-center gap-1 text-xl">{agent.emoji}<span className="text-xs">{STATUS_META[i % STATUS_META.length].dot}</span></span>
                 </div>
-                <h3 className="text-sm font-semibold text-white mb-1">{agent.name}</h3>
-                <p className="text-[11px] text-zinc-500 leading-relaxed mb-3">{role}</p>
+                <h3 className="mb-1 break-words text-sm font-semibold text-white">{agent.name}</h3>
+                <p className="mb-3 text-[11px] leading-relaxed text-zinc-500">{role}</p>
                 <div className="mb-3 rounded-sm border border-white/8 bg-white/[0.03] px-2 py-1.5 text-[10px] text-zinc-500">
                   {lang === "DE" ? STATUS_META[i % STATUS_META.length].labelDE : STATUS_META[i % STATUS_META.length].labelEN} · {lang === "DE" ? STATUS_META[i % STATUS_META.length].activityDE : STATUS_META[i % STATUS_META.length].activityEN}
                 </div>
@@ -511,7 +511,7 @@ export default function Specialists() {
       )}
 
       {/* Info */}
-      <div className="flex items-start gap-3 p-4 bg-[#0A0A0A] border border-[#7C3AED]/15 rounded-sm">
+      <div className="flex items-start gap-3 rounded-sm border border-[#7C3AED]/15 bg-[#0A0A0A] p-4">
         <Wrench size={15} className="text-[#7C3AED] flex-shrink-0 mt-0.5" />
         <div className="text-xs text-zinc-500 leading-relaxed">
           <span className="text-[#7C3AED]">
