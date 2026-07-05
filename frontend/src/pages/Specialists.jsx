@@ -43,6 +43,71 @@ function ToolIcon({ name, size = 13 }) {
   return <Icon size={size} />;
 }
 
+function getAgentInitials(agent) {
+  const cleanName = (agent.name || agent.id || "AI").replace(/[–—-].*$/, "").trim();
+  const words = cleanName.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) return `${words[0][0]}${words[1][0]}`.toUpperCase();
+  return (words[0] || agent.id || "AI").slice(0, 2).toUpperCase();
+}
+
+function getAgentDescription(agent, lang) {
+  const text = lang === "DE" ? agent.personality_de : agent.personality_en;
+  return (text || "")
+    .replace(/\s+/g, " ")
+    .replace(/^Du bist\s+/i, "")
+    .replace(/^You are\s+/i, "")
+    .split(". ")[0]
+    .slice(0, 128);
+}
+
+function AgentAvatar({ agent, Icon, color, className = "" }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const avatar = agent.avatar;
+  const initials = getAgentInitials(agent);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [avatar]);
+
+  return (
+    <div className={`relative h-16 w-16 sm:h-20 sm:w-20 ${className}`}>
+      <div
+        className="absolute -inset-1 rounded-full opacity-80 blur-md transition-opacity group-hover:opacity-100"
+        style={{ background: `radial-gradient(circle, ${color}70 0%, #7C3AED30 48%, transparent 72%)` }}
+      />
+      <div
+        className="relative h-full w-full overflow-hidden rounded-full border-2 bg-[#111118] shadow-[0_0_28px_rgba(124,58,237,0.25)]"
+        style={{ borderColor: `${color}80` }}
+      >
+        {avatar && !imageFailed ? (
+          <img
+            src={avatar}
+            alt={`${agent.name} avatar`}
+            className="h-full w-full object-cover"
+            loading="lazy"
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <div
+            className="flex h-full w-full items-center justify-center text-lg font-bold text-white sm:text-2xl"
+            style={{
+              background: `radial-gradient(circle at 35% 25%, ${color}70, #18181b 58%, #050505 100%)`,
+            }}
+          >
+            {initials}
+          </div>
+        )}
+      </div>
+      <div
+        className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border border-black bg-[#0A0A0A] sm:h-7 sm:w-7"
+        style={{ boxShadow: `0 0 14px ${color}70` }}
+      >
+        <Icon size={13} style={{ color }} />
+      </div>
+    </div>
+  );
+}
+
 function CopyBtn({ text }) {
   const [copied, setCopied] = useState(false);
   const handle = () => {
@@ -461,6 +526,8 @@ export default function Specialists() {
             const { Icon, color } = meta;
             const role = lang === "DE" ? agent.role_de : agent.role_en;
             const tools = agent.tools || [];
+            const status = STATUS_META[i % STATUS_META.length];
+            const description = getAgentDescription(agent, lang);
             return (
               <motion.button
                 key={agent.id}
@@ -468,21 +535,29 @@ export default function Specialists() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
                 onClick={() => setActiveAgent(agent)}
-                className="group min-w-0 text-left bg-[#0A0A0A] border border-white/8 rounded-sm p-4 sm:p-5 transition-all duration-200"
+                className="group min-w-0 text-left bg-[#0A0A0A] border border-white/8 rounded-sm p-4 sm:p-5 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/[0.035]"
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${color}50`; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = ""; }}
               >
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div className="w-11 h-11 rounded-sm flex items-center justify-center"
-                    style={{ backgroundColor: `${color}18` }}>
-                    <Icon size={20} style={{ color }} />
-                  </div>
-                  <span className="flex shrink-0 items-center gap-1 text-xl">{agent.emoji}<span className="text-xs">{STATUS_META[i % STATUS_META.length].dot}</span></span>
+                <div className="mb-4 flex flex-col items-center text-center">
+                  <AgentAvatar agent={agent} Icon={Icon} color={color} />
+                  <span
+                    className="mt-4 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em]"
+                    style={{ borderColor: `${status.color}45`, color: status.color, backgroundColor: `${status.color}12` }}
+                  >
+                    <span>{status.dot}</span>
+                    {lang === "DE" ? status.labelDE : status.labelEN}
+                  </span>
                 </div>
-                <h3 className="mb-1 break-words text-sm font-semibold text-white">{agent.name}</h3>
-                <p className="mb-3 text-[11px] leading-relaxed text-zinc-500">{role}</p>
+                <h3 className="mb-1 break-words text-center text-sm font-semibold text-white">{agent.name}</h3>
+                <p className="mb-3 text-center text-[11px] leading-relaxed text-zinc-400">{role}</p>
+                {description && (
+                  <p className="mb-3 min-h-[42px] text-[11px] leading-relaxed text-zinc-500">
+                    {description}.
+                  </p>
+                )}
                 <div className="mb-3 rounded-sm border border-white/8 bg-white/[0.03] px-2 py-1.5 text-[10px] text-zinc-500">
-                  {lang === "DE" ? STATUS_META[i % STATUS_META.length].labelDE : STATUS_META[i % STATUS_META.length].labelEN} · {lang === "DE" ? STATUS_META[i % STATUS_META.length].activityDE : STATUS_META[i % STATUS_META.length].activityEN}
+                  <span className="text-zinc-300">{lang === "DE" ? "Aktivität" : "Activity"}:</span> {lang === "DE" ? status.activityDE : status.activityEN}
                 </div>
 
                 {/* Tool chips preview */}
