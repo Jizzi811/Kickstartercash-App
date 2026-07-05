@@ -43,6 +43,11 @@ FREETHEAI_IMAGE_MODEL = os.environ.get("FREETHEAI_IMAGE_MODEL", "eve/gpt-image-2
 FREETHEAI_TEXT_MODEL = os.environ.get("FREETHEAI_TEXT_MODEL", "opc/deepseek-v4-flash-free")
 FREETHEAI_TTS_MODEL = os.environ.get("FREETHEAI_TTS_MODEL", "xai/grok-tts")
 
+# --- NVIDIA NIM – OpenAI-compatible endpoint (build.nvidia.com) -------------
+NVIDIA_API_KEY = os.environ.get("NVIDIA_API_KEY", "")
+NVIDIA_BASE = os.environ.get("NVIDIA_BASE", "https://integrate.api.nvidia.com/v1")
+NVIDIA_TEXT_MODEL = os.environ.get("NVIDIA_TEXT_MODEL", "meta/llama-3.1-70b-instruct")
+
 # --- OpenAI model overrides -------------------------------------------------
 # The "gpt" button's text model. Overridable so a non-technical operator can
 # swap it in Render (e.g. to gpt-4o) without a code change.
