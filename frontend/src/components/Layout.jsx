@@ -45,6 +45,7 @@ const NAV_GROUPS = [
     items: [
       { to: "/agents", icon: Bot, labelDE: "Agents", labelEN: "Agents" },
       { to: "/builder", icon: Wrench, labelDE: "Custom Agents", labelEN: "Custom Agents" },
+      { to: "/character-studio", icon: Dna, labelDE: "Character Studio", labelEN: "Character Studio" },
       { to: "/gateway", icon: Plug, labelDE: "Gateway", labelEN: "Gateway" },
       { to: "/skills", icon: Sparkles, labelDE: "Skills", labelEN: "Skills" },
       { to: "/modules", icon: LayoutGrid, labelDE: "Marketplace", labelEN: "Marketplace" },
@@ -123,6 +124,7 @@ const PAGE_NAMES = {
   "/knowledge-graph": "Knowledge Graph",
   "/tickets": "Tickets",
   "/builder": "Eigene Agenten",
+  "/character-studio": "Character Studio",
   "/arena": "Chat Arena",
   "/quantum": "Quantum",
   "/tiktok": "TikTok Studio",
