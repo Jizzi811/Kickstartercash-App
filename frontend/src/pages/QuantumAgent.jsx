@@ -34,19 +34,8 @@ const AGENT_ICON_MAP = {
 
 function AgentAvatar({ agent }) {
   const [hasImageError, setHasImageError] = useState(false);
-  const initial = agent.name.charAt(0);
 
-  if (hasImageError || !agent.avatar) {
-    return (
-      <div
-        className="flex h-28 w-28 items-center justify-center rounded-full border bg-black/50 text-4xl font-bold text-white sm:h-32 sm:w-32"
-        style={{ borderColor: agent.color, boxShadow: `0 0 32px ${agent.color}55` }}
-        aria-label={`${agent.name} Avatar Fallback`}
-      >
-        {initial}
-      </div>
-    );
-  }
+  if (!agent.avatar || hasImageError) return null;
 
   return (
     <img

@@ -87,9 +87,6 @@ function getAgentDescription(agent, lang) {
 function AgentAvatar({ agent, Icon, color, status, className = "" }) {
   const [imageFailed, setImageFailed] = useState(false);
   const avatar = agent.avatar;
-  const initials = getAgentInitials(agent);
-  const isQuantum = agent.id === "ceo" || agent.id === "quantum";
-
   useEffect(() => {
     setImageFailed(false);
   }, [avatar]);
@@ -108,14 +105,7 @@ function AgentAvatar({ agent, Icon, color, status, className = "" }) {
         className="relative h-full w-full overflow-hidden rounded-full border bg-[#08070D] shadow-[0_22px_45px_rgba(0,0,0,0.45)]"
         style={{ borderColor: `${color}D0` }}
       >
-        {isQuantum ? (
-          <div className="relative flex h-full w-full items-center justify-center overflow-hidden" style={{ background: `radial-gradient(circle at 50% 42%, ${color}55 0%, #12091f 52%, #030306 100%)` }}>
-            <div className="absolute h-[82%] w-[82%] rounded-full border border-[#C4B5FD]/35" style={{ boxShadow: `0 0 24px ${color}90` }} />
-            <div className="absolute h-[58%] w-[58%] rounded-full border border-dashed border-[#F0ABFC]/45 animate-spin" style={{ animationDuration: "14s" }} />
-            <div className="h-[46%] w-[46%] rounded-full bg-[#C4B5FD]" style={{ boxShadow: `0 0 18px #C4B5FD, 0 0 42px ${color}` }} />
-            <Sparkles size={22} className="absolute text-white/90" />
-          </div>
-        ) : avatar && !imageFailed ? (
+        {avatar && !imageFailed && (
           <img
             src={avatar}
             alt={`${agent.name} avatar`}
@@ -123,13 +113,6 @@ function AgentAvatar({ agent, Icon, color, status, className = "" }) {
             loading="lazy"
             onError={() => setImageFailed(true)}
           />
-        ) : (
-          <div
-            className="flex h-full w-full items-center justify-center text-2xl font-bold text-white sm:text-3xl"
-            style={{ background: `radial-gradient(circle at 35% 25%, ${color}80, #18181b 58%, #050505 100%)` }}
-          >
-            {initials}
-          </div>
         )}
       </div>
       <div className="absolute -left-1 top-2 h-4 w-4 rounded-full border-2 border-[#050505]" style={{ backgroundColor: status?.color || "#34D399", boxShadow: `0 0 14px ${status?.color || "#34D399"}` }} />
