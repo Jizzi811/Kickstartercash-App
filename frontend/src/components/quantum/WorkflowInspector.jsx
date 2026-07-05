@@ -4,7 +4,7 @@ export default function WorkflowInspector({ workflow }) {
   if (!workflow) return null;
   const context = workflow.sharedContext;
   return (
-    <div className="rounded-sm border border-white/8 bg-black/35 p-4">
+    <div className="min-w-0 overflow-hidden rounded-sm border border-white/8 bg-black/35 p-4">
       <div className="mb-4 text-sm font-semibold text-white">Workflow Inspector</div>
       <div className="grid gap-3 text-xs md:grid-cols-2">
         <div><span className="text-zinc-500">Status:</span> <span className="text-[#A78BFA]">{workflow.status}</span></div>
