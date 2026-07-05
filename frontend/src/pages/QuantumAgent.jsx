@@ -1,6 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { AGENT_REGISTRY, DEMO_PROMPTS, orchestrateQuantumWorkflow } from "@/lib/quantumOrchestrator";
+import { completeNextWorkflowStep, createWorkflow, startWorkflow, WORKFLOW_STATUSES } from "@/lib/workflowEngine";
+import ActivityFeed from "@/components/quantum/ActivityFeed";
+import OutputSummary from "@/components/quantum/OutputSummary";
+import WorkflowInspector from "@/components/quantum/WorkflowInspector";
+import WorkflowTimeline from "@/components/quantum/WorkflowTimeline";
 import {
   Bot, TrendingUp, Palette, Video, ShoppingCart, Search, Zap, Headphones,
   ChevronDown, ArrowDown, User, Cpu, GitBranch, Crown, Music, Mail, Linkedin,
@@ -411,6 +416,7 @@ export default function QuantumAgent() {
   const [orchestratorPrompt, setOrchestratorPrompt] = useState(DEMO_PROMPTS[0]);
   const [orchestratorResult, setOrchestratorResult] = useState(null);
   const [orchestratorThinking, setOrchestratorThinking] = useState(false);
+  const [workflow, setWorkflow] = useState(null);
   const lang = localStorage.getItem("kc_lang") || "DE";
 
   const tasks = lang === "DE" ? TASKS_DE : TASKS_EN;
@@ -483,11 +489,29 @@ export default function QuantumAgent() {
     setOrchestratorPrompt(prompt);
     setOrchestratorThinking(true);
     setOrchestratorResult(null);
+    setWorkflow(null);
     setTimeout(() => {
-      setOrchestratorResult(orchestrateQuantumWorkflow(prompt));
+      const result = orchestrateQuantumWorkflow(prompt);
+      setOrchestratorResult(result);
+      setWorkflow(createWorkflow(result));
       setOrchestratorThinking(false);
     }, 900);
   };
+
+
+
+  const handleStartWorkflow = () => {
+    if (!workflow || workflow.status === WORKFLOW_STATUSES.RUNNING) return;
+    setWorkflow((currentWorkflow) => startWorkflow(currentWorkflow));
+  };
+
+  useEffect(() => {
+    if (!workflow || workflow.status !== WORKFLOW_STATUSES.RUNNING) return undefined;
+    const timer = setTimeout(() => {
+      setWorkflow((currentWorkflow) => completeNextWorkflowStep(currentWorkflow));
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [workflow]);
 
   const activeDeptObj = DEPARTMENTS.find((d) => d.id === activeDept);
   const activeDeptColor = activeDeptObj ? activeDeptObj.color : "#7C3AED";
@@ -562,14 +586,15 @@ export default function QuantumAgent() {
         </div>
         <div className="flex flex-col gap-3 md:flex-row">
           <textarea value={orchestratorPrompt} onChange={(event) => setOrchestratorPrompt(event.target.value)} className="min-h-[92px] flex-1 rounded-sm border border-white/10 bg-black/40 p-3 text-sm text-zinc-200 outline-none focus:border-[#7C3AED]/60" placeholder={lang === "DE" ? "z. B. Erstelle eine Facebook-Kampagne für BrandMind." : "e.g. Create a Facebook campaign for BrandMind."} />
-          <button onClick={() => handleOrchestrate()} className="rounded-sm border border-[#7C3AED]/40 bg-[#7C3AED]/20 px-5 py-3 text-sm font-semibold text-[#DDD6FE] hover:bg-[#7C3AED]/30">{lang === "DE" ? "Workflow ableiten" : "Derive workflow"}</button>
+          <div className="flex flex-col gap-2 md:w-[190px]"><button onClick={() => handleOrchestrate()} className="rounded-sm border border-[#7C3AED]/40 bg-[#7C3AED]/20 px-5 py-3 text-sm font-semibold text-[#DDD6FE] hover:bg-[#7C3AED]/30">{lang === "DE" ? "Workflow ableiten" : "Derive workflow"}</button><button onClick={handleStartWorkflow} disabled={!workflow || workflow.status === WORKFLOW_STATUSES.RUNNING || workflow.status === WORKFLOW_STATUSES.COMPLETED} className="rounded-sm border border-emerald-400/30 bg-emerald-400/10 px-5 py-3 text-sm font-semibold text-emerald-200 hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-40">{workflow?.status === WORKFLOW_STATUSES.RUNNING ? (lang === "DE" ? "Workflow läuft…" : "Workflow running…") : (lang === "DE" ? "Workflow starten" : "Start workflow")}</button></div>
         </div>
         {orchestratorThinking && <div className="mt-4 flex items-center gap-3 rounded-sm border border-[#7C3AED]/20 bg-[#7C3AED]/10 p-3 text-sm text-[#C4B5FD]"><Clock3 size={16} className="animate-pulse" /> {lang === "DE" ? "Analyse läuft… Ziel, Skills und Agenten werden gematcht." : "Analysis running… matching goal, skills and agents."}</div>}
         {orchestratorResult && !orchestratorThinking && <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-5 space-y-4">
           <div className="grid gap-3 md:grid-cols-3">{[[lang === "DE" ? "Ziel erkannt" : "Detected goal", orchestratorResult.analysis.goal], [lang === "DE" ? "Kontext" : "Context", orchestratorResult.analysis.industry], [lang === "DE" ? "Output / Plattform" : "Output / platform", `${orchestratorResult.analysis.desiredOutput} · ${orchestratorResult.analysis.platform}`]].map(([label, value]) => <div key={label} className="rounded-sm border border-white/8 bg-black/35 p-4"><div className="mb-2 flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-[#A78BFA]"><Target size={12} />{label}</div><div className="text-sm text-zinc-200">{value}</div></div>)}</div>
           <div className="rounded-sm border border-white/8 bg-black/35 p-4"><div className="mb-3 text-xs font-semibold text-white">{lang === "DE" ? "Benötigte Fähigkeiten" : "Required skills"}</div><div className="flex flex-wrap gap-2">{orchestratorResult.analysis.requiredSkills.map((skill) => <span key={skill} className="rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/10 px-3 py-1 text-xs text-[#C4B5FD]">{skill}</span>)}</div></div>
           <div className="grid gap-3 lg:grid-cols-2">{orchestratorResult.selectedAgents.map((agent) => <div key={agent.id} className="rounded-sm border border-white/8 bg-white/[0.02] p-4"><div className="mb-2 flex items-center justify-between"><div className="font-semibold text-white">{agent.name}</div><span className="text-xs text-[#A78BFA]">{agent.matchScore}% match</span></div><div className="mb-2 text-xs text-zinc-400">{agent.selectionReason}</div><div className="text-[11px] text-zinc-500">{lang === "DE" ? "Rolle" : "Role"}: {agent.recommendedRole} · {lang === "DE" ? "Passend" : "Matching"}: {agent.matchingSkills.join(", ") || "—"}</div></div>)}</div>
-          <div className="rounded-sm border border-white/8 bg-black/35 p-4"><div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white"><GitBranch size={16} className="text-[#7C3AED]" /> Workflow Timeline</div><div className="space-y-3">{orchestratorResult.executionPlan.map((step) => <div key={step.id} className="grid gap-2 border-l border-[#7C3AED]/30 pl-4 text-xs md:grid-cols-[1fr_1fr_1.3fr_0.7fr]"><div className="text-zinc-200">{step.phase}<div className="text-zinc-500">{step.agent}</div></div><div className="text-zinc-400">{step.task}</div><div className="text-zinc-300">Output: {step.expectedOutput}</div><div className="text-[#A78BFA]">{step.status} · {step.priority}</div></div>)}</div></div>
+          <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]"><WorkflowTimeline workflow={workflow} /><ActivityFeed workflow={workflow} /></div>
+          <div className="grid gap-4 xl:grid-cols-[1fr_1fr]"><OutputSummary workflow={workflow} /><WorkflowInspector workflow={workflow} /></div>
         </motion.div>}
       </div>
 
