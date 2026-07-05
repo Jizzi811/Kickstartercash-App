@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { AGENT_REGISTRY, DEMO_PROMPTS, orchestrateQuantumWorkflow } from "@/lib/quantumOrchestrator";
 import {
   Bot, TrendingUp, Palette, Video, ShoppingCart, Search, Zap, Headphones,
   ChevronDown, ArrowDown, User, Cpu, GitBranch, Crown, Music, Mail, Linkedin,
   Network, Workflow, BarChart2, BookOpen, FileText, CheckCircle2, Gauge, Coins, Sparkles,
+  PlayCircle, Clock3, Target,
 } from "lucide-react";
 
 const DEPARTMENTS = [
@@ -172,88 +174,6 @@ const DEPARTMENTS = [
 ];
 
 
-const AGENT_REGISTRY = [
-  {
-    id: "design_director",
-    name: "Design Director",
-    match: 95,
-    priority: "High",
-    cost: "Medium",
-    skills: ["UI", "Branding", "Logos", "Banner", "Canva"],
-    models: ["GPT", "Claude", "Gemini"],
-    tools: ["Image Generator", "Canva", "Photoshop"],
-    inputs: ["Briefing", "Brand Kit", "Format"],
-    outputs: ["Ad graphics", "Visual system", "Asset brief"],
-    personaDE: "Denkt wie Creative Director, Apple Designer und Markenstratege.",
-    personaEN: "Thinks like a creative director, Apple designer and brand strategist.",
-    reasonDE: "Du benötigst hochwertige Werbegrafiken und ein konsistentes visuelles System.",
-    reasonEN: "You need high-quality advertising visuals and a consistent visual system.",
-  },
-  {
-    id: "video_producer",
-    name: "Video Producer",
-    match: 98,
-    priority: "High",
-    cost: "High",
-    skills: ["Video", "Voice", "Motion", "CapCut", "Veo"],
-    models: ["GPT", "Gemini", "Veo"],
-    tools: ["Veo", "CapCut", "ElevenLabs", "Runway"],
-    inputs: ["Hook", "Storyboard", "Assets"],
-    outputs: ["Reel plan", "Shot list", "Voice brief"],
-    personaDE: "Denkt wie Regisseur, Motion Designer und Social-Video-Stratege.",
-    personaEN: "Thinks like a director, motion designer and social-video strategist.",
-    reasonDE: "Du hast ein Reel oder Bewegtbild-Asset angefordert.",
-    reasonEN: "You requested a reel or motion asset.",
-  },
-  {
-    id: "copy_specialist",
-    name: "Copy Specialist",
-    match: 99,
-    priority: "High",
-    cost: "Low",
-    skills: ["Hooks", "Ads", "Landing Copy", "Email", "CTA"],
-    models: ["GPT", "Claude"],
-    tools: ["Copy Lab", "Tone Analyzer"],
-    inputs: ["Offer", "Audience", "Angle"],
-    outputs: ["Ad copy", "Hooks", "CTA variants"],
-    personaDE: "Denkt wie Conversion-Texter, Kampagnenstratege und Storyteller.",
-    personaEN: "Thinks like a conversion copywriter, campaign strategist and storyteller.",
-    reasonDE: "Die Kampagne enthält Werbetexte, Hooks und klare Handlungsaufforderungen.",
-    reasonEN: "The campaign needs ad copy, hooks and clear calls to action.",
-  },
-  {
-    id: "social_manager",
-    name: "Social Manager",
-    match: 92,
-    priority: "Medium",
-    cost: "Medium",
-    skills: ["Publishing", "Community", "Hashtags", "Calendar", "Trends"],
-    models: ["GPT", "Gemini"],
-    tools: ["Scheduler", "Trend Scanner", "Analytics"],
-    inputs: ["Channels", "Calendar", "Campaign goal"],
-    outputs: ["Posting plan", "Channel checklist", "Community prompts"],
-    personaDE: "Denkt wie Social Lead, Community Manager und Trend Analyst.",
-    personaEN: "Thinks like a social lead, community manager and trend analyst.",
-    reasonDE: "Die Inhalte müssen kanalübergreifend geplant und veröffentlicht werden.",
-    reasonEN: "The content must be planned and published across channels.",
-  },
-  {
-    id: "analytics_expert",
-    name: "Analytics Expert",
-    match: 88,
-    priority: "Medium",
-    cost: "Low",
-    skills: ["KPIs", "Attribution", "Reporting", "Experiments"],
-    models: ["GPT", "Claude"],
-    tools: ["Dashboard", "UTM Builder", "Experiment Tracker"],
-    inputs: ["Goal", "Budget", "Channels"],
-    outputs: ["KPI plan", "Tracking checklist", "Learning agenda"],
-    personaDE: "Denkt wie Growth Analyst, Performance Marketer und Datenstratege.",
-    personaEN: "Thinks like a growth analyst, performance marketer and data strategist.",
-    reasonDE: "Die Kampagne soll später ausgewertet und optimiert werden.",
-    reasonEN: "The campaign should be measured and optimized later.",
-  },
-];
 
 const SPRINT_STAGES = [
   { id: "6.1", titleDE: "Agent Registry", titleEN: "Agent Registry", textDE: "Fähigkeiten, Rollen, Tools, Modelle, Kosten, Prioritäten sowie Ein- und Ausgaben erfassen.", textEN: "Capture capabilities, roles, tools, models, costs, priorities plus inputs and outputs." },
@@ -488,6 +408,9 @@ export default function QuantumAgent() {
   const [activeTask, setActiveTask] = useState(null);
   const [ceoResponse, setCeoResponse] = useState(null);
   const [isThinking, setIsThinking] = useState(false);
+  const [orchestratorPrompt, setOrchestratorPrompt] = useState(DEMO_PROMPTS[0]);
+  const [orchestratorResult, setOrchestratorResult] = useState(null);
+  const [orchestratorThinking, setOrchestratorThinking] = useState(false);
   const lang = localStorage.getItem("kc_lang") || "DE";
 
   const tasks = lang === "DE" ? TASKS_DE : TASKS_EN;
@@ -544,6 +467,26 @@ export default function QuantumAgent() {
       const responses = lang === "DE" ? ceoResponsesDE : ceoResponsesEN;
       setCeoResponse(responses[dept]);
     }, 1800);
+  };
+
+  const registryPreview = useMemo(() => AGENT_REGISTRY.map((agent) => ({
+    ...agent,
+    match: 90,
+    personaDE: `${agent.name} orchestriert ${agent.role} mit ${agent.skills.slice(0, 3).join(", ")}.`,
+    personaEN: `${agent.name} orchestrates ${agent.role} with ${agent.skills.slice(0, 3).join(", ")}.`,
+    reasonDE: `${agent.name} passt, weil die Registry Skills und Outputs strukturiert bereitstellt.`,
+    reasonEN: `${agent.name} fits because the registry exposes skills and outputs in a structured way.`,
+    tools: agent.outputs,
+  })), []);
+
+  const handleOrchestrate = (prompt = orchestratorPrompt) => {
+    setOrchestratorPrompt(prompt);
+    setOrchestratorThinking(true);
+    setOrchestratorResult(null);
+    setTimeout(() => {
+      setOrchestratorResult(orchestrateQuantumWorkflow(prompt));
+      setOrchestratorThinking(false);
+    }, 900);
   };
 
   const activeDeptObj = DEPARTMENTS.find((d) => d.id === activeDept);
@@ -610,6 +553,27 @@ export default function QuantumAgent() {
       </div>
 
       <div className="rounded-sm border border-[#7C3AED]/20 bg-[#070707] p-5">
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-white"><PlayCircle size={16} className="text-[#7C3AED]" /> Quantum Orchestrator Engine</div>
+            <p className="mt-1 text-xs text-zinc-500">{lang === "DE" ? "Beschreibe eine Aufgabe. Quantum analysiert Ziel, Kontext, Output, Plattform und baut einen Mock-Workflow." : "Describe a task. Quantum analyzes goal, context, output, platform and builds a mock workflow."}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">{DEMO_PROMPTS.map((prompt) => <button key={prompt} onClick={() => handleOrchestrate(prompt)} className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px] text-zinc-300 hover:border-[#7C3AED]/50">{prompt}</button>)}</div>
+        </div>
+        <div className="flex flex-col gap-3 md:flex-row">
+          <textarea value={orchestratorPrompt} onChange={(event) => setOrchestratorPrompt(event.target.value)} className="min-h-[92px] flex-1 rounded-sm border border-white/10 bg-black/40 p-3 text-sm text-zinc-200 outline-none focus:border-[#7C3AED]/60" placeholder={lang === "DE" ? "z. B. Erstelle eine Facebook-Kampagne für BrandMind." : "e.g. Create a Facebook campaign for BrandMind."} />
+          <button onClick={() => handleOrchestrate()} className="rounded-sm border border-[#7C3AED]/40 bg-[#7C3AED]/20 px-5 py-3 text-sm font-semibold text-[#DDD6FE] hover:bg-[#7C3AED]/30">{lang === "DE" ? "Workflow ableiten" : "Derive workflow"}</button>
+        </div>
+        {orchestratorThinking && <div className="mt-4 flex items-center gap-3 rounded-sm border border-[#7C3AED]/20 bg-[#7C3AED]/10 p-3 text-sm text-[#C4B5FD]"><Clock3 size={16} className="animate-pulse" /> {lang === "DE" ? "Analyse läuft… Ziel, Skills und Agenten werden gematcht." : "Analysis running… matching goal, skills and agents."}</div>}
+        {orchestratorResult && !orchestratorThinking && <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-5 space-y-4">
+          <div className="grid gap-3 md:grid-cols-3">{[[lang === "DE" ? "Ziel erkannt" : "Detected goal", orchestratorResult.analysis.goal], [lang === "DE" ? "Kontext" : "Context", orchestratorResult.analysis.industry], [lang === "DE" ? "Output / Plattform" : "Output / platform", `${orchestratorResult.analysis.desiredOutput} · ${orchestratorResult.analysis.platform}`]].map(([label, value]) => <div key={label} className="rounded-sm border border-white/8 bg-black/35 p-4"><div className="mb-2 flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-[#A78BFA]"><Target size={12} />{label}</div><div className="text-sm text-zinc-200">{value}</div></div>)}</div>
+          <div className="rounded-sm border border-white/8 bg-black/35 p-4"><div className="mb-3 text-xs font-semibold text-white">{lang === "DE" ? "Benötigte Fähigkeiten" : "Required skills"}</div><div className="flex flex-wrap gap-2">{orchestratorResult.analysis.requiredSkills.map((skill) => <span key={skill} className="rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/10 px-3 py-1 text-xs text-[#C4B5FD]">{skill}</span>)}</div></div>
+          <div className="grid gap-3 lg:grid-cols-2">{orchestratorResult.selectedAgents.map((agent) => <div key={agent.id} className="rounded-sm border border-white/8 bg-white/[0.02] p-4"><div className="mb-2 flex items-center justify-between"><div className="font-semibold text-white">{agent.name}</div><span className="text-xs text-[#A78BFA]">{agent.matchScore}% match</span></div><div className="mb-2 text-xs text-zinc-400">{agent.selectionReason}</div><div className="text-[11px] text-zinc-500">{lang === "DE" ? "Rolle" : "Role"}: {agent.recommendedRole} · {lang === "DE" ? "Passend" : "Matching"}: {agent.matchingSkills.join(", ") || "—"}</div></div>)}</div>
+          <div className="rounded-sm border border-white/8 bg-black/35 p-4"><div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white"><GitBranch size={16} className="text-[#7C3AED]" /> Workflow Timeline</div><div className="space-y-3">{orchestratorResult.executionPlan.map((step) => <div key={step.id} className="grid gap-2 border-l border-[#7C3AED]/30 pl-4 text-xs md:grid-cols-[1fr_1fr_1.3fr_0.7fr]"><div className="text-zinc-200">{step.phase}<div className="text-zinc-500">{step.agent}</div></div><div className="text-zinc-400">{step.task}</div><div className="text-zinc-300">Output: {step.expectedOutput}</div><div className="text-[#A78BFA]">{step.status} · {step.priority}</div></div>)}</div></div>
+        </motion.div>}
+      </div>
+
+      <div className="rounded-sm border border-[#7C3AED]/20 bg-[#070707] p-5">
         <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm font-semibold text-white">
@@ -639,7 +603,7 @@ export default function QuantumAgent() {
         </div>
 
         <div className="mt-5 grid gap-3 xl:grid-cols-5">
-          {AGENT_REGISTRY.map((agent) => (
+          {registryPreview.map((agent) => (
             <div key={agent.id} className="rounded-sm border border-white/8 bg-white/[0.02] p-4">
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
@@ -666,7 +630,7 @@ export default function QuantumAgent() {
           <CheckCircle2 size={16} className="text-[#7C3AED]" /> {lang === "DE" ? "Quantum erklärt seine Auswahl" : "Quantum explains its selection"}
         </div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {AGENT_REGISTRY.slice(0, 4).map((agent) => (
+          {registryPreview.slice(0, 4).map((agent) => (
             <div key={agent.id} className="rounded-sm border border-white/8 bg-[#0A0A0A] p-4">
               <div className="mb-2 flex items-center justify-between gap-3">
                 <div className="font-semibold text-white">✔ {agent.name}</div>
