@@ -11,7 +11,7 @@ import { V, SORA, fadeUp, GradientHeading, Card, SectionHeader } from "@/compone
 
 
 
-const selCls = "min-w-0 bg-[#0A0A0A] border border-white/10 rounded-sm px-2.5 py-2 sm:py-1.5 text-[12px] text-zinc-200 outline-none focus:border-[#7C3AED]/50";
+const selCls = "min-w-0 max-w-full bg-[#0A0A0A] border border-white/10 rounded-sm px-2.5 py-2 sm:py-1.5 text-[12px] text-zinc-200 outline-none focus:border-[#7C3AED]/50";
 
 export default function GatewayStudio() {
   const { lang } = useApp();
@@ -225,8 +225,41 @@ export default function GatewayStudio() {
       {/* PREFERRED MODEL PER TASK */}
       <motion.section {...fadeUp(0.18)}>
         <SectionHeader icon={CircleDot} title={lang === "DE" ? "Bevorzugtes Modell pro Aufgabe" : "Preferred model per task"} />
-        <Card className="p-0 sm:p-2">
-          <div className="overflow-x-auto rounded-sm">
+        <Card className="p-3 sm:p-2">
+          <div className="space-y-3 sm:hidden">
+            {reg.tasks.map((t) => {
+              const pick = cfg.task_models[t.id] || {};
+              const provs = providersFor(t.capability);
+              const models = modelsFor(pick.provider, t.capability);
+              return (
+                <div key={t.id} className="rounded-sm border border-white/8 bg-black/20 p-3">
+                  <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="break-words text-[13px] font-semibold text-zinc-200">{lang === "DE" ? t.de : t.en}</div>
+                      <div className="mt-1 text-[10px] uppercase tracking-widest text-zinc-700">{t.capability}</div>
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <label className="space-y-1">
+                      <span className="block text-[10px] uppercase tracking-widest text-zinc-600">{lang === "DE" ? "Anbieter" : "Provider"}</span>
+                      <select className={selCls + " w-full"} value={pick.provider || ""}
+                        onChange={(e) => setTaskPick(t.id, "provider", e.target.value)}>
+                        {provs.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+                      </select>
+                    </label>
+                    <label className="space-y-1">
+                      <span className="block text-[10px] uppercase tracking-widest text-zinc-600">{lang === "DE" ? "Modell" : "Model"}</span>
+                      <select className={selCls + " w-full"} value={pick.model || ""}
+                        onChange={(e) => setTaskPick(t.id, "model", e.target.value)}>
+                        {models.map((m) => <option key={m.id} value={m.id}>{m.label || m.id}</option>)}
+                      </select>
+                    </label>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="hidden overflow-x-auto rounded-sm sm:block">
           <table className="w-full text-[12px]" style={{ minWidth: 560 }}>
             <thead>
               <tr className="text-zinc-600 text-[10px] uppercase tracking-widest">
@@ -266,7 +299,7 @@ export default function GatewayStudio() {
 
       {/* USAGE BY PROVIDER + TEST */}
       <motion.section {...fadeUp(0.22)} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <SectionHeader icon={Activity} title={lang === "DE" ? "Nutzung pro Anbieter" : "Usage by provider"} />
           {usage?.by_provider?.length ? (
             <div className="space-y-2">
@@ -287,12 +320,12 @@ export default function GatewayStudio() {
           )}
         </Card>
 
-        <Card className="p-6" style={{
+        <Card className="p-4 sm:p-6" style={{
           background: "linear-gradient(145deg, rgba(124,58,237,0.05) 0%, rgba(255,255,255,0.02) 100%)",
           border: "1px solid rgba(124,58,237,0.14)",
         }}>
           <SectionHeader icon={Send} title={lang === "DE" ? "Gateway testen" : "Test the gateway"} />
-          <div className="mb-2 grid gap-2 sm:grid-cols-[auto_1fr_auto]">
+          <div className="mb-2 grid gap-2 sm:grid-cols-[minmax(9rem,auto)_1fr_auto]">
             <select className={selCls + " w-full"} value={testTask} onChange={(e) => setTestTask(e.target.value)}>
               {reg.tasks.filter((t) => ["chat", "structured", "video_prompt"].includes(t.id)).map((t) =>
                 <option key={t.id} value={t.id}>{lang === "DE" ? t.de : t.en}</option>)}
