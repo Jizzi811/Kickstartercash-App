@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Bot, TrendingUp, Palette, Video, ShoppingCart, Search, Zap, Headphones,
   ChevronDown, ArrowDown, User, Cpu, GitBranch, Crown, Music, Mail, Linkedin,
-  Network, Workflow, BarChart2, BookOpen, FileText,
+  Network, Workflow, BarChart2, BookOpen, FileText, CheckCircle2, Gauge, Coins, Sparkles,
 } from "lucide-react";
 
 const DEPARTMENTS = [
@@ -169,6 +169,96 @@ const DEPARTMENTS = [
     descDE: "Steueroptimierung, int. Steuerplanung & Compliance",
     descEN: "Tax optimization, international planning & compliance",
   },
+];
+
+
+const AGENT_REGISTRY = [
+  {
+    id: "design_director",
+    name: "Design Director",
+    match: 95,
+    priority: "High",
+    cost: "Medium",
+    skills: ["UI", "Branding", "Logos", "Banner", "Canva"],
+    models: ["GPT", "Claude", "Gemini"],
+    tools: ["Image Generator", "Canva", "Photoshop"],
+    inputs: ["Briefing", "Brand Kit", "Format"],
+    outputs: ["Ad graphics", "Visual system", "Asset brief"],
+    personaDE: "Denkt wie Creative Director, Apple Designer und Markenstratege.",
+    personaEN: "Thinks like a creative director, Apple designer and brand strategist.",
+    reasonDE: "Du benötigst hochwertige Werbegrafiken und ein konsistentes visuelles System.",
+    reasonEN: "You need high-quality advertising visuals and a consistent visual system.",
+  },
+  {
+    id: "video_producer",
+    name: "Video Producer",
+    match: 98,
+    priority: "High",
+    cost: "High",
+    skills: ["Video", "Voice", "Motion", "CapCut", "Veo"],
+    models: ["GPT", "Gemini", "Veo"],
+    tools: ["Veo", "CapCut", "ElevenLabs", "Runway"],
+    inputs: ["Hook", "Storyboard", "Assets"],
+    outputs: ["Reel plan", "Shot list", "Voice brief"],
+    personaDE: "Denkt wie Regisseur, Motion Designer und Social-Video-Stratege.",
+    personaEN: "Thinks like a director, motion designer and social-video strategist.",
+    reasonDE: "Du hast ein Reel oder Bewegtbild-Asset angefordert.",
+    reasonEN: "You requested a reel or motion asset.",
+  },
+  {
+    id: "copy_specialist",
+    name: "Copy Specialist",
+    match: 99,
+    priority: "High",
+    cost: "Low",
+    skills: ["Hooks", "Ads", "Landing Copy", "Email", "CTA"],
+    models: ["GPT", "Claude"],
+    tools: ["Copy Lab", "Tone Analyzer"],
+    inputs: ["Offer", "Audience", "Angle"],
+    outputs: ["Ad copy", "Hooks", "CTA variants"],
+    personaDE: "Denkt wie Conversion-Texter, Kampagnenstratege und Storyteller.",
+    personaEN: "Thinks like a conversion copywriter, campaign strategist and storyteller.",
+    reasonDE: "Die Kampagne enthält Werbetexte, Hooks und klare Handlungsaufforderungen.",
+    reasonEN: "The campaign needs ad copy, hooks and clear calls to action.",
+  },
+  {
+    id: "social_manager",
+    name: "Social Manager",
+    match: 92,
+    priority: "Medium",
+    cost: "Medium",
+    skills: ["Publishing", "Community", "Hashtags", "Calendar", "Trends"],
+    models: ["GPT", "Gemini"],
+    tools: ["Scheduler", "Trend Scanner", "Analytics"],
+    inputs: ["Channels", "Calendar", "Campaign goal"],
+    outputs: ["Posting plan", "Channel checklist", "Community prompts"],
+    personaDE: "Denkt wie Social Lead, Community Manager und Trend Analyst.",
+    personaEN: "Thinks like a social lead, community manager and trend analyst.",
+    reasonDE: "Die Inhalte müssen kanalübergreifend geplant und veröffentlicht werden.",
+    reasonEN: "The content must be planned and published across channels.",
+  },
+  {
+    id: "analytics_expert",
+    name: "Analytics Expert",
+    match: 88,
+    priority: "Medium",
+    cost: "Low",
+    skills: ["KPIs", "Attribution", "Reporting", "Experiments"],
+    models: ["GPT", "Claude"],
+    tools: ["Dashboard", "UTM Builder", "Experiment Tracker"],
+    inputs: ["Goal", "Budget", "Channels"],
+    outputs: ["KPI plan", "Tracking checklist", "Learning agenda"],
+    personaDE: "Denkt wie Growth Analyst, Performance Marketer und Datenstratege.",
+    personaEN: "Thinks like a growth analyst, performance marketer and data strategist.",
+    reasonDE: "Die Kampagne soll später ausgewertet und optimiert werden.",
+    reasonEN: "The campaign should be measured and optimized later.",
+  },
+];
+
+const SPRINT_STAGES = [
+  { id: "6.1", titleDE: "Agent Registry", titleEN: "Agent Registry", textDE: "Fähigkeiten, Rollen, Tools, Modelle, Kosten, Prioritäten sowie Ein- und Ausgaben erfassen.", textEN: "Capture capabilities, roles, tools, models, costs, priorities plus inputs and outputs." },
+  { id: "6.2", titleDE: "Quantum Orchestrator", titleEN: "Quantum Orchestrator", textDE: "Nutzeranfrage analysieren, passende Agenten auswählen, Auswahl erklären und Ausführungsplan erstellen.", textEN: "Analyze the user request, select agents, explain the choice and create an execution plan." },
+  { id: "6.3", titleDE: "Quantum Memory", titleEN: "Quantum Memory", textDE: "Markenwissen, Nutzerpräferenzen, Kampagnenhistorie, Performance und Empfehlungen speichern.", textEN: "Store brand knowledge, user preferences, campaign history, performance and recommendations." },
 ];
 
 const TASKS_DE = {
@@ -517,6 +607,75 @@ export default function QuantumAgent() {
             </ul>
           </div>
         ))}
+      </div>
+
+      <div className="rounded-sm border border-[#7C3AED]/20 bg-[#070707] p-5">
+        <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-white">
+              <Cpu size={16} className="text-[#7C3AED]" /> Agent Capability Engine
+            </div>
+            <p className="mt-1 text-xs text-zinc-500">
+              {lang === "DE"
+                ? "Quantum entscheidet nicht aus fest codierten Regeln, sondern aus einer strukturierten Agent Registry."
+                : "Quantum does not decide from hard-coded rules, but from a structured agent registry."}
+            </p>
+          </div>
+          <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-emerald-300">
+            {lang === "DE" ? "Sprint 6 Fundament" : "Sprint 6 foundation"}
+          </div>
+        </div>
+
+        <div className="grid gap-3 lg:grid-cols-3">
+          {SPRINT_STAGES.map((stage) => (
+            <div key={stage.id} className="rounded-sm border border-white/8 bg-black/35 p-4">
+              <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-white">
+                <span className="rounded-full bg-[#7C3AED]/15 px-2 py-0.5 text-[#A78BFA]">Sprint {stage.id}</span>
+                {lang === "DE" ? stage.titleDE : stage.titleEN}
+              </div>
+              <p className="text-xs leading-5 text-zinc-500">{lang === "DE" ? stage.textDE : stage.textEN}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 grid gap-3 xl:grid-cols-5">
+          {AGENT_REGISTRY.map((agent) => (
+            <div key={agent.id} className="rounded-sm border border-white/8 bg-white/[0.02] p-4">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-white">{agent.name}</div>
+                  <div className="mt-1 text-[11px] leading-4 text-zinc-500">{lang === "DE" ? agent.personaDE : agent.personaEN}</div>
+                </div>
+                <div className="rounded-full bg-[#7C3AED]/15 px-2 py-1 text-[11px] font-semibold text-[#C4B5FD]">{agent.match}%</div>
+              </div>
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {agent.skills.slice(0, 4).map((skill) => <span key={skill} className="rounded-full border border-white/10 px-2 py-1 text-[10px] text-zinc-400">{skill}</span>)}
+              </div>
+              <div className="space-y-2 text-[11px] text-zinc-500">
+                <div className="flex items-center gap-2"><Gauge size={12} className="text-[#A78BFA]" /> {agent.priority} priority</div>
+                <div className="flex items-center gap-2"><Coins size={12} className="text-[#A78BFA]" /> {agent.cost} cost</div>
+                <div className="flex items-center gap-2"><Sparkles size={12} className="text-[#A78BFA]" /> {agent.tools.slice(0, 2).join(" · ")}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-sm border border-[#7C3AED]/20 bg-black/30 p-5">
+        <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
+          <CheckCircle2 size={16} className="text-[#7C3AED]" /> {lang === "DE" ? "Quantum erklärt seine Auswahl" : "Quantum explains its selection"}
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {AGENT_REGISTRY.slice(0, 4).map((agent) => (
+            <div key={agent.id} className="rounded-sm border border-white/8 bg-[#0A0A0A] p-4">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div className="font-semibold text-white">✔ {agent.name}</div>
+                <span className="text-[10px] text-[#A78BFA]">{agent.match}% match</span>
+              </div>
+              <p className="text-xs leading-5 text-zinc-500"><span className="text-zinc-300">{lang === "DE" ? "Grund:" : "Reason:"}</span> {lang === "DE" ? agent.reasonDE : agent.reasonEN}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="rounded-sm border border-white/8 bg-black/30 p-5">
