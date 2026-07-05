@@ -30,7 +30,7 @@ export const fadeUp = (delay = 0) => ({
 
 /* ─── Page – consistent vertical rhythm ──────────────────────────── */
 export function Page({ children, className = "" }) {
-  return <div className={`space-y-8 pb-12 ${className}`}>{children}</div>;
+  return <div className={`max-w-full space-y-8 overflow-x-hidden pb-12 ${className}`}>{children}</div>;
 }
 
 /* ─── Typography ─────────────────────────────────────────────────── */
@@ -58,7 +58,7 @@ export function Hero({ icon: Icon, badge, title, description, actions, chips, de
   return (
     <motion.section {...fadeUp(delay)}>
       <div
-        className="relative overflow-hidden rounded-2xl"
+        className="relative max-w-full overflow-hidden rounded-2xl"
         style={{
           background:
             "linear-gradient(135deg, rgba(124,58,237,0.08) 0%, rgba(8,8,8,0) 55%, rgba(124,58,237,0.05) 100%)",
@@ -69,12 +69,12 @@ export function Hero({ icon: Icon, badge, title, description, actions, chips, de
           className="absolute -top-28 -left-28 w-96 h-96 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%)" }}
         />
-        <div className="relative p-8 min-h-[224px] flex items-center">
-          <div className="flex-1 flex flex-col md:flex-row md:items-center md:justify-between gap-6 w-full">
-            <div className="max-w-2xl">
+        <div className="relative flex min-h-[180px] min-w-0 items-center p-5 sm:min-h-[224px] sm:p-8">
+          <div className="flex w-full min-w-0 flex-1 flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0 max-w-2xl">
               {badge && (
                 <div
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-5 text-[10px] tracking-[0.2em] uppercase font-semibold"
+                  className="mb-5 inline-flex max-w-full flex-wrap items-center gap-2 rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] sm:tracking-[0.2em]"
                   style={{
                     background: "rgba(124,58,237,0.08)",
                     border: "1px solid rgba(124,58,237,0.26)",
@@ -84,7 +84,7 @@ export function Hero({ icon: Icon, badge, title, description, actions, chips, de
                   {Icon && <Icon size={11} />} {badge}
                 </div>
               )}
-              <h1 className="bm-display mb-3" style={{ fontFamily: SORA }}>
+              <h1 className="bm-display mb-3 break-words text-[clamp(2rem,10vw,3rem)]" style={{ fontFamily: SORA }}>
                 <span
                   style={{
                     background: "linear-gradient(90deg, #7C3AED 0%, #C4B5FD 45%, #6D28D9 100%)",
@@ -97,11 +97,11 @@ export function Hero({ icon: Icon, badge, title, description, actions, chips, de
                 </span>
               </h1>
               {description && (
-                <p className="bm-body text-zinc-400 leading-relaxed">{description}</p>
+                <p className="bm-body break-words text-zinc-400 leading-relaxed">{description}</p>
               )}
               {chips && <div className="flex flex-wrap items-center gap-2.5 mt-5">{chips}</div>}
             </div>
-            {actions && <div className="flex items-center gap-3 flex-shrink-0">{actions}</div>}
+            {actions && <div className="flex max-w-full flex-shrink-0 flex-wrap items-center gap-3">{actions}</div>}
           </div>
         </div>
       </div>
@@ -412,7 +412,7 @@ export function BMHero({ breadcrumbs, statusBadges, kpis, subtitle, description,
   return (
     <div className="space-y-4">
       <Hero {...props} description={description || subtitle} chips={chips} />
-      {kpis && <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">{kpis}</div>}
+      {kpis && <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">{kpis}</div>}
     </div>
   );
 }

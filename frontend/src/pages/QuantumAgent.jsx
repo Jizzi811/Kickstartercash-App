@@ -526,7 +526,7 @@ export default function QuantumAgent() {
   const activeDeptColor = activeDeptObj ? activeDeptObj.color : "#7C3AED";
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-full space-y-6 overflow-x-hidden sm:space-y-8">
 
       {/* Premium Hero Header */}
       <motion.div
@@ -537,7 +537,7 @@ export default function QuantumAgent() {
           position: "relative",
           overflow: "hidden",
           borderRadius: "8px",
-          padding: "32px",
+          padding: "clamp(20px, 5vw, 32px)",
           marginBottom: "8px",
           background: "linear-gradient(135deg, rgba(124,58,237,0.07) 0%, rgba(8,8,8,0) 60%)",
           border: "1px solid rgba(124,58,237,0.15)",
@@ -546,13 +546,13 @@ export default function QuantumAgent() {
         {/* Ambient glow */}
         <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "200px", height: "200px", borderRadius: "50%", background: "radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
 
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap", minWidth: 0 }}>
           {/* Animated Crown Orb */}
           <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "linear-gradient(135deg, #7C3AED, #6D28D9)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 30px rgba(124,58,237,0.4)", flexShrink: 0 }}>
             <Crown size={26} style={{ color: "#050505" }} />
           </div>
-          <div>
-            <div style={{ fontSize: "10px", letterSpacing: "0.3em", textTransform: "uppercase", color: "#7C3AED", marginBottom: "4px" }}>
+          <div style={{ minWidth: 0, flex: "1 1 220px" }}>
+            <div style={{ fontSize: "10px", letterSpacing: "clamp(0.16em, 0.7vw, 0.3em)", textTransform: "uppercase", color: "#7C3AED", marginBottom: "4px" }}>
               KI-Agentur · Quantum Command
             </div>
             <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 700, color: "#fff", margin: 0 }}>
@@ -567,7 +567,7 @@ export default function QuantumAgent() {
 
 
 
-      <div className="grid gap-4 lg:grid-cols-4">
+      <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { labelDE: "Prioritäten", labelEN: "Priorities", itemsDE: ["Kampagnenziel schärfen", "Team-Agenten auswählen"], itemsEN: ["Sharpen campaign goal", "Select team agents"] },
           { labelDE: "Chancen", labelEN: "Opportunities", itemsDE: ["Facebook-Kampagne bündeln", "Design + Copy parallelisieren"], itemsEN: ["Bundle Facebook campaign", "Parallelize design + copy"] },
@@ -587,23 +587,23 @@ export default function QuantumAgent() {
 
 
 
-      <div className="rounded-sm border border-[#7C3AED]/20 bg-[#070707] p-5">
+      <div className="min-w-0 rounded-sm border border-[#7C3AED]/20 bg-[#070707] p-4 sm:p-5">
         <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-sm font-semibold text-white"><Database size={16} className="text-[#7C3AED]" /> Quantum Memory Foundation</div>
+            <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm font-semibold text-white"><Database size={16} className="text-[#7C3AED]" /> Quantum Memory Foundation</div>
             <p className="mt-1 text-xs text-zinc-500">{lang === "DE" ? "Austauschbare Memory-Schicht für BrandMind-Wissen, Projektlernen und spätere agimem/MCP-Anbindung." : "Swappable memory layer for BrandMind knowledge, project learning and future agimem/MCP integration."}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-emerald-300">Status: {memoryProvider.label}</span>
-            <span className="rounded-full border border-[#7C3AED]/25 bg-[#7C3AED]/10 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-[#C4B5FD]">Future: agimem / MCP-ready</span>
+            <span className="max-w-full rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.12em] text-emerald-300 sm:tracking-[0.18em]">Status: {memoryProvider.label}</span>
+            <span className="max-w-full rounded-full border border-[#7C3AED]/25 bg-[#7C3AED]/10 px-3 py-1 text-[10px] uppercase tracking-[0.12em] text-[#C4B5FD] sm:tracking-[0.18em]">Future: agimem / MCP-ready</span>
           </div>
         </div>
-        <div className="grid gap-3 lg:grid-cols-4">
+        <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {memoryFoundationCards.map(([type, definition]) => (
-            <div key={type} className="rounded-sm border border-white/8 bg-black/35 p-4">
+            <div key={type} className="min-w-0 overflow-hidden rounded-sm border border-white/8 bg-black/35 p-4">
               <div className="mb-2 text-sm font-semibold text-white">{definition.label}</div>
               <p className="mb-3 text-xs leading-5 text-zinc-500">{definition.description}</p>
-              <div className="mb-3 flex flex-wrap gap-1.5">{definition.fields.slice(0, 4).map((field) => <span key={field} className="rounded-full border border-white/10 px-2 py-1 text-[10px] text-zinc-400">{field}</span>)}</div>
+              <div className="mb-3 flex flex-wrap gap-1.5">{definition.fields.slice(0, 4).map((field) => <span key={field} className="max-w-full break-words rounded-full border border-white/10 px-2 py-1 text-[10px] text-zinc-400">{field}</span>)}</div>
               <ul className="space-y-1 text-[11px] text-zinc-500">{definition.examples.map((example) => <li key={example}>• {example}</li>)}</ul>
               <div className="mt-4 space-y-1 text-[10px] uppercase tracking-[0.16em] text-[#A78BFA]"><div>Status: Local Demo Provider</div><div>Zukunft: agimem / MCP-ready</div></div>
             </div>
@@ -613,44 +613,44 @@ export default function QuantumAgent() {
           <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-white"><ShieldCheck size={14} className="text-[#A78BFA]" /> Human Approval Vorbereitung</div>
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <p className="text-xs text-zinc-500">{lang === "DE" ? "Memory wird in diesem Sprint nur als Vorschau erzeugt. Speichern ist später erst nach Nutzerfreigabe oder aktivem Auto Memory vorgesehen." : "This sprint only generates memory previews. Later saves require user approval or enabled Auto Memory."}</p>
-            <button type="button" onClick={() => setAutoMemory((value) => !value)} className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] ${autoMemory ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200" : "border-white/10 bg-black/30 text-zinc-400"}`}><ToggleLeft size={14} /> Auto Memory: {autoMemory ? "On" : "Off"}</button>
+            <button type="button" onClick={() => setAutoMemory((value) => !value)} className={`flex max-w-full shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] ${autoMemory ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200" : "border-white/10 bg-black/30 text-zinc-400"}`}><ToggleLeft size={14} /> Auto Memory: {autoMemory ? "On" : "Off"}</button>
           </div>
         </div>
       </div>
 
-      <div className="rounded-sm border border-[#7C3AED]/20 bg-[#070707] p-5">
+      <div className="min-w-0 rounded-sm border border-[#7C3AED]/20 bg-[#070707] p-4 sm:p-5">
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-sm font-semibold text-white"><PlayCircle size={16} className="text-[#7C3AED]" /> Quantum Orchestrator Engine</div>
+            <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm font-semibold text-white"><PlayCircle size={16} className="text-[#7C3AED]" /> Quantum Orchestrator Engine</div>
             <p className="mt-1 text-xs text-zinc-500">{lang === "DE" ? "Beschreibe eine Aufgabe. Quantum analysiert Ziel, Kontext, Output, Plattform und baut einen Mock-Workflow." : "Describe a task. Quantum analyzes goal, context, output, platform and builds a mock workflow."}</p>
           </div>
           <div className="flex flex-wrap gap-2">{DEMO_PROMPTS.map((prompt) => <button key={prompt} onClick={() => handleOrchestrate(prompt)} className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px] text-zinc-300 hover:border-[#7C3AED]/50">{prompt}</button>)}</div>
         </div>
         <div className="flex flex-col gap-3 md:flex-row">
           <textarea value={orchestratorPrompt} onChange={(event) => setOrchestratorPrompt(event.target.value)} className="min-h-[92px] flex-1 rounded-sm border border-white/10 bg-black/40 p-3 text-sm text-zinc-200 outline-none focus:border-[#7C3AED]/60" placeholder={lang === "DE" ? "z. B. Erstelle eine Facebook-Kampagne für BrandMind." : "e.g. Create a Facebook campaign for BrandMind."} />
-          <div className="flex flex-col gap-2 md:w-[190px]"><button onClick={() => handleOrchestrate()} className="rounded-sm border border-[#7C3AED]/40 bg-[#7C3AED]/20 px-5 py-3 text-sm font-semibold text-[#DDD6FE] hover:bg-[#7C3AED]/30">{lang === "DE" ? "Workflow ableiten" : "Derive workflow"}</button><button onClick={handleStartWorkflow} disabled={!workflow || workflow.status === WORKFLOW_STATUSES.RUNNING || workflow.status === WORKFLOW_STATUSES.COMPLETED} className="rounded-sm border border-emerald-400/30 bg-emerald-400/10 px-5 py-3 text-sm font-semibold text-emerald-200 hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-40">{workflow?.status === WORKFLOW_STATUSES.RUNNING ? (lang === "DE" ? "Workflow läuft…" : "Workflow running…") : (lang === "DE" ? "Workflow starten" : "Start workflow")}</button></div>
+          <div className="flex min-w-0 flex-col gap-2 md:w-[190px] md:shrink-0"><button onClick={() => handleOrchestrate()} className="rounded-sm border border-[#7C3AED]/40 bg-[#7C3AED]/20 px-5 py-3 text-sm font-semibold text-[#DDD6FE] hover:bg-[#7C3AED]/30">{lang === "DE" ? "Workflow ableiten" : "Derive workflow"}</button><button onClick={handleStartWorkflow} disabled={!workflow || workflow.status === WORKFLOW_STATUSES.RUNNING || workflow.status === WORKFLOW_STATUSES.COMPLETED} className="rounded-sm border border-emerald-400/30 bg-emerald-400/10 px-5 py-3 text-sm font-semibold text-emerald-200 hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-40">{workflow?.status === WORKFLOW_STATUSES.RUNNING ? (lang === "DE" ? "Workflow läuft…" : "Workflow running…") : (lang === "DE" ? "Workflow starten" : "Start workflow")}</button></div>
         </div>
         {orchestratorThinking && <div className="mt-4 flex items-center gap-3 rounded-sm border border-[#7C3AED]/20 bg-[#7C3AED]/10 p-3 text-sm text-[#C4B5FD]"><Clock3 size={16} className="animate-pulse" /> {lang === "DE" ? "Analyse läuft… Ziel, Skills und Agenten werden gematcht." : "Analysis running… matching goal, skills and agents."}</div>}
         {orchestratorResult && !orchestratorThinking && <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-5 space-y-4">
-          <div className="grid gap-3 md:grid-cols-3">{[[lang === "DE" ? "Ziel erkannt" : "Detected goal", orchestratorResult.analysis.goal], [lang === "DE" ? "Kontext" : "Context", orchestratorResult.analysis.industry], [lang === "DE" ? "Output / Plattform" : "Output / platform", `${orchestratorResult.analysis.desiredOutput} · ${orchestratorResult.analysis.platform}`]].map(([label, value]) => <div key={label} className="rounded-sm border border-white/8 bg-black/35 p-4"><div className="mb-2 flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-[#A78BFA]"><Target size={12} />{label}</div><div className="text-sm text-zinc-200">{value}</div></div>)}</div>
-          <div className="rounded-sm border border-white/8 bg-black/35 p-4"><div className="mb-3 text-xs font-semibold text-white">{lang === "DE" ? "Benötigte Fähigkeiten" : "Required skills"}</div><div className="flex flex-wrap gap-2">{orchestratorResult.analysis.requiredSkills.map((skill) => <span key={skill} className="rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/10 px-3 py-1 text-xs text-[#C4B5FD]">{skill}</span>)}</div></div>
-          <div className="grid gap-3 lg:grid-cols-2">{orchestratorResult.selectedAgents.map((agent) => <div key={agent.id} className="rounded-sm border border-white/8 bg-white/[0.02] p-4"><div className="mb-2 flex items-center justify-between"><div className="font-semibold text-white">{agent.name}</div><span className="text-xs text-[#A78BFA]">{agent.matchScore}% match</span></div><div className="mb-2 text-xs text-zinc-400">{agent.selectionReason}</div><div className="text-[11px] text-zinc-500">{lang === "DE" ? "Rolle" : "Role"}: {agent.recommendedRole} · {lang === "DE" ? "Passend" : "Matching"}: {agent.matchingSkills.join(", ") || "—"}</div></div>)}</div>
-          <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]"><WorkflowTimeline workflow={workflow} /><ActivityFeed workflow={workflow} /></div>
-          <div className="grid gap-4 xl:grid-cols-[1fr_1fr]"><OutputSummary workflow={workflow} /><WorkflowInspector workflow={workflow} /></div>
+          <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-3">{[[lang === "DE" ? "Ziel erkannt" : "Detected goal", orchestratorResult.analysis.goal], [lang === "DE" ? "Kontext" : "Context", orchestratorResult.analysis.industry], [lang === "DE" ? "Output / Plattform" : "Output / platform", `${orchestratorResult.analysis.desiredOutput} · ${orchestratorResult.analysis.platform}`]].map(([label, value]) => <div key={label} className="min-w-0 overflow-hidden rounded-sm border border-white/8 bg-black/35 p-4"><div className="mb-2 flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-[#A78BFA]"><Target size={12} />{label}</div><div className="break-words text-sm text-zinc-200">{value}</div></div>)}</div>
+          <div className="min-w-0 overflow-hidden rounded-sm border border-white/8 bg-black/35 p-4"><div className="mb-3 text-xs font-semibold text-white">{lang === "DE" ? "Benötigte Fähigkeiten" : "Required skills"}</div><div className="flex flex-wrap gap-2">{orchestratorResult.analysis.requiredSkills.map((skill) => <span key={skill} className="max-w-full break-words rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/10 px-3 py-1 text-xs text-[#C4B5FD]">{skill}</span>)}</div></div>
+          <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-2">{orchestratorResult.selectedAgents.map((agent) => <div key={agent.id} className="rounded-sm border border-white/8 bg-white/[0.02] p-4"><div className="mb-2 flex flex-wrap items-center justify-between gap-2"><div className="min-w-0 break-words font-semibold text-white">{agent.name}</div><span className="shrink-0 text-xs text-[#A78BFA]">{agent.matchScore}% match</span></div><div className="mb-2 break-words text-xs text-zinc-400">{agent.selectionReason}</div><div className="break-words text-[11px] text-zinc-500">{lang === "DE" ? "Rolle" : "Role"}: {agent.recommendedRole} · {lang === "DE" ? "Passend" : "Matching"}: {agent.matchingSkills.join(", ") || "—"}</div></div>)}</div>
+          <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]"><WorkflowTimeline workflow={workflow} /><ActivityFeed workflow={workflow} /></div>
+          <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2"><OutputSummary workflow={workflow} /><WorkflowInspector workflow={workflow} /></div>
           {memoryPreview.length > 0 && <div className="rounded-sm border border-[#7C3AED]/25 bg-[#7C3AED]/5 p-4">
             <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div><div className="text-sm font-semibold text-white">{lang === "DE" ? "Was Quantum daraus speichern würde" : "What Quantum would store from this"}</div><div className="mt-1 text-xs text-zinc-500">Preview only · {memoryApprovalReady ? "Human Approval pending" : "No workflow preview"} · Auto Memory {autoMemory ? "On" : "Off"}</div></div>
               <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-amber-200">Nicht automatisch gespeichert</span>
             </div>
-            <div className="grid gap-3 md:grid-cols-3">{memoryPreview.map((block) => <div key={block.type} className="rounded-sm border border-white/8 bg-black/35 p-3"><div className="mb-2 text-xs font-semibold text-[#C4B5FD]">{block.title}</div><ul className="space-y-1 text-xs text-zinc-500">{block.items.map((item) => <li key={item}>• {item}</li>)}</ul></div>)}</div>
+            <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-3">{memoryPreview.map((block) => <div key={block.type} className="rounded-sm border border-white/8 bg-black/35 p-3"><div className="mb-2 text-xs font-semibold text-[#C4B5FD]">{block.title}</div><ul className="space-y-1 text-xs text-zinc-500">{block.items.map((item) => <li key={item}>• {item}</li>)}</ul></div>)}</div>
           </div>}
         </motion.div>}
       </div>
 
-      <div className="rounded-sm border border-[#7C3AED]/20 bg-[#070707] p-5">
+      <div className="min-w-0 rounded-sm border border-[#7C3AED]/20 bg-[#070707] p-4 sm:p-5">
         <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-sm font-semibold text-white">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm font-semibold text-white">
               <Cpu size={16} className="text-[#7C3AED]" /> Agent Capability Engine
             </div>
             <p className="mt-1 text-xs text-zinc-500">
@@ -659,14 +659,14 @@ export default function QuantumAgent() {
                 : "Quantum does not decide from hard-coded rules, but from a structured agent registry."}
             </p>
           </div>
-          <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-emerald-300">
+          <div className="max-w-full rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.12em] text-emerald-300 sm:tracking-[0.18em]">
             {lang === "DE" ? "Sprint 6 Fundament" : "Sprint 6 foundation"}
           </div>
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {SPRINT_STAGES.map((stage) => (
-            <div key={stage.id} className="rounded-sm border border-white/8 bg-black/35 p-4">
+            <div key={stage.id} className="min-w-0 overflow-hidden rounded-sm border border-white/8 bg-black/35 p-4">
               <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-white">
                 <span className="rounded-full bg-[#7C3AED]/15 px-2 py-0.5 text-[#A78BFA]">Sprint {stage.id}</span>
                 {lang === "DE" ? stage.titleDE : stage.titleEN}
@@ -676,7 +676,7 @@ export default function QuantumAgent() {
           ))}
         </div>
 
-        <div className="mt-5 grid gap-3 xl:grid-cols-5">
+        <div className="mt-5 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {registryPreview.map((agent) => (
             <div key={agent.id} className="rounded-sm border border-white/8 bg-white/[0.02] p-4">
               <div className="mb-3 flex items-start justify-between gap-3">
@@ -687,7 +687,7 @@ export default function QuantumAgent() {
                 <div className="rounded-full bg-[#7C3AED]/15 px-2 py-1 text-[11px] font-semibold text-[#C4B5FD]">{agent.match}%</div>
               </div>
               <div className="mb-3 flex flex-wrap gap-1.5">
-                {agent.skills.slice(0, 4).map((skill) => <span key={skill} className="rounded-full border border-white/10 px-2 py-1 text-[10px] text-zinc-400">{skill}</span>)}
+                {agent.skills.slice(0, 4).map((skill) => <span key={skill} className="max-w-full break-words rounded-full border border-white/10 px-2 py-1 text-[10px] text-zinc-400">{skill}</span>)}
               </div>
               <div className="space-y-2 text-[11px] text-zinc-500">
                 <div className="flex items-center gap-2"><Gauge size={12} className="text-[#A78BFA]" /> {agent.priority} priority</div>
@@ -703,11 +703,11 @@ export default function QuantumAgent() {
         <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white">
           <CheckCircle2 size={16} className="text-[#7C3AED]" /> {lang === "DE" ? "Quantum erklärt seine Auswahl" : "Quantum explains its selection"}
         </div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           {registryPreview.slice(0, 4).map((agent) => (
             <div key={agent.id} className="rounded-sm border border-white/8 bg-[#0A0A0A] p-4">
               <div className="mb-2 flex items-center justify-between gap-3">
-                <div className="font-semibold text-white">✔ {agent.name}</div>
+                <div className="min-w-0 break-words font-semibold text-white">✔ {agent.name}</div>
                 <span className="text-[10px] text-[#A78BFA]">{agent.match}% match</span>
               </div>
               <p className="text-xs leading-5 text-zinc-500"><span className="text-zinc-300">{lang === "DE" ? "Grund:" : "Reason:"}</span> {lang === "DE" ? agent.reasonDE : agent.reasonEN}</p>
@@ -728,7 +728,7 @@ export default function QuantumAgent() {
             ["08:45", "… Video Agent", lang === "DE" ? "Reel wird geplant" : "Planning reel"],
             ["08:46", "🔵 Analytics Agent", lang === "DE" ? "wartet auf Zielgruppe" : "waiting for audience"],
           ].map(([time, agent, state]) => (
-            <div key={time} className="grid grid-cols-[52px_1fr_1.4fr] gap-3 border-l border-[#7C3AED]/25 pl-4 text-zinc-500">
+            <div key={time} className="grid grid-cols-1 gap-1 border-l border-[#7C3AED]/25 pl-4 text-zinc-500 sm:grid-cols-[52px_minmax(0,1fr)_minmax(0,1.4fr)] sm:gap-3">
               <span>{time}</span><span className="text-zinc-200">{agent}</span><span>{state}</span>
             </div>
           ))}
@@ -764,7 +764,7 @@ export default function QuantumAgent() {
           transition={{ delay: 0.25 }}
           className="flex flex-col items-center"
         >
-          <div className="relative flex items-center gap-4 px-8 py-4 bg-[#7C3AED]/10 border-2 border-[#7C3AED]/60 rounded-sm min-w-[240px] justify-center">
+          <div className="relative flex w-full max-w-[240px] items-center justify-center gap-3 rounded-sm border-2 border-[#7C3AED]/60 bg-[#7C3AED]/10 px-5 py-4 sm:gap-4 sm:px-8">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-[#7C3AED] text-white text-[10px] font-bold tracking-widest uppercase rounded-full">
               CORE
             </div>
@@ -803,7 +803,7 @@ export default function QuantumAgent() {
           transition={{ delay: 0.5 }}
           className="w-full"
         >
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "12px", marginTop: "8px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(160px, 100%), 1fr))", gap: "12px", marginTop: "8px" }}>
             {DEPARTMENTS.map((dept, i) => {
               const isActive = activeDept === dept.id;
               return (
@@ -856,7 +856,7 @@ export default function QuantumAgent() {
           }}
         >
           {/* Dept header */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px", paddingBottom: "16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px", paddingBottom: "16px", borderBottom: "1px solid rgba(255,255,255,0.06)", flexWrap: "wrap", minWidth: 0 }}>
             {activeDeptObj && (
               <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: `${activeDeptColor}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <activeDeptObj.icon size={16} style={{ color: activeDeptColor }} />
@@ -953,13 +953,13 @@ export default function QuantumAgent() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex items-center gap-3 px-5 py-3 bg-[#0A0A0A] border border-white/8 rounded-sm"
+          className="flex min-w-0 flex-wrap items-center gap-3 rounded-sm border border-white/8 bg-[#0A0A0A] px-4 py-3 sm:px-5"
         >
           <div className="w-2 h-2 rounded-full bg-emerald-400" />
           <span className="text-xs text-zinc-400">
             {lang === "DE" ? "Aufgabe delegiert & in Bearbeitung" : "Task delegated & in progress"}
           </span>
-          <span className="ml-auto text-xs text-zinc-600 truncate max-w-[200px]">{activeTask}</span>
+          <span className="min-w-0 text-xs text-zinc-600 sm:ml-auto sm:max-w-[200px] sm:truncate">{activeTask}</span>
         </motion.div>
       )}
     </div>
