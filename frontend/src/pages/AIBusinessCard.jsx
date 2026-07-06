@@ -40,7 +40,7 @@ const emptyCard = {
   website: "",
   address: "",
   social_links: { linkedin: "", instagram: "", x: "", github: "", youtube: "" },
-  template_id: "aurora",
+  template_id: "spotlight",
   show_ai_assistant: true,
   assistant_mode: "avatar",
   assistant_avatar: "",
@@ -199,10 +199,11 @@ function CardPreview({ card, compact = false, publicMode = false }) {
   }
 
   return (
-    <div className={`relative overflow-hidden rounded-[2rem] border border-white/15 bg-gradient-to-br ${template.bg} p-6 shadow-2xl backdrop-blur-xl`}>
-      <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-white/20 blur-3xl" />
+    <div className={`relative overflow-hidden rounded-sm border border-white/15 bg-gradient-to-br ${template.bg} p-6 shadow-2xl`}>
+      <div className="absolute -right-20 -top-20 h-44 w-44 rounded-full bg-white/10 blur-3xl" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.08),transparent_45%)]" />
       <div className="relative flex items-start gap-4">
-        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-3xl border border-white/20 bg-white/10">
+        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-sm border border-white/25 bg-black/25">
           {card.avatar ? (
             <img src={card.avatar} alt="Avatar" className="h-full w-full object-cover" />
           ) : (
@@ -212,9 +213,9 @@ function CardPreview({ card, compact = false, publicMode = false }) {
           )}
         </div>
         <div className="min-w-0 text-left">
-          <p className="text-xs uppercase tracking-[0.35em] text-white/60">AI Business Card</p>
+          <p className="text-xs uppercase tracking-[0.35em] text-white/60">Professional Card</p>
           <h3 className="mt-2 truncate text-2xl font-semibold text-white">{card.name || "Your Name"}</h3>
-          <p className="text-sm text-violet-100">
+          <p className="text-sm text-violet-100/95">
             {card.title || "Title"}
             {card.company ? ` · ${card.company}` : ""}
           </p>
@@ -224,10 +225,10 @@ function CardPreview({ card, compact = false, publicMode = false }) {
         {card.bio || "Add a short profile bio so visitors understand who you are and how you help."}
       </p>
       {contactItems.length > 0 && (
-        <div className="relative mt-6 grid gap-2 text-sm text-white/80">
+        <div className="relative mt-6 grid gap-2 text-sm text-white/85">
           {contactItems.map(({ key, value, icon: Icon }) => (
-            <div key={key} className="inline-flex items-center gap-2 min-w-0">
-              <Icon className="h-3.5 w-3.5 text-white/60 shrink-0" />
+            <div key={key} className="inline-flex min-w-0 items-center gap-2 rounded-sm border border-white/10 bg-black/25 px-2.5 py-1.5">
+              <Icon className="h-3.5 w-3.5 shrink-0 text-white/70" />
               <div className="truncate">{renderContactValue(key, value)}</div>
             </div>
           ))}
@@ -244,7 +245,7 @@ function CardPreview({ card, compact = false, publicMode = false }) {
                 href={href}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] text-white/90 hover:text-white hover:border-white/40 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-sm border border-white/20 bg-black/25 px-2.5 py-1 text-[11px] text-white/90 transition-colors hover:border-white/40 hover:text-white"
               >
                 <Icon className="h-3 w-3" />
                 {k}
@@ -254,7 +255,7 @@ function CardPreview({ card, compact = false, publicMode = false }) {
         </div>
       )}
       {card.show_ai_assistant && (
-        <div className="relative mt-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs text-white">
+        <div className="relative mt-5 inline-flex items-center gap-2 rounded-sm border border-white/15 bg-black/30 px-3 py-1 text-xs text-white">
           <MessageCircle className="h-3 w-3" />
           AI assistant enabled ({assistantModeLabel})
         </div>
