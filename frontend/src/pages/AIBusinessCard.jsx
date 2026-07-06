@@ -303,7 +303,7 @@ function AssistantPanel({ card, messages, q, setQ, ask, asking }) {
 
   return (
     <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-      <h2 className="mb-2 font-semibold">Ask about {card.name || "this profile"}</h2>
+      <h2 className="mb-2 font-semibold">FAQ BOT von Brandmind</h2>
       <p className="text-xs text-zinc-400">{normalizeAssistantGreeting(card.assistant_greeting)}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         {quickQuestions.map((qText) => (
