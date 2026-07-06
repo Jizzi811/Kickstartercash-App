@@ -1053,39 +1053,44 @@ def _build_image_prompt(brand: dict, subject: str, style: str) -> str:
         f"Brand color palette: {colors}. {extra} {dna_clause}"
         f"Theme: {subject}. "
         "Design a rich, detailed and FINISHED campaign scene – NOT a plain background with a caption. "
-        "Give it a clear focal point with depth: a real person, a product, or a striking hero object "
-        "interacting with the theme, set in a polished, cinematic environment with supporting details "
-        "(atmosphere, lighting effects, subtle graphic or holographic UI elements). "
-        "Photorealistic or premium 3D render, dramatic lighting, sharp focus, professional composition, "
-        "shallow depth of field. "
-        # Consistency anchors – raise the hit-rate for a cohesive, on-brand look.
-        "Editorial ad-campaign quality with cohesive color grading strictly in the brand palette; "
-        "ONE strong focal subject; clean, uncluttered background with deliberate negative space for a short headline; "
-        "no busy collages, no stock-photo feel. If any text appears, spell it correctly and keep it minimal and elegant."
+        "Create a bold visual story with cinematic production value: layered foreground/midground/background, "
+        "real atmosphere, tactile materials, nuanced light behavior, and intentional camera direction. "
+        "Prefer striking creative choices over safe generic compositions while staying premium and brand-consistent. "
+        "Photorealistic or premium 3D render, dramatic but believable lighting, strong depth, sharp subject separation. "
+        # Consistency anchors without over-constraining creativity.
+        "Editorial ad-campaign quality with cohesive color grading in the brand palette; "
+        "avoid flat layouts, generic stock-photo look, and repetitive low-information scenes. "
+        "If any text appears, keep it minimal, elegant, and correctly spelled."
     )
 
 
 def _image_variant_prompt(base_prompt: str, index: int, total: int, language: str = "DE") -> str:
-    """Inject a gentle creative direction per variant to avoid near-duplicates."""
+    """Inject a strong creative direction per variant to avoid near-duplicates."""
     variant_directions = [
-        "Cinematic hero composition with dramatic key light and clean premium negative space.",
-        "Human-centered storytelling angle with candid motion and warm emotional atmosphere.",
-        "Bold product-led close-up with texture detail, reflective materials and strong depth.",
-        "Editorial wide scene with architectural lines, layered foreground/background and dynamic perspective.",
+        "Cinematic hero scene, low camera angle, dramatic rim light, high contrast, iconic ad look.",
+        "Human-centered narrative scene with candid movement, emotional expression, and warm volumetric light.",
+        "Product-first macro-to-mid composition with rich texture, reflections, and bold material realism.",
+        "Editorial architectural wide shot with dynamic leading lines, layered depth, and kinetic perspective.",
     ]
+    palettes = ["deep contrast", "warm tonal blend", "cool metallic mood", "vibrant cinematic grade"]
+    lens_styles = ["35mm immersive framing", "50mm portrait realism", "85mm compression drama", "24mm dynamic wide angle"]
     direction = variant_directions[index % len(variant_directions)]
+    palette = palettes[index % len(palettes)]
+    lens = lens_styles[index % len(lens_styles)]
     if language == "DE":
         return (
             f"{base_prompt} "
             f"Variante {index + 1} von {total}: {direction} "
-            "Erzeuge eine deutlich eigene kreative Interpretation im selben Brand-Style "
-            "(andere Komposition, Perspektive und Lichtstimmung als die anderen Varianten)."
+            f"Color grading: {palette}. Lens/Framing: {lens}. "
+            "Erzeuge eine klar eigenständige Interpretation im gleichen Brand-Style: "
+            "andere Komposition, Perspektive, Lichtstimmung, Tiefenstaffelung und Story-Moment als die anderen Varianten."
         )
     return (
         f"{base_prompt} "
         f"Variant {index + 1} of {total}: {direction} "
-        "Create a clearly distinct creative interpretation in the same brand style "
-        "(different composition, perspective, and lighting mood than the other variants)."
+        f"Color grading: {palette}. Lens/framing: {lens}. "
+        "Create a clearly distinct interpretation in the same brand style: "
+        "different composition, perspective, lighting mood, scene depth, and narrative moment than the other variants."
     )
 
 
