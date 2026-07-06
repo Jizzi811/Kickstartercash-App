@@ -117,11 +117,11 @@ function CardPreview({ card, compact = false, publicMode = false }) {
 
   if (card.template_id === "spotlight") {
     return (
-      <div className="relative overflow-hidden rounded-[2rem] border border-violet-300/20 bg-gradient-to-br from-[#140726] via-[#0b0517] to-[#04030c] p-6 shadow-2xl">
+      <div className="relative overflow-hidden rounded-sm border border-violet-300/25 bg-gradient-to-br from-[#140726] via-[#0b0517] to-[#04030c] p-6 shadow-2xl">
         <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-violet-500/20 blur-3xl" />
         <div className="absolute -left-16 bottom-[-60px] h-44 w-44 rounded-full bg-fuchsia-500/20 blur-3xl" />
         <div className="relative">
-          <p className="text-xs uppercase tracking-[0.35em] text-violet-300/80">BrandMind</p>
+          <p className="text-xs uppercase tracking-[0.35em] text-violet-300/80">Professional Card</p>
           <h3 className="mt-2 text-3xl font-semibold text-white">{card.name || "Your Name"}</h3>
           <p className="text-violet-200/90 text-sm">{card.title || "Title"}{card.company ? ` · ${card.company}` : ""}</p>
 
@@ -132,7 +132,7 @@ function CardPreview({ card, compact = false, publicMode = false }) {
                 {card.bio || "Professionelle KI-gestützte Marketing-Unterstützung für mehr Wachstum und bessere Automatisierung."}
               </p>
             </div>
-            <div className="h-28 w-28 overflow-hidden rounded-2xl border border-violet-300/30 bg-white/10">
+            <div className="h-28 w-28 overflow-hidden rounded-sm border border-violet-300/30 bg-white/10">
               {card.avatar ? (
                 <img src={card.avatar} alt="Avatar" className="h-full w-full object-cover" />
               ) : (
@@ -171,7 +171,7 @@ function CardPreview({ card, compact = false, publicMode = false }) {
 
           <div className="mt-5 grid gap-2 text-sm text-zinc-200">
             {contactItems.map(({ key, value, icon: Icon }) => (
-              <div key={key} className="inline-flex items-center gap-2 min-w-0">
+            <div key={key} className="inline-flex min-w-0 items-center gap-2 rounded-sm border border-violet-300/20 bg-black/20 px-2.5 py-1.5">
                 <Icon className="h-3.5 w-3.5 text-violet-200/80 shrink-0" />
                 <div className="truncate">{renderContactValue(key, value)}</div>
               </div>
