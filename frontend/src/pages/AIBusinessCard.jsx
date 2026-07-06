@@ -9,13 +9,22 @@ import {
   Copy,
   Download,
   ExternalLink,
+  Github,
+  Globe,
+  Instagram,
+  Linkedin,
+  Mail,
+  MapPin,
   MessageCircle,
+  Phone,
   Plus,
   Send,
   Trash2,
+  Twitter,
   Users,
   Wand2,
   X,
+  Youtube,
 } from "lucide-react";
 
 const emptyCard = {
@@ -53,9 +62,53 @@ const normalizeCard = (card = {}) => ({
   social_links: { ...emptyCard.social_links, ...(card.social_links || {}) },
 });
 
-function CardPreview({ card, compact = false }) {
+const socialIconByKey = {
+  linkedin: Linkedin,
+  instagram: Instagram,
+  x: Twitter,
+  github: Github,
+  youtube: Youtube,
+};
+
+const normalizeUrl = (url = "") => (/^https?:\/\//i.test(url) ? url : `https://${url}`);
+const normalizePhoneForTel = (phone = "") => phone.replace(/[^\d+]/g, "");
+
+function CardPreview({ card, compact = false, publicMode = false }) {
   const template = templates.find((t) => t.id === card.template_id) || templates[0];
   const assistantModeLabel = card.assistant_mode === "avatar" ? "avatar mode" : "panel mode";
+  const socials = Object.entries(card.social_links || {}).filter(([, v]) => !!(v || "").trim());
+  const contactItems = [
+    { key: "email", value: card.email, icon: Mail },
+    { key: "phone", value: card.phone, icon: Phone },
+    { key: "website", value: card.website, icon: Globe },
+    { key: "address", value: card.address, icon: MapPin },
+  ].filter((item) => !!(item.value || "").trim());
+
+  const renderContactValue = (key, value) => {
+    if (!publicMode) return <span>{value}</span>;
+    if (key === "email") {
+      return (
+        <a href={`mailto:${value}`} className="hover:text-white transition-colors underline-offset-2 hover:underline">
+          {value}
+        </a>
+      );
+    }
+    if (key === "phone") {
+      return (
+        <a href={`tel:${normalizePhoneForTel(value)}`} className="hover:text-white transition-colors underline-offset-2 hover:underline">
+          {value}
+        </a>
+      );
+    }
+    if (key === "website") {
+      return (
+        <a href={normalizeUrl(value)} target="_blank" rel="noreferrer" className="hover:text-white transition-colors underline-offset-2 hover:underline">
+          {value}
+        </a>
+      );
+    }
+    return <span>{value}</span>;
+  };
 
   return (
     <div className={`relative overflow-hidden rounded-[2rem] border border-white/15 bg-gradient-to-br ${template.bg} p-6 shadow-2xl backdrop-blur-xl`}>
@@ -82,12 +135,36 @@ function CardPreview({ card, compact = false }) {
       <p className={`relative mt-5 text-sm leading-6 text-white/80 ${compact ? "line-clamp-3" : ""}`}>
         {card.bio || "Add a short profile bio so visitors understand who you are and how you help."}
       </p>
-      <div className="relative mt-6 grid gap-2 text-sm text-white/80">
-        {card.email && <span>{card.email}</span>}
-        {card.phone && <span>{card.phone}</span>}
-        {card.website && <span>{card.website}</span>}
-        {card.address && <span>{card.address}</span>}
-      </div>
+      {contactItems.length > 0 && (
+        <div className="relative mt-6 grid gap-2 text-sm text-white/80">
+          {contactItems.map(({ key, value, icon: Icon }) => (
+            <div key={key} className="inline-flex items-center gap-2 min-w-0">
+              <Icon className="h-3.5 w-3.5 text-white/60 shrink-0" />
+              <div className="truncate">{renderContactValue(key, value)}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {socials.length > 0 && (
+        <div className="relative mt-4 flex flex-wrap gap-2">
+          {socials.map(([k, v]) => {
+            const Icon = socialIconByKey[k] || ExternalLink;
+            const href = normalizeUrl(v);
+            return (
+              <a
+                key={k}
+                href={href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] text-white/90 hover:text-white hover:border-white/40 transition-colors"
+              >
+                <Icon className="h-3 w-3" />
+                {k}
+              </a>
+            );
+          })}
+        </div>
+      )}
       {card.show_ai_assistant && (
         <div className="relative mt-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs text-white">
           <MessageCircle className="h-3 w-3" />
@@ -99,16 +176,54 @@ function CardPreview({ card, compact = false }) {
 }
 
 function AssistantPanel({ card, messages, q, setQ, ask, asking }) {
+  const quickQuestions = [
+    "What services do you offer?",
+    "How can I contact you?",
+    "What is your website?",
+  ];
+
   return (
     <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
       <h2 className="mb-2 font-semibold">Ask about {card.name || "this profile"}</h2>
       <p className="text-xs text-zinc-400">{card.assistant_greeting}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {quickQuestions.map((qText) => (
+          <button
+            key={qText}
+            type="button"
+            disabled={asking}
+            onClick={() => ask(qText)}
+            className="rounded-full border border-white/10 bg-black/30 px-2.5 py-1 text-[11px] text-zinc-300 hover:text-white hover:border-white/20 transition-colors disabled:opacity-50"
+          >
+            {qText}
+          </button>
+        ))}
+      </div>
       <div className="mt-3 max-h-64 space-y-2 overflow-auto text-sm">
         {messages.map((m, i) => (
-          <div key={`${m.role}-${i}`} className={m.role === "ai" ? "text-violet-100" : "text-white/70"}>
-            <b>{m.role}:</b> {m.text}
+          <div key={`${m.role}-${i}`} className={`flex ${m.role === "ai" ? "justify-start" : "justify-end"}`}>
+            <div className={`max-w-[85%] rounded-2xl px-3 py-2 ${
+              m.role === "ai"
+                ? "border border-white/10 bg-white/[0.06] text-violet-100"
+                : "bg-violet-600/90 text-white"
+            }`}>
+              <div className="text-[10px] uppercase tracking-wider mb-1 opacity-80">
+                {m.role === "ai" ? card.assistant_label || "AI Assistant" : "You"}
+              </div>
+              <div>{m.text}</div>
+            </div>
           </div>
         ))}
+        {asking && (
+          <div className="flex justify-start">
+            <div className="max-w-[85%] rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2 text-violet-100">
+              <div className="text-[10px] uppercase tracking-wider mb-1 opacity-80">{card.assistant_label || "AI Assistant"}</div>
+              <div className="inline-flex items-center gap-2 text-xs">
+                <Loader2 className="h-3 w-3 animate-spin" /> thinking...
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       <div className="mt-3 flex gap-2">
         <input
@@ -191,9 +306,10 @@ export function PublicBusinessCard() {
     axios.get(`${API}/business-cards/public/${hash}`).then((r) => setCard(normalizeCard(r.data)));
   }, [hash]);
 
-  const ask = async () => {
-    if (!q.trim() || asking || !card) return;
-    const question = q.trim();
+  const ask = async (overrideQuestion = null) => {
+    if (asking || !card) return;
+    const question = (overrideQuestion || q).trim();
+    if (!question) return;
     setQ("");
     setMessages((m) => [...m, { role: "you", text: question }]);
     setAsking(true);
@@ -216,7 +332,7 @@ export function PublicBusinessCard() {
   return (
     <div className="min-h-screen bg-[#08040f] px-5 py-10 text-white">
       <div className="mx-auto max-w-xl space-y-6">
-        <CardPreview card={card} />
+        <CardPreview card={card} publicMode />
         {card.show_ai_assistant && card.assistant_mode === "panel" && (
           <AssistantPanel card={card} messages={messages} q={q} setQ={setQ} ask={ask} asking={asking} />
         )}
