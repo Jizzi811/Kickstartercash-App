@@ -10,9 +10,7 @@ def test_nano_banana_model_uses_nano_banana_engine():
     assert server.IMAGE_MODELS["nano-banana"]["engine"] == "nano-banana"
 
 
-def test_nano_banana_routes_to_gemini_fallback_when_poyo_unset(monkeypatch):
-    monkeypatch.setattr(server, "POYO_API_KEY", "")
-
+def test_nano_banana_routes_to_gemini_directly(monkeypatch):
     async def _fake_gemini(prompt, size="1:1", image_urls=None):
         return "data:image/png;base64,test"
 

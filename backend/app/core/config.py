@@ -32,10 +32,6 @@ REPORT_EMAILS: list[str] = [
     e.strip() for e in os.environ.get("KASH_REPORT_EMAILS", "").split(",") if e.strip()
 ]
 
-# --- Image providers --------------------------------------------------------
-POYO_API_KEY = os.environ.get("POYO_API_KEY", "")
-POYO_BASE = "https://api.poyo.ai"
-
 # --- NVIDIA image models (Flux 2, Flux schnell, Qwen, SD 3.5) ---------------
 # Uses the SAME NVIDIA key as the text provider. Cloud genai API:
 #   POST {NVIDIA_IMAGE_BASE}/{publisher}/{model}  (Authorization: Bearer nvapi-...)

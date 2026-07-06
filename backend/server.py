@@ -37,7 +37,6 @@ from app.core.config import (  # noqa: E402
     MONGO_URL, DB_NAME,
     ANTHROPIC_API_KEY, EMERGENT_LLM_KEY, OPENAI_API_KEY, GEMINI_API_KEY,
     RESEND_API_KEY, SENDER_EMAIL, REPORT_EMAILS,
-    POYO_API_KEY, POYO_BASE,
     FREETHEAI_API_KEY, FREETHEAI_BASE, FREETHEAI_IMAGE_MODEL,
     FREETHEAI_TEXT_MODEL, FREETHEAI_TTS_MODEL,
     OPENAI_TEXT_MODEL, LOGO_URL,
@@ -132,63 +131,8 @@ async def pollinations_image(prompt: str, width: int = 1024, height: int = 1024)
     return await asyncio.to_thread(_fetch)
 
 
-async def poyo_nano_banana(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
-    """Image generation via poyo.ai Nano Banana (Google Gemini 2.5 Flash Image).
-    When image_urls are provided, uses nano-banana-edit to composite reference images (e.g. brand logo)."""
-    if not POYO_API_KEY:
-        return None
-    auth = {"Authorization": f"Bearer {POYO_API_KEY}"}
-    model = "nano-banana-edit" if image_urls else "nano-banana"
-    payload_input = {"prompt": prompt[:5000], "size": size}
-    if image_urls:
-        payload_input["image_urls"] = image_urls
-
-    def _submit():
-        import requests
-        r = requests.post(
-            f"{POYO_BASE}/api/generate/submit",
-            headers={**auth, "Content-Type": "application/json"},
-            json={"model": model, "input": payload_input},
-            timeout=30,
-        )
-        if r.status_code == 402:
-            raise RuntimeError("Poyo.ai Guthaben aufgebraucht. Bitte unter poyo.ai aufladen. / Poyo.ai credits exhausted, please top up.")
-        r.raise_for_status()
-        return (r.json().get("data") or {}).get("task_id")
-
-    def _status(task_id):
-        import requests
-        r = requests.get(f"{POYO_BASE}/api/generate/status/{task_id}", headers=auth, timeout=30)
-        r.raise_for_status()
-        return r.json().get("data") or {}
-
-    def _fetch_b64(url):
-        import requests
-        r = requests.get(url, timeout=60)
-        if r.ok and r.content:
-            ct = r.headers.get("content-type", "image/png")
-            return f"data:{ct};base64,{base64.b64encode(r.content).decode('utf-8')}"
-        return None
-
-    task_id = await asyncio.to_thread(_submit)
-    if not task_id:
-        return None
-    for _ in range(40):
-        await asyncio.sleep(3)
-        data = await asyncio.to_thread(_status, task_id)
-        status = data.get("status")
-        if status == "finished":
-            img = next((f["file_url"] for f in data.get("files", []) if f.get("file_type") == "image"), None)
-            return await asyncio.to_thread(_fetch_b64, img) if img else None
-        if status == "failed":
-            logger.error(f"Poyo nano-banana failed: {data.get('error_message')}")
-            return None
-    return None
-
-
 async def gemini_nano_banana(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
-    """Image generation via Google's official Gemini API (Nano Banana / gemini-2.5-flash-image).
-    Same underlying model that Poyo resells – used directly with our own GEMINI_API_KEY."""
+    """Image generation via Google's official Gemini API (Nano Banana / gemini-2.5-flash-image)."""
     if not GEMINI_API_KEY:
         return None
 
@@ -357,8 +301,6 @@ async def brand_image_verbose(prompt: str, size: str = "1:1", image_urls: Option
         providers.append(("FreeTheAi", freetheai_image))
     if OPENAI_API_KEY:
         providers.append(("OpenAI", openai_image))
-    if POYO_API_KEY:
-        providers.append(("Poyo", poyo_nano_banana))
     providers.append(("Gemini", gemini_nano_banana))
 
     status = {}
@@ -377,7 +319,7 @@ async def brand_image_verbose(prompt: str, size: str = "1:1", image_urls: Option
 
 
 async def brand_image(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
-    """Best-available brand image: FreeTheAi -> OpenAI (gpt-image-1) -> Poyo -> Gemini."""
+    """Best-available brand image: FreeTheAi -> OpenAI (gpt-image-1) -> Gemini."""
     img, _ = await brand_image_verbose(prompt, size=size, image_urls=image_urls)
     return img
 
@@ -465,22 +407,11 @@ async def image_by_model_verbose(model_key: str, prompt: str, size: str = "1:1",
     """
     spec = IMAGE_MODELS.get(model_key) or IMAGE_MODELS["gpt"]
     if spec.get("engine") == "nano-banana":
-        status = {}
-        # Prefer explicit Poyo Nano Banana if configured, then fallback to direct Gemini.
-        providers = []
-        if POYO_API_KEY:
-            providers.append((spec["label"], poyo_nano_banana))
-        providers.append(("Gemini Nano Banana", gemini_nano_banana))
-        for name, fn in providers:
-            try:
-                img = await fn(prompt, size=size, image_urls=image_urls)
-                if img:
-                    status[name] = "ok"
-                    return img, status
-                status[name] = "kein Bild"
-            except Exception as e:  # noqa: BLE001
-                status[name] = str(e)[:160]
-        return None, status or {spec["label"]: "GEMINI_API_KEY or POYO_API_KEY not set"}
+        try:
+            img = await gemini_nano_banana(prompt, size=size, image_urls=image_urls)
+            return img, {"Gemini Nano Banana": "ok" if img else "kein Bild"}
+        except Exception as e:  # noqa: BLE001
+            return None, {"Gemini Nano Banana": str(e)[:160]}
     if spec.get("engine") == "nvidia":
         if not NVIDIA_API_KEY:
             return None, {spec["label"]: "NVIDIA_API_KEY not set – set it to use this model"}
@@ -4641,7 +4572,6 @@ async def debug_image():
     out = {
         "freetheai_configured": bool(FREETHEAI_API_KEY),
         "openai_configured": bool(OPENAI_API_KEY),
-        "poyo_configured": bool(POYO_API_KEY),
         "gemini_key": bool(GEMINI_API_KEY),
         "image_model": FREETHEAI_IMAGE_MODEL,
     }
