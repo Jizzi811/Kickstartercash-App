@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -9,13 +9,24 @@ import {
   Copy,
   Download,
   ExternalLink,
+  Github,
+  Globe,
+  Instagram,
+  Linkedin,
+  Loader2,
+  Mail,
+  MapPin,
   MessageCircle,
+  Phone,
   Plus,
+  Upload,
   Send,
   Trash2,
+  Twitter,
   Users,
   Wand2,
   X,
+  Youtube,
 } from "lucide-react";
 
 const emptyCard = {
@@ -29,7 +40,7 @@ const emptyCard = {
   website: "",
   address: "",
   social_links: { linkedin: "", instagram: "", x: "", github: "", youtube: "" },
-  template_id: "aurora",
+  template_id: "spotlight",
   show_ai_assistant: true,
   assistant_mode: "avatar",
   assistant_avatar: "",
@@ -42,6 +53,7 @@ const templates = [
   { id: "aurora", name: "Aurora Glass", bg: "from-violet-600/40 via-fuchsia-500/20 to-cyan-400/20" },
   { id: "executive", name: "Executive Dark", bg: "from-slate-800 via-violet-950/60 to-black" },
   { id: "creator", name: "Creator Pulse", bg: "from-pink-500/40 via-purple-600/30 to-orange-400/20" },
+  { id: "spotlight", name: "Spotlight Signature", bg: "from-indigo-950 via-[#0a0418] to-black" },
 ];
 
 const publicUrl = (hash) => `${window.location.origin}/card/${hash}`;
@@ -53,15 +65,145 @@ const normalizeCard = (card = {}) => ({
   social_links: { ...emptyCard.social_links, ...(card.social_links || {}) },
 });
 
-function CardPreview({ card, compact = false }) {
+const socialIconByKey = {
+  linkedin: Linkedin,
+  instagram: Instagram,
+  x: Twitter,
+  github: Github,
+  youtube: Youtube,
+};
+
+const normalizeUrl = (url = "") => (/^https?:\/\//i.test(url) ? url : `https://${url}`);
+const normalizePhoneForTel = (phone = "") => phone.replace(/[^\d+]/g, "");
+
+function CardPreview({ card, compact = false, publicMode = false }) {
   const template = templates.find((t) => t.id === card.template_id) || templates[0];
   const assistantModeLabel = card.assistant_mode === "avatar" ? "avatar mode" : "panel mode";
+  const socials = Object.entries(card.social_links || {}).filter(([, v]) => !!(v || "").trim());
+  const contactItems = [
+    { key: "email", value: card.email, icon: Mail },
+    { key: "phone", value: card.phone, icon: Phone },
+    { key: "website", value: card.website, icon: Globe },
+    { key: "address", value: card.address, icon: MapPin },
+  ].filter((item) => !!(item.value || "").trim());
+
+  const renderContactValue = (key, value) => {
+    if (!publicMode) return <span>{value}</span>;
+    if (key === "email") {
+      return (
+        <a href={`mailto:${value}`} className="hover:text-white transition-colors underline-offset-2 hover:underline">
+          {value}
+        </a>
+      );
+    }
+    if (key === "phone") {
+      return (
+        <a href={`tel:${normalizePhoneForTel(value)}`} className="hover:text-white transition-colors underline-offset-2 hover:underline">
+          {value}
+        </a>
+      );
+    }
+    if (key === "website") {
+      return (
+        <a href={normalizeUrl(value)} target="_blank" rel="noreferrer" className="hover:text-white transition-colors underline-offset-2 hover:underline">
+          {value}
+        </a>
+      );
+    }
+    return <span>{value}</span>;
+  };
+
+  const cardPublicLink = card.url_hash ? publicUrl(card.url_hash) : "";
+
+  if (card.template_id === "spotlight") {
+    return (
+      <div className="relative overflow-hidden rounded-sm border border-violet-300/25 bg-gradient-to-br from-[#140726] via-[#0b0517] to-[#04030c] p-6 shadow-2xl">
+        <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-violet-500/20 blur-3xl" />
+        <div className="absolute -left-16 bottom-[-60px] h-44 w-44 rounded-full bg-fuchsia-500/20 blur-3xl" />
+        <div className="relative">
+          <p className="text-xs uppercase tracking-[0.35em] text-violet-300/80">Professional Card</p>
+          <h3 className="mt-2 text-3xl font-semibold text-white">{card.name || "Your Name"}</h3>
+          <p className="text-violet-200/90 text-sm">{card.title || "Title"}{card.company ? ` · ${card.company}` : ""}</p>
+
+          <div className="mt-5 grid grid-cols-[1fr_110px] gap-4 items-center">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-violet-300/70">Mehr Zeit · Mehr Impact</p>
+              <p className="mt-2 text-sm leading-6 text-zinc-200">
+                {card.bio || "Professionelle KI-gestützte Marketing-Unterstützung für mehr Wachstum und bessere Automatisierung."}
+              </p>
+            </div>
+            <div className="h-28 w-28 overflow-hidden rounded-sm border border-violet-300/30 bg-white/10">
+              {card.avatar ? (
+                <img src={card.avatar} alt="Avatar" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full items-center justify-center text-3xl font-bold text-white">
+                  {(card.name || "AI").slice(0, 2).toUpperCase()}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-2 text-[11px]">
+            {["KI Agenten", "Content", "Marketing", "Automation"].map((item) => (
+              <div key={item} className="rounded-xl border border-white/10 bg-white/[0.04] px-2 py-1.5 text-zinc-200">{item}</div>
+            ))}
+          </div>
+
+          {socials.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {socials.map(([k, v]) => {
+                const Icon = socialIconByKey[k] || ExternalLink;
+                return (
+                  <a
+                    key={k}
+                    href={normalizeUrl(v)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-violet-300/30 bg-violet-500/10 px-2.5 py-1 text-[11px] text-violet-100 hover:border-violet-200/60 transition-colors"
+                  >
+                    <Icon className="h-3 w-3" />
+                    {k}
+                  </a>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="mt-5 grid gap-2 text-sm text-zinc-200">
+            {contactItems.map(({ key, value, icon: Icon }) => (
+            <div key={key} className="inline-flex min-w-0 items-center gap-2 rounded-sm border border-violet-300/20 bg-black/20 px-2.5 py-1.5">
+                <Icon className="h-3.5 w-3.5 text-violet-200/80 shrink-0" />
+                <div className="truncate">{renderContactValue(key, value)}</div>
+              </div>
+            ))}
+          </div>
+
+          {publicMode && cardPublicLink && (
+            <div className="mt-5 inline-flex items-center gap-3 rounded-2xl border border-violet-300/25 bg-black/30 p-2">
+              <img src={qrUrl(cardPublicLink)} alt="QR code" className="h-20 w-20 rounded-md bg-white p-1" />
+              <div className="text-xs text-zinc-300">
+                <p className="text-violet-200 uppercase tracking-wide">Vernetze dich mit mir</p>
+                <p className="mt-1 break-all text-zinc-400">{cardPublicLink}</p>
+              </div>
+            </div>
+          )}
+
+          {card.show_ai_assistant && (
+            <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-violet-300/30 bg-violet-500/15 px-3 py-1 text-xs text-violet-100">
+              <MessageCircle className="h-3 w-3" /> AI assistant enabled ({assistantModeLabel})
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`relative overflow-hidden rounded-[2rem] border border-white/15 bg-gradient-to-br ${template.bg} p-6 shadow-2xl backdrop-blur-xl`}>
-      <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-white/20 blur-3xl" />
+    <div className={`relative overflow-hidden rounded-sm border border-white/15 bg-gradient-to-br ${template.bg} p-6 shadow-2xl`}>
+      <div className="absolute -right-20 -top-20 h-44 w-44 rounded-full bg-white/10 blur-3xl" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.08),transparent_45%)]" />
       <div className="relative flex items-start gap-4">
-        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-3xl border border-white/20 bg-white/10">
+        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-sm border border-white/25 bg-black/25">
           {card.avatar ? (
             <img src={card.avatar} alt="Avatar" className="h-full w-full object-cover" />
           ) : (
@@ -71,9 +213,9 @@ function CardPreview({ card, compact = false }) {
           )}
         </div>
         <div className="min-w-0 text-left">
-          <p className="text-xs uppercase tracking-[0.35em] text-white/60">AI Business Card</p>
+          <p className="text-xs uppercase tracking-[0.35em] text-white/60">Professional Card</p>
           <h3 className="mt-2 truncate text-2xl font-semibold text-white">{card.name || "Your Name"}</h3>
-          <p className="text-sm text-violet-100">
+          <p className="text-sm text-violet-100/95">
             {card.title || "Title"}
             {card.company ? ` · ${card.company}` : ""}
           </p>
@@ -82,14 +224,38 @@ function CardPreview({ card, compact = false }) {
       <p className={`relative mt-5 text-sm leading-6 text-white/80 ${compact ? "line-clamp-3" : ""}`}>
         {card.bio || "Add a short profile bio so visitors understand who you are and how you help."}
       </p>
-      <div className="relative mt-6 grid gap-2 text-sm text-white/80">
-        {card.email && <span>{card.email}</span>}
-        {card.phone && <span>{card.phone}</span>}
-        {card.website && <span>{card.website}</span>}
-        {card.address && <span>{card.address}</span>}
-      </div>
+      {contactItems.length > 0 && (
+        <div className="relative mt-6 grid gap-2 text-sm text-white/85">
+          {contactItems.map(({ key, value, icon: Icon }) => (
+            <div key={key} className="inline-flex min-w-0 items-center gap-2 rounded-sm border border-white/10 bg-black/25 px-2.5 py-1.5">
+              <Icon className="h-3.5 w-3.5 shrink-0 text-white/70" />
+              <div className="truncate">{renderContactValue(key, value)}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {socials.length > 0 && (
+        <div className="relative mt-4 flex flex-wrap gap-2">
+          {socials.map(([k, v]) => {
+            const Icon = socialIconByKey[k] || ExternalLink;
+            const href = normalizeUrl(v);
+            return (
+              <a
+                key={k}
+                href={href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-sm border border-white/20 bg-black/25 px-2.5 py-1 text-[11px] text-white/90 transition-colors hover:border-white/40 hover:text-white"
+              >
+                <Icon className="h-3 w-3" />
+                {k}
+              </a>
+            );
+          })}
+        </div>
+      )}
       {card.show_ai_assistant && (
-        <div className="relative mt-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs text-white">
+        <div className="relative mt-5 inline-flex items-center gap-2 rounded-sm border border-white/15 bg-black/30 px-3 py-1 text-xs text-white">
           <MessageCircle className="h-3 w-3" />
           AI assistant enabled ({assistantModeLabel})
         </div>
@@ -99,16 +265,54 @@ function CardPreview({ card, compact = false }) {
 }
 
 function AssistantPanel({ card, messages, q, setQ, ask, asking }) {
+  const quickQuestions = [
+    "What services do you offer?",
+    "How can I contact you?",
+    "What is your website?",
+  ];
+
   return (
     <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
       <h2 className="mb-2 font-semibold">Ask about {card.name || "this profile"}</h2>
       <p className="text-xs text-zinc-400">{card.assistant_greeting}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {quickQuestions.map((qText) => (
+          <button
+            key={qText}
+            type="button"
+            disabled={asking}
+            onClick={() => ask(qText)}
+            className="rounded-full border border-white/10 bg-black/30 px-2.5 py-1 text-[11px] text-zinc-300 hover:text-white hover:border-white/20 transition-colors disabled:opacity-50"
+          >
+            {qText}
+          </button>
+        ))}
+      </div>
       <div className="mt-3 max-h-64 space-y-2 overflow-auto text-sm">
         {messages.map((m, i) => (
-          <div key={`${m.role}-${i}`} className={m.role === "ai" ? "text-violet-100" : "text-white/70"}>
-            <b>{m.role}:</b> {m.text}
+          <div key={`${m.role}-${i}`} className={`flex ${m.role === "ai" ? "justify-start" : "justify-end"}`}>
+            <div className={`max-w-[85%] rounded-2xl px-3 py-2 ${
+              m.role === "ai"
+                ? "border border-white/10 bg-white/[0.06] text-violet-100"
+                : "bg-violet-600/90 text-white"
+            }`}>
+              <div className="text-[10px] uppercase tracking-wider mb-1 opacity-80">
+                {m.role === "ai" ? card.assistant_label || "AI Assistant" : "You"}
+              </div>
+              <div>{m.text}</div>
+            </div>
           </div>
         ))}
+        {asking && (
+          <div className="flex justify-start">
+            <div className="max-w-[85%] rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2 text-violet-100">
+              <div className="text-[10px] uppercase tracking-wider mb-1 opacity-80">{card.assistant_label || "AI Assistant"}</div>
+              <div className="inline-flex items-center gap-2 text-xs">
+                <Loader2 className="h-3 w-3 animate-spin" /> thinking...
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       <div className="mt-3 flex gap-2">
         <input
@@ -191,9 +395,10 @@ export function PublicBusinessCard() {
     axios.get(`${API}/business-cards/public/${hash}`).then((r) => setCard(normalizeCard(r.data)));
   }, [hash]);
 
-  const ask = async () => {
-    if (!q.trim() || asking || !card) return;
-    const question = q.trim();
+  const ask = async (overrideQuestion = null) => {
+    if (asking || !card) return;
+    const question = (overrideQuestion || q).trim();
+    if (!question) return;
     setQ("");
     setMessages((m) => [...m, { role: "you", text: question }]);
     setAsking(true);
@@ -216,7 +421,7 @@ export function PublicBusinessCard() {
   return (
     <div className="min-h-screen bg-[#08040f] px-5 py-10 text-white">
       <div className="mx-auto max-w-xl space-y-6">
-        <CardPreview card={card} />
+        <CardPreview card={card} publicMode />
         {card.show_ai_assistant && card.assistant_mode === "panel" && (
           <AssistantPanel card={card} messages={messages} q={q} setQ={setQ} ask={ask} asking={asking} />
         )}
@@ -230,6 +435,7 @@ export default function AIBusinessCard() {
   const [cards, setCards] = useState([]);
   const [current, setCurrent] = useState(emptyCard);
   const [saving, setSaving] = useState(false);
+  const avatarFileInputRef = useRef(null);
 
   const link = useMemo(() => (current.url_hash ? publicUrl(current.url_hash) : "Save to generate link"), [current.url_hash]);
 
@@ -289,6 +495,25 @@ export default function AIBusinessCard() {
     a.click();
   };
 
+  const onAvatarUpload = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      toast.error("Image too large (max 6MB)");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      update("avatar", String(reader.result || ""));
+      toast.success("Profile image uploaded");
+    };
+    reader.onerror = () => toast.error("Image upload failed");
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -332,6 +557,24 @@ export default function AIBusinessCard() {
                 className="rounded-sm border border-white/10 bg-black px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#7C3AED]/50"
               />
             ))}
+            <div className="md:col-span-2 flex items-center gap-2">
+              <input
+                ref={avatarFileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => onAvatarUpload(e.target.files?.[0])}
+              />
+              <button
+                type="button"
+                onClick={() => avatarFileInputRef.current?.click()}
+                className="inline-flex items-center gap-2 rounded-sm border border-white/10 px-3 py-2 text-xs text-zinc-300 hover:text-white hover:border-white/20 transition-colors"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Upload your real photo
+              </button>
+              <span className="text-[11px] text-zinc-500">JPG/PNG/WebP, max 6MB</span>
+            </div>
             <textarea
               value={current.bio || ""}
               onChange={(e) => update("bio", e.target.value)}
