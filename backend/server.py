@@ -3986,18 +3986,28 @@ async def run_agent_tool(req: AgentToolRunRequest, ws: Optional[str] = Depends(c
     if tool.get("type") == "image":
         if not context:
             raise HTTPException(status_code=400, detail="Context is required for image generation.")
-        image_req = ImageRequest(
-            prompt=context,
-            style=brand.get("image_style") or "Luxuriös",
-            brand_id=brand.get("id", req.brand_id),
-            language=lang,
-            apply_logo=False,
-            size="1:1",
-            count=3,
-            model="gpt",
-        )
-        generated = await generate_image(image_req, ws=ws)
-        images = generated.get("images") or []
+        images = []
+        provider = "unknown"
+        try:
+            image_req = ImageRequest(
+                prompt=context,
+                style=brand.get("image_style") or "Luxuriös",
+                brand_id=brand.get("id", req.brand_id),
+                language=lang,
+                apply_logo=False,
+                size="1:1",
+                count=3,
+                model="gpt",
+            )
+            generated = await generate_image(image_req, ws=ws)
+            images = generated.get("images") or []
+            provider = generated.get("provider") or "gpt-chain"
+        except Exception as media_exc:
+            logger.warning(f"Agent image tool primary pipeline failed, using fallback: {media_exc}")
+            fallback = await pollinations_image(context, width=1024, height=1024)
+            if fallback:
+                images = [fallback]
+                provider = "pollinations-fallback"
         if not images:
             raise HTTPException(status_code=502, detail="Image generation returned no images.")
         return {
@@ -4007,13 +4017,24 @@ async def run_agent_tool(req: AgentToolRunRequest, ws: Optional[str] = Depends(c
             "image_url": images[0],
             "images": images,
             "prompt_used": context,
-            "provider": generated.get("provider"),
+            "provider": provider,
         }
 
     if tool.get("type") == "video":
         if not context:
             raise HTTPException(status_code=400, detail="Context is required for video generation.")
-        veo = await generate_veo_video(VeoRequest(prompt=context, aspect_ratio="16:9"))
+        try:
+            veo = await generate_veo_video(VeoRequest(prompt=context, aspect_ratio="16:9"))
+        except HTTPException as exc:
+            return {
+                "type": "video",
+                "tool_id": req.tool_id,
+                "tool_label": tool["label"] if lang == "DE" else tool["label_en"],
+                "operation_name": "",
+                "status": "unavailable",
+                "prompt_used": context,
+                "message": exc.detail if isinstance(exc.detail, str) else "Video provider unavailable.",
+            }
         return {
             "type": "video",
             "tool_id": req.tool_id,
