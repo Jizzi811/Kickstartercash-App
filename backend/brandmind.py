@@ -453,8 +453,8 @@ async def canva_connect(
     authorization: Optional[str] = Header(default=None),
     x_workspace_id: Optional[str] = Header(default=None, alias="X-Workspace-Id"),
 ):
-    _require_canva_config()
     user = await current_user(authorization)
+    _require_canva_config()
     if not x_workspace_id:
         raise HTTPException(status_code=400, detail="X-Workspace-Id header is required.")
     await _assert_member(user["id"], x_workspace_id)
