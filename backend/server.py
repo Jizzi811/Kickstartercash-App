@@ -380,6 +380,9 @@ async def nvidia_image(prompt: str, size: str = "1:1", image_urls: Optional[list
     if not NVIDIA_API_KEY:
         return None
     w, h = _size_to_nvidia_wh(size)
+    # Use a dynamic non-zero seed so repeated calls with the same prompt
+    # can still produce diverse variants (seed=0 made outputs too similar).
+    seed = (uuid.uuid4().int % 2_147_483_647) or 1
 
     def _generate():
         import requests
@@ -388,7 +391,7 @@ async def nvidia_image(prompt: str, size: str = "1:1", image_urls: Optional[list
             url,
             headers={"Authorization": f"Bearer {NVIDIA_API_KEY}",
                      "Accept": "application/json", "Content-Type": "application/json"},
-            json={"prompt": prompt[:5000], "width": w, "height": h, "seed": 0},
+            json={"prompt": prompt[:5000], "width": w, "height": h, "seed": seed},
             timeout=180,
         )
         if not r.ok:
