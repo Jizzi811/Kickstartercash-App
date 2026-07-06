@@ -1,10 +1,11 @@
-# Brandmind frontend on Netlify (reference copy).
-# Production uses /netlify.toml at the repo root (kashbot3.netlify.app).
-# Keep this file for the Brandmind spinoff script (scripts/spinoff-brandmind.sh).
+# Brandmind frontend on Netlify (reference / spinoff copy).
+# Do NOT place this at the repo root – kashbot2 and other sites share this repo
+# and deploy different directories. For kashbot3, set these values in the Netlify UI
+# or use .github/workflows/deploy-frontend.yml with NETLIFY_SITE_ID.
 [build]
   base = "frontend"
-  command = "npm run build"
-  publish = "frontend/build"
+  command = "npm ci --legacy-peer-deps && npm run build"
+  publish = "build"
 
 [build.environment]
   CI = "false"
