@@ -3922,6 +3922,15 @@ class AgentToolRunRequest(BaseModel):
     brand_id: str = "kickstartercash"
 
 
+class AgentTaskDispatchRequest(BaseModel):
+    task: str
+    language: str = "DE"
+    model: str = "gpt"
+    brand_id: str = "kickstartercash"
+    execute: bool = True
+    preferred_agent_id: Optional[str] = None
+
+
 @api_router.get("/agents")
 async def list_agents():
     result = []
@@ -3939,6 +3948,43 @@ async def get_agent_tools(agent_id: str):
     if agent_id not in AGENTS:
         raise HTTPException(status_code=404, detail="Agent not found")
     return skill_registry.skills_for_agent(agent_id)
+
+
+@api_router.post("/agents/dispatch-task")
+async def dispatch_agent_task(req: AgentTaskDispatchRequest, ws: Optional[str] = Depends(current_workspace)):
+    if not (req.task or "").strip():
+        raise HTTPException(status_code=400, detail="Task is required.")
+
+    suggested = skill_registry.suggest_skill_for_task(req.task, req.preferred_agent_id)
+    if not suggested:
+        raise HTTPException(status_code=404, detail="No matching skill found.")
+
+    agent_id = req.preferred_agent_id or suggested.get("agent_ids", [""])[0]
+    agent = AGENTS.get(agent_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Matched agent not found.")
+
+    payload = {
+        "agent_id": agent_id,
+        "agent_name": agent.get("name"),
+        "tool_id": suggested["id"],
+        "tool_label": suggested["label"] if req.language == "DE" else suggested["label_en"],
+        "tool_type": suggested.get("type", "llm"),
+        "task": req.task,
+    }
+    if not req.execute:
+        return {"routed": payload, "executed": False}
+
+    run_req = AgentToolRunRequest(
+        agent_id=agent_id,
+        tool_id=suggested["id"],
+        context=req.task,
+        model=req.model,
+        language=req.language,
+        brand_id=req.brand_id,
+    )
+    result = await run_agent_tool(run_req, ws=ws)
+    return {"routed": payload, "executed": True, "result": result}
 
 
 @api_router.get("/skills/registry")

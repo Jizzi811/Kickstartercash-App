@@ -417,16 +417,41 @@ function AgentChat({ agent, onClose }) {
 }
 
 export default function Specialists() {
-  const lang = localStorage.getItem("kc_lang") || "DE";
+  const { lang, model, activeBrandId } = useApp();
   const [agents, setAgents] = useState([]);
   const [activeAgent, setActiveAgent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [dispatchTask, setDispatchTask] = useState("");
+  const [dispatchLoading, setDispatchLoading] = useState(false);
+  const [dispatchResult, setDispatchResult] = useState(null);
 
   useEffect(() => {
     axios.get(`${API}/agents`)
       .then((r) => { setAgents(r.data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
+
+  const runAutoDispatch = async () => {
+    if (!dispatchTask.trim() || dispatchLoading) return;
+    setDispatchLoading(true);
+    setDispatchResult(null);
+    try {
+      const res = await axios.post(`${API}/agents/dispatch-task`, {
+        task: dispatchTask.trim(),
+        language: lang,
+        model,
+        brand_id: activeBrandId,
+        execute: true,
+      });
+      setDispatchResult(res.data);
+    } catch {
+      setDispatchResult({
+        error: lang === "DE" ? "Task-Routing fehlgeschlagen." : "Task routing failed.",
+      });
+    } finally {
+      setDispatchLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -445,6 +470,58 @@ export default function Specialists() {
             ? "17 KI-Agenten mit eigener Persönlichkeit, spezialisierten Tools & KB-Zugriff."
             : "17 AI agents with their own personality, specialized tools & KB access."}
         </p>
+      </div>
+
+      <div className="bg-[#0A0A0A] border border-white/8 rounded-sm p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Zap size={14} className="text-[#7C3AED]" />
+          <span className="text-xs uppercase tracking-widest text-zinc-500">
+            {lang === "DE" ? "Auto Task Router" : "Auto Task Router"}
+          </span>
+        </div>
+        <div className="flex gap-2">
+          <textarea
+            value={dispatchTask}
+            onChange={(e) => setDispatchTask(e.target.value)}
+            rows={2}
+            placeholder={lang === "DE" ? "Aufgabe eingeben, z. B. 'Erstelle ein Hero-Bild für neue Kampagne'" : "Enter a task, e.g. 'Create a hero image for new campaign'"}
+            className="flex-1 bg-black border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none"
+          />
+          <button
+            onClick={runAutoDispatch}
+            disabled={!dispatchTask.trim() || dispatchLoading}
+            className="self-stretch px-3 rounded-sm border border-[#7C3AED]/40 text-[#7C3AED] bg-[#7C3AED]/10 disabled:opacity-40"
+          >
+            {dispatchLoading ? <Loader2 size={14} className="animate-spin" /> : <GitBranch size={14} />}
+          </button>
+        </div>
+        {dispatchResult?.routed && (
+          <div className="rounded-sm border border-white/10 bg-black/30 p-3 space-y-2">
+            <p className="text-xs text-zinc-400">
+              {lang === "DE" ? "Geroutet an" : "Routed to"}:{" "}
+              <span className="text-white">{dispatchResult.routed.agent_name}</span> ·{" "}
+              <span className="text-zinc-300">{dispatchResult.routed.tool_label}</span>
+            </p>
+            {dispatchResult.result?.type === "image" && (
+              <img src={dispatchResult.result.image_url} alt="Routed output" className="w-full max-h-64 object-cover rounded-sm border border-white/10" />
+            )}
+            {dispatchResult.result?.type === "video" && (
+              <div className="text-xs text-zinc-400 bg-[#0A0A0A] border border-white/8 rounded-sm p-2">
+                {dispatchResult.result.message}
+              </div>
+            )}
+            {dispatchResult.result?.type === "text" && (
+              <pre className="text-xs text-zinc-300 whitespace-pre-wrap bg-[#0A0A0A] border border-white/8 rounded-sm p-2 max-h-56 overflow-auto">
+                {dispatchResult.result.reply}
+              </pre>
+            )}
+          </div>
+        )}
+        {dispatchResult?.error && (
+          <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-sm p-2">
+            {dispatchResult.error}
+          </div>
+        )}
       </div>
 
       {/* Agent Grid */}

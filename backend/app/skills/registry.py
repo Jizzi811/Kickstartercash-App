@@ -70,3 +70,48 @@ def skills_for_agent(agent_id: str) -> List[dict]:
 
 def registry_payload() -> dict:
     return {"categories": CATEGORIES, "skills": list_skills(), "agent_skill_map": AGENT_SKILL_MAP}
+
+
+def suggest_skill_for_task(task: str, preferred_agent_id: Optional[str] = None) -> Optional[dict]:
+    """Heuristic matcher that maps free-form tasks to the best skill.
+
+    We deliberately keep this lightweight and deterministic so it can run before
+    any expensive model call.
+    """
+    text = (task or "").strip().lower()
+    if not text:
+        return None
+
+    best = None
+    best_score = -1.0
+    for skill in SKILLS.values():
+        if preferred_agent_id and preferred_agent_id not in skill.get("agent_ids", []):
+            continue
+
+        haystack = " ".join([
+            skill.get("name", ""),
+            skill.get("description", ""),
+            skill.get("category", ""),
+            skill.get("prompt_de", ""),
+            skill.get("prompt_en", ""),
+        ]).lower()
+
+        # Basic token-overlap score
+        tokens = [t for t in text.replace("/", " ").replace("-", " ").split() if len(t) >= 3]
+        overlap = sum(1 for t in tokens if t in haystack)
+        score = float(overlap)
+
+        # Small boosts for obvious media intents.
+        if any(k in text for k in ("bild", "image", "visual", "grafik")) and skill.get("type") == "image":
+            score += 5.0
+        if any(k in text for k in ("video", "reel", "veo", "clip")) and skill.get("type") == "video":
+            score += 5.0
+
+        if score > best_score:
+            best_score = score
+            best = skill
+
+    if best_score <= 0:
+        # Fallback preference: orchestrator-safe planning skill for unknown tasks.
+        return SKILLS.get("campaign_planner")
+    return best
