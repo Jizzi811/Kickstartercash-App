@@ -16,7 +16,7 @@ const IMAGE_MODELS = [
   { id: "flux2", label: "Flux 2" },
   { id: "flux-schnell", label: "Flux.1 schnell" },
   { id: "qwen-image", label: "Qwen Image" },
-  { id: "sd3", label: "Stable Diffusion 3" },
+  { id: "sd3", label: "Stable Diffusion 3.5" },
 ];
 
 // Output formats (aspect ratios) -> backend `size` label.
@@ -105,7 +105,7 @@ export default function DesignStudio() {
         icon={Palette}
         color="#C084FC"
         title="Design Studio"
-        subtitle={lang === "DE" ? "GPT · Flux 2 · Flux schnell · Qwen · SD3 · Canva · Leonardo" : "GPT · Flux 2 · Flux schnell · Qwen · SD3 · Canva · Leonardo"}
+        subtitle={lang === "DE" ? "GPT · Flux 2 · Flux schnell · Qwen · SD 3.5 · Canva · Leonardo" : "GPT · Flux 2 · Flux schnell · Qwen · SD 3.5 · Canva · Leonardo"}
         badge="Design"
       />
 

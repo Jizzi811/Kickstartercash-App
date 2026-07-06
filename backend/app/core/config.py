@@ -36,16 +36,17 @@ REPORT_EMAILS: list[str] = [
 POYO_API_KEY = os.environ.get("POYO_API_KEY", "")
 POYO_BASE = "https://api.poyo.ai"
 
-# --- fal.ai – multi-model image generation (Flux 2, Flux schnell, Qwen, SD3) -
-# HTTP API: POST {FAL_BASE}/{model-id}  with header "Authorization: Key <FAL_KEY>".
-# Powers the extra Design-Studio image models. Each model id is overridable so
-# an operator can swap a slug without a code change.
-FAL_KEY = os.environ.get("FAL_KEY", "")
-FAL_BASE = os.environ.get("FAL_BASE", "https://fal.run")
-FAL_MODEL_FLUX2 = os.environ.get("FAL_MODEL_FLUX2", "fal-ai/flux-2")
-FAL_MODEL_FLUX_SCHNELL = os.environ.get("FAL_MODEL_FLUX_SCHNELL", "fal-ai/flux/schnell")
-FAL_MODEL_QWEN = os.environ.get("FAL_MODEL_QWEN", "fal-ai/qwen-image")
-FAL_MODEL_SD3 = os.environ.get("FAL_MODEL_SD3", "fal-ai/stable-diffusion-3")
+# --- NVIDIA image models (Flux 2, Flux schnell, Qwen, SD 3.5) ---------------
+# Uses the SAME NVIDIA key as the text provider. Cloud genai API:
+#   POST {NVIDIA_IMAGE_BASE}/{publisher}/{model}  (Authorization: Bearer nvapi-...)
+# -> {"artifacts": [{"base64": "..."}]}. Each model slug is overridable so an
+# operator can swap it without a code change.
+NVIDIA_API_KEY = os.environ.get("NVIDIA_API_KEY", "")  # shared with the NVIDIA text provider
+NVIDIA_IMAGE_BASE = os.environ.get("NVIDIA_IMAGE_BASE", "https://ai.api.nvidia.com/v1/genai")
+NVIDIA_MODEL_FLUX2 = os.environ.get("NVIDIA_MODEL_FLUX2", "black-forest-labs/flux.2-klein-4b")
+NVIDIA_MODEL_FLUX_SCHNELL = os.environ.get("NVIDIA_MODEL_FLUX_SCHNELL", "black-forest-labs/flux.1-schnell")
+NVIDIA_MODEL_QWEN = os.environ.get("NVIDIA_MODEL_QWEN", "qwen/qwen-image")
+NVIDIA_MODEL_SD3 = os.environ.get("NVIDIA_MODEL_SD3", "stabilityai/stable-diffusion-3.5-large")
 
 # --- FreeTheAi – free OpenAI-compatible gateway (gpt-image-2 etc.) -----------
 FREETHEAI_API_KEY = os.environ.get("FREETHEAI_API_KEY", "")
