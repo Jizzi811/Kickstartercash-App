@@ -308,8 +308,6 @@ export const Layout = ({ children }) => {
     </div>
   );
 
-  if (!enabled) return null;
-
   return (
     <div className="min-h-screen flex bg-[var(--bm-bg)] font-['Sora',ui-sans-serif,system-ui]">
       {/* Global whimsy layers */}
