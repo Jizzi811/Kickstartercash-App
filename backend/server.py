@@ -6529,6 +6529,10 @@ class BusinessCardPayload(BaseModel):
     social_links: dict = Field(default_factory=dict)
     template_id: str = "aurora"
     show_ai_assistant: bool = True
+    assistant_mode: str = "avatar"
+    assistant_avatar: str = ""
+    assistant_label: str = "Ask AI"
+    assistant_greeting: str = "Hi, ask me anything about this profile."
 
 
 def _card_public(card: dict) -> dict:
