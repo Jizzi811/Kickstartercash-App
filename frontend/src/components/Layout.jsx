@@ -57,6 +57,7 @@ const NAV_GROUPS = [
     labelEN: "Studios",
     items: [
       { to: "/design", icon: Palette, labelDE: "Design", labelEN: "Design" },
+      { to: "/design-v2", icon: Sparkles, labelDE: "Design V2 (Preview)", labelEN: "Design V2 (Preview)" },
       { to: "/video", icon: Film, labelDE: "Video", labelEN: "Video" },
       { to: "/seo", icon: Globe, labelDE: "SEO", labelEN: "SEO" },
       { to: "/seo-specialist", icon: Search, labelDE: "SEO Specialist", labelEN: "SEO Specialist" },
@@ -114,6 +115,7 @@ const PAGE_NAMES = {
   "/permissions": "Permissions",
   "/agents": "Agenten",
   "/design": "Design Studio",
+  "/design-v2": "Design Studio V2",
   "/video": "Video Studio",
   "/social": "Social Media",
   "/seo": "SEO",
