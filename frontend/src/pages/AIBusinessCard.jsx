@@ -3,6 +3,7 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { API } from "@/context/AppContext";
+import { PageHeader } from "@/components/PageHeader";
 import {
   Bot,
   Copy,
@@ -11,7 +12,6 @@ import {
   MessageCircle,
   Plus,
   Send,
-  Sparkles,
   Trash2,
   Users,
   Wand2,
@@ -291,36 +291,30 @@ export default function AIBusinessCard() {
 
   return (
     <div className="space-y-8">
-      <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-8">
-        <p className="flex items-center gap-2 text-sm uppercase tracking-[0.35em] text-violet-300">
-          <Sparkles className="h-4 w-4" />
-          Brandmind module
-        </p>
-        <h1 className="mt-3 bg-gradient-to-r from-white via-violet-200 to-fuchsia-300 bg-clip-text text-4xl font-semibold text-transparent">
-          AI Business Card
-        </h1>
-        <p className="mt-3 max-w-3xl text-zinc-400">
-          Create Brandmind-native digital business cards with public links, QR codes, templates and a profile-bounded AI assistant.
-        </p>
-      </motion.div>
+      <PageHeader
+        icon={Users}
+        title="AI Business Card"
+        subtitle="Create Brandmind-native digital business cards with public links, QR codes, templates and a profile-bounded AI assistant."
+        badge="Brandmind Module"
+      />
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
-        <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_420px]">
+        <div className="bg-[#0A0A0A] border border-white/10 rounded-sm p-6">
           <div className="mb-4 flex flex-wrap gap-3">
-            <button onClick={() => setCurrent(emptyCard)} className="rounded-xl bg-violet-600 px-4 py-2 text-sm">
+            <button onClick={() => setCurrent(emptyCard)} className="rounded-sm bg-[#7C3AED] px-4 py-2 text-sm font-semibold text-white hover:bg-[#C4B5FD] transition-colors">
               <Plus className="mr-2 inline h-4 w-4" />
               New card
             </button>
-            <button onClick={save} disabled={saving} className="rounded-xl border border-white/10 px-4 py-2 text-sm">
+            <button onClick={save} disabled={saving} className="rounded-sm border border-white/10 px-4 py-2 text-sm text-zinc-200 hover:text-white hover:border-white/20 transition-colors disabled:opacity-60">
               {saving ? "Saving..." : "Save card"}
             </button>
             {current.url_hash && (
               <>
-                <button onClick={() => copy(link)} className="rounded-xl border border-white/10 px-4 py-2 text-sm">
+                <button onClick={() => copy(link)} className="rounded-sm border border-white/10 px-4 py-2 text-sm text-zinc-200 hover:text-white hover:border-white/20 transition-colors">
                   <Copy className="mr-2 inline h-4 w-4" />
                   Copy link
                 </button>
-                <button onClick={downloadQr} className="rounded-xl border border-white/10 px-4 py-2 text-sm">
+                <button onClick={downloadQr} className="rounded-sm border border-white/10 px-4 py-2 text-sm text-zinc-200 hover:text-white hover:border-white/20 transition-colors">
                   <Download className="mr-2 inline h-4 w-4" />
                   QR
                 </button>
@@ -335,14 +329,14 @@ export default function AIBusinessCard() {
                 value={current[f] || ""}
                 onChange={(e) => update(f, e.target.value)}
                 placeholder={f.replace("_", " ")}
-                className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-violet-400"
+                className="rounded-sm border border-white/10 bg-black px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#7C3AED]/50"
               />
             ))}
             <textarea
               value={current.bio || ""}
               onChange={(e) => update("bio", e.target.value)}
               placeholder="Bio"
-              className="min-h-28 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-violet-400 md:col-span-2"
+              className="min-h-28 rounded-sm border border-white/10 bg-black px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#7C3AED]/50 md:col-span-2"
             />
             {Object.keys(emptyCard.social_links).map((k) => (
               <input
@@ -350,19 +344,19 @@ export default function AIBusinessCard() {
                 value={(current.social_links || {})[k] || ""}
                 onChange={(e) => social(k, e.target.value)}
                 placeholder={`${k} URL`}
-                className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-violet-400"
+                className="rounded-sm border border-white/10 bg-black px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#7C3AED]/50"
               />
             ))}
             <select
               value={current.template_id}
               onChange={(e) => update("template_id", e.target.value)}
-              className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white"
+              className="rounded-sm border border-white/10 bg-black px-3 py-2 text-sm text-white focus:outline-none focus:border-[#7C3AED]/50"
             >
               {templates.map((t) => (
                 <option key={t.id} value={t.id}>{t.name}</option>
               ))}
             </select>
-            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm">
+            <label className="flex items-center gap-3 rounded-sm border border-white/10 bg-black px-3 py-2 text-sm text-zinc-300">
               <input
                 type="checkbox"
                 checked={!!current.show_ai_assistant}
@@ -373,7 +367,7 @@ export default function AIBusinessCard() {
             <select
               value={current.assistant_mode || "avatar"}
               onChange={(e) => update("assistant_mode", e.target.value)}
-              className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white"
+              className="rounded-sm border border-white/10 bg-black px-3 py-2 text-sm text-white focus:outline-none focus:border-[#7C3AED]/50"
             >
               <option value="avatar">Assistant mode: Floating avatar</option>
               <option value="panel">Assistant mode: Inline panel</option>
@@ -382,25 +376,25 @@ export default function AIBusinessCard() {
               value={current.assistant_label || ""}
               onChange={(e) => update("assistant_label", e.target.value)}
               placeholder="Assistant button label (e.g. Ask AI)"
-              className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-violet-400"
+              className="rounded-sm border border-white/10 bg-black px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#7C3AED]/50"
             />
             <input
               value={current.assistant_avatar || ""}
               onChange={(e) => update("assistant_avatar", e.target.value)}
               placeholder="Assistant avatar URL (optional)"
-              className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-violet-400 md:col-span-2"
+              className="rounded-sm border border-white/10 bg-black px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#7C3AED]/50 md:col-span-2"
             />
             <textarea
               value={current.assistant_greeting || ""}
               onChange={(e) => update("assistant_greeting", e.target.value)}
               placeholder="Assistant greeting"
-              className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-violet-400 md:col-span-2"
+              className="rounded-sm border border-white/10 bg-black px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#7C3AED]/50 md:col-span-2"
             />
             <textarea
               value={current.assistant_knowledge || ""}
               onChange={(e) => update("assistant_knowledge", e.target.value)}
               placeholder="Assistant knowledge (private notes/FAQ for bot answers)"
-              className="min-h-32 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-violet-400 md:col-span-2"
+              className="min-h-32 rounded-sm border border-white/10 bg-black px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#7C3AED]/50 md:col-span-2"
             />
           </div>
         </div>
@@ -408,15 +402,15 @@ export default function AIBusinessCard() {
         <div className="space-y-5">
           <CardPreview card={current} />
           {current.url_hash && (
-            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 text-center">
-              <img src={qrUrl(link)} alt="QR code" className="mx-auto h-44 w-44 rounded-2xl bg-white p-2" />
+            <div className="bg-[#0A0A0A] border border-white/10 rounded-sm p-5 text-center">
+              <img src={qrUrl(link)} alt="QR code" className="mx-auto h-44 w-44 rounded-sm bg-white p-2" />
               <p className="mt-3 break-all text-xs text-zinc-400">{link}</p>
             </div>
           )}
         </div>
       </div>
 
-      <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
+      <div className="bg-[#0A0A0A] border border-white/10 rounded-sm p-6">
         <h2 className="mb-5 flex items-center gap-2 text-xl font-semibold text-white">
           <Users className="h-5 w-5 text-violet-300" />
           Saved card gallery
