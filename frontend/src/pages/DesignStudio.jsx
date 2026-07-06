@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { toast } from "sonner";
@@ -62,7 +62,7 @@ const TOOLS = [
 ];
 
 export default function DesignStudio() {
-  const { lang, activeBrandId } = useApp();
+  const { lang, activeBrandId, isAuthenticated, activeWorkspaceId } = useApp();
   const [toolLoading, setToolLoading] = useState(null);
   const [prompt, setPrompt] = useState("");
   const [style, setStyle] = useState("Luxuriös");
@@ -70,6 +70,28 @@ export default function DesignStudio() {
   const [imageFormat, setImageFormat] = useState("16:9");
   const [generatedImages, setGeneratedImages] = useState([]);
   const [canvaGuide, setCanvaGuide] = useState("");
+  const [canvaConnected, setCanvaConnected] = useState(false);
+  const [canvaStatusLoading, setCanvaStatusLoading] = useState(false);
+  const [canvaConnectLoading, setCanvaConnectLoading] = useState(false);
+  const [canvaDisconnectLoading, setCanvaDisconnectLoading] = useState(false);
+
+  const loadCanvaStatus = async () => {
+    if (!isAuthenticated || !activeWorkspaceId) return;
+    setCanvaStatusLoading(true);
+    try {
+      const res = await axios.get(`${API}/integrations/canva/status`);
+      setCanvaConnected(!!res.data?.connected);
+    } catch {
+      setCanvaConnected(false);
+    } finally {
+      setCanvaStatusLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCanvaStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, activeWorkspaceId]);
 
   const buildCanvaContext = () => {
     const outputRules = [
@@ -99,6 +121,32 @@ export default function DesignStudio() {
       toast.success(lang === "DE" ? "Canva-Guide kopiert" : "Canva guide copied");
     } catch {
       toast.error(lang === "DE" ? "Kopieren fehlgeschlagen" : "Copy failed");
+    }
+  };
+
+  const connectCanva = async () => {
+    setCanvaConnectLoading(true);
+    try {
+      const res = await axios.get(`${API}/integrations/canva/connect`);
+      const url = res.data?.authorize_url;
+      if (!url) throw new Error("missing authorize_url");
+      window.location.href = url;
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || (lang === "DE" ? "Canva-Verbindung fehlgeschlagen" : "Canva connect failed"));
+      setCanvaConnectLoading(false);
+    }
+  };
+
+  const disconnectCanva = async () => {
+    setCanvaDisconnectLoading(true);
+    try {
+      await axios.post(`${API}/integrations/canva/disconnect`);
+      setCanvaConnected(false);
+      toast.success(lang === "DE" ? "Canva getrennt" : "Canva disconnected");
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || (lang === "DE" ? "Trennen fehlgeschlagen" : "Disconnect failed"));
+    } finally {
+      setCanvaDisconnectLoading(false);
     }
   };
 
@@ -225,6 +273,43 @@ export default function DesignStudio() {
 
           {/* Tool Cards */}
           <div>
+            <div className="mb-3 border border-white/8 rounded-sm p-3 bg-black/20">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] text-zinc-600 uppercase tracking-widest">
+                    {lang === "DE" ? "Canva Connect" : "Canva Connect"}
+                  </p>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    {canvaStatusLoading
+                      ? (lang === "DE" ? "Status wird geladen…" : "Loading status…")
+                      : canvaConnected
+                        ? (lang === "DE" ? "Verbunden mit Canva API" : "Connected to Canva API")
+                        : (lang === "DE" ? "Nicht verbunden (Guide-Modus aktiv)" : "Not connected (guide mode active)")}
+                  </p>
+                </div>
+                {canvaConnected ? (
+                  <button
+                    type="button"
+                    onClick={disconnectCanva}
+                    disabled={canvaDisconnectLoading}
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-sm border border-white/15 text-zinc-200 hover:text-white disabled:opacity-50"
+                  >
+                    {canvaDisconnectLoading ? <Loader2 size={11} className="animate-spin" /> : null}
+                    {lang === "DE" ? "Canva trennen" : "Disconnect Canva"}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={connectCanva}
+                    disabled={canvaConnectLoading}
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-sm border border-[#C084FC]/40 text-[#E9D5FF] hover:text-white disabled:opacity-50"
+                  >
+                    {canvaConnectLoading ? <Loader2 size={11} className="animate-spin" /> : <ExternalLink size={11} />}
+                    {lang === "DE" ? "Canva verbinden" : "Connect Canva"}
+                  </button>
+                )}
+              </div>
+            </div>
             <p className="text-[10px] text-zinc-700 uppercase tracking-widest mb-3">
               {lang === "DE" ? "Tools — Prompt oben eingeben, dann klicken" : "Tools — enter prompt above, then click"}
             </p>
