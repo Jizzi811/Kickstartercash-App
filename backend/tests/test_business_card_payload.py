@@ -7,7 +7,7 @@ import server  # noqa: E402
 
 def test_business_card_payload_defaults_include_avatar_assistant_mode():
     payload = server.BusinessCardPayload()
-    data = payload.dict()
+    data = payload.model_dump()
     assert data["assistant_mode"] == "avatar"
     assert data["assistant_label"] == "Ask AI"
     assert data["assistant_greeting"] == "Hi, ask me anything about this profile."
@@ -21,7 +21,7 @@ def test_business_card_payload_allows_custom_assistant_fields():
         assistant_avatar="https://cdn.example.com/maya.png",
         assistant_greeting="Hello, I can guide you through services.",
     )
-    data = payload.dict()
+    data = payload.model_dump()
     assert data["assistant_mode"] == "panel"
     assert data["assistant_label"] == "Chat with Maya"
     assert data["assistant_avatar"] == "https://cdn.example.com/maya.png"
