@@ -72,6 +72,31 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
+# Muapi proxy (Design Studio V2)
+# ---------------------------------------------------------------------------
+MUAPI_API_KEY = os.environ.get("MUAPI_API_KEY", "").strip()
+MUAPI_BASE_URL = os.environ.get("MUAPI_BASE_URL", "https://muapi.ai").rstrip("/")
+MUAPI_PROXY_TIMEOUT = float(os.environ.get("MUAPI_PROXY_TIMEOUT", "45"))
+_MUAPI_PROXY_HEADER_ALLOWLIST = {
+    "content-type",
+    "cache-control",
+    "etag",
+    "last-modified",
+    "expires",
+    "set-cookie",
+    "content-disposition",
+    "location",
+}
+
+
+def _muapi_target_url(path: str, query: str = "") -> str:
+    clean_path = "/" + (path or "").lstrip("/")
+    url = f"{MUAPI_BASE_URL}{clean_path}"
+    if query:
+        url = f"{url}?{query}"
+    return url
+
+# ---------------------------------------------------------------------------
 # LLM helpers
 # ---------------------------------------------------------------------------
 
@@ -760,6 +785,79 @@ async def _kash_daily_report_scheduler():
 @api_router.get("/")
 async def root():
     return {"message": "Kickstarter Content Maschine API"}
+
+
+@api_router.get("/integrations/muapi/status")
+async def muapi_status():
+    return {
+        "provider": "muapi",
+        "configured": bool(MUAPI_API_KEY),
+        "proxy_base_path": "/api/integrations/muapi",
+        "assistant_path": "/api/integrations/muapi/assistant",
+    }
+
+
+@api_router.api_route("/integrations/muapi", methods=["GET"])
+async def muapi_proxy_root(request: Request):
+    return await muapi_proxy("assistant", request)
+
+
+@api_router.api_route(
+    "/integrations/muapi/{path:path}",
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+)
+async def muapi_proxy(path: str, request: Request):
+    """Fixed-domain proxy to Muapi with server-side API key injection.
+
+    This keeps MUAPI_API_KEY out of browser code while allowing the preview route
+    to open/embed Muapi through our backend.
+    """
+    if not MUAPI_API_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="Muapi integration is not configured (MUAPI_API_KEY missing).",
+        )
+
+    target_url = _muapi_target_url(path or "assistant", request.url.query)
+    incoming_body = await request.body()
+
+    forward_headers = {
+        "Authorization": f"Bearer {MUAPI_API_KEY}",
+        "Accept": request.headers.get("accept", "*/*"),
+    }
+    if request.headers.get("content-type"):
+        forward_headers["Content-Type"] = request.headers["content-type"]
+    if request.headers.get("accept-language"):
+        forward_headers["Accept-Language"] = request.headers["accept-language"]
+    if request.headers.get("user-agent"):
+        forward_headers["User-Agent"] = request.headers["user-agent"]
+
+    timeout = aiohttp.ClientTimeout(total=MUAPI_PROXY_TIMEOUT)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        try:
+            async with session.request(
+                request.method,
+                target_url,
+                headers=forward_headers,
+                data=incoming_body if incoming_body else None,
+                allow_redirects=False,
+            ) as upstream:
+                payload = await upstream.read()
+                passthrough_headers = {}
+                for key, value in upstream.headers.items():
+                    lk = key.lower()
+                    if lk in _MUAPI_PROXY_HEADER_ALLOWLIST and lk not in {"content-length", "transfer-encoding"}:
+                        passthrough_headers[key] = value
+                return Response(
+                    content=payload,
+                    status_code=upstream.status,
+                    media_type=upstream.headers.get("content-type"),
+                    headers=passthrough_headers,
+                )
+        except asyncio.TimeoutError as exc:
+            raise HTTPException(status_code=504, detail="Muapi upstream timeout.") from exc
+        except aiohttp.ClientError as exc:
+            raise HTTPException(status_code=502, detail=f"Muapi proxy error: {exc}") from exc
 
 
 async def current_workspace(
