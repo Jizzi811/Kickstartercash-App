@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { toast } from "sonner";
-import { Palette, Download, Loader2, ExternalLink } from "lucide-react";
+import { Palette, Download, Loader2, ExternalLink, Copy } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
 import { ToolCard, AgentChatPanel, StudioContextArea } from "@/components/StudioLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -69,6 +69,38 @@ export default function DesignStudio() {
   const [imageModel, setImageModel] = useState("gpt");
   const [imageFormat, setImageFormat] = useState("16:9");
   const [generatedImages, setGeneratedImages] = useState([]);
+  const [canvaGuide, setCanvaGuide] = useState("");
+
+  const buildCanvaContext = () => {
+    const outputRules = [
+      lang === "DE" ? "Ausgabe bitte auf Deutsch." : "Output in English.",
+      lang === "DE"
+        ? "Strukturiere die Antwort exakt in diesen Abschnitten:"
+        : "Structure your response exactly with these sections:",
+      "1) Design Goal",
+      "2) Canva Size + Layout Grid",
+      "3) Color Palette (hex codes)",
+      "4) Fonts (headline/body + alternatives)",
+      "5) Elements (search terms for Canva elements/photos/icons)",
+      "6) Text Blocks (ready to paste copy)",
+      "7) Build Steps in Canva (step-by-step)",
+      "8) Export Settings (format + use-case)",
+      lang === "DE"
+        ? "Nutze kurze, konkrete Punkte. Keine Einleitung."
+        : "Use concise and concrete bullet points. No introduction.",
+    ].join("\n");
+    return `${prompt.trim()}\n\n${outputRules}`;
+  };
+
+  const copyCanvaGuide = async () => {
+    if (!canvaGuide) return;
+    try {
+      await navigator.clipboard.writeText(canvaGuide);
+      toast.success(lang === "DE" ? "Canva-Guide kopiert" : "Canva guide copied");
+    } catch {
+      toast.error(lang === "DE" ? "Kopieren fehlgeschlagen" : "Copy failed");
+    }
+  };
 
   const runTool = async (tool) => {
     if (tool.id === "gpt_image") {
@@ -88,10 +120,14 @@ export default function DesignStudio() {
       // Delegate to agent tool runner via chat context
       setToolLoading(tool.id);
       try {
+        const context = tool.id === "canva" ? buildCanvaContext() : prompt;
         const res = await axios.post(`${API}/agents/tools/run`, {
-          agent_id: "designer", tool_id: tool.id, context: prompt, model: "gpt", language: lang,
+          agent_id: "designer", tool_id: tool.id, context, model: "gpt", language: lang,
         });
         if (res.data.reply) {
+          if (tool.id === "canva") {
+            setCanvaGuide(res.data.reply);
+          }
           setPrompt((p) => p + (p ? "\n\n---\n\n" : "") + `[${lang === "DE" ? tool.label : tool.label_en}]\n${res.data.reply}`);
         }
       } catch { toast.error("Fehler"); }
@@ -206,6 +242,48 @@ export default function DesignStudio() {
               ))}
             </div>
           </div>
+
+          {/* Canva helper output */}
+          {(toolLoading === "canva" || canvaGuide) && (
+            <div className="bg-[#0A0A0A] border border-white/8 rounded-sm overflow-hidden p-3 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[10px] text-zinc-600 uppercase tracking-widest px-1">
+                  {lang === "DE" ? "Canva Guide — Copy & in Canva umsetzen" : "Canva guide — copy and implement in Canva"}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={copyCanvaGuide}
+                    disabled={!canvaGuide}
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-sm border border-white/15 text-zinc-200 hover:text-white disabled:opacity-50"
+                  >
+                    <Copy size={11} />
+                    {lang === "DE" ? "Kopieren" : "Copy"}
+                  </button>
+                  <a
+                    href="https://www.canva.com/design/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-sm border border-white/15 text-zinc-200 hover:text-white"
+                  >
+                    <ExternalLink size={11} />
+                    {lang === "DE" ? "Canva öffnen" : "Open Canva"}
+                  </a>
+                </div>
+              </div>
+
+              {toolLoading === "canva" ? (
+                <div className="flex items-center justify-center py-10 gap-3 text-zinc-500">
+                  <Loader2 size={18} className="animate-spin text-[#C084FC]" />
+                  <span className="text-sm">{lang === "DE" ? "Canva-Guide wird erstellt…" : "Building Canva guide..."}</span>
+                </div>
+              ) : (
+                <pre className="w-full whitespace-pre-wrap text-sm text-zinc-200 bg-black/40 border border-white/8 rounded-sm p-3">
+                  {canvaGuide}
+                </pre>
+              )}
+            </div>
+          )}
 
           {/* Generated variants */}
           {(toolLoading === "gpt_image" || generatedImages.length > 0) && (
