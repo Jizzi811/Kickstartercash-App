@@ -449,6 +449,7 @@ async def nvidia_image(prompt: str, size: str = "1:1", image_urls: Optional[list
 # NVIDIA (build.nvidia.com), all served by the single NVIDIA_API_KEY.
 IMAGE_MODELS = {
     "gpt":          {"label": "GPT Image",            "engine": "default"},
+    "nano-banana":  {"label": "Nano Banana",         "engine": "nano-banana"},
     "flux2":        {"label": "Flux 2",               "engine": "nvidia", "model": NVIDIA_MODEL_FLUX2},
     "flux-schnell": {"label": "Flux.1 [schnell]",     "engine": "nvidia", "model": NVIDIA_MODEL_FLUX_SCHNELL},
     "qwen-image":   {"label": "Qwen Image",           "engine": "nvidia", "model": NVIDIA_MODEL_QWEN},
@@ -463,6 +464,23 @@ async def image_by_model_verbose(model_key: str, prompt: str, size: str = "1:1",
     Returns (image_or_None, per-provider status dict), matching brand_image_verbose.
     """
     spec = IMAGE_MODELS.get(model_key) or IMAGE_MODELS["gpt"]
+    if spec.get("engine") == "nano-banana":
+        status = {}
+        # Prefer explicit Poyo Nano Banana if configured, then fallback to direct Gemini.
+        providers = []
+        if POYO_API_KEY:
+            providers.append((spec["label"], poyo_nano_banana))
+        providers.append(("Gemini Nano Banana", gemini_nano_banana))
+        for name, fn in providers:
+            try:
+                img = await fn(prompt, size=size, image_urls=image_urls)
+                if img:
+                    status[name] = "ok"
+                    return img, status
+                status[name] = "kein Bild"
+            except Exception as e:  # noqa: BLE001
+                status[name] = str(e)[:160]
+        return None, status or {spec["label"]: "GEMINI_API_KEY or POYO_API_KEY not set"}
     if spec.get("engine") == "nvidia":
         if not NVIDIA_API_KEY:
             return None, {spec["label"]: "NVIDIA_API_KEY not set – set it to use this model"}
