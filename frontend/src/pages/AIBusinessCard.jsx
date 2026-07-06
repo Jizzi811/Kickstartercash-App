@@ -63,6 +63,7 @@ const qrUrl = (url) => `https://api.qrserver.com/v1/create-qr-code/?size=480x480
 const normalizeCard = (card = {}) => ({
   ...emptyCard,
   ...card,
+  logo_url: (card.logo_url || (card.social_links || {})._logo_url || ""),
   social_links: { ...emptyCard.social_links, ...(card.social_links || {}) },
 });
 
@@ -80,7 +81,9 @@ const normalizePhoneForTel = (phone = "") => phone.replace(/[^\d+]/g, "");
 function CardPreview({ card, compact = false, publicMode = false }) {
   const template = templates.find((t) => t.id === card.template_id) || templates[0];
   const assistantModeLabel = card.assistant_mode === "avatar" ? "avatar mode" : "panel mode";
-  const socials = Object.entries(card.social_links || {}).filter(([, v]) => !!(v || "").trim());
+  const socials = Object.entries(card.social_links || {}).filter(
+    ([k, v]) => !String(k || "").startsWith("_") && !!(v || "").trim(),
+  );
   const logoSrc = (card.logo_url || "").trim() || "/brandmind-logo.svg";
   const contactItems = [
     { key: "email", value: card.email, icon: Mail },
@@ -466,10 +469,11 @@ export default function AIBusinessCard() {
     setSaving(true);
     try {
       const payload = normalizeCard(current);
+      payload.social_links = { ...(payload.social_links || {}), _logo_url: payload.logo_url || "" };
       const r = current.id
         ? await axios.put(`${API}/business-cards/${current.id}`, payload)
         : await axios.post(`${API}/business-cards`, payload);
-      setCurrent(normalizeCard(r.data));
+      setCurrent(normalizeCard({ ...payload, ...(r.data || {}) }));
       await load({ syncCurrent: false });
       toast.success("Business card saved");
     } finally {
