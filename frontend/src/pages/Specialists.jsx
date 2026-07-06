@@ -71,6 +71,24 @@ function ToolResultCard({ result, color }) {
       </div>
     );
   }
+  if (result.type === "video") {
+    return (
+      <div className="rounded-sm overflow-hidden border border-white/10 bg-[#0A0A0A]">
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-white/8">
+          <Film size={13} style={{ color }} />
+          <span className="text-xs text-zinc-400">{result.tool_label}</span>
+        </div>
+        <div className="px-3 py-3 space-y-2 text-xs text-zinc-400">
+          <p>{result.message || "Video generation started."}</p>
+          {result.operation_name && (
+            <div className="rounded-sm border border-white/10 bg-black/40 px-2 py-1.5 text-[11px] text-zinc-500 break-all">
+              op: {result.operation_name}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
   if (result.type === "error") {
     return <div className="px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-sm text-sm text-red-400">{result.message}</div>;
   }
@@ -148,6 +166,12 @@ function AgentChat({ agent, onClose }) {
         setMessages((prev) => [...prev, {
           role: "assistant",
           content: `**${toolLabel}** — Bild generiert:`,
+          toolResult: res.data,
+        }]);
+      } else if (res.data.type === "video") {
+        setMessages((prev) => [...prev, {
+          role: "assistant",
+          content: `**${toolLabel}** — Video-Job gestartet:`,
           toolResult: res.data,
         }]);
       } else if (res.data.type === "text") {
@@ -236,6 +260,7 @@ function AgentChat({ agent, onClose }) {
                     const isRunning = toolLoading === tool.id;
                     const label = lang === "DE" ? tool.label : tool.label_en;
                     const isImage = tool.type === "image";
+                    const isVideo = tool.type === "video";
                     return (
                       <button
                         key={tool.id}
@@ -244,6 +269,8 @@ function AgentChat({ agent, onClose }) {
                         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm border text-[11px] font-medium transition-all disabled:opacity-40 ${
                           isImage
                             ? "border-[#C084FC]/40 text-[#C084FC] bg-[#C084FC]/8 hover:bg-[#C084FC]/15"
+                            : isVideo
+                              ? "border-[#F472B6]/40 text-[#F472B6] bg-[#F472B6]/8 hover:bg-[#F472B6]/15"
                             : "border-white/10 text-zinc-400 bg-white/3 hover:border-white/20 hover:text-white"
                         }`}
                         style={isRunning ? { borderColor: color, color } : {}}
@@ -254,6 +281,7 @@ function AgentChat({ agent, onClose }) {
                         }
                         {label}
                         {isImage && <span className="text-[9px] opacity-60 ml-0.5">IMG</span>}
+                        {isVideo && <span className="text-[9px] opacity-60 ml-0.5">VID</span>}
                       </button>
                     );
                   })}

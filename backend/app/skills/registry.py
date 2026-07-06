@@ -21,7 +21,8 @@ def _skill(id: str, name: str, category: str, description: str, prompt_de: str, 
            agents: List[str], icon: str = "Sparkles", version: str = "1.0.0",
            required_memory: Optional[List[str]] = None, required_dna: Optional[List[str]] = None,
            required_tools: Optional[List[str]] = None, required_providers: Optional[List[str]] = None,
-           cost: str = "low", runtime: str = "20-45s", permission: str = "execute"):
+           cost: str = "low", runtime: str = "20-45s", permission: str = "execute",
+           skill_type: str = "llm"):
     SKILLS[id] = {
         "id": id, "name": name, "label": name, "label_en": name, "description": description,
         "category": category, "input_schema": _BASE_INPUT, "output_schema": _TEXT_OUTPUT,
@@ -30,7 +31,7 @@ def _skill(id: str, name: str, category: str, description: str, prompt_de: str, 
         "required_tools": required_tools or [], "required_providers": required_providers or ["chat", "structured_output"],
         "cost_estimate": cost, "average_runtime": runtime, "version": version,
         "permissions": [permission], "prompt_de": prompt_de, "prompt_en": prompt_en,
-        "agent_ids": agents, "icon": icon, "type": "llm", "status": "active",
+        "agent_ids": agents, "icon": icon, "type": skill_type, "status": "active",
     }
 
 _skill("campaign_planner", "Campaign Planner", "Marketing", "Plans a complete campaign from objective to channel mix, funnel and KPI plan.", "Erstelle einen vollständigen Kampagnenplan mit Ziel, Zielgruppe, Funnel, Kanälen, Budget, Content-Plan, KPIs und nächsten Schritten für: ", "Create a complete campaign plan with objective, audience, funnel, channels, budget, content plan, KPIs and next steps for: ", ["ceo", "content", "orchestrator"], "Map")
@@ -42,6 +43,8 @@ _skill("hook_generator", "Hook Generator", "Copywriting", "Generates high-perfor
 _skill("cta_optimizer", "CTA Optimizer", "Copywriting", "Improves calls to action for clarity, urgency and conversion.", "Optimiere diese CTA-Idee. Liefere 15 Varianten nach Funnel-Stufe und psychologischem Trigger für: ", "Optimize this CTA idea. Provide 15 variants by funnel stage and psychological trigger for: ", ["content", "email", "linkedin", "sales"], "MousePointer")
 _skill("image_critique", "Image Critique", "Image", "Critiques visuals against brand DNA, message clarity and conversion purpose.", "Bewerte dieses Bild-/Visual-Konzept nach Brand-Fit, Klarheit, Blickführung, Conversion und Verbesserungen: ", "Critique this visual concept for brand fit, clarity, eye flow, conversion and improvements: ", ["designer", "content"], "Image", required_providers=["chat", "vision"])
 _skill("video_critique", "Video Critique", "Video", "Reviews video concepts for hook, pacing, story, brand fit and CTA.", "Bewerte dieses Video-Konzept nach Hook, Pacing, Story, Brand-Fit, CTA und konkreten Verbesserungen: ", "Review this video concept for hook, pacing, story, brand fit, CTA and concrete improvements: ", ["video", "tiktok"], "Video", required_providers=["chat", "vision"])
+_skill("image_generate_live", "Generate Image (Live)", "Image", "Generates production image variants directly with the backend image pipeline.", "Generiere ein hochwertiges Werbebild basierend auf: ", "Generate a high-quality production image based on: ", ["designer"], "Image", skill_type="image", required_providers=["image"])
+_skill("video_generate_live", "Generate Video (Live)", "Video", "Starts a real Veo video generation job from the given context.", "Erzeuge ein kurzes Video basierend auf: ", "Generate a short video based on: ", ["video"], "Film", skill_type="video", required_providers=["video"])
 _skill("prompt_optimizer", "Prompt Optimizer", "Quality Assurance", "Transforms rough prompts into provider-ready production prompts.", "Optimiere diesen Prompt für bessere KI-Ergebnisse. Liefere eine finale Version plus Begründung: ", "Optimize this prompt for better AI results. Return a final version plus rationale: ", ["ceo", "designer", "video", "coding", "orchestrator"], "Wand2")
 _skill("landingpage_review", "Landingpage Review", "Review", "Reviews a landing page for structure, copy, friction, SEO and conversion.", "Reviewe diese Landingpage: Hero, Nutzenversprechen, Trust, Einwände, CTA, SEO, mobile UX und Quick Wins: ", "Review this landing page: hero, value prop, trust, objections, CTA, SEO, mobile UX and quick wins: ", ["content", "seo", "coding", "sales"], "Layout")
 _skill("storytelling_review", "Storytelling Review", "Review", "Improves narrative arc, emotional clarity and proof points.", "Reviewe das Storytelling: Zielgruppe, Konflikt, Transformation, Beweise, Emotion, Klarheit und bessere Version: ", "Review the storytelling: audience, conflict, transformation, proof, emotion, clarity and better version: ", ["content", "linkedin", "email"], "BookOpen")

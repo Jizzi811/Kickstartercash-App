@@ -3981,6 +3981,48 @@ async def run_agent_tool(req: AgentToolRunRequest, ws: Optional[str] = Depends(c
 
     # Every specialist skill runs inside the active brand's context (never blind).
     brand = await _resolve_brand(req.brand_id, ws)
+    context = (req.context or "").strip()
+
+    if tool.get("type") == "image":
+        if not context:
+            raise HTTPException(status_code=400, detail="Context is required for image generation.")
+        image_req = ImageRequest(
+            prompt=context,
+            style=brand.get("image_style") or "Luxuriös",
+            brand_id=brand.get("id", req.brand_id),
+            language=lang,
+            apply_logo=False,
+            size="1:1",
+            count=3,
+            model="gpt",
+        )
+        generated = await generate_image(image_req, ws=ws)
+        images = generated.get("images") or []
+        if not images:
+            raise HTTPException(status_code=502, detail="Image generation returned no images.")
+        return {
+            "type": "image",
+            "tool_id": req.tool_id,
+            "tool_label": tool["label"] if lang == "DE" else tool["label_en"],
+            "image_url": images[0],
+            "images": images,
+            "prompt_used": context,
+            "provider": generated.get("provider"),
+        }
+
+    if tool.get("type") == "video":
+        if not context:
+            raise HTTPException(status_code=400, detail="Context is required for video generation.")
+        veo = await generate_veo_video(VeoRequest(prompt=context, aspect_ratio="16:9"))
+        return {
+            "type": "video",
+            "tool_id": req.tool_id,
+            "tool_label": tool["label"] if lang == "DE" else tool["label_en"],
+            "operation_name": veo.get("operation_name", ""),
+            "status": veo.get("status", "processing"),
+            "prompt_used": context,
+            "message": "Video generation started. Track progress in Video Studio.",
+        }
 
     _mem = await _agent_memory_context(req.agent_id, ws, lang)
     cfg = await _load_gateway_config(ws)
