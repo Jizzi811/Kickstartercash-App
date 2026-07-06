@@ -420,7 +420,7 @@ async def image_by_model_verbose(model_key: str, prompt: str, size: str = "1:1",
             return img, {spec["label"]: "ok" if img else "kein Bild"}
         except Exception as e:  # noqa: BLE001
             return None, {spec["label"]: str(e)[:160]}
-    # default: existing best-available chain (FreeTheAi -> OpenAI -> Poyo -> Gemini)
+    # default: existing best-available chain (FreeTheAi -> OpenAI -> Gemini)
     return await brand_image_verbose(prompt, size=size, image_urls=image_urls)
 
 
