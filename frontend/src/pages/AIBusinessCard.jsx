@@ -443,19 +443,24 @@ export default function AIBusinessCard() {
   const [cards, setCards] = useState([]);
   const [current, setCurrent] = useState(emptyCard);
   const [saving, setSaving] = useState(false);
+  const [loadingCards, setLoadingCards] = useState(true);
   const avatarFileInputRef = useRef(null);
   const logoFileInputRef = useRef(null);
 
   const link = useMemo(() => (current.url_hash ? publicUrl(current.url_hash) : "Save to generate link"), [current.url_hash]);
 
-  const load = async () => {
+  const load = async ({ syncCurrent = true } = {}) => {
     const r = await axios.get(`${API}/business-cards`);
     const next = (r.data || []).map((card) => normalizeCard(card));
     setCards(next);
+    if (syncCurrent && !current.id && next[0]) {
+      setCurrent(next[0]);
+    }
+    setLoadingCards(false);
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load({ syncCurrent: true }); }, []);
 
   const save = async () => {
     setSaving(true);
@@ -465,7 +470,7 @@ export default function AIBusinessCard() {
         ? await axios.put(`${API}/business-cards/${current.id}`, payload)
         : await axios.post(`${API}/business-cards`, payload);
       setCurrent(normalizeCard(r.data));
-      await load();
+      await load({ syncCurrent: false });
       toast.success("Business card saved");
     } finally {
       setSaving(false);
@@ -475,14 +480,14 @@ export default function AIBusinessCard() {
   const duplicate = async (id) => {
     const r = await axios.post(`${API}/business-cards/${id}/duplicate`);
     setCurrent(normalizeCard(r.data));
-    await load();
+    await load({ syncCurrent: false });
   };
 
   const remove = async (id) => {
     if (!window.confirm("Delete this business card?")) return;
     await axios.delete(`${API}/business-cards/${id}`);
     setCurrent(emptyCard);
-    await load();
+    await load({ syncCurrent: false });
   };
 
   const update = (k, v) => setCurrent((c) => ({ ...c, [k]: v }));
@@ -538,6 +543,20 @@ export default function AIBusinessCard() {
     reader.onerror = () => toast.error("Logo upload failed");
     reader.readAsDataURL(file);
   };
+
+  if (loadingCards) {
+    return (
+      <div className="space-y-8">
+        <PageHeader
+          icon={Users}
+          title="AI Business Card"
+          subtitle="Create Brandmind-native digital business cards with public links, QR codes, templates and a profile-bounded AI assistant."
+          badge="Brandmind Module"
+        />
+        <div className="rounded-sm border border-white/10 bg-[#0A0A0A] p-6 text-sm text-zinc-400">Loading business cards…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
