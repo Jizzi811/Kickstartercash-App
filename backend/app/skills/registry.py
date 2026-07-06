@@ -109,9 +109,9 @@ def suggest_skill_for_task(task: str, preferred_agent_id: Optional[str] = None) 
 
         # Small boosts for obvious media intents.
         if any(k in text for k in ("bild", "image", "visual", "grafik")) and skill.get("type") == "image":
-            score += 5.0
+            score += 8.0
         if any(k in text for k in ("video", "reel", "veo", "clip")) and skill.get("type") == "video":
-            score += 5.0
+            score += 8.0
 
         # Targeted boosts for newly integrated agency-agent style skills.
         if skill.get("id") == "ai_citation_strategist" and any(
