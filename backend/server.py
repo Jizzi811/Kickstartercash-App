@@ -41,6 +41,8 @@ from app.core.config import (  # noqa: E402
     FREETHEAI_API_KEY, FREETHEAI_BASE, FREETHEAI_IMAGE_MODEL,
     FREETHEAI_TEXT_MODEL, FREETHEAI_TTS_MODEL,
     OPENAI_TEXT_MODEL, LOGO_URL,
+    NVIDIA_API_KEY, NVIDIA_IMAGE_BASE, NVIDIA_MODEL_FLUX2,
+    NVIDIA_MODEL_FLUX_SCHNELL, NVIDIA_MODEL_QWEN, NVIDIA_MODEL_SD3,
 )
 
 from app.core.database import client, db  # noqa: E402
@@ -355,6 +357,96 @@ async def brand_image(prompt: str, size: str = "1:1", image_urls: Optional[list]
     return img
 
 
+def _size_to_nvidia_wh(size: str) -> tuple:
+    """Map an aspect-ratio label to (width, height) pixels (multiples of 64)."""
+    return {
+        "1:1": (1024, 1024),
+        "16:9": (1344, 768),
+        "9:16": (768, 1344),
+        "4:3": (1152, 896),
+        "3:4": (896, 1152),
+    }.get(size, (1024, 1024))
+
+
+async def nvidia_image(prompt: str, size: str = "1:1", image_urls: Optional[list] = None,
+                       model: str = NVIDIA_MODEL_FLUX2) -> Optional[str]:
+    """Image generation via NVIDIA's cloud genai API (Flux 2 / Flux schnell / Qwen / SD 3.5).
+
+    Uses the same NVIDIA_API_KEY as the text provider:
+      POST {NVIDIA_IMAGE_BASE}/{publisher}/{model}  with "Authorization: Bearer <key>".
+    Payload is the minimal {prompt, width, height, seed} that every NVIDIA image NIM accepts
+    (flux.1-schnell rejects any extra field with 422). Response: {"artifacts":[{"base64": ...}]}.
+    """
+    if not NVIDIA_API_KEY:
+        return None
+    w, h = _size_to_nvidia_wh(size)
+
+    def _generate():
+        import requests
+        url = f"{NVIDIA_IMAGE_BASE.rstrip('/')}/{model.strip('/')}"
+        r = requests.post(
+            url,
+            headers={"Authorization": f"Bearer {NVIDIA_API_KEY}",
+                     "Accept": "application/json", "Content-Type": "application/json"},
+            json={"prompt": prompt[:5000], "width": w, "height": h, "seed": 0},
+            timeout=180,
+        )
+        if not r.ok:
+            logger.warning(f"NVIDIA image {r.status_code}: {r.text[:200]}")
+            return None
+        body = r.json()
+        # NVIDIA genai shape: {"artifacts": [{"base64": "..."}]}
+        arts = body.get("artifacts") or []
+        if arts and arts[0].get("base64"):
+            b64 = arts[0]["base64"]
+            return b64 if b64.startswith("data:") else f"data:image/png;base64,{b64}"
+        # OpenAI-compatible fallbacks (self-hosted NIM): data[].b64_json / image
+        data = body.get("data") or []
+        if data and data[0].get("b64_json"):
+            return f"data:image/png;base64,{data[0]['b64_json']}"
+        img = body.get("image")
+        if img:
+            return img if img.startswith("data:") else f"data:image/png;base64,{img}"
+        return None
+
+    try:
+        return await asyncio.wait_for(asyncio.to_thread(_generate), timeout=190)
+    except Exception as e:
+        logger.error(f"NVIDIA image generation failed: {e}")
+        return None
+
+
+# Design-Studio image models: friendly id -> engine (+ NVIDIA model slug).
+# "gpt" keeps the existing best-available provider chain; the rest route to
+# NVIDIA (build.nvidia.com), all served by the single NVIDIA_API_KEY.
+IMAGE_MODELS = {
+    "gpt":          {"label": "GPT Image",            "engine": "default"},
+    "flux2":        {"label": "Flux 2",               "engine": "nvidia", "model": NVIDIA_MODEL_FLUX2},
+    "flux-schnell": {"label": "Flux.1 [schnell]",     "engine": "nvidia", "model": NVIDIA_MODEL_FLUX_SCHNELL},
+    "qwen-image":   {"label": "Qwen Image",           "engine": "nvidia", "model": NVIDIA_MODEL_QWEN},
+    "sd3":          {"label": "Stable Diffusion 3.5", "engine": "nvidia", "model": NVIDIA_MODEL_SD3},
+}
+
+
+async def image_by_model_verbose(model_key: str, prompt: str, size: str = "1:1",
+                                 image_urls: Optional[list] = None):
+    """Route an image request by the Design-Studio model choice.
+
+    Returns (image_or_None, per-provider status dict), matching brand_image_verbose.
+    """
+    spec = IMAGE_MODELS.get(model_key) or IMAGE_MODELS["gpt"]
+    if spec.get("engine") == "nvidia":
+        if not NVIDIA_API_KEY:
+            return None, {spec["label"]: "NVIDIA_API_KEY not set – set it to use this model"}
+        try:
+            img = await nvidia_image(prompt, size=size, image_urls=image_urls, model=spec["model"])
+            return img, {spec["label"]: "ok" if img else "kein Bild"}
+        except Exception as e:  # noqa: BLE001
+            return None, {spec["label"]: str(e)[:160]}
+    # default: existing best-available chain (FreeTheAi -> OpenAI -> Poyo -> Gemini)
+    return await brand_image_verbose(prompt, size=size, image_urls=image_urls)
+
+
 async def llm_image(prompt: str, reference_b64: Optional[str] = None) -> Optional[str]:
     from emergentintegrations.llm.chat import ImageContent
     chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=str(uuid.uuid4()),
@@ -487,6 +579,7 @@ class ImageRequest(BaseModel):
     apply_logo: bool = False
     size: str = "1:1"
     count: int = 1   # number of variants to generate (1-4)
+    model: str = "gpt"   # gpt (default chain) | flux2 | flux-schnell | qwen-image | sd3
 
 
 class PromptOptimizeRequest(BaseModel):
@@ -1065,7 +1158,7 @@ async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_
 
     count = min(max(req.count or 1, 1), 4)
     results = await asyncio.gather(
-        *[brand_image_verbose(full_prompt, size=req.size, image_urls=image_urls) for _ in range(count)],
+        *[image_by_model_verbose(req.model, full_prompt, size=req.size, image_urls=image_urls) for _ in range(count)],
         return_exceptions=True,
     )
     images = []
@@ -1089,6 +1182,7 @@ async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_
         "prompt": req.prompt,
         "style": req.style,
         "brand_id": req.brand_id,
+        "model": req.model,
         "image": images[0],
         "images": images,
         "created_at": _now_iso(),
