@@ -138,6 +138,14 @@ PROVIDER_REGISTRY: Dict[str, ProviderSpec] = {
         openai_compatible=True, enabled_by_default=True, rpm_limit=60,
         notes="Free OpenAI-compatible gateway used as a resilience fallback.",
     ),
+    "nvidia": ProviderSpec(
+        "nvidia", "NVIDIA NIM",
+        [CHAT, STRUCTURED_OUTPUT],
+        api_key_env="NVIDIA_API_KEY", base_url_env="NVIDIA_BASE",
+        default_base_url="https://integrate.api.nvidia.com/v1",
+        openai_compatible=True, rpm_limit=120,
+        notes="OpenAI-compatible NIM endpoint (build.nvidia.com). Set NVIDIA_API_KEY to enable.",
+    ),
 }
 
 
@@ -184,6 +192,11 @@ MODEL_REGISTRY: Dict[str, ModelSpec] = {m.id: m for m in [
     ModelSpec("anthropic.claude-sonnet-4-6-v1:0", "bedrock", [CHAT, VISION, STRUCTURED_OUTPUT], "Claude Sonnet (Bedrock)", 200000, 3.0, 15.0),
     # FreeTheAi (distinct id so it doesn't collide with OpenAI's gpt-4o in the registry)
     ModelSpec("freetheai/gpt-4o", "freetheai", [CHAT], "GPT-4o (FreeTheAi)", 128000, 0.0, 0.0),
+    # NVIDIA NIM (OpenAI-compatible; cost depends on your NVIDIA plan → 0 = unknown)
+    ModelSpec("meta/llama-3.1-70b-instruct", "nvidia", [CHAT, STRUCTURED_OUTPUT], "Llama 3.1 70B (NVIDIA)", 128000, 0.0, 0.0),
+    ModelSpec("meta/llama-3.1-405b-instruct", "nvidia", [CHAT, STRUCTURED_OUTPUT], "Llama 3.1 405B (NVIDIA)", 128000, 0.0, 0.0),
+    ModelSpec("nvidia/llama-3.1-nemotron-70b-instruct", "nvidia", [CHAT, STRUCTURED_OUTPUT], "Nemotron 70B (NVIDIA)", 128000, 0.0, 0.0),
+    ModelSpec("mistralai/mixtral-8x7b-instruct-v0.1", "nvidia", [CHAT, STRUCTURED_OUTPUT], "Mixtral 8x7B (NVIDIA)", 32000, 0.0, 0.0),
 ]}
 
 
