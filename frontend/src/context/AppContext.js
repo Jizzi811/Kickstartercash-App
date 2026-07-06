@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import axios from "axios";
 import { translations } from "@/i18n";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "";
 export const API = `${BACKEND_URL}/api`;
 
 const AppContext = createContext(null);
@@ -117,7 +117,13 @@ export const AppProvider = ({ children }) => {
     return res.data;
   }, []);
 
-  useEffect(() => { loadBrands(); }, [loadBrands, activeWorkspaceId]);
+  useEffect(() => {
+    loadBrands().catch((error) => {
+      // Brand data is non-critical for the shell; do not let API/network issues blank the app.
+      console.warn("Unable to load brands", error);
+      setBrands([]);
+    });
+  }, [loadBrands, activeWorkspaceId]);
   useEffect(() => { localStorage.setItem("kc_lang", lang); }, [lang]);
   useEffect(() => { localStorage.setItem("kc_model", model); }, [model]);
   useEffect(() => { localStorage.setItem("kc_brand", activeBrandId); }, [activeBrandId]);

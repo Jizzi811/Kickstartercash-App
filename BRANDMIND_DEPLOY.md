@@ -82,7 +82,7 @@ git push -u origin main
 Der Spinoff enthält noch Kickstartercash-spezifische Altlasten, die du gefahrlos
 entfernen kannst, wenn du sie nicht brauchst:
 
-- `webinar.html`, `jarvjis-orb.html` (große Demo-Dateien)
+- `webinar.html`, `quantum-orb.html` (große Demo-Dateien)
 - `backend/funnel_bundle.html` (28 MB, nur für das KT-Funnel-Feature)
 - der Default-Seed „Kickstartercash.Club" in `backend/server.py` (`DEFAULT_BRAND`)
 

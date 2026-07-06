@@ -8,7 +8,7 @@ import {
   Activity, Gauge,
 } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
-import { V, SORA, fadeUp, GradientHeading, Card, SectionHeader, Metric } from "@/components/bm";
+import { V, SORA, fadeUp, Card, SectionHeader, Metric } from "@/components/bm";
 
 
 const ICON = {
@@ -86,27 +86,27 @@ export default function IntelligenceStudio() {
   const trends = data?.trends || {};
 
   return (
-    <div className="space-y-10 pb-10">
+    <div className="max-w-full space-y-7 overflow-x-hidden pb-8 sm:space-y-10 sm:pb-10">
       {/* ══ HERO ════════════════════════════════════════════════════ */}
       <motion.section {...fadeUp(0)}>
-        <div className="relative overflow-hidden rounded-xl" style={{
+        <div className="relative max-w-full overflow-hidden rounded-xl" style={{
           background: "linear-gradient(135deg, rgba(124,58,237,0.08) 0%, rgba(8,8,8,0) 55%, rgba(124,58,237,0.05) 100%)",
           border: "1px solid rgba(124,58,237,0.14)",
         }}>
-          <div className="absolute -top-28 -left-28 w-96 h-96 rounded-full pointer-events-none"
+          <div className="absolute -top-20 -left-24 h-72 w-72 rounded-full pointer-events-none sm:-top-28 sm:-left-28 sm:h-96 sm:w-96"
             style={{ background: "radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%)" }} />
-          <div className="relative px-6 md:px-10 py-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-5 text-[10px] tracking-[0.2em] uppercase font-semibold"
+          <div className="relative px-4 py-7 sm:px-6 sm:py-10 md:px-10">
+            <div className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] sm:mb-5 sm:tracking-[0.2em]"
               style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.26)", color: V }}>
               <BrainCircuit size={11} /> Intelligence Engine
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-3" style={{ fontFamily: SORA }}>
+            <h1 className="mb-3 text-[clamp(1.85rem,9vw,2.25rem)] font-bold leading-tight sm:text-3xl md:text-4xl" style={{ fontFamily: SORA }}>
               <span style={{
                 background: "linear-gradient(90deg, #7C3AED 0%, #C4B5FD 45%, #6D28D9 100%)",
                 WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
               }}>{lang === "DE" ? "Was Brandmind gelernt hat" : "What Brandmind has learned"}</span>
             </h1>
-            <p className="text-sm text-zinc-400 leading-relaxed max-w-xl">
+            <p className="max-w-xl break-words text-[13px] leading-relaxed text-zinc-400 sm:text-sm">
               {lang === "DE"
                 ? "Deine interne Intelligenzschicht lernt kontinuierlich aus Aktivität, Assets, Kampagnen und Freigaben – ausschließlich aus deinen eigenen Daten, ohne externe Analytics."
                 : "Your internal intelligence layer continuously learns from activity, assets, campaigns and approvals – purely from your own data, with no external analytics."}
@@ -116,7 +116,7 @@ export default function IntelligenceStudio() {
       </motion.section>
 
       {/* ══ METRICS ═════════════════════════════════════════════════ */}
-      <motion.section {...fadeUp(0.05)} className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <motion.section {...fadeUp(0.05)} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Metric icon={ThumbsUp} label={lang === "DE" ? "Freigabequote" : "Approval rate"} value={`${m.approval_rate ?? 0}%`} color="#4ade80" />
         <Metric icon={Layers} label={lang === "DE" ? "Assets generiert" : "Assets generated"} value={m.assets_total ?? 0} />
         <Metric icon={Target} label={lang === "DE" ? "Executive-Pläne" : "Executive plans"} value={m.plans_total ?? 0} color="#C084FC" />
@@ -135,7 +135,7 @@ export default function IntelligenceStudio() {
               const Icon = ICON[c.icon] || Sparkles;
               const conf = CONF_STYLE[c.confidence] || CONF_STYLE.low;
               return (
-                <Card key={c.id} className="p-5 relative overflow-hidden">
+                <Card key={c.id} className="relative overflow-hidden p-4 sm:p-5">
                   <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full pointer-events-none"
                     style={{ background: "radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%)" }} />
                   <div className="flex items-start justify-between mb-3 relative">
@@ -170,14 +170,14 @@ export default function IntelligenceStudio() {
 
       {/* ══ RECOMMENDATIONS + OPTIMIZATIONS ═════════════════════════ */}
       <motion.section {...fadeUp(0.14)} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <SectionHeader icon={Lightbulb} title={lang === "DE" ? "Empfehlungen" : "Recommendations"} />
           <div className="space-y-2.5">
             {(data?.recommendations || []).map((r) => {
               const p = PRIO_STYLE[r.priority] || PRIO_STYLE.medium;
               return (
                 <button key={r.id} onClick={() => ACTION_ROUTE[r.action] && navigate(ACTION_ROUTE[r.action])}
-                  className="w-full text-left flex items-start gap-3 p-3 rounded-sm transition-colors group"
+                  className="group flex w-full min-w-0 items-start gap-2.5 rounded-sm p-3 text-left transition-colors sm:gap-3"
                   style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(124,58,237,0.3)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}>
@@ -194,7 +194,7 @@ export default function IntelligenceStudio() {
           </div>
         </Card>
 
-        <Card className="p-6" style={{
+        <Card className="p-4 sm:p-6" style={{
           background: "linear-gradient(145deg, rgba(124,58,237,0.05) 0%, rgba(255,255,255,0.02) 100%)",
           border: "1px solid rgba(124,58,237,0.14)",
         }}>
@@ -203,7 +203,7 @@ export default function IntelligenceStudio() {
             <div className="space-y-2.5">
               {data.optimizations.map((o) => (
                 <button key={o.id} onClick={() => ACTION_ROUTE[o.action] && navigate(ACTION_ROUTE[o.action])}
-                  className="w-full text-left flex items-start gap-2.5 p-3 rounded-sm"
+                  className="flex w-full min-w-0 items-start gap-2.5 rounded-sm p-3 text-left"
                   style={{ background: "rgba(255,255,255,0.02)", borderLeft: `3px solid ${V}` }}>
                   <div className="flex-1 min-w-0">
                     <div className="text-[13px] font-medium text-zinc-200 leading-snug">{o.title}</div>
@@ -223,7 +223,7 @@ export default function IntelligenceStudio() {
       <motion.section {...fadeUp(0.18)}>
         <SectionHeader icon={TrendingUp} title={lang === "DE" ? "Performance-Trends" : "Performance Trends"}
           right={<span className="text-[10px] text-zinc-700 uppercase tracking-widest">{trends.window_days || 30} {lang === "DE" ? "Tage" : "days"}</span>} />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           {[
             { key: "assets", label: lang === "DE" ? "Assets / Tag" : "Assets / day", color: V, icon: Layers },
             { key: "approved", label: lang === "DE" ? "Freigaben / Tag" : "Approvals / day", color: "#4ade80", icon: CheckCircle2 },
@@ -233,11 +233,11 @@ export default function IntelligenceStudio() {
             const sum = series.reduce((a, p) => a + p.value, 0);
             const Icon = t.icon;
             return (
-              <Card key={t.key} className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Icon size={13} style={{ color: t.color }} />
-                    <span className="text-[12px] text-zinc-400">{t.label}</span>
+              <Card key={t.key} className="p-4 sm:p-5">
+                <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Icon size={13} className="flex-shrink-0" style={{ color: t.color }} />
+                    <span className="truncate text-[12px] text-zinc-400">{t.label}</span>
                   </div>
                   <span className="text-sm font-bold" style={{ fontFamily: SORA, color: t.color }}>{sum}</span>
                 </div>
@@ -250,31 +250,29 @@ export default function IntelligenceStudio() {
 
       {/* ══ SUMMARIES ═══════════════════════════════════════════════ */}
       <motion.section {...fadeUp(0.22)}>
-        <SectionHeader icon={Gauge} title={lang === "DE" ? "Zusammenfassungen" : "Summaries"}
-          right={
-            <div className="flex gap-1">
-              {["daily", "weekly", "monthly"].map((p) => (
-                <button key={p} onClick={() => setPeriod(p)}
-                  className="text-[10px] px-2.5 py-1 rounded-full transition-colors"
-                  style={{
-                    background: period === p ? "rgba(124,58,237,0.16)" : "transparent",
-                    border: `1px solid ${period === p ? "rgba(124,58,237,0.4)" : "rgba(255,255,255,0.08)"}`,
-                    color: period === p ? "#a78bfa" : "#71717a",
-                  }}>
-                  {p === "daily" ? (lang === "DE" ? "Täglich" : "Daily")
-                    : p === "weekly" ? (lang === "DE" ? "Wöchentlich" : "Weekly")
-                      : (lang === "DE" ? "Monatlich" : "Monthly")}
-                </button>
-              ))}
-            </div>
-          } />
+        <SectionHeader icon={Gauge} title={lang === "DE" ? "Zusammenfassungen" : "Summaries"} />
+        <div className="mb-4 flex flex-wrap gap-1 sm:justify-end">
+          {["daily", "weekly", "monthly"].map((p) => (
+            <button key={p} onClick={() => setPeriod(p)}
+              className="rounded-full px-2 py-1 text-[10px] transition-colors sm:px-2.5"
+              style={{
+                background: period === p ? "rgba(124,58,237,0.16)" : "transparent",
+                border: `1px solid ${period === p ? "rgba(124,58,237,0.4)" : "rgba(255,255,255,0.08)"}`,
+                color: period === p ? "#a78bfa" : "#71717a",
+              }}>
+              {p === "daily" ? (lang === "DE" ? "Täglich" : "Daily")
+                : p === "weekly" ? (lang === "DE" ? "Wöchentlich" : "Weekly")
+                  : (lang === "DE" ? "Monatlich" : "Monthly")}
+            </button>
+          ))}
+        </div>
         {summary ? (
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
+          <Card className="p-4 sm:p-6">
+            <div className="mb-4 flex min-w-0 items-center gap-2">
               <Activity size={14} style={{ color: V }} />
-              <span className="text-sm font-semibold text-zinc-200" style={{ fontFamily: SORA }}>{summary.label}</span>
+              <span className="min-w-0 break-words text-sm font-semibold text-zinc-200" style={{ fontFamily: SORA }}>{summary.label}</span>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+            <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
               {[
                 { label: lang === "DE" ? "Generiert" : "Generated", value: summary.generated },
                 { label: lang === "DE" ? "Freigegeben" : "Approved", value: summary.approved },
@@ -290,9 +288,9 @@ export default function IntelligenceStudio() {
             </div>
             <div className="flex flex-wrap gap-2">
               {(summary.highlights || []).map((h, i) => (
-                <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px]"
+                <span key={i} className="inline-flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px]"
                   style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.24)", color: "#a78bfa" }}>
-                  <Sparkles size={10} />{h}
+                  <Sparkles size={10} className="flex-shrink-0" /><span className="min-w-0 break-words">{h}</span>
                 </span>
               ))}
             </div>
@@ -302,7 +300,7 @@ export default function IntelligenceStudio() {
         )}
       </motion.section>
 
-      <p className="text-[10px] text-zinc-700 text-center">
+      <p className="px-2 text-center text-[10px] leading-relaxed text-zinc-700">
         {lang === "DE"
           ? `Alle Erkenntnisse basieren ausschließlich auf den Daten von „${activeBrand?.name || "—"}" in diesem Workspace. Keine externen Analytics.`
           : `All insights are derived solely from "${activeBrand?.name || "—"}" data in this workspace. No external analytics.`}

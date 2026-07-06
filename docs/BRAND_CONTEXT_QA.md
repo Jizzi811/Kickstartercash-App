@@ -79,7 +79,7 @@ The **agent surfaces were previously blind** to the brand:
   replies in the Knowledge Base but **not the brand**. It now injects
   `_brand_context(...)` too, and accepts an optional `brand_id`.
 - `POST /agent-builder/generate` now runs inside the brand context, and its
-  stale "Jarvjis" system label was corrected to "Brandmind".
+  stale "Quantum" system label was corrected to "Brandmind".
 - All generation endpoints switched from `_get_brand_or_404` to `_resolve_brand`
   so a missing/stale `brand_id` degrades gracefully instead of 404-ing.
 - The frontend now sends `brand_id: activeBrandId` from the shared

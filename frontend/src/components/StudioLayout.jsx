@@ -14,7 +14,7 @@ export function ToolCard({ tool, color, onRun, isRunning, disabled }) {
     <button
       onClick={() => onRun(tool)}
       disabled={disabled}
-      className={`group flex flex-col gap-2 p-4 rounded-sm border text-left transition-all duration-200 disabled:opacity-40 ${
+      className={`group flex min-h-full min-w-0 flex-col gap-2 rounded-sm border p-3 text-left transition-all duration-200 disabled:opacity-40 sm:p-4 ${
         isBuiltIn
           ? "border-opacity-50 hover:bg-opacity-15"
           : isExternal
@@ -23,14 +23,14 @@ export function ToolCard({ tool, color, onRun, isRunning, disabled }) {
       }`}
       style={isBuiltIn ? { borderColor: `${color}50`, backgroundColor: `${color}08` } : {}}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-start justify-between gap-2 sm:items-center">
+        <div className="flex min-w-0 items-center gap-2">
           {isRunning ? (
             <Loader2 size={16} className="animate-spin" style={{ color }} />
           ) : (
             <span className="text-lg">{tool.emoji || "🔧"}</span>
           )}
-          <span className="text-sm font-medium text-white">{label}</span>
+          <span className="min-w-0 break-words text-sm font-medium text-white">{label}</span>
         </div>
         {isBuiltIn && (
           <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider"
@@ -170,12 +170,12 @@ export function StudioContextArea({ color, context, setContext, label, labelEN, 
   };
 
   return (
-    <div className="border border-white/8 rounded-sm p-5 space-y-3" style={{ background: `${color}08` }}>
-      <div className="flex items-center justify-between">
+    <div className="space-y-3 rounded-sm border border-white/8 p-4 sm:p-5" style={{ background: `${color}08` }}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <label className="block text-xs uppercase tracking-widest" style={{ color }}>
           {lang === "DE" ? (label || "Kontext") : (labelEN || "Context")}
         </label>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {uploadedFile && (
             <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 bg-white/5 border border-white/10 rounded-sm px-2 py-1">
               <FileText size={10} />
@@ -205,7 +205,7 @@ export function StudioContextArea({ color, context, setContext, label, labelEN, 
       {uploadedFile?.type === "image" && (
         <img src={uploadedFile.url} alt="upload" className="max-h-32 rounded-sm object-contain border border-white/10" />
       )}
-      <textarea value={context} onChange={(e) => setContext(e.target.value)} rows={4}
+      <textarea value={context} onChange={(e) => setContext(e.target.value)} rows={5}
         placeholder={lang === "DE" ? (placeholder || "Kontext eingeben…") : (placeholderEN || "Enter context…")}
         className="w-full bg-black border border-white/8 rounded-sm px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none"
         onFocus={(e) => { e.target.style.borderColor = `${color}50`; }}
@@ -276,13 +276,13 @@ export function AgentChatPanel({ agentId, agentName, agentEmoji, color, tools = 
   }, [input, agentId, model, lang, activeBrandId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full min-w-0 flex-col">
       {/* Chat header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-3 border-b border-white/8 px-3 py-3 sm:px-4">
+        <div className="flex min-w-0 items-center gap-2">
           <span className="text-base">{agentEmoji}</span>
           <div>
-            <span className="text-sm font-semibold text-white">{agentName}</span>
+            <span className="break-words text-sm font-semibold text-white">{agentName}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -299,7 +299,7 @@ export function AgentChatPanel({ agentId, agentName, agentEmoji, color, tools = 
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 sm:p-4">
         {messages.length === 0 && (
           <div className="text-center py-10 text-zinc-700 text-sm">
             <span className="text-3xl block mb-2">{agentEmoji}</span>
@@ -314,7 +314,7 @@ export function AgentChatPanel({ agentId, agentName, agentEmoji, color, tools = 
                 {agentEmoji}
               </div>
             )}
-            <div className={`group max-w-[85%] space-y-1.5 ${m.role === "user" ? "order-1" : ""}`}>
+            <div className={`group max-w-[92%] space-y-1.5 sm:max-w-[85%] ${m.role === "user" ? "order-1" : ""}`}>
               {m.toolLabel && (
                 <div className="text-[10px] uppercase tracking-widest flex items-center gap-1" style={{ color }}>
                   <Wrench size={8} /> {m.toolLabel}
@@ -357,7 +357,7 @@ export function AgentChatPanel({ agentId, agentName, agentEmoji, color, tools = 
       </div>
 
       {/* Input */}
-      <div className="px-4 py-3 border-t border-white/8 flex-shrink-0">
+      <div className="flex-shrink-0 border-t border-white/8 px-3 py-3 sm:px-4">
         <div className="flex gap-2">
           <input
             value={input}
@@ -373,6 +373,25 @@ export function AgentChatPanel({ agentId, agentName, agentEmoji, color, tools = 
             {loading ? <Loader2 size={14} style={{ color }} className="animate-spin" /> : <Send size={14} style={{ color }} />}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+export function StudioFlowRail({ color = "#7C3AED", lang = "DE", active = "Workspace" }) {
+  const steps = ["Hero", "Workspace", "Tool Cards", "Chat", "Ergebnis", "Export"];
+  return (
+    <div className="rounded-sm border border-white/8 bg-[#0A0A0A] p-3">
+      <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-zinc-600">
+        {(lang === "DE" ? ["Hero", "Workspace", "Tools", "Chat", "Ergebnis", "Export"] : steps).map((step, index) => {
+          const isActive = active === steps[index] || active === step;
+          return (
+            <React.Fragment key={step}>
+              <span className="rounded-full border px-2.5 py-1" style={{ borderColor: isActive ? `${color}70` : "rgba(255,255,255,0.08)", color: isActive ? color : undefined, background: isActive ? `${color}12` : undefined }}>{step}</span>
+              {index < steps.length - 1 && <span className="text-zinc-800">↓</span>}
+            </React.Fragment>
+          );
+        })}
       </div>
     </div>
   );

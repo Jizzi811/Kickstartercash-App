@@ -10,10 +10,11 @@ import {
   RefreshCw, FileBarChart, Map, ListChecks, Type, BookOpen,
   Mail, MousePointer, Layout, Wand2, PenTool, Clapperboard,
   Code, Braces, FileEdit, Calendar, User, Globe2, Workflow,
-  Plug, Box, Terminal, Webhook,
+  Plug, Box, Terminal, Webhook, Activity, Clock3,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { API } from "@/context/AppContext";
+import { PageHeader } from "@/components/PageHeader";
 
 const ICON_MAP = {
   ceo:        { Icon: Target,      color: "#7C3AED" },
@@ -28,6 +29,30 @@ const ICON_MAP = {
   coding:     { Icon: Code2,       color: "#22D3EE" },
 };
 
+
+const AGENT_VISUALS = {
+  ceo: { badge: "CORE", archetypeDE: "Zentrale AI", archetypeEN: "Core AI" },
+  content: { badge: "COPY", archetypeDE: "Story Architect", archetypeEN: "Story Architect" },
+  designer: { badge: "ART", archetypeDE: "Creative Director", archetypeEN: "Creative Director" },
+  video: { badge: "FILM", archetypeDE: "Video Director", archetypeEN: "Video Director" },
+  seo: { badge: "GEO", archetypeDE: "Search Strategist", archetypeEN: "Search Strategist" },
+  social: { badge: "SOC", archetypeDE: "Community Lead", archetypeEN: "Community Lead" },
+  sales: { badge: "REV", archetypeDE: "Sales Director", archetypeEN: "Sales Director" },
+  analytics: { badge: "INT", archetypeDE: "Intelligence Lead", archetypeEN: "Intelligence Lead" },
+  automation: { badge: "OPS", archetypeDE: "Automation Architect", archetypeEN: "Automation Architect" },
+  coding: { badge: "DEV", archetypeDE: "Tech Builder", archetypeEN: "Tech Builder" },
+  marketing: { badge: "MKT", archetypeDE: "Growth Strategist", archetypeEN: "Growth Strategist" },
+};
+
+function getAgentVisual(agent, Icon) {
+  return AGENT_VISUALS[agent.id] || {
+    badge: getAgentInitials(agent),
+    archetypeDE: agent.name,
+    archetypeEN: agent.name,
+    Icon,
+  };
+}
+
 const LUCIDE_ICONS = {
   GitBranch, Map, ListChecks, BarChart2, Zap, Type, BookOpen, Mail,
   MousePointer, Image: ImageIcon, Layout, Wand2, Sparkles, PenTool, Palette,
@@ -40,6 +65,65 @@ const LUCIDE_ICONS = {
 function ToolIcon({ name, size = 13 }) {
   const Icon = LUCIDE_ICONS[name] || Wrench;
   return <Icon size={size} />;
+}
+
+function getAgentInitials(agent) {
+  const cleanName = (agent.name || agent.id || "AI").replace(/[–—-].*$/, "").trim();
+  const words = cleanName.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) return `${words[0][0]}${words[1][0]}`.toUpperCase();
+  return (words[0] || agent.id || "AI").slice(0, 2).toUpperCase();
+}
+
+function getAgentDescription(agent, lang) {
+  const text = lang === "DE" ? agent.personality_de : agent.personality_en;
+  return (text || "")
+    .replace(/\s+/g, " ")
+    .replace(/^Du bist\s+/i, "")
+    .replace(/^You are\s+/i, "")
+    .split(". ")[0]
+    .slice(0, 128);
+}
+
+function AgentAvatar({ agent, Icon, color, status, className = "" }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const avatar = agent.avatar;
+  useEffect(() => {
+    setImageFailed(false);
+  }, [avatar]);
+
+  return (
+    <div className={`relative h-24 w-24 sm:h-28 sm:w-28 ${className}`}>
+      <div
+        className="absolute -inset-5 rounded-full opacity-75 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
+        style={{ background: `radial-gradient(circle, ${color}75 0%, #A855F735 42%, transparent 72%)` }}
+      />
+      <div
+        className="absolute -inset-2 rounded-full border border-white/10 opacity-80"
+        style={{ boxShadow: `0 0 28px ${color}55, inset 0 0 24px ${color}20` }}
+      />
+      <div
+        className="relative h-full w-full overflow-hidden rounded-full border bg-[#08070D] shadow-[0_22px_45px_rgba(0,0,0,0.45)]"
+        style={{ borderColor: `${color}D0` }}
+      >
+        {avatar && !imageFailed && (
+          <img
+            src={avatar}
+            alt={`${agent.name} avatar`}
+            className="h-full w-full scale-110 object-cover object-top transition-transform duration-300 group-hover:scale-[1.16]"
+            loading="lazy"
+            onError={() => setImageFailed(true)}
+          />
+        )}
+      </div>
+      <div className="absolute -left-1 top-2 h-4 w-4 rounded-full border-2 border-[#050505]" style={{ backgroundColor: status?.color || "#34D399", boxShadow: `0 0 14px ${status?.color || "#34D399"}` }} />
+      <div
+        className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border border-black bg-[#0A0A0A] sm:h-9 sm:w-9"
+        style={{ boxShadow: `0 0 18px ${color}90` }}
+      >
+        <Icon size={16} style={{ color }} />
+      </div>
+    </div>
+  );
 }
 
 function CopyBtn({ text }) {
@@ -416,6 +500,13 @@ function AgentChat({ agent, onClose }) {
   );
 }
 
+const STATUS_META = [
+  { key: "active", dot: "🟢", color: "#34D399", labelDE: "Aktiv", labelEN: "Active", activityDE: "nimmt neue Aufgaben an", activityEN: "accepting new work" },
+  { key: "working", dot: "🟡", color: "#FBBF24", labelDE: "Arbeitet", labelEN: "Working", activityDE: "bearbeitet einen Auftrag", activityEN: "processing a task" },
+  { key: "waiting", dot: "🔵", color: "#60A5FA", labelDE: "Wartet", labelEN: "Waiting", activityDE: "wartet auf Freigabe", activityEN: "waiting for approval" },
+  { key: "error", dot: "🔴", color: "#F87171", labelDE: "Fehler", labelEN: "Error", activityDE: "braucht Aufmerksamkeit", activityEN: "needs attention" },
+];
+
 export default function Specialists() {
   const { lang, model, activeBrandId } = useApp();
   const [agents, setAgents] = useState([]);
@@ -452,24 +543,45 @@ export default function Specialists() {
       setDispatchLoading(false);
     }
   };
+  const liveAgents = agents.slice(0, 6).map((agent, index) => ({ agent, status: STATUS_META[index % STATUS_META.length] }));
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-sm bg-[#7C3AED]/10 flex items-center justify-center">
-            <Sparkles size={20} className="text-[#7C3AED]" />
+    <div className="min-w-0 space-y-6 pb-6 sm:space-y-8">
+      <PageHeader
+        icon={Sparkles}
+        badge="Brandmind Specialists"
+        title={lang === "DE" ? "Brandmind Spezialisten" : "Brandmind Specialists"}
+        subtitle={lang === "DE"
+          ? "17 KI-Agenten mit eigener Persönlichkeit, spezialisierten Tools & KB-Zugriff."
+          : "17 AI agents with their own personality, specialized tools & KB access."}
+      />
+
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="min-w-0 rounded-sm border border-[#7C3AED]/20 bg-[#0A0A0A] p-4 sm:p-5">
+          <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white"><Activity size={16} className="text-[#7C3AED]" />{lang === "DE" ? "Agentenzentrale" : "Agent Command Center"}</div>
+          <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2 sm:grid-cols-4">
+            {STATUS_META.map((s) => (
+              <div key={s.key} className="rounded-sm border border-white/8 bg-white/[0.03] p-3">
+                <div className="text-lg">{s.dot}</div>
+                <div className="mt-1 text-xs font-medium text-zinc-200">{lang === "DE" ? s.labelDE : s.labelEN}</div>
+                <div className="text-[10px] text-zinc-600">{lang === "DE" ? s.activityDE : s.activityEN}</div>
+              </div>
+            ))}
           </div>
-          <h1 className="font-display text-2xl text-white">
-            {lang === "DE" ? "Brandmind Spezialisten" : "Brandmind Specialists"}
-          </h1>
         </div>
-        <p className="text-sm text-zinc-500">
-          {lang === "DE"
-            ? "17 KI-Agenten mit eigener Persönlichkeit, spezialisierten Tools & KB-Zugriff."
-            : "17 AI agents with their own personality, specialized tools & KB access."}
-        </p>
+        <div className="min-w-0 rounded-sm border border-white/8 bg-[#0A0A0A] p-4 sm:p-5">
+          <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white"><Clock3 size={16} className="text-[#7C3AED]" />Live-Aktivitäten</div>
+          <div className="space-y-3">
+            {(liveAgents.length ? liveAgents : []).map(({ agent, status }, index) => (
+              <div key={agent.id} className="flex min-w-0 items-start gap-2 text-xs sm:items-center sm:gap-3">
+                <span className="w-9 shrink-0 text-zinc-600 sm:w-10">08:{String(42 + index).padStart(2, "0")}</span>
+                <span>{status.dot}</span>
+                <span className="min-w-0 flex-1 break-words text-zinc-300 sm:truncate">{agent.name} · {lang === "DE" ? status.activityDE : status.activityEN}</span>
+              </div>
+            ))}
+            {!liveAgents.length && <p className="text-xs text-zinc-600">{lang === "DE" ? "Lade Live-Aktivitäten…" : "Loading live activity…"}</p>}
+          </div>
+        </div>
       </div>
 
       <div className="bg-[#0A0A0A] border border-white/8 rounded-sm p-4 space-y-3">
@@ -530,12 +642,16 @@ export default function Specialists() {
           <Loader2 size={20} className="animate-spin text-[#7C3AED]" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="grid min-w-0 grid-cols-1 gap-3 min-[430px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 xl:gap-4">
           {agents.map((agent, i) => {
             const meta = ICON_MAP[agent.id] || { Icon: Bot, color: "#7C3AED" };
             const { Icon, color } = meta;
             const role = lang === "DE" ? agent.role_de : agent.role_en;
             const tools = agent.tools || [];
+            const status = STATUS_META[i % STATUS_META.length];
+            const description = getAgentDescription(agent, lang);
+            const visual = getAgentVisual(agent, Icon);
+            const archetype = lang === "DE" ? visual.archetypeDE : visual.archetypeEN;
             return (
               <motion.button
                 key={agent.id}
@@ -543,19 +659,37 @@ export default function Specialists() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
                 onClick={() => setActiveAgent(agent)}
-                className="group text-left bg-[#0A0A0A] border border-white/8 rounded-sm p-5 transition-all duration-200"
+                className="group relative mt-12 min-w-0 overflow-visible rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(124,58,237,0.13),rgba(10,10,10,0.96)_38%)] p-4 pt-0 text-left shadow-[0_18px_55px_rgba(0,0,0,0.28)] transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.035] sm:p-5 sm:pt-0"
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${color}50`; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = ""; }}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-11 h-11 rounded-sm flex items-center justify-center"
-                    style={{ backgroundColor: `${color}18` }}>
-                    <Icon size={20} style={{ color }} />
-                  </div>
-                  <span className="text-xl">{agent.emoji}</span>
+                <div className="mb-4 flex flex-col items-center text-center">
+                  <AgentAvatar agent={agent} Icon={Icon} color={color} status={status} className="-mt-12" />
+                  <span
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-300"
+                    style={{ boxShadow: `0 0 18px ${color}25` }}
+                  >
+                    <Icon size={10} style={{ color }} />
+                    {visual.badge} · {archetype}
+                  </span>
+                  <span
+                    className="mt-4 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em]"
+                    style={{ borderColor: `${status.color}45`, color: status.color, backgroundColor: `${status.color}12` }}
+                  >
+                    <span>{status.dot}</span>
+                    {lang === "DE" ? status.labelDE : status.labelEN}
+                  </span>
                 </div>
-                <h3 className="text-sm font-semibold text-white mb-1">{agent.name}</h3>
-                <p className="text-[11px] text-zinc-500 leading-relaxed mb-3">{role}</p>
+                <h3 className="mb-1 break-words text-center text-base font-semibold text-white">{agent.name}</h3>
+                <p className="mb-3 text-center text-[11px] leading-relaxed text-zinc-400">{role}</p>
+                {description && (
+                  <p className="mb-3 min-h-[42px] text-[11px] leading-relaxed text-zinc-500">
+                    {description}.
+                  </p>
+                )}
+                <div className="mb-3 rounded-sm border border-white/8 bg-white/[0.03] px-2 py-1.5 text-[10px] text-zinc-500">
+                  <span className="text-zinc-300">{lang === "DE" ? "Aktivität" : "Activity"}:</span> {lang === "DE" ? status.activityDE : status.activityEN}
+                </div>
 
                 {/* Tool chips preview */}
                 {tools.length > 0 && (
@@ -583,7 +717,7 @@ export default function Specialists() {
       )}
 
       {/* Info */}
-      <div className="flex items-start gap-3 p-4 bg-[#0A0A0A] border border-[#7C3AED]/15 rounded-sm">
+      <div className="flex items-start gap-3 rounded-sm border border-[#7C3AED]/15 bg-[#0A0A0A] p-4">
         <Wrench size={15} className="text-[#7C3AED] flex-shrink-0 mt-0.5" />
         <div className="text-xs text-zinc-500 leading-relaxed">
           <span className="text-[#7C3AED]">

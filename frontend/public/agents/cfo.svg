@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="title desc">
+  <title id="title">cfo hologram agent avatar</title>
+  <desc id="desc">Futuristic non-human neon hologram avatar with violet circuit lines and AI glow.</desc>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="76%">
+      <stop offset="0%" stop-color="#7DD3FC" stop-opacity=".34"/>
+      <stop offset="42%" stop-color="#4C1D95" stop-opacity=".42"/>
+      <stop offset="78%" stop-color="#070013"/>
+      <stop offset="100%" stop-color="#020005"/>
+    </radialGradient>
+    <linearGradient id="holo" x1="22%" y1="8%" x2="82%" y2="92%">
+      <stop stop-color="#F0ABFC"/>
+      <stop offset=".36" stop-color="#A855F7"/>
+      <stop offset=".7" stop-color="#10B981"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+    <filter id="glow" x="-55%" y="-55%" width="210%" height="210%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <pattern id="scan" width="240" height="12" patternUnits="userSpaceOnUse">
+      <path d="M0 1h240" stroke="#E879F9" stroke-opacity=".13" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="240" height="240" rx="120" fill="url(#bg)"/>
+  <rect width="240" height="240" rx="120" fill="url(#scan)" opacity=".9"/>
+  <g filter="url(#glow)">
+    <circle cx="120" cy="120" r="91" fill="none" stroke="url(#holo)" stroke-width="3.5" opacity=".95"/>
+    <circle cx="120" cy="120" r="74" fill="none" stroke="#22D3EE" stroke-width="1.4" stroke-dasharray="3 9" opacity=".55"/>
+    <ellipse cx="120" cy="187" rx="57" ry="14" fill="#22D3EE" opacity=".12"/>
+    <path d="M83 178c7-25 21-41 37-41s30 16 37 41c-15 11-59 11-74 0z" fill="#12051f" fill-opacity=".54" stroke="url(#holo)" stroke-width="2"/>
+    <path d="M85 89c7-37 30-55 35-55s28 18 35 55c5 30-8 57-35 57S80 119 85 89z" fill="#090217" fill-opacity=".66" stroke="url(#holo)" stroke-width="2.5"/>
+    <path d="M92 95c14-12 42-12 56 0M96 117c15 7 33 7 48 0M120 45v94M101 58l19 20 19-20M96 142l24-18 24 18" fill="none" stroke="#C084FC" stroke-width="1.7" stroke-linecap="round" opacity=".86"/>
+    <path d="M72 99h29m38 0h29M63 123h32m50 0h32M84 74h-18m90 0h18" fill="none" stroke="#22D3EE" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="4 5" opacity=".78"/>
+    <circle cx="103" cy="101" r="6" fill="#22D3EE" opacity=".96"/>
+    <circle cx="137" cy="101" r="6" fill="#F0ABFC" opacity=".96"/>
+    <path d="M108 124c8 5 16 5 24 0" fill="none" stroke="#E879F9" stroke-width="2.4" stroke-linecap="round" opacity=".9"/>
+    <path d="M70 190l28-20m72 20l-28-20M120 137v45" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" opacity=".72"/>
+  </g>
+  <circle cx="184" cy="176" r="28" fill="#080014" fill-opacity=".88" stroke="url(#holo)" stroke-width="2.5" filter="url(#glow)"/>
+  <text x="184" y="186" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" fill="#F5D0FE" filter="url(#glow)">C</text>
+</svg>

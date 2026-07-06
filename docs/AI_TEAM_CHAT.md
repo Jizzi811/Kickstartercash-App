@@ -12,7 +12,7 @@ BrandMind AI Team Chat adds an internal discussion layer to Mission Control plan
 
 The team chat includes these core BrandMind roles:
 
-1. AI CEO — moderator and final recommendation
+1. Quantum AI — moderator and final recommendation
 2. Marketing Director — campaign strategy and channels
 3. Creative Director — campaign idea and creative quality
 4. Copywriter — hooks, messaging, and conversion copy
@@ -57,7 +57,7 @@ Team chat data is stored in two MongoDB collections:
   - Stores the human question.
   - Calls the selected LLM with brand, plan, task, workspace, and safety context.
   - Stores short role-specific agent replies.
-  - Ensures the final response is an AI CEO summary/recommendation.
+  - Ensures the final response is a Quantum AI summary/recommendation.
   - Falls back to a deterministic safe team discussion if the LLM returns unusable output.
 
 ## Frontend behavior
@@ -68,7 +68,7 @@ On plan detail pages, Mission Control renders a premium BrandMind chat panel bel
 - Agent avatars, names, and roles are visible.
 - User questions are displayed as chat bubbles.
 - Agent responses are concise and role-specific.
-- AI CEO summaries are highlighted as recommendation cards.
+- Quantum AI summaries are highlighted as recommendation cards.
 - The layout is responsive and stacks cleanly on mobile.
 
 Suggested prompts shown in the UI:

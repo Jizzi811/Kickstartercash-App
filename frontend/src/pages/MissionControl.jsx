@@ -36,7 +36,7 @@ const STATUS_STYLE = {
 };
 
 const TEAM_AVATARS = {
-  "AI CEO": { initials: "QC", gradient: "linear-gradient(135deg,#7C3AED,#C4B5FD)" },
+  "Quantum AI": { initials: "QC", gradient: "linear-gradient(135deg,#7C3AED,#C4B5FD)" },
   "Marketing Director": { initials: "MD", gradient: "linear-gradient(135deg,#6D28D9,#A78BFA)" },
   "Creative Director": { initials: "CD", gradient: "linear-gradient(135deg,#8B5CF6,#EC4899)" },
   Copywriter: { initials: "CW", gradient: "linear-gradient(135deg,#7C3AED,#60A5FA)" },
@@ -303,7 +303,7 @@ function TeamChat({ plan, tasks, lang, model }) {
           </p>
           <div className="grid grid-cols-2 xl:grid-cols-1 gap-2">
             {(agents.length ? agents : Object.keys(TEAM_AVATARS).filter((a) => a !== "Human").map((agent) => ({ agent, role: "" }))).map((a) => {
-              const av = TEAM_AVATARS[a.agent] || TEAM_AVATARS["AI CEO"];
+              const av = TEAM_AVATARS[a.agent] || TEAM_AVATARS["Quantum AI"];
               return (
                 <div key={a.agent} className="flex items-center gap-2 p-2 rounded-sm" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
                   <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-black text-white" style={{ background: av.gradient }}>{av.initials}</div>
@@ -336,7 +336,7 @@ function TeamChat({ plan, tasks, lang, model }) {
               </div>
             )}
             {messages.map((m) => {
-              const av = TEAM_AVATARS[m.agent] || TEAM_AVATARS["AI CEO"];
+              const av = TEAM_AVATARS[m.agent] || TEAM_AVATARS["Quantum AI"];
               const task = m.linked_task_id ? tasks?.find((t) => t.id === m.linked_task_id) : null;
               const isSummary = m.message_type === "summary";
               const isUser = m.message_type === "user";
@@ -353,7 +353,7 @@ function TeamChat({ plan, tasks, lang, model }) {
                         <span className="text-[12px] font-semibold text-zinc-100">{m.agent}</span>
                         {!isUser && <span className="text-[10px] text-zinc-600 ml-2">{m.role}</span>}
                       </div>
-                      {isSummary && <Pill icon={ShieldCheck}>{lang === "DE" ? "CEO Empfehlung" : "CEO summary"}</Pill>}
+                      {isSummary && <Pill icon={ShieldCheck}>{lang === "DE" ? "Quantum Empfehlung" : "Quantum summary"}</Pill>}
                     </div>
                     <p className="text-[13px] text-zinc-300 leading-relaxed whitespace-pre-wrap">{m.content}</p>
                     {task && <div className="mt-2 text-[10px] text-zinc-500">↳ {lang === "DE" ? "Task" : "Task"}: {task.title}</div>}
@@ -466,8 +466,8 @@ export default function MissionControl() {
             </h1>
             <p className="text-sm text-zinc-400 leading-relaxed max-w-xl mb-6">
               {lang === "DE"
-                ? "Dein KI-CEO-Kommandozentrum. Gib ein Geschäftsziel vor – Quantum entwirft den Executive-Plan und verteilt die Aufgaben an dein KI-Team. Nichts wird ohne deine Freigabe ausgeführt."
-                : "Your AI CEO command center. Set a business goal – Quantum drafts the executive plan and delegates tasks to your AI team. Nothing runs without your approval."}
+                ? "Dein Quantum Command Center. Gib ein Geschäftsziel vor – Quantum entwirft den Executive-Plan und verteilt die Aufgaben an dein KI-Team. Nichts wird ohne deine Freigabe ausgeführt."
+                : "Your Quantum Command Center. Set a business goal – Quantum drafts the executive plan and delegates tasks to your AI team. Nothing runs without your approval."}
             </p>
             <div className="flex flex-wrap items-center gap-2.5">
               <Pill icon={Building2}>{activeWorkspace?.name || (lang === "DE" ? "Kein Workspace" : "No workspace")}</Pill>
@@ -478,7 +478,7 @@ export default function MissionControl() {
         </div>
       </motion.section>
 
-      {/* ══ AI CEO composer ═════════════════════════════════════════ */}
+      {/* ══ Quantum AI composer ═════════════════════════════════════════ */}
       <motion.section {...fadeUp(0.06)}>
         <Card className="p-6" style={{
           background: "linear-gradient(145deg, rgba(124,58,237,0.06) 0%, rgba(255,255,255,0.02) 100%)",
@@ -490,8 +490,8 @@ export default function MissionControl() {
               <Sparkles size={15} style={{ color: V }} />
             </div>
             <div>
-              <GradientHeading className="text-base">{lang === "DE" ? "KI-CEO Planung" : "AI CEO Planning"}</GradientHeading>
-              <p className="text-[11px] text-zinc-600">Quantum · {lang === "DE" ? "KI-CEO & Orchestrator" : "AI CEO & Orchestrator"}</p>
+              <GradientHeading className="text-base">{lang === "DE" ? "Quantum Command Planung" : "Quantum Command Planning"}</GradientHeading>
+              <p className="text-[11px] text-zinc-600">Quantum · {lang === "DE" ? "Quantum AI & Orchestrator" : "Quantum AI & Orchestrator"}</p>
             </div>
           </div>
           <textarea

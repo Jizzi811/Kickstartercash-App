@@ -7,7 +7,7 @@ import {
   FileText
 } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
-import { PageTitle } from "@/components/PageTitle";
+import { PageHeader } from "@/components/PageHeader";
 
 const MODELS = [
   {
@@ -176,20 +176,19 @@ export default function ChatArena() {
   const onKey = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <PageTitle
-          title={t("nav_arena")}
-          subtitle={t("arena_sub")}
-          icon={LayoutGrid}
-        />
-        {messages.length > 0 && (
+    <div className="space-y-8">
+      <PageHeader
+        icon={LayoutGrid}
+        badge="Chat Arena"
+        title={t("nav_arena")}
+        subtitle={t("arena_sub")}
+        actions={messages.length > 0 ? (
           <button onClick={clearChat}
             className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-sm border border-white/10 text-zinc-400 hover:text-red-400 hover:border-red-400/50">
             <Trash2 size={13} /> {t("chat_clear")}
           </button>
-        )}
-      </div>
+        ) : null}
+      />
 
       {/* Model selector */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">

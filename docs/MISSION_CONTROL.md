@@ -1,4 +1,4 @@
-# Mission Control & AI CEO Planning
+# Mission Control & Quantum Command Planning
 
 Mission Control is Brandmind's command center – the new home route (`/`). It
 turns a business goal into an **executive plan** and a set of **department task
@@ -15,7 +15,7 @@ Related docs: [`BRAND_CONTEXT_QA.md`](./BRAND_CONTEXT_QA.md) (brand grounding),
 |---|---|---|
 | Personalized greeting | `useApp().user` (client) | first name + time-of-day |
 | Active workspace / brand | `useApp().activeWorkspace` / `activeBrand` | context chips in the hero |
-| AI CEO composer | `POST /mission/ceo/plan` | enter a goal → executive plan |
+| Quantum AI composer | `POST /mission/ceo/plan` | enter a goal → executive plan |
 | Executive plan | plan result / `GET /mission/plans/{id}` | strategy, audience, channels, assets, next steps, tasks |
 | Today's priorities | `GET /mission/overview` → `priorities` | open tasks that are urgent/high or due today/overdue |
 | Running campaigns | `overview.campaigns` | approved/in-progress plans + generated campaign history |
@@ -27,12 +27,11 @@ Related docs: [`BRAND_CONTEXT_QA.md`](./BRAND_CONTEXT_QA.md) (brand grounding),
 The rich module launcher that used to live on `/` now lives at **`/modules`**
 (sidebar → "Module").
 
-## 2. The AI CEO flow
+## 2. The Quantum AI flow
 
 1. The user enters a business goal in the composer.
 2. `POST /mission/ceo/plan` resolves the active brand (`_resolve_brand`) and the
-   active workspace (`current_workspace`), then prompts the **`ceo` agent
-   (Quantum)** with the brand-context block.
+   active workspace (`current_workspace`), then prompts **Quantum (`ceo` agent)** with the brand-context block.
 3. Quantum returns strict JSON: `summary`, `strategy`, `target_audience`,
    `channels[]`, `required_assets[]`, `next_steps[]`, and `tasks[]`.
 4. The backend stores an `ExecutivePlan` (status `awaiting_approval`) and creates
@@ -67,7 +66,7 @@ All are workspace-scoped via `ws = Depends(current_workspace)` and
 
 | Method | Path | Purpose |
 |---|---|---|
-| `POST` | `/mission/ceo/plan` | AI CEO drafts a plan + department tasks (proposals) |
+| `POST` | `/mission/ceo/plan` | Quantum Intelligence drafts a plan + department tasks (proposals) |
 | `GET` | `/mission/plans` | plan history for the workspace |
 | `GET` | `/mission/plans/{id}` | a plan + its tasks |
 | `GET` | `/mission/tasks` | tasks (filter by `status`, `department`) |
@@ -81,7 +80,7 @@ user can only touch their own workspace's tasks.
 
 ## 5. Brand & workspace grounding
 
-- The AI CEO prompt always includes `_brand_context(brand, lang)`, so plans speak
+- The Quantum AI prompt always includes `_brand_context(brand, lang)`, so plans speak
   in the active brand's name, tone and audience.
 - If no `brand_id` is sent (or it is stale), `_resolve_brand` falls back to the
   workspace brand, then the Brandmind default – it never fails. See
