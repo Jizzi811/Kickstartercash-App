@@ -13,6 +13,7 @@ const COLOR = "#C084FC";
 // Image models offered by the live generator (maps to backend ImageRequest.model).
 const IMAGE_MODELS = [
   { id: "gpt", label: "GPT Image" },
+  { id: "nano-banana", label: "Nano Banana" },
   { id: "flux2", label: "Flux 2" },
   { id: "flux-schnell", label: "Flux.1 schnell" },
   { id: "qwen-image", label: "Qwen Image" },
@@ -189,7 +190,7 @@ export default function DesignStudio() {
         icon={Palette}
         color="#C084FC"
         title="Design Studio"
-        subtitle={lang === "DE" ? "GPT · Flux 2 · Flux schnell · Qwen · SD 3.5 · Canva · Leonardo" : "GPT · Flux 2 · Flux schnell · Qwen · SD 3.5 · Canva · Leonardo"}
+        subtitle={lang === "DE" ? "GPT · Nano Banana · Flux 2 · Flux schnell · Qwen · SD 3.5 · Canva · Leonardo" : "GPT · Nano Banana · Flux 2 · Flux schnell · Qwen · SD 3.5 · Canva · Leonardo"}
         badge="Design"
       />
 

@@ -37,7 +37,6 @@ from app.core.config import (  # noqa: E402
     MONGO_URL, DB_NAME,
     ANTHROPIC_API_KEY, EMERGENT_LLM_KEY, OPENAI_API_KEY, GEMINI_API_KEY,
     RESEND_API_KEY, SENDER_EMAIL, REPORT_EMAILS,
-    POYO_API_KEY, POYO_BASE,
     FREETHEAI_API_KEY, FREETHEAI_BASE, FREETHEAI_IMAGE_MODEL,
     FREETHEAI_TEXT_MODEL, FREETHEAI_TTS_MODEL,
     OPENAI_TEXT_MODEL, LOGO_URL,
@@ -132,63 +131,8 @@ async def pollinations_image(prompt: str, width: int = 1024, height: int = 1024)
     return await asyncio.to_thread(_fetch)
 
 
-async def poyo_nano_banana(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
-    """Image generation via poyo.ai Nano Banana (Google Gemini 2.5 Flash Image).
-    When image_urls are provided, uses nano-banana-edit to composite reference images (e.g. brand logo)."""
-    if not POYO_API_KEY:
-        return None
-    auth = {"Authorization": f"Bearer {POYO_API_KEY}"}
-    model = "nano-banana-edit" if image_urls else "nano-banana"
-    payload_input = {"prompt": prompt[:5000], "size": size}
-    if image_urls:
-        payload_input["image_urls"] = image_urls
-
-    def _submit():
-        import requests
-        r = requests.post(
-            f"{POYO_BASE}/api/generate/submit",
-            headers={**auth, "Content-Type": "application/json"},
-            json={"model": model, "input": payload_input},
-            timeout=30,
-        )
-        if r.status_code == 402:
-            raise RuntimeError("Poyo.ai Guthaben aufgebraucht. Bitte unter poyo.ai aufladen. / Poyo.ai credits exhausted, please top up.")
-        r.raise_for_status()
-        return (r.json().get("data") or {}).get("task_id")
-
-    def _status(task_id):
-        import requests
-        r = requests.get(f"{POYO_BASE}/api/generate/status/{task_id}", headers=auth, timeout=30)
-        r.raise_for_status()
-        return r.json().get("data") or {}
-
-    def _fetch_b64(url):
-        import requests
-        r = requests.get(url, timeout=60)
-        if r.ok and r.content:
-            ct = r.headers.get("content-type", "image/png")
-            return f"data:{ct};base64,{base64.b64encode(r.content).decode('utf-8')}"
-        return None
-
-    task_id = await asyncio.to_thread(_submit)
-    if not task_id:
-        return None
-    for _ in range(40):
-        await asyncio.sleep(3)
-        data = await asyncio.to_thread(_status, task_id)
-        status = data.get("status")
-        if status == "finished":
-            img = next((f["file_url"] for f in data.get("files", []) if f.get("file_type") == "image"), None)
-            return await asyncio.to_thread(_fetch_b64, img) if img else None
-        if status == "failed":
-            logger.error(f"Poyo nano-banana failed: {data.get('error_message')}")
-            return None
-    return None
-
-
 async def gemini_nano_banana(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
-    """Image generation via Google's official Gemini API (Nano Banana / gemini-2.5-flash-image).
-    Same underlying model that Poyo resells – used directly with our own GEMINI_API_KEY."""
+    """Image generation via Google's official Gemini API (Nano Banana / gemini-2.5-flash-image)."""
     if not GEMINI_API_KEY:
         return None
 
@@ -357,8 +301,6 @@ async def brand_image_verbose(prompt: str, size: str = "1:1", image_urls: Option
         providers.append(("FreeTheAi", freetheai_image))
     if OPENAI_API_KEY:
         providers.append(("OpenAI", openai_image))
-    if POYO_API_KEY:
-        providers.append(("Poyo", poyo_nano_banana))
     providers.append(("Gemini", gemini_nano_banana))
 
     status = {}
@@ -377,7 +319,7 @@ async def brand_image_verbose(prompt: str, size: str = "1:1", image_urls: Option
 
 
 async def brand_image(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
-    """Best-available brand image: FreeTheAi -> OpenAI (gpt-image-1) -> Poyo -> Gemini."""
+    """Best-available brand image: FreeTheAi -> OpenAI (gpt-image-1) -> Gemini."""
     img, _ = await brand_image_verbose(prompt, size=size, image_urls=image_urls)
     return img
 
@@ -449,6 +391,7 @@ async def nvidia_image(prompt: str, size: str = "1:1", image_urls: Optional[list
 # NVIDIA (build.nvidia.com), all served by the single NVIDIA_API_KEY.
 IMAGE_MODELS = {
     "gpt":          {"label": "GPT Image",            "engine": "default"},
+    "nano-banana":  {"label": "Nano Banana",         "engine": "nano-banana"},
     "flux2":        {"label": "Flux 2",               "engine": "nvidia", "model": NVIDIA_MODEL_FLUX2},
     "flux-schnell": {"label": "Flux.1 [schnell]",     "engine": "nvidia", "model": NVIDIA_MODEL_FLUX_SCHNELL},
     "qwen-image":   {"label": "Qwen Image",           "engine": "nvidia", "model": NVIDIA_MODEL_QWEN},
@@ -463,6 +406,12 @@ async def image_by_model_verbose(model_key: str, prompt: str, size: str = "1:1",
     Returns (image_or_None, per-provider status dict), matching brand_image_verbose.
     """
     spec = IMAGE_MODELS.get(model_key) or IMAGE_MODELS["gpt"]
+    if spec.get("engine") == "nano-banana":
+        try:
+            img = await gemini_nano_banana(prompt, size=size, image_urls=image_urls)
+            return img, {"Gemini Nano Banana": "ok" if img else "kein Bild"}
+        except Exception as e:  # noqa: BLE001
+            return None, {"Gemini Nano Banana": str(e)[:160]}
     if spec.get("engine") == "nvidia":
         if not NVIDIA_API_KEY:
             return None, {spec["label"]: "NVIDIA_API_KEY not set – set it to use this model"}
@@ -471,7 +420,7 @@ async def image_by_model_verbose(model_key: str, prompt: str, size: str = "1:1",
             return img, {spec["label"]: "ok" if img else "kein Bild"}
         except Exception as e:  # noqa: BLE001
             return None, {spec["label"]: str(e)[:160]}
-    # default: existing best-available chain (FreeTheAi -> OpenAI -> Poyo -> Gemini)
+    # default: existing best-available chain (FreeTheAi -> OpenAI -> Gemini)
     return await brand_image_verbose(prompt, size=size, image_urls=image_urls)
 
 
@@ -4623,7 +4572,6 @@ async def debug_image():
     out = {
         "freetheai_configured": bool(FREETHEAI_API_KEY),
         "openai_configured": bool(OPENAI_API_KEY),
-        "poyo_configured": bool(POYO_API_KEY),
         "gemini_key": bool(GEMINI_API_KEY),
         "image_model": FREETHEAI_IMAGE_MODEL,
     }
@@ -6529,11 +6477,24 @@ class BusinessCardPayload(BaseModel):
     social_links: dict = Field(default_factory=dict)
     template_id: str = "aurora"
     show_ai_assistant: bool = True
+    assistant_mode: str = "avatar"
+    assistant_avatar: str = ""
+    assistant_label: str = "Ask AI"
+    assistant_greeting: str = "Hi, ask me anything about this profile."
+    assistant_knowledge: str = ""
 
 
 def _card_public(card: dict) -> dict:
     card = dict(card or {})
     card.pop("_id", None)
+    return card
+
+
+def _public_business_card_view(card: dict) -> dict:
+    card = _card_public(card)
+    # Keep extra assistant notes private; only chat endpoint should consume them.
+    card.pop("assistant_knowledge", None)
+    card.pop("user_id", None)
     return card
 
 
@@ -6607,7 +6568,7 @@ async def get_public_business_card(url_hash: str):
     card = await db.business_cards.find_one({"url_hash": url_hash}, {"_id": 0, "user_id": 0})
     if not card:
         raise HTTPException(status_code=404, detail="Business card not found")
-    return card
+    return _public_business_card_view(card)
 
 
 class BusinessCardChatRequest(BaseModel):
@@ -6622,6 +6583,7 @@ async def chat_public_business_card(url_hash: str, payload: BusinessCardChatRequ
     q = (payload.question or "").lower()[:500]
     allowed = {k: card.get(k, "") for k in ["name", "title", "company", "bio", "phone", "email", "website", "address"]}
     socials = card.get("social_links") or {}
+    assistant_knowledge = (card.get("assistant_knowledge") or "").strip()[:6000]
     if any(w in q for w in ["phone", "telefon", "call"]):
         answer = f"Phone: {allowed.get('phone') or 'not provided on this card.'}"
     elif "email" in q or "mail" in q:
@@ -6630,12 +6592,17 @@ async def chat_public_business_card(url_hash: str, payload: BusinessCardChatRequ
         answer = f"Website: {allowed.get('website') or 'not provided on this card.'}"
     elif "social" in q or "linkedin" in q or "instagram" in q:
         answer = "Social links: " + (", ".join(f"{k}: {v}" for k, v in socials.items() if v) or "not provided on this card.")
+    elif assistant_knowledge and any(w in q for w in ["service", "services", "offer", "offering", "angebot", "leistungen"]):
+        answer = assistant_knowledge[:900]
     else:
-        prompt = "Answer only from this business card profile. If unknown, say it is not provided.\nProfile: " + json.dumps({**allowed, "social_links": socials}) + "\nQuestion: " + payload.question[:500]
+        prompt = "Answer only from this business card profile. If unknown, say it is not provided.\nProfile: " + json.dumps({**allowed, "social_links": socials, "assistant_knowledge": assistant_knowledge}) + "\nQuestion: " + payload.question[:500]
         try:
             answer = await llm_text(OPENAI_TEXT_MODEL, "You are a business-card assistant. Answer only from the provided profile data.", prompt)
         except Exception:
-            answer = f"{allowed.get('name', 'This person')} is {allowed.get('title', 'a professional')} at {allowed.get('company', 'their company')}. {allowed.get('bio', '')}".strip()
+            if assistant_knowledge:
+                answer = assistant_knowledge[:900]
+            else:
+                answer = f"{allowed.get('name', 'This person')} is {allowed.get('title', 'a professional')} at {allowed.get('company', 'their company')}. {allowed.get('bio', '')}".strip()
     return {"answer": answer}
 
 app.include_router(api_router)
