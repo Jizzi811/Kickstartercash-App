@@ -97,6 +97,15 @@ const QUICK_ACTIONS = [
     color: "#C084FC",
   },
   {
+    to: "/design-v2",
+    icon: Sparkles,
+    labelDE: "Design V2 (Preview)",
+    labelEN: "Design V2 (Preview)",
+    descDE: "Open Design Agent parallel testen",
+    descEN: "Test Open Design Agent in parallel",
+    color: "#A78BFA",
+  },
+  {
     to: "/video",
     icon: Film,
     labelDE: "Video Studio",
@@ -397,7 +406,7 @@ export default function Dashboard() {
                       <ArrowRight size={14} />
                     </button>
                     <button
-                      onClick={() => navigate("/jarvjis")}
+                      onClick={() => navigate("/quantum")}
                       className="inline-flex items-center gap-2.5 text-sm px-6 py-3 rounded-sm transition-all duration-200"
                       style={{ border: "1px solid rgba(255,255,255,0.12)", color: "#a1a1aa" }}
                       onMouseEnter={(e) => {

@@ -4,7 +4,7 @@ import {
   LayoutGrid, Building2, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare, ShieldCheck,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
-  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target, Factory, Plug, Dna, Brain, Sparkles, User, Bell, BriefcaseBusiness,
+  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target, Factory, Plug, Dna, Brain, Sparkles, User, Bell, BriefcaseBusiness, IdCard,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { SalesSupportWidget } from "@/components/SalesSupportWidget";
@@ -43,8 +43,10 @@ const NAV_GROUPS = [
     labelDE: "AI",
     labelEN: "AI",
     items: [
+      { to: "/ai-business-card", icon: IdCard, labelDE: "AI Business Card", labelEN: "AI Business Card" },
       { to: "/agents", icon: Bot, labelDE: "Agents", labelEN: "Agents" },
       { to: "/builder", icon: Wrench, labelDE: "Custom Agents", labelEN: "Custom Agents" },
+      { to: "/character-studio", icon: Dna, labelDE: "Character Studio", labelEN: "Character Studio" },
       { to: "/gateway", icon: Plug, labelDE: "Gateway", labelEN: "Gateway" },
       { to: "/skills", icon: Sparkles, labelDE: "Skills", labelEN: "Skills" },
       { to: "/modules", icon: LayoutGrid, labelDE: "Marketplace", labelEN: "Marketplace" },
@@ -57,6 +59,7 @@ const NAV_GROUPS = [
     labelEN: "Studios",
     items: [
       { to: "/design", icon: Palette, labelDE: "Design", labelEN: "Design" },
+      { to: "/design-v2", icon: Sparkles, labelDE: "Design V2 (Preview)", labelEN: "Design V2 (Preview)" },
       { to: "/video", icon: Film, labelDE: "Video", labelEN: "Video" },
       { to: "/seo", icon: Globe, labelDE: "SEO", labelEN: "SEO" },
       { to: "/seo-specialist", icon: Search, labelDE: "SEO Specialist", labelEN: "SEO Specialist" },
@@ -110,10 +113,12 @@ const PAGE_NAMES = {
   "/memory": "Memory",
   "/skills": "Skills",
   "/output-factory": "Output Factory",
+  "/ai-business-card": "AI Business Card",
   "/billing": "Preise & Plan",
   "/permissions": "Permissions",
   "/agents": "Agenten",
   "/design": "Design Studio",
+  "/design-v2": "Design Studio V2",
   "/video": "Video Studio",
   "/social": "Social Media",
   "/seo": "SEO",
@@ -123,8 +128,9 @@ const PAGE_NAMES = {
   "/knowledge-graph": "Knowledge Graph",
   "/tickets": "Tickets",
   "/builder": "Eigene Agenten",
+  "/character-studio": "Character Studio",
   "/arena": "Chat Arena",
-  "/jarvjis": "Quantum",
+  "/quantum": "Quantum",
   "/tiktok": "TikTok Studio",
   "/seo-specialist": "SEO Specialist",
   "/email": "E-Mail Marketing",
@@ -241,8 +247,8 @@ const CEOModeToast = ({ lang, onDone, enabled = true }) => {
       }}
     >
       {lang === "DE"
-        ? "✦ Du hast den CEO-Modus entdeckt 🏆"
-        : "✦ You found CEO mode 🏆"}
+        ? "✦ Du hast den Quantum Command entdeckt 🏆"
+        : "✦ You found Quantum Command 🏆"}
       <style>{`
         @keyframes ceoToastIn {
           from { opacity: 0; transform: translateX(-50%) translateY(16px) scale(0.92); }

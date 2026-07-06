@@ -72,6 +72,31 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
+# Muapi proxy (Design Studio V2)
+# ---------------------------------------------------------------------------
+MUAPI_API_KEY = os.environ.get("MUAPI_API_KEY", "").strip()
+MUAPI_BASE_URL = os.environ.get("MUAPI_BASE_URL", "https://muapi.ai").rstrip("/")
+MUAPI_PROXY_TIMEOUT = float(os.environ.get("MUAPI_PROXY_TIMEOUT", "45"))
+_MUAPI_PROXY_HEADER_ALLOWLIST = {
+    "content-type",
+    "cache-control",
+    "etag",
+    "last-modified",
+    "expires",
+    "set-cookie",
+    "content-disposition",
+    "location",
+}
+
+
+def _muapi_target_url(path: str, query: str = "") -> str:
+    clean_path = "/" + (path or "").lstrip("/")
+    url = f"{MUAPI_BASE_URL}{clean_path}"
+    if query:
+        url = f"{url}?{query}"
+    return url
+
+# ---------------------------------------------------------------------------
 # LLM helpers
 # ---------------------------------------------------------------------------
 
@@ -380,6 +405,9 @@ async def nvidia_image(prompt: str, size: str = "1:1", image_urls: Optional[list
     if not NVIDIA_API_KEY:
         return None
     w, h = _size_to_nvidia_wh(size)
+    # Use a dynamic non-zero seed so repeated calls with the same prompt
+    # can still produce diverse variants (seed=0 made outputs too similar).
+    seed = (uuid.uuid4().int % 2_147_483_647) or 1
 
     def _generate():
         import requests
@@ -388,7 +416,7 @@ async def nvidia_image(prompt: str, size: str = "1:1", image_urls: Optional[list
             url,
             headers={"Authorization": f"Bearer {NVIDIA_API_KEY}",
                      "Accept": "application/json", "Content-Type": "application/json"},
-            json={"prompt": prompt[:5000], "width": w, "height": h, "seed": 0},
+            json={"prompt": prompt[:5000], "width": w, "height": h, "seed": seed},
             timeout=180,
         )
         if not r.ok:
@@ -759,6 +787,79 @@ async def root():
     return {"message": "Kickstarter Content Maschine API"}
 
 
+@api_router.get("/integrations/muapi/status")
+async def muapi_status():
+    return {
+        "provider": "muapi",
+        "configured": bool(MUAPI_API_KEY),
+        "proxy_base_path": "/api/integrations/muapi",
+        "assistant_path": "/api/integrations/muapi/assistant",
+    }
+
+
+@api_router.api_route("/integrations/muapi", methods=["GET"])
+async def muapi_proxy_root(request: Request):
+    return await muapi_proxy("assistant", request)
+
+
+@api_router.api_route(
+    "/integrations/muapi/{path:path}",
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+)
+async def muapi_proxy(path: str, request: Request):
+    """Fixed-domain proxy to Muapi with server-side API key injection.
+
+    This keeps MUAPI_API_KEY out of browser code while allowing the preview route
+    to open/embed Muapi through our backend.
+    """
+    if not MUAPI_API_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="Muapi integration is not configured (MUAPI_API_KEY missing).",
+        )
+
+    target_url = _muapi_target_url(path or "assistant", request.url.query)
+    incoming_body = await request.body()
+
+    forward_headers = {
+        "Authorization": f"Bearer {MUAPI_API_KEY}",
+        "Accept": request.headers.get("accept", "*/*"),
+    }
+    if request.headers.get("content-type"):
+        forward_headers["Content-Type"] = request.headers["content-type"]
+    if request.headers.get("accept-language"):
+        forward_headers["Accept-Language"] = request.headers["accept-language"]
+    if request.headers.get("user-agent"):
+        forward_headers["User-Agent"] = request.headers["user-agent"]
+
+    timeout = aiohttp.ClientTimeout(total=MUAPI_PROXY_TIMEOUT)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        try:
+            async with session.request(
+                request.method,
+                target_url,
+                headers=forward_headers,
+                data=incoming_body if incoming_body else None,
+                allow_redirects=False,
+            ) as upstream:
+                payload = await upstream.read()
+                passthrough_headers = {}
+                for key, value in upstream.headers.items():
+                    lk = key.lower()
+                    if lk in _MUAPI_PROXY_HEADER_ALLOWLIST and lk not in {"content-length", "transfer-encoding"}:
+                        passthrough_headers[key] = value
+                return Response(
+                    content=payload,
+                    status_code=upstream.status,
+                    media_type=upstream.headers.get("content-type"),
+                    headers=passthrough_headers,
+                )
+        except asyncio.TimeoutError as exc:
+            raise HTTPException(status_code=504, detail="Muapi upstream timeout.") from exc
+        except aiohttp.ClientError as exc:
+            raise HTTPException(status_code=502, detail=f"Muapi proxy error: {exc}") from exc
+
+
 async def current_workspace(
     authorization: Optional[str] = Header(default=None),
     x_workspace_id: Optional[str] = Header(default=None, alias="X-Workspace-Id"),
@@ -1050,15 +1151,53 @@ def _build_image_prompt(brand: dict, subject: str, style: str) -> str:
         f"Brand color palette: {colors}. {extra} {dna_clause}"
         f"Theme: {subject}. "
         "Design a rich, detailed and FINISHED campaign scene – NOT a plain background with a caption. "
-        "Give it a clear focal point with depth: a real person, a product, or a striking hero object "
-        "interacting with the theme, set in a polished, cinematic environment with supporting details "
-        "(atmosphere, lighting effects, subtle graphic or holographic UI elements). "
-        "Photorealistic or premium 3D render, dramatic lighting, sharp focus, professional composition, "
-        "shallow depth of field. "
-        # Consistency anchors – raise the hit-rate for a cohesive, on-brand look.
-        "Editorial ad-campaign quality with cohesive color grading strictly in the brand palette; "
-        "ONE strong focal subject; clean, uncluttered background with deliberate negative space for a short headline; "
-        "no busy collages, no stock-photo feel. If any text appears, spell it correctly and keep it minimal and elegant."
+        "Create a bold visual story with cinematic production value: layered foreground/midground/background, "
+        "real atmosphere, tactile materials, nuanced light behavior, and intentional camera direction. "
+        "Prefer striking creative choices over safe generic compositions while staying premium and brand-consistent. "
+        "Photorealistic or premium 3D render, dramatic but believable lighting, strong depth, sharp subject separation. "
+        # Consistency anchors without over-constraining creativity.
+        "Editorial ad-campaign quality with cohesive color grading in the brand palette; "
+        "avoid flat layouts, generic stock-photo look, and repetitive low-information scenes. "
+        "If any text appears, keep it minimal, elegant, and correctly spelled."
+    )
+
+
+def _image_variant_prompt(
+    base_prompt: str,
+    index: int,
+    total: int,
+    language: str = "DE",
+    variation_key: Optional[str] = None,
+) -> str:
+    """Inject a strong creative direction per variant to avoid near-duplicates."""
+    variant_directions = [
+        "Cinematic hero scene, low camera angle, dramatic rim light, high contrast, iconic ad look.",
+        "Human-centered narrative scene with candid movement, emotional expression, and warm volumetric light.",
+        "Product-first macro-to-mid composition with rich texture, reflections, and bold material realism.",
+        "Editorial architectural wide shot with dynamic leading lines, layered depth, and kinetic perspective.",
+    ]
+    palettes = ["deep contrast", "warm tonal blend", "cool metallic mood", "vibrant cinematic grade"]
+    lens_styles = ["35mm immersive framing", "50mm portrait realism", "85mm compression drama", "24mm dynamic wide angle"]
+    direction = variant_directions[index % len(variant_directions)]
+    palette = palettes[index % len(palettes)]
+    lens = lens_styles[index % len(lens_styles)]
+    var_key = variation_key or uuid.uuid4().hex[:10]
+    if language == "DE":
+        return (
+            f"{base_prompt} "
+            f"Variante {index + 1} von {total}: {direction} "
+            f"Color grading: {palette}. Lens/Framing: {lens}. "
+            f"Interner Variationsschlüssel: {var_key} (nicht als Text im Bild rendern). "
+            "Erzeuge eine klar eigenständige Interpretation im gleichen Brand-Style: "
+            "andere Komposition, Perspektive, Lichtstimmung, Tiefenstaffelung und Story-Moment als die anderen Varianten."
+        )
+    return (
+        f"{base_prompt} "
+        f"Variant {index + 1} of {total}: {direction} "
+        f"Color grading: {palette}. Lens/framing: {lens}. "
+        f"Internal variation key: {var_key} (do not render as visible text in the image). "
+        "Create a clearly distinct interpretation in the same brand style: "
+        "different composition, perspective, lighting mood, scene depth, and narrative moment than the other variants."
     )
 
 
@@ -1157,8 +1296,14 @@ async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_
         image_urls = [brand_logo]
 
     count = min(max(req.count or 1, 1), 4)
+    prompts = [
+        _image_variant_prompt(
+            full_prompt, i, count, req.language, variation_key=f"v{i+1}-{uuid.uuid4().hex[:8]}"
+        )
+        for i in range(count)
+    ]
     results = await asyncio.gather(
-        *[image_by_model_verbose(req.model, full_prompt, size=req.size, image_urls=image_urls) for _ in range(count)],
+        *[image_by_model_verbose(req.model, p, size=req.size, image_urls=image_urls) for p in prompts],
         return_exceptions=True,
     )
     images = []
@@ -2779,11 +2924,12 @@ AGENTS = {
         "id": "ceo",
         "emoji": "🎯",
         "name": "Quantum",
-        "role_de": "KI-CEO & Orchestrator",
-        "role_en": "AI CEO & Orchestrator",
+        "role_de": "Quantum AI & Orchestrator",
+        "role_en": "Quantum AI & Orchestrator",
         "color": "#7C3AED",
+        "avatar": "/agents/brandmind_avatars_v2/Quantum.png",
         "personality_de": (
-            "Du bist Quantum, der KI-CEO des digitalen Mitarbeiterstabs deines Nutzers. "
+            "Du bist Quantum, die zentrale Intelligenz des digitalen Mitarbeiterstabs deines Nutzers. "
             "Du kennst die Marke, Zielgruppe und Angebote aus dem Brand Brain (Wissensdatenbank) "
             "und richtest jede Empfehlung strikt daran aus. "
             "Du denkst strategisch, erkennst Chancen sofort und delegierst mit Präzision an die Spezialisten-Agenten. "
@@ -2791,7 +2937,7 @@ AGENTS = {
             "Du analysierst die Anfrage und gibst eine klare Entscheidung + Aktionsplan."
         ),
         "personality_en": (
-            "You are Quantum, the AI CEO of the user's digital staff. "
+            "You are Quantum, the intelligence core of the user's digital staff. "
             "You know the brand, audience and offers from the Brand Brain (knowledge base) "
             "and align every recommendation strictly with it. "
             "You think strategically, spot opportunities instantly and delegate with precision to the specialist agents. "
@@ -2806,6 +2952,7 @@ AGENTS = {
         "role_de": "Texte, Hooks & Storytelling",
         "role_en": "Copy, Hooks & Storytelling",
         "color": "#60A5FA",
+        "avatar": "/agents/brandmind_avatars_v2/BM-03_Story-Copywriter.png",
         "personality_de": (
             "Du bist der Content-Spezialist von Brandmind. Du schreibst fesselnde Texte, "
             "unwiderstehliche Hooks, emotionale Storys und konvertierende Sales-Texte. "
@@ -2826,6 +2973,7 @@ AGENTS = {
         "role_de": "Creative Director & Visual AI Designer",
         "role_en": "Creative Director & Visual AI Designer",
         "color": "#C084FC",
+        "avatar": "/agents/brandmind_avatars_v2/BM-04_Aura-Designer.png",
         "personality_de": (
             "Du bist die offizielle Creative Director und Visual AI Designer von Brandmind. "
             "Du kombinierst das Wissen von: Art Director, Brand Designer, Creative Director, Werbeagentur, "
@@ -2888,6 +3036,7 @@ AGENTS = {
         "role_de": "Video Director, AI Film Producer & Creative Storytelling Specialist",
         "role_en": "Video Director, AI Film Producer & Creative Storytelling Specialist",
         "color": "#F472B6",
+        "avatar": "/agents/brandmind_avatars_v2/BM-11_Motion-Video-Creator.png",
         "personality_de": (
             "Du bist der offizielle Video Director, AI Film Producer und Creative Storytelling Specialist "
             "von Brandmind. Du bist ein preisgekrönter Werbefilm-Regisseur mit Expertenwissen in: "
@@ -2955,6 +3104,7 @@ AGENTS = {
         "role_de": "SEO & GEO Director – Search Engine & AI Search Optimization",
         "role_en": "SEO & GEO Director – Search Engine & AI Search Optimization",
         "color": "#34D399",
+        "avatar": "/agents/brandmind_avatars_v2/BM-05_Search-Optimizer.png",
         "personality_de": (
             "Du bist der offizielle SEO & GEO Director von Brandmind. "
             "Du bist einer der weltweit führenden Experten für: SEO (Search Engine Optimization), "
@@ -3015,6 +3165,7 @@ AGENTS = {
         "role_de": "Head of Social Media & Community Growth Director",
         "role_en": "Head of Social Media & Community Growth Director",
         "color": "#FBBF24",
+        "avatar": "/agents/brandmind_avatars_v2/BM-07_Trend-Social-Lead.png",
         "personality_de": (
             "Du bist die offizielle Head of Social Media und Community Growth Director von Brandmind. "
             "Du gehörst zu den besten Social Media Strateginnen der Welt. "
@@ -3073,6 +3224,7 @@ AGENTS = {
         "role_de": "Sales Director, Business Development Manager & Verkaufspsychologin",
         "role_en": "Sales Director, Business Development Manager & Sales Psychologist",
         "color": "#34D399",
+        "avatar": "/agents/brandmind_avatars_v2/BM-09_Path-Funnel-Architect.png",
         "personality_de": (
             "Du bist die offizielle Sales Director, Business Development Manager und Verkaufspsychologin "
             "von Brandmind. Du gehörst zu den besten Vertriebsexpertinnen der Welt. "
@@ -3131,6 +3283,7 @@ AGENTS = {
         "role_de": "Chief Intelligence Officer & Analytics Director",
         "role_en": "Chief Intelligence Officer & Analytics Director",
         "color": "#A78BFA",
+        "avatar": "/agents/brandmind_avatars_v2/BM-02_Signal-Analyst.png",
         "personality_de": (
             "Du bist der offizielle Analytics & Growth Intelligence Director von Brandmind. "
             "Du bist einer der weltweit führenden Experten für: Business Intelligence, Data Analytics, "
@@ -3201,6 +3354,7 @@ AGENTS = {
         "role_de": "Senior Marketing Director & KI-Marketingstratege",
         "role_en": "Senior Marketing Director & AI Marketing Strategist",
         "color": "#7C3AED",
+        "avatar": "/agents/brandmind_avatars_v2/BM-01_Nexus-Strategist.png",
         "personality_de": (
             "Du bist der offizielle Senior Marketing Director und KI-Marketingstratege von Brandmind. "
             "Du verfügst über Expertenwissen in: Digital Marketing, Performance Marketing, Social Media Marketing, "
@@ -3253,6 +3407,7 @@ AGENTS = {
         "role_de": "Automation Architect, AI Workflow Engineer & Process Optimization Director",
         "role_en": "Automation Architect, AI Workflow Engineer & Process Optimization Director",
         "color": "#F87171",
+        "avatar": "/agents/brandmind_avatars_v2/BM-10_Sync-Automation-Engineer.png",
         "personality_de": (
             "Du bist der offizielle Automation Architect, AI Workflow Engineer und Process Optimization Director "
             "von Brandmind. Du gehörst zu den besten Workflow- und Automatisierungsexperten der Welt. "
@@ -3313,6 +3468,7 @@ AGENTS = {
         "role_de": "CFO & Strategischer Finanzchef",
         "role_en": "CFO & Strategic Finance Leader",
         "color": "#10B981",
+        "avatar": "/agents/brandmind_avatars_v2/BM-21_Prism-Insights-Architect.png",
         "personality_de": (
             "Du bist Carl, der offizielle CFO-Berater von Brandmind. "
             "Du bist ein erfahrener Chief Financial Officer mit über 20 Jahren Erfahrung in Unternehmensfinanzierung, "
@@ -3339,6 +3495,7 @@ AGENTS = {
         "role_de": "Senior Financial Analyst & Modellierungsexpertin",
         "role_en": "Senior Financial Analyst & Modeling Expert",
         "color": "#3B82F6",
+        "avatar": "/agents/brandmind_avatars_v2/BM-02_Signal-Analyst.png",
         "personality_de": (
             "Du bist Fiona, die offizielle Financial Analyst von Brandmind. "
             "Du bist eine erstklassige Financial Analystin spezialisiert auf Finanzmodellierung, Forecasting, "
@@ -3365,6 +3522,7 @@ AGENTS = {
         "role_de": "FP&A Spezialist & Budgetierungsexperte",
         "role_en": "FP&A Specialist & Budgeting Expert",
         "color": "#6366F1",
+        "avatar": "/agents/brandmind_avatars_v2/BM-21_Prism-Insights-Architect.png",
         "personality_de": (
             "Du bist Felix, der offizielle FP&A-Spezialist von Brandmind. "
             "Du bist ein erfahrener Financial Planning & Analysis Experte spezialisiert auf Budgetierung, "
@@ -3391,6 +3549,7 @@ AGENTS = {
         "role_de": "Buchhalterin & Controller",
         "role_en": "Bookkeeper & Controller",
         "color": "#059669",
+        "avatar": "/agents/brandmind_avatars_v2/BM-13_Core-CRM-Manager.png",
         "personality_de": (
             "Du bist Bianca, die offizielle Buchhalterin und Controller von Brandmind. "
             "Du bist eine erfahrene Buchhaltungs- und Controlling-Expertin spezialisiert auf tägliche Buchhaltungsoperationen, "
@@ -3415,6 +3574,7 @@ AGENTS = {
         "role_de": "Steuerstrategist & Compliance-Experte",
         "role_en": "Tax Strategist & Compliance Expert",
         "color": "#F59E0B",
+        "avatar": "/agents/brandmind_avatars_v2/BM-19_Lift-Conversion-Doctor.png",
         "personality_de": (
             "Du bist Tobias, der offizielle Steuerstrategist von Brandmind. "
             "Du bist ein erfahrener Steuerexperte spezialisiert auf Steueroptimierung, internationale Steuerplanung, "
@@ -3439,6 +3599,7 @@ AGENTS = {
         "role_de": "TikTok-Marketing-Expertin & Viral-Content-Spezialistin",
         "role_en": "TikTok Marketing Expert & Viral Content Specialist",
         "color": "#FF2D55",
+        "avatar": "/agents/brandmind_avatars_v2/BM-20_Spark-Growth-Hacker.png",
         "personality_de": (
             "Du bist Tia, die offizielle TikTok-Strategin von Brandmind. "
             "Du bist eine der weltweit führenden Expertinnen für TikTok-Marketing, Viral-Content-Strategien, "
@@ -3481,6 +3642,7 @@ AGENTS = {
         "role_de": "SEO-Direktorin & GEO-Spezialistin",
         "role_en": "SEO Director & GEO Specialist",
         "color": "#34D399",
+        "avatar": "/agents/brandmind_avatars_v2/BM-05_Search-Optimizer.png",
         "personality_de": (
             "Du bist Sofia, die offizielle SEO-Direktorin und GEO-Spezialistin (Generative Engine Optimization) "
             "von Brandmind. "
@@ -3526,6 +3688,7 @@ AGENTS = {
         "role_de": "SEO-Spezialistin & GEO-Expertin",
         "role_en": "SEO Specialist & GEO Expert",
         "color": "#34D399",
+        "avatar": "/agents/brandmind_avatars_v2/BM-05_Search-Optimizer.png",
         "personality_de": (
             "Du bist Sofia, die SEO-Spezialistin und GEO-Expertin von Brandmind. "
             "Du optimierst für Google und KI-Suchmaschinen (ChatGPT, Gemini, Perplexity). "
@@ -3548,6 +3711,7 @@ AGENTS = {
         "role_de": "E-Mail-Marketing-Strategin & CRM-Spezialistin",
         "role_en": "Email Marketing Strategist & CRM Specialist",
         "color": "#FBBF24",
+        "avatar": "/agents/brandmind_avatars_v2/BM-08_Flow-Email-Specialist.png",
         "personality_de": (
             "Du bist Emma, die offizielle E-Mail-Marketing-Strategin und CRM-Spezialistin von Brandmind. "
             "Du bist Expertin für: E-Mail-Marketing-Strategie, CRM-Systeme, Newsletter-Konzeption, "
@@ -3593,6 +3757,7 @@ AGENTS = {
         "role_de": "LinkedIn-Content-Stratege & Personal-Branding-Experte",
         "role_en": "LinkedIn Content Strategist & Personal Branding Expert",
         "color": "#0A66C2",
+        "avatar": "/agents/brandmind_avatars_v2/BM-18_Radar-Influencer-Scout.png",
         "personality_de": (
             "Du bist Leon, der offizielle LinkedIn-Content-Stratege und Personal-Branding-Experte von Brandmind. "
             "Du bist Experte für: LinkedIn-Content-Strategie, Thought Leadership, Personal Branding, "
@@ -3642,10 +3807,11 @@ AGENTS = {
         "role_de": "Multi-Agent-Orchestrator & KI-Systemarchitekt",
         "role_en": "Multi-Agent Orchestrator & AI System Architect",
         "color": "#8B5CF6",
+        "avatar": "/agents/brandmind_avatars_v2/BM-12_Circle-Community-Lead.png",
         "personality_de": (
             "Du bist Orion, der offizielle Multi-Agent-Orchestrator und KI-Systemarchitekt von Brandmind. "
             "Du bist der Dirigent des gesamten Brandmind AI Operating Systems. "
-            "Du koordinierst alle Agenten (CEO, Marketing, Content, Design, Video, SEO, TikTok, "
+            "Du koordinierst alle Agenten (Quantum, Marketing, Content, Design, Video, SEO, TikTok, "
             "E-Mail, LinkedIn, Automation, Analytics, Sales, Coding) und orchestrierst sie für "
             "komplexe, mehrstufige Aufgaben. "
             "\n\nDEINE KERNFÄHIGKEITEN: "
@@ -3678,7 +3844,7 @@ AGENTS = {
         "personality_en": (
             "You are Orion, the official Multi-Agent Orchestrator and AI System Architect of Brandmind. "
             "You are the conductor of the entire Brandmind AI Operating System. "
-            "You coordinate all agents (CEO, Marketing, Content, Design, Video, SEO, TikTok, "
+            "You coordinate all agents (Quantum, Marketing, Content, Design, Video, SEO, TikTok, "
             "Email, LinkedIn, Automation, Analytics, Sales, Coding) for complex, multi-step tasks. "
             "Patterns: Sequential Chain, Parallel Dispatch, Hierarchical, Feedback Loop, Specialist Swarm. "
             "For every request: understand goal → decompose into atomic tasks → assign optimal agent → "
@@ -3695,6 +3861,7 @@ AGENTS = {
         "role_de": "Spezialisierter Workflow-Architekt & Prozessdesigner",
         "role_en": "Specialized Workflow Architect & Process Designer",
         "color": "#F97316",
+        "avatar": "/agents/brandmind_avatars_v2/BM-15_Echo-PR-Voice.png",
         "personality_de": (
             "Du bist Wren, der offizielle spezialisierte Workflow-Architekt und Prozessdesigner von Brandmind. "
             "Du entwirfst hocheffiziente, skalierbare Geschäftsprozesse und technische Workflows. "
@@ -3740,6 +3907,7 @@ AGENTS = {
         "role_de": "HTML, React, PHP, APIs & n8n",
         "role_en": "HTML, React, PHP, APIs & n8n",
         "color": "#22D3EE",
+        "avatar": "/agents/brandmind_avatars_v2/BM-10_Sync-Automation-Engineer.png",
         "personality_de": (
             "Du bist der Lead-Entwickler von Brandmind. "
             "Du beherrschst HTML, CSS, JavaScript, React, PHP, Python und REST-APIs. "
@@ -3777,6 +3945,15 @@ class AgentToolRunRequest(BaseModel):
     brand_id: str = "kickstartercash"
 
 
+class AgentTaskDispatchRequest(BaseModel):
+    task: str
+    language: str = "DE"
+    model: str = "gpt"
+    brand_id: str = "kickstartercash"
+    execute: bool = True
+    preferred_agent_id: Optional[str] = None
+
+
 @api_router.get("/agents")
 async def list_agents():
     result = []
@@ -3794,6 +3971,43 @@ async def get_agent_tools(agent_id: str):
     if agent_id not in AGENTS:
         raise HTTPException(status_code=404, detail="Agent not found")
     return skill_registry.skills_for_agent(agent_id)
+
+
+@api_router.post("/agents/dispatch-task")
+async def dispatch_agent_task(req: AgentTaskDispatchRequest, ws: Optional[str] = Depends(current_workspace)):
+    if not (req.task or "").strip():
+        raise HTTPException(status_code=400, detail="Task is required.")
+
+    suggested = skill_registry.suggest_skill_for_task(req.task, req.preferred_agent_id)
+    if not suggested:
+        raise HTTPException(status_code=404, detail="No matching skill found.")
+
+    agent_id = req.preferred_agent_id or suggested.get("agent_ids", [""])[0]
+    agent = AGENTS.get(agent_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Matched agent not found.")
+
+    payload = {
+        "agent_id": agent_id,
+        "agent_name": agent.get("name"),
+        "tool_id": suggested["id"],
+        "tool_label": suggested["label"] if req.language == "DE" else suggested["label_en"],
+        "tool_type": suggested.get("type", "llm"),
+        "task": req.task,
+    }
+    if not req.execute:
+        return {"routed": payload, "executed": False}
+
+    run_req = AgentToolRunRequest(
+        agent_id=agent_id,
+        tool_id=suggested["id"],
+        context=req.task,
+        model=req.model,
+        language=req.language,
+        brand_id=req.brand_id,
+    )
+    result = await run_agent_tool(run_req, ws=ws)
+    return {"routed": payload, "executed": True, "result": result}
 
 
 @api_router.get("/skills/registry")
@@ -3836,6 +4050,69 @@ async def run_agent_tool(req: AgentToolRunRequest, ws: Optional[str] = Depends(c
 
     # Every specialist skill runs inside the active brand's context (never blind).
     brand = await _resolve_brand(req.brand_id, ws)
+    context = (req.context or "").strip()
+
+    if tool.get("type") == "image":
+        if not context:
+            raise HTTPException(status_code=400, detail="Context is required for image generation.")
+        images = []
+        provider = "unknown"
+        try:
+            image_req = ImageRequest(
+                prompt=context,
+                style=brand.get("image_style") or "Luxuriös",
+                brand_id=brand.get("id", req.brand_id),
+                language=lang,
+                apply_logo=False,
+                size="1:1",
+                count=3,
+                model="gpt",
+            )
+            generated = await generate_image(image_req, ws=ws)
+            images = generated.get("images") or []
+            provider = generated.get("provider") or "gpt-chain"
+        except Exception as media_exc:
+            logger.warning(f"Agent image tool primary pipeline failed, using fallback: {media_exc}")
+            fallback = await pollinations_image(context, width=1024, height=1024)
+            if fallback:
+                images = [fallback]
+                provider = "pollinations-fallback"
+        if not images:
+            raise HTTPException(status_code=502, detail="Image generation returned no images.")
+        return {
+            "type": "image",
+            "tool_id": req.tool_id,
+            "tool_label": tool["label"] if lang == "DE" else tool["label_en"],
+            "image_url": images[0],
+            "images": images,
+            "prompt_used": context,
+            "provider": provider,
+        }
+
+    if tool.get("type") == "video":
+        if not context:
+            raise HTTPException(status_code=400, detail="Context is required for video generation.")
+        try:
+            veo = await generate_veo_video(VeoRequest(prompt=context, aspect_ratio="16:9"))
+        except HTTPException as exc:
+            return {
+                "type": "video",
+                "tool_id": req.tool_id,
+                "tool_label": tool["label"] if lang == "DE" else tool["label_en"],
+                "operation_name": "",
+                "status": "unavailable",
+                "prompt_used": context,
+                "message": exc.detail if isinstance(exc.detail, str) else "Video provider unavailable.",
+            }
+        return {
+            "type": "video",
+            "tool_id": req.tool_id,
+            "tool_label": tool["label"] if lang == "DE" else tool["label_en"],
+            "operation_name": veo.get("operation_name", ""),
+            "status": veo.get("status", "processing"),
+            "prompt_used": context,
+            "message": "Video generation started. Track progress in Video Studio.",
+        }
 
     _mem = await _agent_memory_context(req.agent_id, ws, lang)
     cfg = await _load_gateway_config(ws)
@@ -4001,7 +4278,7 @@ async def search_knowledge(payload: KbSearchRequest):
         f"[{d['category']}] {d['title']}:\n{d['content']}" for d in docs[:30]
     )
     system = (
-        "Du bist Jarvjis, der KI-Agent von Brandmind. "
+        "Du bist Quantum, der KI-Agent von Brandmind. "
         "Beantworte Fragen ausschließlich auf Basis der folgenden Wissensdatenbank. "
         "Halluziniere nichts. Zitiere die Quelle (Titel) wenn möglich.\n\n"
         f"WISSENSDATENBANK:\n{context}"
@@ -4682,9 +4959,9 @@ async def ticket_stats():
 
 
 # ---------------------------------------------------------------------------
-# Mission Control – AI CEO executive planning + department tasks
+# Mission Control – Quantum AI executive planning + department tasks
 # ---------------------------------------------------------------------------
-# The dashboard's command center. The AI CEO (Quantum) turns a business goal
+# The dashboard's command center. The Quantum Intelligence turns a business goal
 # into an executive plan and a set of department task objects. NOTHING is
 # auto-published or executed – every task starts as a proposal that a human
 # must approve. All records are workspace-scoped and carry the active brand.
@@ -4963,7 +5240,7 @@ def _dept_for(dept_id: str) -> dict:
 
 
 TEAM_CHAT_AGENTS = [
-    {"agent": "AI CEO", "role": "Moderator & final decision maker"},
+    {"agent": "Quantum AI", "role": "Moderator & final decision maker"},
     {"agent": "Marketing Director", "role": "Campaign strategy and channel focus"},
     {"agent": "Creative Director", "role": "Big idea, story and creative quality"},
     {"agent": "Copywriter", "role": "Messaging, hooks and conversion copy"},
@@ -4999,26 +5276,26 @@ def _fallback_team_chat(question: str, plan: dict, tasks: List[dict], lang: str)
     top_tasks = ", ".join(t.get("title", "") for t in tasks[:3] if t.get("title")) or plan.get("goal", "")
     if lang == "DE":
         return [
-            {"agent": "AI CEO", "role": "Moderator & final decision maker", "content": f"Ich moderiere: Wir prüfen den Plan zu „{plan.get('goal', '')}“ anhand Wirkung, Risiken und benötigter Freigaben.", "message_type": "agent"},
+            {"agent": "Quantum AI", "role": "Moderator & final decision maker", "content": f"Ich moderiere: Wir prüfen den Plan zu „{plan.get('goal', '')}“ anhand Wirkung, Risiken und benötigter Freigaben.", "message_type": "agent"},
             {"agent": "Marketing Director", "role": "Campaign strategy and channel focus", "content": "Priorisiert einen klaren Lead-Kanal und eine sekundäre Content-Schleife, statt alle Kanäle gleichzeitig zu starten.", "message_type": "agent"},
             {"agent": "Creative Director", "role": "Big idea, story and creative quality", "content": "Die Kernidee braucht eine einfache Story: Problem, sichtbarer Wandel, Proof und konkreter nächster Schritt.", "message_type": "agent"},
             {"agent": "Copywriter", "role": "Messaging, hooks and conversion copy", "content": "Ich würde Hooks und CTA zuerst schärfen; jede Aufgabe sollte eine konkrete Conversion-Aussage enthalten.", "message_type": "agent"},
             {"agent": "Analytics Expert", "role": "KPIs, measurement and risk signals", "content": "Risiko: Ohne Messplan optimieren wir blind. Definiert Lead-Kosten, Conversion-Rate und Produktionsgeschwindigkeit vor Start.", "message_type": "agent"},
-            {"agent": "AI CEO", "role": "Moderator & final decision maker", "content": f"Entscheidung: Zuerst die wichtigsten Tasks fokussieren ({top_tasks}), fehlende Assets ergänzen und alles nur nach menschlicher Freigabe umsetzen. Keine externen oder destruktiven Aktionen.", "message_type": "summary"},
+            {"agent": "Quantum AI", "role": "Moderator & final decision maker", "content": f"Entscheidung: Zuerst die wichtigsten Tasks fokussieren ({top_tasks}), fehlende Assets ergänzen und alles nur nach menschlicher Freigabe umsetzen. Keine externen oder destruktiven Aktionen.", "message_type": "summary"},
         ]
     return [
-        {"agent": "AI CEO", "role": "Moderator & final decision maker", "content": f"I'll moderate: we are reviewing the plan for “{plan.get('goal', '')}” for impact, risks and approval needs.", "message_type": "agent"},
+        {"agent": "Quantum AI", "role": "Moderator & final decision maker", "content": f"I'll moderate: we are reviewing the plan for “{plan.get('goal', '')}” for impact, risks and approval needs.", "message_type": "agent"},
         {"agent": "Marketing Director", "role": "Campaign strategy and channel focus", "content": "Prioritize one primary lead channel and one supporting content loop instead of launching every channel at once.", "message_type": "agent"},
         {"agent": "Creative Director", "role": "Big idea, story and creative quality", "content": "The idea needs a simple story: problem, visible transformation, proof and one clear next step.", "message_type": "agent"},
         {"agent": "Copywriter", "role": "Messaging, hooks and conversion copy", "content": "I would sharpen hooks and CTAs first; every task should include a concrete conversion message.", "message_type": "agent"},
         {"agent": "Analytics Expert", "role": "KPIs, measurement and risk signals", "content": "Risk: without measurement, we optimize blindly. Define CPL, conversion rate and production velocity before launch.", "message_type": "agent"},
-        {"agent": "AI CEO", "role": "Moderator & final decision maker", "content": f"Decision: focus the highest-impact tasks first ({top_tasks}), add missing assets, and execute only after human approval. No external or destructive actions.", "message_type": "summary"},
+        {"agent": "Quantum AI", "role": "Moderator & final decision maker", "content": f"Decision: focus the highest-impact tasks first ({top_tasks}), add missing assets, and execute only after human approval. No external or destructive actions.", "message_type": "summary"},
     ]
 
 
 @api_router.post("/mission/ceo/plan")
 async def mission_ceo_plan(req: CeoPlanRequest, ws: Optional[str] = Depends(current_workspace)):
-    """AI CEO (Quantum) turns a business goal into an executive plan + tasks.
+    """Quantum Intelligence turns a business goal into an executive plan + tasks.
 
     Uses the active brand + workspace context. Stores the plan and the derived
     department tasks. NOTHING is executed – every task is a proposal awaiting
@@ -5042,7 +5319,7 @@ async def mission_ceo_plan(req: CeoPlanRequest, ws: Optional[str] = Depends(curr
         f"{personality}\n\n"
         f"{_brand_context(brand, lang, 'ceo')}\n\n"
         f"{(_mem + chr(10) + chr(10)) if _mem else ''}"
-        "Du bist der KI-CEO. Erstelle einen umsetzbaren Executive-Plan für das Ziel des Nutzers. "
+        "Du bist Quantum Intelligence. Erstelle einen umsetzbaren Executive-Plan für das Ziel des Nutzers. "
         "WICHTIG: Nichts wird automatisch veröffentlicht oder ausgeführt – dein Plan ist ein Vorschlag, "
         "den ein Mensch freigeben muss. "
         f"Antworte AUSSCHLIESSLICH mit gültigem JSON in {lang_label}, ohne Markdown, mit exakt diesen Schlüsseln:\n"
@@ -5131,7 +5408,7 @@ async def mission_ceo_plan(req: CeoPlanRequest, ws: Optional[str] = Depends(curr
             required_inputs=[str(x) for x in required_inputs if str(x).strip()],
             expected_output=str(raw_task.get("expected_output") or fallback_outputs[dept_id]).strip(),
             comments=[{"id": str(uuid.uuid4()), "author": "Quantum", "text": "Task generated for internal collaboration. Human approval is required before anything leaves BrandMind.", "created_at": _now_iso()}],
-            timeline=[{"at": _now_iso(), "type": "task_created", "text": f"{dept['label_en']} task planned by AI CEO"}],
+            timeline=[{"at": _now_iso(), "type": "task_created", "text": f"{dept['label_en']} task planned by Quantum AI"}],
             brand_id=brand.get("id", ""),
             workspace_id=ws or "",
         )
@@ -5221,13 +5498,13 @@ async def mission_team_chat_ask(plan_id: str, payload: TeamChatAskRequest,
         f"{_brand_context(brand, payload.language, 'ceo')}\n\n"
         f"{(_mem + chr(10) + chr(10)) if _mem else ''}"
         "You are BrandMind's internal AI Team Chat for a Mission Control plan. "
-        "The AI CEO moderates. Relevant agents respond with short role-specific critique, improvements and next actions. "
+        "Quantum moderates. Relevant agents respond with short role-specific critique, improvements and next actions. "
         "Agents may challenge or improve each other's suggestions. "
-        "The AI CEO must end with a highlighted final recommendation. "
+        "The Quantum AI must end with a highlighted final recommendation. "
         "No external publishing, no destructive actions, no execution. Human approval is always required. "
         f"Answer only valid JSON in {lang_label}, no markdown. Shape: "
-        '{"messages":[{"agent":"AI CEO|Marketing Director|Creative Director|Copywriter|SEO Manager|Designer|Video Producer|Sales Expert|Analytics Expert|Automation Architect","role":"...","content":"1-3 short sentences","message_type":"agent|summary","linked_task_id":"optional task id or empty"}]}. '
-        "Use 4-8 total team messages. Last message_type must be summary by AI CEO."
+        '{"messages":[{"agent":"Quantum AI|Marketing Director|Creative Director|Copywriter|SEO Manager|Designer|Video Producer|Sales Expert|Analytics Expert|Automation Architect","role":"...","content":"1-3 short sentences","message_type":"agent|summary","linked_task_id":"optional task id or empty"}]}. '
+        "Use 4-8 total team messages. Last message_type must be summary by Quantum AI."
     )
     user = (
         f"PLAN GOAL: {plan.get('goal')}\nSUMMARY: {plan.get('summary')}\nSTRATEGY: {plan.get('strategy')}\n"
@@ -5249,9 +5526,9 @@ async def mission_team_chat_ask(plan_id: str, payload: TeamChatAskRequest,
     for item in messages[:10]:
         if not isinstance(item, dict):
             continue
-        agent = str(item.get("agent") or "AI CEO").strip()
+        agent = str(item.get("agent") or "Quantum AI").strip()
         if agent not in allowed_agents:
-            agent = "AI CEO"
+            agent = "Quantum AI"
         mtype = str(item.get("message_type") or "agent").strip()
         if mtype not in {"agent", "summary"}:
             mtype = "agent"
@@ -5449,8 +5726,8 @@ async def mission_overview(ws: Optional[str] = Depends(current_workspace)):
         })
     if not plans:
         suggestions.append({
-            "text_de": "Formuliere dein erstes Geschäftsziel – der KI-CEO erstellt den Plan",
-            "text_en": "Enter your first business goal – the AI CEO drafts the plan",
+            "text_de": "Formuliere dein erstes Geschäftsziel – der Quantum Intelligence erstellt den Plan",
+            "text_en": "Enter your first business goal – the Quantum Intelligence drafts the plan",
             "action": "create_plan",
         })
     overdue = [t for t in open_tasks if t.get("due_date") and t["due_date"] < today]
@@ -6233,6 +6510,133 @@ async def knowledge_graph_visualization(ws: Optional[str] = Depends(current_work
         "workspace_id": ws or "",
     }
 
+
+
+# ---------------------------------------------------------------------------
+# AI Business Card module
+# ---------------------------------------------------------------------------
+
+class BusinessCardPayload(BaseModel):
+    name: str = ""
+    title: str = ""
+    company: str = ""
+    bio: str = ""
+    avatar: str = ""
+    phone: str = ""
+    email: str = ""
+    website: str = ""
+    address: str = ""
+    social_links: dict = Field(default_factory=dict)
+    template_id: str = "aurora"
+    show_ai_assistant: bool = True
+
+
+def _card_public(card: dict) -> dict:
+    card = dict(card or {})
+    card.pop("_id", None)
+    return card
+
+
+def _new_card_hash() -> str:
+    return uuid.uuid4().hex[:10]
+
+
+async def _business_card_user(authorization: Optional[str] = Header(default=None)) -> dict:
+    from brandmind import current_user as bm_current_user
+    return await bm_current_user(authorization)
+
+
+@api_router.get("/business-cards")
+async def list_business_cards(user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+    query = {"user_id": user["id"], **({"workspace_id": ws} if ws else {})}
+    cards = await db.business_cards.find(query, {"_id": 0}).sort("updated_at", -1).to_list(200)
+    return cards
+
+
+@api_router.post("/business-cards")
+async def create_business_card(payload: BusinessCardPayload, user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+    now = _now_iso()
+    card = payload.dict()
+    card.update({
+        "id": str(uuid.uuid4()),
+        "url_hash": _new_card_hash(),
+        "user_id": user["id"],
+        "workspace_id": ws or "",
+        "created_at": now,
+        "updated_at": now,
+    })
+    await db.business_cards.insert_one(card)
+    return _card_public(card)
+
+
+@api_router.put("/business-cards/{card_id}")
+async def update_business_card(card_id: str, payload: BusinessCardPayload, user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+    query = {"id": card_id, "user_id": user["id"], **({"workspace_id": ws} if ws else {})}
+    existing = await db.business_cards.find_one(query, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Business card not found")
+    update = payload.dict()
+    update["updated_at"] = _now_iso()
+    await db.business_cards.update_one({"id": card_id}, {"$set": update})
+    return _card_public({**existing, **update})
+
+
+@api_router.post("/business-cards/{card_id}/duplicate")
+async def duplicate_business_card(card_id: str, user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+    query = {"id": card_id, "user_id": user["id"], **({"workspace_id": ws} if ws else {})}
+    existing = await db.business_cards.find_one(query, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Business card not found")
+    now = _now_iso()
+    clone = {**existing, "id": str(uuid.uuid4()), "url_hash": _new_card_hash(), "name": f"{existing.get('name', 'Card')} Copy", "created_at": now, "updated_at": now}
+    await db.business_cards.insert_one(clone)
+    return _card_public(clone)
+
+
+@api_router.delete("/business-cards/{card_id}")
+async def delete_business_card(card_id: str, user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+    query = {"id": card_id, "user_id": user["id"], **({"workspace_id": ws} if ws else {})}
+    result = await db.business_cards.delete_one(query)
+    if not result.deleted_count:
+        raise HTTPException(status_code=404, detail="Business card not found")
+    return {"ok": True}
+
+
+@api_router.get("/business-cards/public/{url_hash}")
+async def get_public_business_card(url_hash: str):
+    card = await db.business_cards.find_one({"url_hash": url_hash}, {"_id": 0, "user_id": 0})
+    if not card:
+        raise HTTPException(status_code=404, detail="Business card not found")
+    return card
+
+
+class BusinessCardChatRequest(BaseModel):
+    question: str
+
+
+@api_router.post("/business-cards/public/{url_hash}/chat")
+async def chat_public_business_card(url_hash: str, payload: BusinessCardChatRequest):
+    card = await db.business_cards.find_one({"url_hash": url_hash}, {"_id": 0, "user_id": 0})
+    if not card or not card.get("show_ai_assistant", True):
+        raise HTTPException(status_code=404, detail="Assistant not available")
+    q = (payload.question or "").lower()[:500]
+    allowed = {k: card.get(k, "") for k in ["name", "title", "company", "bio", "phone", "email", "website", "address"]}
+    socials = card.get("social_links") or {}
+    if any(w in q for w in ["phone", "telefon", "call"]):
+        answer = f"Phone: {allowed.get('phone') or 'not provided on this card.'}"
+    elif "email" in q or "mail" in q:
+        answer = f"Email: {allowed.get('email') or 'not provided on this card.'}"
+    elif "website" in q or "web" in q:
+        answer = f"Website: {allowed.get('website') or 'not provided on this card.'}"
+    elif "social" in q or "linkedin" in q or "instagram" in q:
+        answer = "Social links: " + (", ".join(f"{k}: {v}" for k, v in socials.items() if v) or "not provided on this card.")
+    else:
+        prompt = "Answer only from this business card profile. If unknown, say it is not provided.\nProfile: " + json.dumps({**allowed, "social_links": socials}) + "\nQuestion: " + payload.question[:500]
+        try:
+            answer = await llm_text(OPENAI_TEXT_MODEL, "You are a business-card assistant. Answer only from the provided profile data.", prompt)
+        except Exception:
+            answer = f"{allowed.get('name', 'This person')} is {allowed.get('title', 'a professional')} at {allowed.get('company', 'their company')}. {allowed.get('bio', '')}".strip()
+    return {"answer": answer}
 
 app.include_router(api_router)
 

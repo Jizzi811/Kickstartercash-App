@@ -1,9 +1,63 @@
+import React from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AppProvider, useApp } from "@/context/AppContext";
 import { BRANDMIND } from "@/brandmind";
 import { Layout } from "@/components/Layout";
+
+function AppFallback({ title, message, error }) {
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center px-6 text-center"
+      style={{ background: BRANDMIND.colors.base, color: "#fff" }}
+    >
+      <div className="max-w-md rounded-2xl border border-white/10 bg-white/[0.04] p-8 shadow-2xl">
+        <div
+          className="mx-auto mb-5 h-12 w-12 rounded-full"
+          style={{ background: BRANDMIND.colors.glow, boxShadow: `0 0 40px ${BRANDMIND.colors.glow}` }}
+        />
+        <h1 className="text-xl font-semibold">{title}</h1>
+        <p className="mt-3 text-sm leading-6 text-zinc-400">{message}</p>
+        {error && (
+          <pre className="mt-4 max-h-40 overflow-auto rounded-lg bg-black/40 p-3 text-left text-xs text-red-300">
+            {error}
+          </pre>
+        )}
+      </div>
+    </div>
+  );
+}
+
+class AppErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error, info) {
+    // Keep the failure visible instead of leaving users on a black screen.
+    console.error("Brandmind app render failed", error, info);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <AppFallback
+          title="Brandmind konnte nicht geladen werden"
+          message="Bitte lade die Seite neu. Falls das Problem bleibt, kopiere die Fehlermeldung unten an den Support."
+          error={this.state.error?.message || String(this.state.error)}
+        />
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // Core pages
 import BrandMindHQ from "@/pages/BrandMindHQ";
@@ -22,11 +76,12 @@ import Billing from "@/pages/Billing";
 import Permissions from "@/pages/Permissions";
 
 // Agent system
-import JarvjisAgent from "@/pages/JarvjisAgent";   // CEO Orb – bleibt
+import QuantumAgent from "@/pages/QuantumAgent";   // Quantum Command
 import Specialists from "@/pages/Specialists";       // Agents overview
 
 // Studios
 import DesignStudio from "@/pages/DesignStudio";
+import DesignStudioV2Preview from "@/pages/DesignStudioV2Preview";
 import VideoStudio from "@/pages/VideoStudio";
 import SeoStudio from "@/pages/SeoStudio";
 import AnalyticsStudio from "@/pages/AnalyticsStudio";
@@ -60,23 +115,28 @@ import ExportCenter from "@/pages/ExportCenter";
 import Campaign from "@/pages/Campaign";
 import CampaignWorkflow from "@/pages/CampaignWorkflow";
 import AgentBuilder from "@/pages/AgentBuilder";
+import CharacterStudio from "@/pages/CharacterStudio";
 import TTSStudio from "@/pages/TTSStudio";
 import OutputFactory from "@/pages/OutputFactory";
+import AIBusinessCard, { PublicBusinessCard } from "@/pages/AIBusinessCard";
 
 function App() {
   return (
     <div className="App">
-      <AppProvider>
+      <AppErrorBoundary>
+        <AppProvider>
         <BrowserRouter>
           <Routes>
             {/* Brandmind auth – standalone, no app chrome */}
             <Route path="/auth" element={<Auth />} />
+            <Route path="/card/:hash" element={<PublicBusinessCard />} />
             {/* Everything else runs inside the app shell */}
             <Route path="/*" element={<AppShell />} />
           </Routes>
         </BrowserRouter>
         <Toaster theme="dark" position="top-right" richColors />
       </AppProvider>
+      </AppErrorBoundary>
     </div>
   );
 }
@@ -91,10 +151,13 @@ function AppShell() {
         className="min-h-screen flex items-center justify-center"
         style={{ background: BRANDMIND.colors.base }}
       >
-        <div
-          className="w-10 h-10 rounded-full animate-pulse"
-          style={{ background: BRANDMIND.colors.glow, filter: "blur(4px)" }}
-        />
+        <div className="text-center">
+          <div
+            className="mx-auto mb-4 w-10 h-10 rounded-full animate-pulse"
+            style={{ background: BRANDMIND.colors.glow, filter: "blur(4px)" }}
+          />
+          <p className="text-sm text-zinc-400">Brandmind wird geladen…</p>
+        </div>
       </div>
     );
   }
@@ -114,6 +177,10 @@ function AppShell() {
               <Route path="/mission/plans/:planId" element={<MissionControl />} />
               <Route path="/modules" element={<Dashboard />} />
               <Route path="/output-factory" element={<OutputFactory />} />
+              <Route path="/ai-business-card" element={<AIBusinessCard />} />
+              <Route path="ai-business-card" element={<AIBusinessCard />} />
+              <Route path="/business-card" element={<Navigate to="/ai-business-card" replace />} />
+              <Route path="business-card" element={<Navigate to="/ai-business-card" replace />} />
               <Route path="/brand-brain" element={<BrandBrain />} />
               <Route path="/brand-identity" element={<BrandIdentity />} />
               <Route path="/memory" element={<Memory />} />
@@ -123,6 +190,7 @@ function AppShell() {
               <Route path="/permissions" element={<Permissions />} />
               <Route path="/agents" element={<Specialists />} />
               <Route path="/design" element={<DesignStudio />} />
+              <Route path="/design-v2" element={<DesignStudioV2Preview />} />
               <Route path="/video" element={<VideoStudio />} />
               <Route path="/social" element={<SocialMedia />} />
               <Route path="/seo" element={<SeoStudio />} />
@@ -131,9 +199,10 @@ function AppShell() {
               <Route path="/knowledge" element={<KnowledgeBase />} />
               <Route path="/knowledge-graph" element={<KnowledgeExplorer />} />
 
-              {/* Jarvjis CEO Orb – bleibt */}
-              <Route path="/jarvjis" element={<JarvjisAgent />} />
+              {/* Quantum Command – bleibt */}
+              <Route path="/quantum" element={<QuantumAgent />} />
               <Route path="/builder" element={<AgentBuilder />} />
+              <Route path="/character-studio" element={<CharacterStudio />} />
 
               {/* Ticket System */}
               <Route path="/tickets" element={<TicketSystem />} />

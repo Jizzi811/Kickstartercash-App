@@ -39,6 +39,7 @@ class _Handler(BaseHTTPRequestHandler):
             "auth": self.headers.get("Authorization"),
             "width": body.get("width"),
             "height": body.get("height"),
+            "seed": body.get("seed"),
             "keys": sorted(body.keys()),
         })
         payload = json.dumps({"artifacts": [{"base64": _B64, "finishReason": "SUCCESS"}]}).encode()
@@ -75,6 +76,7 @@ def test_nvidia_models_route_correctly():
             assert last["path"] == f"/v1/genai/{slug}", f"{model_key} path {last['path']}"
             assert last["auth"] == "Bearer nvapi-test-key"
             assert (last["width"], last["height"]) == (w, h), f"{model_key} size {last['width']}x{last['height']}"
+            assert isinstance(last["seed"], int) and last["seed"] > 0, f"{model_key} seed {last['seed']}"
             # flux.1-schnell rejects extra fields: payload must be exactly these 4
             assert last["keys"] == ["height", "prompt", "seed", "width"], last["keys"]
     finally:

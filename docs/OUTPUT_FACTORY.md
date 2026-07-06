@@ -24,7 +24,7 @@ Every factory receives the same context package:
 - Active workspace
 - Active brand
 - Mission Control plan
-- AI CEO strategy
+- Quantum AI strategy
 - Approved department tasks
 - Brand Brain context
 

@@ -39,7 +39,7 @@ Additional operational relationships, such as Workspace contains Brand, Brand ha
 Key integration points:
 
 - **Current persistence layer:** reads brands, Mission Control plans/tasks, Output Factory assets, Knowledge Base records, workflow runs, and intelligence events.
-- **Memory Router:** graph snapshots include routed CEO memory context and memory-brain nodes rather than bypassing the router.
+- **Memory Router:** graph snapshots include routed Quantum memory context and memory-brain nodes rather than bypassing the router.
 - **Brand Identity Engine:** brand identity nodes are generated from `identity_service.merged_dna()` and include completeness data.
 - **Mission Control:** plans become campaign, mission, and goal nodes; Mission Control tasks become task, workflow, workflow-step, department, and agent relationships.
 - **Permission framework:** API routes preflight with the existing permission policy before returning graph data.

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Volume2, Loader2, Download, Play } from "lucide-react";
 import { useApp, API } from "@/context/AppContext";
-import { PageTitle } from "@/components/PageTitle";
+import { PageHeader } from "@/components/PageHeader";
 import { Textarea } from "@/components/ui/textarea";
 
 // OpenAI gpt-4o-mini-tts voices. "Standard" = alloy.
@@ -43,11 +43,12 @@ export default function TTSStudio() {
   };
 
   return (
-    <div>
-      <PageTitle
+    <div className="space-y-8">
+      <PageHeader
+        icon={Volume2}
+        badge="TTS Studio"
         title={L("TTS Studio", "TTS Studio")}
         subtitle={L("Text eingeben, vertonen lassen und als Audio herunterladen.", "Enter text, turn it into speech and download the audio.")}
-        icon={Volume2}
       />
 
       <div className="bg-[#0A0A0A] border border-[#7C3AED]/30 rounded-md p-6 md:p-7 space-y-5 purple-glow">
