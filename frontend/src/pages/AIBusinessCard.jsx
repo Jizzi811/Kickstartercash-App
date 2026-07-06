@@ -35,6 +35,7 @@ const emptyCard = {
   assistant_avatar: "",
   assistant_label: "Ask AI",
   assistant_greeting: "Hi, ask me anything about this profile.",
+  assistant_knowledge: "",
 };
 
 const templates = [
@@ -394,6 +395,12 @@ export default function AIBusinessCard() {
               onChange={(e) => update("assistant_greeting", e.target.value)}
               placeholder="Assistant greeting"
               className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-violet-400 md:col-span-2"
+            />
+            <textarea
+              value={current.assistant_knowledge || ""}
+              onChange={(e) => update("assistant_knowledge", e.target.value)}
+              placeholder="Assistant knowledge (private notes/FAQ for bot answers)"
+              className="min-h-32 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-violet-400 md:col-span-2"
             />
           </div>
         </div>
