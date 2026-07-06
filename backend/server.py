@@ -1064,7 +1064,13 @@ def _build_image_prompt(brand: dict, subject: str, style: str) -> str:
     )
 
 
-def _image_variant_prompt(base_prompt: str, index: int, total: int, language: str = "DE") -> str:
+def _image_variant_prompt(
+    base_prompt: str,
+    index: int,
+    total: int,
+    language: str = "DE",
+    variation_key: Optional[str] = None,
+) -> str:
     """Inject a strong creative direction per variant to avoid near-duplicates."""
     variant_directions = [
         "Cinematic hero scene, low camera angle, dramatic rim light, high contrast, iconic ad look.",
@@ -1077,11 +1083,13 @@ def _image_variant_prompt(base_prompt: str, index: int, total: int, language: st
     direction = variant_directions[index % len(variant_directions)]
     palette = palettes[index % len(palettes)]
     lens = lens_styles[index % len(lens_styles)]
+    var_key = variation_key or uuid.uuid4().hex[:10]
     if language == "DE":
         return (
             f"{base_prompt} "
             f"Variante {index + 1} von {total}: {direction} "
             f"Color grading: {palette}. Lens/Framing: {lens}. "
+            f"Interner Variationsschlüssel: {var_key} (nicht als Text im Bild rendern). "
             "Erzeuge eine klar eigenständige Interpretation im gleichen Brand-Style: "
             "andere Komposition, Perspektive, Lichtstimmung, Tiefenstaffelung und Story-Moment als die anderen Varianten."
         )
@@ -1089,6 +1097,7 @@ def _image_variant_prompt(base_prompt: str, index: int, total: int, language: st
         f"{base_prompt} "
         f"Variant {index + 1} of {total}: {direction} "
         f"Color grading: {palette}. Lens/framing: {lens}. "
+        f"Internal variation key: {var_key} (do not render as visible text in the image). "
         "Create a clearly distinct interpretation in the same brand style: "
         "different composition, perspective, lighting mood, scene depth, and narrative moment than the other variants."
     )
@@ -1189,7 +1198,12 @@ async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_
         image_urls = [brand_logo]
 
     count = min(max(req.count or 1, 1), 4)
-    prompts = [_image_variant_prompt(full_prompt, i, count, req.language) for i in range(count)]
+    prompts = [
+        _image_variant_prompt(
+            full_prompt, i, count, req.language, variation_key=f"v{i+1}-{uuid.uuid4().hex[:8]}"
+        )
+        for i in range(count)
+    ]
     results = await asyncio.gather(
         *[image_by_model_verbose(req.model, p, size=req.size, image_urls=image_urls) for p in prompts],
         return_exceptions=True,
