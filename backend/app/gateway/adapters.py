@@ -15,11 +15,15 @@ from __future__ import annotations
 import asyncio
 import base64
 import logging
+import os
 from typing import List, Optional
 
 from .registry import ProviderSpec
 
 logger = logging.getLogger(__name__)
+_NVIDIA_BASE_DEFAULT = "https://integrate.api.nvidia.com/v1"
+_NVIDIA_DEEPSEEK_MODEL = "deepseek-ai/deepseek-r1"
+_NVIDIA_MISTRAL_MODEL = "mistralai/mixtral-8x7b-instruct-v0.1"
 
 # chat for these providers is handled by the existing, tested llm layer
 NATIVE_CHAT = {"openai", "anthropic", "gemini", "grok", "freetheai"}
@@ -84,7 +88,21 @@ class ProviderAdapter:
             headers["X-Title"] = "BrandMind"
         return headers
 
+    def _uses_nvidia_fallback(self) -> bool:
+        return self.spec.id in {"deepseek", "mistral"} and not os.environ.get(self.spec.api_key_env or "", "") and bool(os.environ.get("NVIDIA_API_KEY", ""))
+
+    def _effective_model(self, model: str) -> str:
+        if not self._uses_nvidia_fallback():
+            return model
+        if self.spec.id == "deepseek":
+            return os.environ.get("NVIDIA_MODEL_DEEPSEEK", _NVIDIA_DEEPSEEK_MODEL)
+        if self.spec.id == "mistral":
+            return os.environ.get("NVIDIA_MODEL_MISTRAL", _NVIDIA_MISTRAL_MODEL)
+        return model
+
     def _chat_url(self) -> str:
+        if self._uses_nvidia_fallback():
+            return f"{os.environ.get('NVIDIA_BASE', _NVIDIA_BASE_DEFAULT).rstrip('/')}/chat/completions"
         base = self.spec.base_url().rstrip("/")
         if not base:
             raise RuntimeError(f"{self.spec.id}: base url not configured")
@@ -99,13 +117,18 @@ class ProviderAdapter:
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": user})
+        effective_model = self._effective_model(model)
         r = requests.post(self._chat_url(), headers=self._headers(),
-                          json={"model": model, "messages": messages}, timeout=90)
+                          json={"model": effective_model, "messages": messages}, timeout=90)
         if not r.ok:
             raise RuntimeError(f"{self.spec.id} {r.status_code}: {r.text[:200]}")
         return (((r.json().get("choices") or [{}])[0]).get("message") or {}).get("content", "") or ""
 
     def _oai_embed(self, model: str, texts: List[str]) -> List[List[float]]:
+        if self._uses_nvidia_fallback():
+            raise RuntimeError(
+                f"{self.spec.id} embeddings require {self.spec.api_key_env}; NVIDIA fallback supports chat routing only"
+            )
         import requests
         base = self.spec.base_url().rstrip("/")
         url = f"{base}/embeddings"

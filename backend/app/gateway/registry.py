@@ -21,6 +21,11 @@ from .capabilities import (
     CHAT, VISION, IMAGE, EMBEDDINGS, SPEECH_TO_TEXT, TEXT_TO_SPEECH, STRUCTURED_OUTPUT,
 )
 
+_NVIDIA_KEY_ENV = "NVIDIA_API_KEY"
+_NVIDIA_BASE_ENV = "NVIDIA_BASE"
+_NVIDIA_DEFAULT_BASE = "https://integrate.api.nvidia.com/v1"
+_NVIDIA_FALLBACK_PROVIDERS = {"deepseek", "mistral"}
+
 
 @dataclass
 class ProviderSpec:
@@ -37,11 +42,19 @@ class ProviderSpec:
     notes: str = ""
 
     def api_key(self) -> str:
-        return os.environ.get(self.api_key_env, "") if self.api_key_env else ""
+        if self.api_key_env:
+            key = os.environ.get(self.api_key_env, "")
+            if key:
+                return key
+        if self.id in _NVIDIA_FALLBACK_PROVIDERS:
+            return os.environ.get(_NVIDIA_KEY_ENV, "")
+        return ""
 
     def base_url(self) -> str:
         if self.base_url_env and os.environ.get(self.base_url_env):
             return os.environ[self.base_url_env]
+        if self.id in _NVIDIA_FALLBACK_PROVIDERS and os.environ.get(_NVIDIA_KEY_ENV):
+            return os.environ.get(_NVIDIA_BASE_ENV, _NVIDIA_DEFAULT_BASE)
         return self.default_base_url or ""
 
     def is_configured(self) -> bool:

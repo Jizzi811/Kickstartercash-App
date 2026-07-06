@@ -59,6 +59,10 @@ FREETHEAI_TTS_MODEL = os.environ.get("FREETHEAI_TTS_MODEL", "xai/grok-tts")
 NVIDIA_API_KEY = os.environ.get("NVIDIA_API_KEY", "")
 NVIDIA_BASE = os.environ.get("NVIDIA_BASE", "https://integrate.api.nvidia.com/v1")
 NVIDIA_TEXT_MODEL = os.environ.get("NVIDIA_TEXT_MODEL", "meta/llama-3.1-70b-instruct")
+# Optional aliases used when users pick DeepSeek/Mistral without dedicated keys.
+# These models are called through the same NVIDIA NIM endpoint/key.
+NVIDIA_MODEL_DEEPSEEK = os.environ.get("NVIDIA_MODEL_DEEPSEEK", "deepseek-ai/deepseek-r1")
+NVIDIA_MODEL_MISTRAL = os.environ.get("NVIDIA_MODEL_MISTRAL", "mistralai/mixtral-8x7b-instruct-v0.1")
 
 # --- OpenAI model overrides -------------------------------------------------
 # The "gpt" button's text model. Overridable so a non-technical operator can

@@ -20,7 +20,7 @@ import anthropic
 from app.core.config import (
     OPENAI_API_KEY, GEMINI_API_KEY, EMERGENT_LLM_KEY, ANTHROPIC_API_KEY,
     FREETHEAI_API_KEY, FREETHEAI_BASE, OPENAI_TEXT_MODEL, FREETHEAI_TEXT_MODEL,
-    NVIDIA_API_KEY, NVIDIA_BASE, NVIDIA_TEXT_MODEL,
+    NVIDIA_API_KEY, NVIDIA_BASE, NVIDIA_TEXT_MODEL, NVIDIA_MODEL_DEEPSEEK, NVIDIA_MODEL_MISTRAL,
 )
 
 logger = logging.getLogger(__name__)
@@ -64,6 +64,14 @@ MODEL_MAP = {
     "freetheai": ("freetheai", FREETHEAI_TEXT_MODEL),
     # NVIDIA NIM (OpenAI-compatible – build.nvidia.com)
     "nvidia": ("nvidia", NVIDIA_TEXT_MODEL),
+    # DeepSeek + Mistral aliases routed through NVIDIA when selected as chat models.
+    # This keeps the UX simple: one NVIDIA key can power these choices.
+    "deepseek": ("nvidia", NVIDIA_MODEL_DEEPSEEK),
+    "deepseek-chat": ("nvidia", NVIDIA_MODEL_DEEPSEEK),
+    "deepseek-reasoner": ("nvidia", NVIDIA_MODEL_DEEPSEEK),
+    "mistral": ("nvidia", NVIDIA_MODEL_MISTRAL),
+    "mistral-large-latest": ("nvidia", NVIDIA_MODEL_MISTRAL),
+    "mistral-small-latest": ("nvidia", NVIDIA_MODEL_MISTRAL),
 }
 IMAGE_MODEL = "gemini-3.1-flash-image-preview"
 
