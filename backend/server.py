@@ -6469,6 +6469,7 @@ class BusinessCardPayload(BaseModel):
     title: str = ""
     company: str = ""
     bio: str = ""
+    logo_url: str = ""
     avatar: str = ""
     phone: str = ""
     email: str = ""

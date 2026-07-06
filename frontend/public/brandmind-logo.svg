@@ -1,0 +1,22 @@
+<svg width="300" height="72" viewBox="0 0 300 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="brandmind-purple" x1="8" y1="8" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A78BFA"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="wordmark-purple" x1="162" y1="18" x2="272" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C4B5FD"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <rect x="1.5" y="1.5" width="69" height="69" rx="19.5" stroke="url(#brandmind-purple)" stroke-width="3"/>
+  <path d="M23 49V23H37.2C42.4 23 46 26.4 46 31.2C46 34.1 44.7 36.2 42.4 37.3C45.4 38.4 47 40.9 47 44C47 49 43 52 37.4 52H30.5M30.5 34.6H36.3C38.8 34.6 40.4 33.3 40.4 31.2C40.4 29.2 38.9 28 36.3 28H30.5V34.6ZM30.5 46.8H37.1C39.7 46.8 41.4 45.6 41.4 43.4C41.4 41.1 39.7 39.9 37.1 39.9H30.5V46.8Z" fill="url(#brandmind-purple)"/>
+  <path d="M50.5 28.8C52.9 28.8 54.8 26.9 54.8 24.5C54.8 22.1 52.9 20.2 50.5 20.2C48.1 20.2 46.2 22.1 46.2 24.5C46.2 26.9 48.1 28.8 50.5 28.8Z" fill="url(#brandmind-purple)"/>
+  <rect x="58" y="35" width="10" height="5" rx="2.5" fill="url(#brandmind-purple)"/>
+  <rect x="54" y="37.5" width="16" height="3" rx="1.5" fill="url(#brandmind-purple)" opacity="0.65"/>
+  <path d="M88 21.6H108.2C120.5 21.6 127.7 28.2 127.7 36C127.7 43.8 120.5 50.4 108.2 50.4H88V21.6ZM98 29.2V42.8H108.1C114.2 42.8 117.4 39.7 117.4 36C117.4 32.3 114.2 29.2 108.1 29.2H98Z" fill="white"/>
+  <path d="M130.8 50.4V21.6H156.9V29H140.6V32.8H155.8V39.6H140.6V43H157.4V50.4H130.8Z" fill="white"/>
+  <path d="M160.2 50.4V21.6H176.5L183.7 34.7L190.9 21.6H207.2V50.4H197.7V34.8L190.6 47.6H176.8L169.7 34.8V50.4H160.2Z" fill="url(#wordmark-purple)"/>
+  <path d="M210.2 50.4V21.6H220.1L233.5 37.6V21.6H243.3V50.4H233.5L220 34.4V50.4H210.2Z" fill="url(#wordmark-purple)"/>
+  <path d="M247.1 50.4V21.6H259.5C272.9 21.6 279.8 27.8 279.8 36C279.8 44.2 272.9 50.4 259.5 50.4H247.1ZM257 29.2V42.8H259.5C266.1 42.8 269.5 39.6 269.5 36C269.5 32.4 266.1 29.2 259.5 29.2H257Z" fill="url(#wordmark-purple)"/>
+</svg>
