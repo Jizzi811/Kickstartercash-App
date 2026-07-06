@@ -1065,6 +1065,30 @@ def _build_image_prompt(brand: dict, subject: str, style: str) -> str:
     )
 
 
+def _image_variant_prompt(base_prompt: str, index: int, total: int, language: str = "DE") -> str:
+    """Inject a gentle creative direction per variant to avoid near-duplicates."""
+    variant_directions = [
+        "Cinematic hero composition with dramatic key light and clean premium negative space.",
+        "Human-centered storytelling angle with candid motion and warm emotional atmosphere.",
+        "Bold product-led close-up with texture detail, reflective materials and strong depth.",
+        "Editorial wide scene with architectural lines, layered foreground/background and dynamic perspective.",
+    ]
+    direction = variant_directions[index % len(variant_directions)]
+    if language == "DE":
+        return (
+            f"{base_prompt} "
+            f"Variante {index + 1} von {total}: {direction} "
+            "Erzeuge eine deutlich eigene kreative Interpretation im selben Brand-Style "
+            "(andere Komposition, Perspektive und Lichtstimmung als die anderen Varianten)."
+        )
+    return (
+        f"{base_prompt} "
+        f"Variant {index + 1} of {total}: {direction} "
+        "Create a clearly distinct creative interpretation in the same brand style "
+        "(different composition, perspective, and lighting mood than the other variants)."
+    )
+
+
 def _fetch_logo_b64(brand: dict) -> Optional[str]:
     if not brand.get("logo_url"):
         return None
@@ -1160,8 +1184,9 @@ async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_
         image_urls = [brand_logo]
 
     count = min(max(req.count or 1, 1), 4)
+    prompts = [_image_variant_prompt(full_prompt, i, count, req.language) for i in range(count)]
     results = await asyncio.gather(
-        *[image_by_model_verbose(req.model, full_prompt, size=req.size, image_urls=image_urls) for _ in range(count)],
+        *[image_by_model_verbose(req.model, p, size=req.size, image_urls=image_urls) for p in prompts],
         return_exceptions=True,
     )
     images = []
