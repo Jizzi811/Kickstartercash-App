@@ -10,11 +10,29 @@ import { IMAGE_STYLES } from "@/i18n";
 
 const COLOR = "#C084FC";
 
+// Image models offered by the live generator (maps to backend ImageRequest.model).
+const IMAGE_MODELS = [
+  { id: "gpt", label: "GPT Image" },
+  { id: "flux2", label: "Flux 2" },
+  { id: "flux-schnell", label: "Flux.1 schnell" },
+  { id: "qwen-image", label: "Qwen Image" },
+  { id: "sd3", label: "Stable Diffusion 3.5" },
+];
+
+// Output formats (aspect ratios) -> backend `size` label.
+const IMAGE_FORMATS = [
+  { id: "1:1", label: "1:1", de: "Quadrat", en: "Square" },
+  { id: "16:9", label: "16:9", de: "Querformat", en: "Landscape" },
+  { id: "9:16", label: "9:16", de: "Hochformat", en: "Portrait" },
+  { id: "4:3", label: "4:3", de: "Klassisch", en: "Classic" },
+  { id: "3:4", label: "3:4", de: "Porträt", en: "Portrait" },
+];
+
 const TOOLS = [
   {
-    id: "gpt_image", label: "GPT Image", label_en: "GPT Image",
+    id: "gpt_image", label: "Bild generieren", label_en: "Generate Image",
     emoji: "🤖", type: "image", builtIn: true,
-    desc: "Generiert sofort ein Werbebild via KI (Gemini Flash Image).",
+    desc: "Generiert 3 Werbebild-Varianten mit dem gewählten Modell & Format.",
   },
   {
     id: "canva", label: "Canva Guide", label_en: "Canva Guide",
@@ -48,6 +66,8 @@ export default function DesignStudio() {
   const [toolLoading, setToolLoading] = useState(null);
   const [prompt, setPrompt] = useState("");
   const [style, setStyle] = useState("Luxuriös");
+  const [imageModel, setImageModel] = useState("gpt");
+  const [imageFormat, setImageFormat] = useState("16:9");
   const [generatedImages, setGeneratedImages] = useState([]);
 
   const runTool = async (tool) => {
@@ -57,7 +77,8 @@ export default function DesignStudio() {
       setGeneratedImages([]);
       try {
         const res = await axios.post(`${API}/generate/image`, {
-          prompt, style, brand_id: activeBrandId, language: lang, apply_logo: false, size: "16:9", count: 3,
+          prompt, style, brand_id: activeBrandId, language: lang, apply_logo: false,
+          size: imageFormat, count: 3, model: imageModel,
         });
         setGeneratedImages(res.data.images || (res.data.image ? [res.data.image] : []));
       } catch (e) {
@@ -84,7 +105,7 @@ export default function DesignStudio() {
         icon={Palette}
         color="#C084FC"
         title="Design Studio"
-        subtitle={lang === "DE" ? "GPT Image · Canva · Leonardo · Flux · Ideogram" : "GPT Image · Canva · Leonardo · Flux · Ideogram"}
+        subtitle={lang === "DE" ? "GPT · Flux 2 · Flux schnell · Qwen · SD 3.5 · Canva · Leonardo" : "GPT · Flux 2 · Flux schnell · Qwen · SD 3.5 · Canva · Leonardo"}
         badge="Design"
       />
 
@@ -112,8 +133,57 @@ export default function DesignStudio() {
                 {IMAGE_STYLES.map((s) => <option key={s}>{s}</option>)}
               </select>
               <span className="text-xs text-zinc-600">
-                {lang === "DE" ? "Stil für GPT Image" : "Style for GPT Image"}
+                {lang === "DE" ? "Bild-Stil" : "Image style"}
               </span>
+            </div>
+
+            {/* Image model selector */}
+            <div>
+              <p className="text-[10px] text-zinc-600 uppercase tracking-widest mb-2">
+                {lang === "DE" ? "Modell" : "Model"}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {IMAGE_MODELS.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setImageModel(m.id)}
+                    data-testid={`image-model-${m.id}`}
+                    className={`px-3 py-1.5 rounded-sm text-xs border transition-colors ${
+                      imageModel === m.id
+                        ? "border-[#C084FC] text-white bg-[rgba(192,132,252,0.14)]"
+                        : "border-white/8 text-zinc-400 hover:text-white hover:border-white/20"
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Output format (aspect ratio) selector */}
+            <div>
+              <p className="text-[10px] text-zinc-600 uppercase tracking-widest mb-2">
+                {lang === "DE" ? "Format" : "Format"}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {IMAGE_FORMATS.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setImageFormat(f.id)}
+                    data-testid={`image-format-${f.id}`}
+                    title={lang === "DE" ? f.de : f.en}
+                    className={`px-3 py-1.5 rounded-sm text-xs border transition-colors ${
+                      imageFormat === f.id
+                        ? "border-[#C084FC] text-white bg-[rgba(192,132,252,0.14)]"
+                        : "border-white/8 text-zinc-400 hover:text-white hover:border-white/20"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
