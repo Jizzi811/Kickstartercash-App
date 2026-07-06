@@ -13,6 +13,7 @@ import {
   Globe,
   Instagram,
   Linkedin,
+  Loader2,
   Mail,
   MapPin,
   MessageCircle,
