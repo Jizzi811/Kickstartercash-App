@@ -41,6 +41,8 @@ from app.core.config import (  # noqa: E402
     FREETHEAI_API_KEY, FREETHEAI_BASE, FREETHEAI_IMAGE_MODEL,
     FREETHEAI_TEXT_MODEL, FREETHEAI_TTS_MODEL,
     OPENAI_TEXT_MODEL, LOGO_URL,
+    FAL_KEY, FAL_BASE, FAL_MODEL_FLUX2, FAL_MODEL_FLUX_SCHNELL,
+    FAL_MODEL_QWEN, FAL_MODEL_SD3,
 )
 
 from app.core.database import client, db  # noqa: E402
@@ -355,6 +357,91 @@ async def brand_image(prompt: str, size: str = "1:1", image_urls: Optional[list]
     return img
 
 
+def _size_to_fal(size: str) -> str:
+    """Map an aspect-ratio label to a fal.ai image_size enum value."""
+    return {
+        "1:1": "square_hd",
+        "16:9": "landscape_16_9",
+        "9:16": "portrait_16_9",
+        "4:3": "landscape_4_3",
+        "3:4": "portrait_4_3",
+    }.get(size, "square_hd")
+
+
+async def fal_image(prompt: str, size: str = "1:1", image_urls: Optional[list] = None,
+                    model: str = FAL_MODEL_FLUX2) -> Optional[str]:
+    """Image generation via fal.ai (Flux 2 / Flux schnell / Qwen / SD3). Needs FAL_KEY.
+
+    fal.ai HTTP API: POST {FAL_BASE}/{model-id} with header "Authorization: Key <FAL_KEY>".
+    Returns a data: URL (image fetched + base64-encoded for consistency with the other providers).
+    """
+    if not FAL_KEY:
+        return None
+
+    def _generate():
+        import requests
+        url = f"{FAL_BASE.rstrip('/')}/{model.strip('/')}"
+        r = requests.post(
+            url,
+            headers={"Authorization": f"Key {FAL_KEY}", "Content-Type": "application/json"},
+            json={"prompt": prompt[:5000], "image_size": _size_to_fal(size),
+                  "num_images": 1, "output_format": "jpeg"},
+            timeout=180,
+        )
+        if not r.ok:
+            logger.warning(f"fal image {r.status_code}: {r.text[:200]}")
+            return None
+        img0 = ((r.json().get("images") or [{}])[0]) or {}
+        b64 = img0.get("b64_json")
+        if b64:
+            return f"data:{img0.get('content_type', 'image/jpeg')};base64,{b64}"
+        u = img0.get("url")
+        if u and u.startswith("data:"):
+            return u
+        if u:
+            rr = requests.get(u, timeout=60)
+            if rr.ok and rr.content:
+                ct = rr.headers.get("content-type", img0.get("content_type", "image/jpeg"))
+                return f"data:{ct};base64,{base64.b64encode(rr.content).decode('utf-8')}"
+        return None
+
+    try:
+        return await asyncio.wait_for(asyncio.to_thread(_generate), timeout=190)
+    except Exception as e:
+        logger.error(f"fal image generation failed: {e}")
+        return None
+
+
+# Design-Studio image models: friendly id -> engine (+ fal.ai model slug).
+# "gpt" keeps the existing best-available provider chain; the rest route to fal.ai.
+IMAGE_MODELS = {
+    "gpt":          {"label": "GPT Image",          "engine": "default"},
+    "flux2":        {"label": "Flux 2",             "engine": "fal", "model": FAL_MODEL_FLUX2},
+    "flux-schnell": {"label": "Flux.1 [schnell]",   "engine": "fal", "model": FAL_MODEL_FLUX_SCHNELL},
+    "qwen-image":   {"label": "Qwen Image",         "engine": "fal", "model": FAL_MODEL_QWEN},
+    "sd3":          {"label": "Stable Diffusion 3", "engine": "fal", "model": FAL_MODEL_SD3},
+}
+
+
+async def image_by_model_verbose(model_key: str, prompt: str, size: str = "1:1",
+                                 image_urls: Optional[list] = None):
+    """Route an image request by the Design-Studio model choice.
+
+    Returns (image_or_None, per-provider status dict), matching brand_image_verbose.
+    """
+    spec = IMAGE_MODELS.get(model_key) or IMAGE_MODELS["gpt"]
+    if spec.get("engine") == "fal":
+        if not FAL_KEY:
+            return None, {spec["label"]: "FAL_KEY not set – set it to use this model"}
+        try:
+            img = await fal_image(prompt, size=size, image_urls=image_urls, model=spec["model"])
+            return img, {spec["label"]: "ok" if img else "kein Bild"}
+        except Exception as e:  # noqa: BLE001
+            return None, {spec["label"]: str(e)[:160]}
+    # default: existing best-available chain (FreeTheAi -> OpenAI -> Poyo -> Gemini)
+    return await brand_image_verbose(prompt, size=size, image_urls=image_urls)
+
+
 async def llm_image(prompt: str, reference_b64: Optional[str] = None) -> Optional[str]:
     from emergentintegrations.llm.chat import ImageContent
     chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=str(uuid.uuid4()),
@@ -487,6 +574,7 @@ class ImageRequest(BaseModel):
     apply_logo: bool = False
     size: str = "1:1"
     count: int = 1   # number of variants to generate (1-4)
+    model: str = "gpt"   # gpt (default chain) | flux2 | flux-schnell | qwen-image | sd3
 
 
 class PromptOptimizeRequest(BaseModel):
@@ -1065,7 +1153,7 @@ async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_
 
     count = min(max(req.count or 1, 1), 4)
     results = await asyncio.gather(
-        *[brand_image_verbose(full_prompt, size=req.size, image_urls=image_urls) for _ in range(count)],
+        *[image_by_model_verbose(req.model, full_prompt, size=req.size, image_urls=image_urls) for _ in range(count)],
         return_exceptions=True,
     )
     images = []
@@ -1089,6 +1177,7 @@ async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_
         "prompt": req.prompt,
         "style": req.style,
         "brand_id": req.brand_id,
+        "model": req.model,
         "image": images[0],
         "images": images,
         "created_at": _now_iso(),
