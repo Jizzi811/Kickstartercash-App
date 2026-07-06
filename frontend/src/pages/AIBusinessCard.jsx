@@ -29,6 +29,23 @@ import {
   Youtube,
 } from "lucide-react";
 
+const DEFAULT_ASSISTANT_LABEL = "FAQ BOT";
+const DEFAULT_ASSISTANT_GREETING = "Hi, ich bin der FAQ BOT von Brandmind, was möchtest du heute gerne wissen.";
+const LEGACY_ASSISTANT_LABEL = "Ask AI";
+const LEGACY_ASSISTANT_GREETING = "Hi, ask me anything about this profile.";
+
+const normalizeAssistantLabel = (value = "") => {
+  const cleaned = String(value || "").trim();
+  if (!cleaned || cleaned === LEGACY_ASSISTANT_LABEL) return DEFAULT_ASSISTANT_LABEL;
+  return cleaned;
+};
+
+const normalizeAssistantGreeting = (value = "") => {
+  const cleaned = String(value || "").trim();
+  if (!cleaned || cleaned === LEGACY_ASSISTANT_GREETING) return DEFAULT_ASSISTANT_GREETING;
+  return cleaned;
+};
+
 const emptyCard = {
   name: "",
   title: "",
@@ -45,8 +62,8 @@ const emptyCard = {
   show_ai_assistant: true,
   assistant_mode: "avatar",
   assistant_avatar: "",
-  assistant_label: "Ask AI",
-  assistant_greeting: "Hi, ask me anything about this profile.",
+  assistant_label: DEFAULT_ASSISTANT_LABEL,
+  assistant_greeting: DEFAULT_ASSISTANT_GREETING,
   assistant_knowledge: "",
 };
 
@@ -64,6 +81,8 @@ const normalizeCard = (card = {}) => ({
   ...emptyCard,
   ...card,
   logo_url: (card.logo_url || (card.social_links || {})._logo_url || ""),
+  assistant_label: normalizeAssistantLabel(card.assistant_label),
+  assistant_greeting: normalizeAssistantGreeting(card.assistant_greeting),
   social_links: { ...emptyCard.social_links, ...(card.social_links || {}) },
 });
 
@@ -285,7 +304,7 @@ function AssistantPanel({ card, messages, q, setQ, ask, asking }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
       <h2 className="mb-2 font-semibold">Ask about {card.name || "this profile"}</h2>
-      <p className="text-xs text-zinc-400">{card.assistant_greeting}</p>
+      <p className="text-xs text-zinc-400">{normalizeAssistantGreeting(card.assistant_greeting)}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         {quickQuestions.map((qText) => (
           <button
@@ -308,7 +327,7 @@ function AssistantPanel({ card, messages, q, setQ, ask, asking }) {
                 : "bg-violet-600/90 text-white"
             }`}>
               <div className="text-[10px] uppercase tracking-wider mb-1 opacity-80">
-                {m.role === "ai" ? card.assistant_label || "AI Assistant" : "You"}
+                {m.role === "ai" ? normalizeAssistantLabel(card.assistant_label) : "You"}
               </div>
               <div>{m.text}</div>
             </div>
@@ -317,7 +336,7 @@ function AssistantPanel({ card, messages, q, setQ, ask, asking }) {
         {asking && (
           <div className="flex justify-start">
             <div className="max-w-[85%] rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2 text-violet-100">
-              <div className="text-[10px] uppercase tracking-wider mb-1 opacity-80">{card.assistant_label || "AI Assistant"}</div>
+              <div className="text-[10px] uppercase tracking-wider mb-1 opacity-80">{normalizeAssistantLabel(card.assistant_label)}</div>
               <div className="inline-flex items-center gap-2 text-xs">
                 <Loader2 className="h-3 w-3 animate-spin" /> thinking...
               </div>
@@ -368,7 +387,7 @@ function FloatingAvatarAssistant({ card, messages, q, setQ, ask, asking }) {
           )}
           <span className="absolute inset-0 rounded-full border border-violet-300/80 animate-ping" />
         </span>
-        <span className="pr-2 text-sm font-medium">{card.assistant_label || "Ask AI"}</span>
+        <span className="pr-2 text-sm font-medium">{normalizeAssistantLabel(card.assistant_label)}</span>
       </motion.button>
 
       {open && (
@@ -377,7 +396,7 @@ function FloatingAvatarAssistant({ card, messages, q, setQ, ask, asking }) {
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MessageCircle className="h-4 w-4 text-violet-300" />
-                <h3 className="font-semibold">{card.assistant_label || "Ask AI"}</h3>
+                <h3 className="font-semibold">{normalizeAssistantLabel(card.assistant_label)}</h3>
               </div>
               <button
                 onClick={() => setOpen(false)}
@@ -691,7 +710,7 @@ export default function AIBusinessCard() {
             <input
               value={current.assistant_label || ""}
               onChange={(e) => update("assistant_label", e.target.value)}
-              placeholder="Assistant button label (e.g. Ask AI)"
+              placeholder={`Assistant button label (e.g. ${DEFAULT_ASSISTANT_LABEL})`}
               className="rounded-sm border border-white/10 bg-black px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#7C3AED]/50"
             />
             <input

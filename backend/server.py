@@ -6480,8 +6480,8 @@ class BusinessCardPayload(BaseModel):
     show_ai_assistant: bool = True
     assistant_mode: str = "avatar"
     assistant_avatar: str = ""
-    assistant_label: str = "Ask AI"
-    assistant_greeting: str = "Hi, ask me anything about this profile."
+    assistant_label: str = "FAQ BOT"
+    assistant_greeting: str = "Hi, ich bin der FAQ BOT von Brandmind, was möchtest du heute gerne wissen."
     assistant_knowledge: str = ""
 
 

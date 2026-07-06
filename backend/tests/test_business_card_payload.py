@@ -10,8 +10,8 @@ def test_business_card_payload_defaults_include_avatar_assistant_mode():
     data = payload.model_dump()
     assert data["logo_url"] == ""
     assert data["assistant_mode"] == "avatar"
-    assert data["assistant_label"] == "Ask AI"
-    assert data["assistant_greeting"] == "Hi, ask me anything about this profile."
+    assert data["assistant_label"] == "FAQ BOT"
+    assert data["assistant_greeting"] == "Hi, ich bin der FAQ BOT von Brandmind, was möchtest du heute gerne wissen."
     assert data["assistant_avatar"] == ""
     assert data["assistant_knowledge"] == ""
 
