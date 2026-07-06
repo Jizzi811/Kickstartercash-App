@@ -50,6 +50,12 @@ _skill("landingpage_review", "Landingpage Review", "Review", "Reviews a landing 
 _skill("storytelling_review", "Storytelling Review", "Review", "Improves narrative arc, emotional clarity and proof points.", "Reviewe das Storytelling: Zielgruppe, Konflikt, Transformation, Beweise, Emotion, Klarheit und bessere Version: ", "Review the storytelling: audience, conflict, transformation, proof, emotion, clarity and better version: ", ["content", "linkedin", "email"], "BookOpen")
 _skill("brand_compliance_check", "Brand Compliance Check", "Quality Assurance", "Checks whether output follows brand identity, tone and rules.", "Prüfe diesen Output auf Brand Compliance: Tonalität, Werte, Visual DNA, No-Gos, Konsistenz. Gib Freigabe oder Korrekturen: ", "Check this output for brand compliance: tone, values, visual DNA, no-gos, consistency. Give approval or corrections: ", ["ceo", "designer", "content", "orchestrator"], "ShieldCheck")
 _skill("output_optimizer", "Output Optimizer", "Quality Assurance", "Refines existing output for usefulness, structure, conversion and polish.", "Optimiere diesen Output auf Klarheit, Struktur, Umsetzbarkeit, Conversion und Premium-Wirkung: ", "Optimize this output for clarity, structure, actionability, conversion and premium polish: ", ["ceo", "content", "orchestrator", "seo", "email", "linkedin"], "Sparkles")
+_skill("ai_citation_strategist", "AI Citation Strategist", "SEO", "Improves visibility in AI answers (ChatGPT, Claude, Gemini, Perplexity) and GEO/AEO citations.", "Analysiere die Sichtbarkeit in KI-Suchen (ChatGPT, Claude, Gemini, Perplexity) und liefere eine priorisierte GEO/AEO-Strategie inkl. Quellen-, Entitäten- und Zitier-Optimierung für: ", "Analyze visibility across AI answer engines (ChatGPT, Claude, Gemini, Perplexity) and provide a prioritized GEO/AEO strategy including source, entity and citation optimization for: ", ["seo", "ceo"], "Quote", required_memory=["business", "experience"], required_dna=["audience", "positioning"], cost="medium", runtime="45-90s")
+_skill("aeo_foundations_architect", "AEO Foundations Architect", "SEO", "Defines llms.txt, AI-aware robots rules and retrieval-ready content foundations.", "Erstelle die AEO-Basisarchitektur mit llms.txt, AI-fähigem robots-Konzept, strukturierter Entitätslogik, FAQ-Schema und priorisiertem Implementierungsplan für: ", "Design the AEO foundations with llms.txt, AI-aware robots strategy, entity structure, FAQ schema and a prioritized implementation plan for: ", ["seo", "coding"], "FileCog", required_memory=["business", "experience"], required_dna=["audience", "positioning"], cost="medium", runtime="45-90s")
+_skill("agentic_search_optimizer", "Agentic Search Optimizer", "SEO", "Optimizes pages so AI agents can discover, parse and complete tasks reliably.", "Optimiere die Website für agentische Suche (AI-Browser/Agents): Crawlbarkeit, Task-Completeness, strukturierte Inhalte, Navigation und Prompt-freundliche Informationsarchitektur für: ", "Optimize the website for agentic search (AI browsers/agents): crawlability, task completeness, structured content, navigation and prompt-friendly information architecture for: ", ["seo", "coding", "automation"], "Bot", required_memory=["business", "experience"], required_dna=["audience", "tone"], cost="medium", runtime="45-90s")
+_skill("video_optimization_specialist", "Video Optimization Specialist", "Video", "Optimizes YouTube/Reels videos for hook strength, retention, chapters, thumbnail angle and CTA.", "Optimiere dieses Video-/Channel-Konzept für Hook, Retention, Watchtime, Kapitelstruktur, Thumbnail-Ideen, Titel/Description-SEO und CTA-System: ", "Optimize this video/channel concept for hook strength, retention, watch time, chaptering, thumbnail angles, title/description SEO and CTA system: ", ["video", "seo", "content"], "Clapperboard", required_memory=["business", "experience"], required_dna=["audience", "tone"], cost="medium", runtime="45-90s")
+_skill("email_marketing_strategist", "Email Marketing Strategist", "Marketing", "Builds lifecycle email systems with segmentation, automation, deliverability and offer sequencing.", "Entwickle eine Lifecycle-Email-Strategie mit Segmenten, Automationen, Kampagnenstruktur, Betreff-Ansätzen, Angebotssequenz und Deliverability-Absicherung für: ", "Build a lifecycle email strategy with segmentation, automations, campaign structure, subject-line angles, offer sequencing and deliverability safeguards for: ", ["content", "sales", "automation"], "Mail", required_memory=["business", "experience"], required_dna=["audience", "tone"], cost="medium", runtime="45-90s")
+_skill("pr_communications_manager", "PR & Communications Manager", "Marketing", "Creates PR narratives, launch messaging, media angles and trust-building communication plans.", "Erstelle einen PR- und Kommunikationsplan mit Kernnarrativ, Pressewinkeln, Messaging-Hierarchie, Stakeholder-Plan, Krisenreaktionslinien und Veröffentlichungsfahrplan für: ", "Create a PR and communications plan with core narrative, press angles, messaging hierarchy, stakeholder plan, crisis response lines and publishing roadmap for: ", ["ceo", "content", "sales"], "Megaphone", required_memory=["brand", "business"], required_dna=["tone", "positioning", "audience"], cost="medium", runtime="45-90s")
 
 AGENT_SKILL_MAP = {aid: [s["id"] for s in SKILLS.values() if aid in s.get("agent_ids", [])] for aid in sorted({a for s in SKILLS.values() for a in s.get("agent_ids", [])})}
 
@@ -106,6 +112,32 @@ def suggest_skill_for_task(task: str, preferred_agent_id: Optional[str] = None) 
             score += 5.0
         if any(k in text for k in ("video", "reel", "veo", "clip")) and skill.get("type") == "video":
             score += 5.0
+
+        # Targeted boosts for newly integrated agency-agent style skills.
+        if skill.get("id") == "ai_citation_strategist" and any(
+            k in text for k in ("geo", "aeo", "citation", "citations", "ai overview", "perplexity", "chatgpt", "claude", "gemini")
+        ):
+            score += 6.0
+        if skill.get("id") == "aeo_foundations_architect" and any(
+            k in text for k in ("llms.txt", "robots", "schema", "structured data", "entity", "entities")
+        ):
+            score += 6.0
+        if skill.get("id") == "agentic_search_optimizer" and any(
+            k in text for k in ("agentic", "ai browser", "webmcp", "crawlability", "task completeness")
+        ):
+            score += 6.0
+        if skill.get("id") == "video_optimization_specialist" and any(
+            k in text for k in ("watchtime", "retention", "thumbnail", "chapter", "youtube seo")
+        ):
+            score += 6.0
+        if skill.get("id") == "email_marketing_strategist" and any(
+            k in text for k in ("email", "newsletter", "deliverability", "lifecycle", "sequence")
+        ):
+            score += 6.0
+        if skill.get("id") == "pr_communications_manager" and any(
+            k in text for k in ("pr", "press", "communications", "media", "reputation")
+        ):
+            score += 6.0
 
         if score > best_score:
             best_score = score
