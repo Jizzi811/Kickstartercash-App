@@ -36,6 +36,17 @@ REPORT_EMAILS: list[str] = [
 POYO_API_KEY = os.environ.get("POYO_API_KEY", "")
 POYO_BASE = "https://api.poyo.ai"
 
+# --- fal.ai – multi-model image generation (Flux 2, Flux schnell, Qwen, SD3) -
+# HTTP API: POST {FAL_BASE}/{model-id}  with header "Authorization: Key <FAL_KEY>".
+# Powers the extra Design-Studio image models. Each model id is overridable so
+# an operator can swap a slug without a code change.
+FAL_KEY = os.environ.get("FAL_KEY", "")
+FAL_BASE = os.environ.get("FAL_BASE", "https://fal.run")
+FAL_MODEL_FLUX2 = os.environ.get("FAL_MODEL_FLUX2", "fal-ai/flux-2")
+FAL_MODEL_FLUX_SCHNELL = os.environ.get("FAL_MODEL_FLUX_SCHNELL", "fal-ai/flux/schnell")
+FAL_MODEL_QWEN = os.environ.get("FAL_MODEL_QWEN", "fal-ai/qwen-image")
+FAL_MODEL_SD3 = os.environ.get("FAL_MODEL_SD3", "fal-ai/stable-diffusion-3")
+
 # --- FreeTheAi – free OpenAI-compatible gateway (gpt-image-2 etc.) -----------
 FREETHEAI_API_KEY = os.environ.get("FREETHEAI_API_KEY", "")
 FREETHEAI_BASE = os.environ.get("FREETHEAI_BASE", "https://api.freetheai.xyz/v1")
