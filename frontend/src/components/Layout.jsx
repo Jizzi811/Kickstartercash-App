@@ -4,7 +4,7 @@ import {
   LayoutGrid, Building2, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare, ShieldCheck,
   Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
-  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target, Factory, Plug, Dna, Brain, Sparkles, User, Bell, BriefcaseBusiness,
+  TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target, Factory, Plug, Dna, Brain, Sparkles, User, Bell, BriefcaseBusiness, IdCard,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { SalesSupportWidget } from "@/components/SalesSupportWidget";
@@ -49,6 +49,7 @@ const NAV_GROUPS = [
       { to: "/gateway", icon: Plug, labelDE: "Gateway", labelEN: "Gateway" },
       { to: "/skills", icon: Sparkles, labelDE: "Skills", labelEN: "Skills" },
       { to: "/modules", icon: LayoutGrid, labelDE: "Marketplace", labelEN: "Marketplace" },
+      { to: "/ai-business-card", icon: IdCard, labelDE: "AI Business Card", labelEN: "AI Business Card" },
       { to: "/arena", icon: MessageSquare, labelDE: "Chat Arena", labelEN: "Chat Arena" },
     ],
   },
@@ -111,6 +112,7 @@ const PAGE_NAMES = {
   "/memory": "Memory",
   "/skills": "Skills",
   "/output-factory": "Output Factory",
+  "/ai-business-card": "AI Business Card",
   "/billing": "Preise & Plan",
   "/permissions": "Permissions",
   "/agents": "Agenten",
