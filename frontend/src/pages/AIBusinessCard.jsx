@@ -452,9 +452,6 @@ export default function AIBusinessCard() {
     const r = await axios.get(`${API}/business-cards`);
     const next = (r.data || []).map((card) => normalizeCard(card));
     setCards(next);
-    if (!current.id && next[0]) {
-      setCurrent(next[0]);
-    }
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
