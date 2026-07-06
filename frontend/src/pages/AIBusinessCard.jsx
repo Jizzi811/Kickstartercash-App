@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ import {
   MessageCircle,
   Phone,
   Plus,
+  Upload,
   Send,
   Trash2,
   Twitter,
@@ -52,6 +53,7 @@ const templates = [
   { id: "aurora", name: "Aurora Glass", bg: "from-violet-600/40 via-fuchsia-500/20 to-cyan-400/20" },
   { id: "executive", name: "Executive Dark", bg: "from-slate-800 via-violet-950/60 to-black" },
   { id: "creator", name: "Creator Pulse", bg: "from-pink-500/40 via-purple-600/30 to-orange-400/20" },
+  { id: "spotlight", name: "Spotlight Signature", bg: "from-indigo-950 via-[#0a0418] to-black" },
 ];
 
 const publicUrl = (hash) => `${window.location.origin}/card/${hash}`;
@@ -110,6 +112,91 @@ function CardPreview({ card, compact = false, publicMode = false }) {
     }
     return <span>{value}</span>;
   };
+
+  const cardPublicLink = card.url_hash ? publicUrl(card.url_hash) : "";
+
+  if (card.template_id === "spotlight") {
+    return (
+      <div className="relative overflow-hidden rounded-[2rem] border border-violet-300/20 bg-gradient-to-br from-[#140726] via-[#0b0517] to-[#04030c] p-6 shadow-2xl">
+        <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-violet-500/20 blur-3xl" />
+        <div className="absolute -left-16 bottom-[-60px] h-44 w-44 rounded-full bg-fuchsia-500/20 blur-3xl" />
+        <div className="relative">
+          <p className="text-xs uppercase tracking-[0.35em] text-violet-300/80">BrandMind</p>
+          <h3 className="mt-2 text-3xl font-semibold text-white">{card.name || "Your Name"}</h3>
+          <p className="text-violet-200/90 text-sm">{card.title || "Title"}{card.company ? ` · ${card.company}` : ""}</p>
+
+          <div className="mt-5 grid grid-cols-[1fr_110px] gap-4 items-center">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-violet-300/70">Mehr Zeit · Mehr Impact</p>
+              <p className="mt-2 text-sm leading-6 text-zinc-200">
+                {card.bio || "Professionelle KI-gestützte Marketing-Unterstützung für mehr Wachstum und bessere Automatisierung."}
+              </p>
+            </div>
+            <div className="h-28 w-28 overflow-hidden rounded-2xl border border-violet-300/30 bg-white/10">
+              {card.avatar ? (
+                <img src={card.avatar} alt="Avatar" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full items-center justify-center text-3xl font-bold text-white">
+                  {(card.name || "AI").slice(0, 2).toUpperCase()}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-2 text-[11px]">
+            {["KI Agenten", "Content", "Marketing", "Automation"].map((item) => (
+              <div key={item} className="rounded-xl border border-white/10 bg-white/[0.04] px-2 py-1.5 text-zinc-200">{item}</div>
+            ))}
+          </div>
+
+          {socials.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {socials.map(([k, v]) => {
+                const Icon = socialIconByKey[k] || ExternalLink;
+                return (
+                  <a
+                    key={k}
+                    href={normalizeUrl(v)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-violet-300/30 bg-violet-500/10 px-2.5 py-1 text-[11px] text-violet-100 hover:border-violet-200/60 transition-colors"
+                  >
+                    <Icon className="h-3 w-3" />
+                    {k}
+                  </a>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="mt-5 grid gap-2 text-sm text-zinc-200">
+            {contactItems.map(({ key, value, icon: Icon }) => (
+              <div key={key} className="inline-flex items-center gap-2 min-w-0">
+                <Icon className="h-3.5 w-3.5 text-violet-200/80 shrink-0" />
+                <div className="truncate">{renderContactValue(key, value)}</div>
+              </div>
+            ))}
+          </div>
+
+          {publicMode && cardPublicLink && (
+            <div className="mt-5 inline-flex items-center gap-3 rounded-2xl border border-violet-300/25 bg-black/30 p-2">
+              <img src={qrUrl(cardPublicLink)} alt="QR code" className="h-20 w-20 rounded-md bg-white p-1" />
+              <div className="text-xs text-zinc-300">
+                <p className="text-violet-200 uppercase tracking-wide">Vernetze dich mit mir</p>
+                <p className="mt-1 break-all text-zinc-400">{cardPublicLink}</p>
+              </div>
+            </div>
+          )}
+
+          {card.show_ai_assistant && (
+            <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-violet-300/30 bg-violet-500/15 px-3 py-1 text-xs text-violet-100">
+              <MessageCircle className="h-3 w-3" /> AI assistant enabled ({assistantModeLabel})
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`relative overflow-hidden rounded-[2rem] border border-white/15 bg-gradient-to-br ${template.bg} p-6 shadow-2xl backdrop-blur-xl`}>
@@ -347,6 +434,7 @@ export default function AIBusinessCard() {
   const [cards, setCards] = useState([]);
   const [current, setCurrent] = useState(emptyCard);
   const [saving, setSaving] = useState(false);
+  const avatarFileInputRef = useRef(null);
 
   const link = useMemo(() => (current.url_hash ? publicUrl(current.url_hash) : "Save to generate link"), [current.url_hash]);
 
@@ -406,6 +494,25 @@ export default function AIBusinessCard() {
     a.click();
   };
 
+  const onAvatarUpload = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      toast.error("Image too large (max 6MB)");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      update("avatar", String(reader.result || ""));
+      toast.success("Profile image uploaded");
+    };
+    reader.onerror = () => toast.error("Image upload failed");
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -449,6 +556,24 @@ export default function AIBusinessCard() {
                 className="rounded-sm border border-white/10 bg-black px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#7C3AED]/50"
               />
             ))}
+            <div className="md:col-span-2 flex items-center gap-2">
+              <input
+                ref={avatarFileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => onAvatarUpload(e.target.files?.[0])}
+              />
+              <button
+                type="button"
+                onClick={() => avatarFileInputRef.current?.click()}
+                className="inline-flex items-center gap-2 rounded-sm border border-white/10 px-3 py-2 text-xs text-zinc-300 hover:text-white hover:border-white/20 transition-colors"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Upload your real photo
+              </button>
+              <span className="text-[11px] text-zinc-500">JPG/PNG/WebP, max 6MB</span>
+            </div>
             <textarea
               value={current.bio || ""}
               onChange={(e) => update("bio", e.target.value)}
