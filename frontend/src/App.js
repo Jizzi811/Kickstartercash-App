@@ -117,6 +117,7 @@ import AgentBuilder from "@/pages/AgentBuilder";
 import CharacterStudio from "@/pages/CharacterStudio";
 import TTSStudio from "@/pages/TTSStudio";
 import OutputFactory from "@/pages/OutputFactory";
+import AIBusinessCard, { PublicBusinessCard } from "@/pages/AIBusinessCard";
 
 function App() {
   return (
@@ -127,6 +128,7 @@ function App() {
           <Routes>
             {/* Brandmind auth – standalone, no app chrome */}
             <Route path="/auth" element={<Auth />} />
+            <Route path="/card/:hash" element={<PublicBusinessCard />} />
             {/* Everything else runs inside the app shell */}
             <Route path="/*" element={<AppShell />} />
           </Routes>
@@ -174,6 +176,10 @@ function AppShell() {
               <Route path="/mission/plans/:planId" element={<MissionControl />} />
               <Route path="/modules" element={<Dashboard />} />
               <Route path="/output-factory" element={<OutputFactory />} />
+              <Route path="/ai-business-card" element={<AIBusinessCard />} />
+              <Route path="ai-business-card" element={<AIBusinessCard />} />
+              <Route path="/business-card" element={<Navigate to="/ai-business-card" replace />} />
+              <Route path="business-card" element={<Navigate to="/ai-business-card" replace />} />
               <Route path="/brand-brain" element={<BrandBrain />} />
               <Route path="/brand-identity" element={<BrandIdentity />} />
               <Route path="/memory" element={<Memory />} />

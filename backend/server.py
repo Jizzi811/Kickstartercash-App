@@ -6163,6 +6163,133 @@ async def knowledge_graph_visualization(ws: Optional[str] = Depends(current_work
     }
 
 
+
+# ---------------------------------------------------------------------------
+# AI Business Card module
+# ---------------------------------------------------------------------------
+
+class BusinessCardPayload(BaseModel):
+    name: str = ""
+    title: str = ""
+    company: str = ""
+    bio: str = ""
+    avatar: str = ""
+    phone: str = ""
+    email: str = ""
+    website: str = ""
+    address: str = ""
+    social_links: dict = Field(default_factory=dict)
+    template_id: str = "aurora"
+    show_ai_assistant: bool = True
+
+
+def _card_public(card: dict) -> dict:
+    card = dict(card or {})
+    card.pop("_id", None)
+    return card
+
+
+def _new_card_hash() -> str:
+    return uuid.uuid4().hex[:10]
+
+
+async def _business_card_user(authorization: Optional[str] = Header(default=None)) -> dict:
+    from brandmind import current_user as bm_current_user
+    return await bm_current_user(authorization)
+
+
+@api_router.get("/business-cards")
+async def list_business_cards(user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+    query = {"user_id": user["id"], **({"workspace_id": ws} if ws else {})}
+    cards = await db.business_cards.find(query, {"_id": 0}).sort("updated_at", -1).to_list(200)
+    return cards
+
+
+@api_router.post("/business-cards")
+async def create_business_card(payload: BusinessCardPayload, user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+    now = _now_iso()
+    card = payload.dict()
+    card.update({
+        "id": str(uuid.uuid4()),
+        "url_hash": _new_card_hash(),
+        "user_id": user["id"],
+        "workspace_id": ws or "",
+        "created_at": now,
+        "updated_at": now,
+    })
+    await db.business_cards.insert_one(card)
+    return _card_public(card)
+
+
+@api_router.put("/business-cards/{card_id}")
+async def update_business_card(card_id: str, payload: BusinessCardPayload, user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+    query = {"id": card_id, "user_id": user["id"], **({"workspace_id": ws} if ws else {})}
+    existing = await db.business_cards.find_one(query, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Business card not found")
+    update = payload.dict()
+    update["updated_at"] = _now_iso()
+    await db.business_cards.update_one({"id": card_id}, {"$set": update})
+    return _card_public({**existing, **update})
+
+
+@api_router.post("/business-cards/{card_id}/duplicate")
+async def duplicate_business_card(card_id: str, user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+    query = {"id": card_id, "user_id": user["id"], **({"workspace_id": ws} if ws else {})}
+    existing = await db.business_cards.find_one(query, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Business card not found")
+    now = _now_iso()
+    clone = {**existing, "id": str(uuid.uuid4()), "url_hash": _new_card_hash(), "name": f"{existing.get('name', 'Card')} Copy", "created_at": now, "updated_at": now}
+    await db.business_cards.insert_one(clone)
+    return _card_public(clone)
+
+
+@api_router.delete("/business-cards/{card_id}")
+async def delete_business_card(card_id: str, user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+    query = {"id": card_id, "user_id": user["id"], **({"workspace_id": ws} if ws else {})}
+    result = await db.business_cards.delete_one(query)
+    if not result.deleted_count:
+        raise HTTPException(status_code=404, detail="Business card not found")
+    return {"ok": True}
+
+
+@api_router.get("/business-cards/public/{url_hash}")
+async def get_public_business_card(url_hash: str):
+    card = await db.business_cards.find_one({"url_hash": url_hash}, {"_id": 0, "user_id": 0})
+    if not card:
+        raise HTTPException(status_code=404, detail="Business card not found")
+    return card
+
+
+class BusinessCardChatRequest(BaseModel):
+    question: str
+
+
+@api_router.post("/business-cards/public/{url_hash}/chat")
+async def chat_public_business_card(url_hash: str, payload: BusinessCardChatRequest):
+    card = await db.business_cards.find_one({"url_hash": url_hash}, {"_id": 0, "user_id": 0})
+    if not card or not card.get("show_ai_assistant", True):
+        raise HTTPException(status_code=404, detail="Assistant not available")
+    q = (payload.question or "").lower()[:500]
+    allowed = {k: card.get(k, "") for k in ["name", "title", "company", "bio", "phone", "email", "website", "address"]}
+    socials = card.get("social_links") or {}
+    if any(w in q for w in ["phone", "telefon", "call"]):
+        answer = f"Phone: {allowed.get('phone') or 'not provided on this card.'}"
+    elif "email" in q or "mail" in q:
+        answer = f"Email: {allowed.get('email') or 'not provided on this card.'}"
+    elif "website" in q or "web" in q:
+        answer = f"Website: {allowed.get('website') or 'not provided on this card.'}"
+    elif "social" in q or "linkedin" in q or "instagram" in q:
+        answer = "Social links: " + (", ".join(f"{k}: {v}" for k, v in socials.items() if v) or "not provided on this card.")
+    else:
+        prompt = "Answer only from this business card profile. If unknown, say it is not provided.\nProfile: " + json.dumps({**allowed, "social_links": socials}) + "\nQuestion: " + payload.question[:500]
+        try:
+            answer = await llm_text(OPENAI_TEXT_MODEL, "You are a business-card assistant. Answer only from the provided profile data.", prompt)
+        except Exception:
+            answer = f"{allowed.get('name', 'This person')} is {allowed.get('title', 'a professional')} at {allowed.get('company', 'their company')}. {allowed.get('bio', '')}".strip()
+    return {"answer": answer}
+
 app.include_router(api_router)
 
 # Brandmind multi-tenant foundation (auth, workspaces, billing)
