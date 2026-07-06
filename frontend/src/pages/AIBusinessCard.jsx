@@ -34,6 +34,7 @@ const emptyCard = {
   title: "",
   company: "",
   bio: "",
+  logo_url: "",
   avatar: "",
   phone: "",
   email: "",
@@ -80,6 +81,7 @@ function CardPreview({ card, compact = false, publicMode = false }) {
   const template = templates.find((t) => t.id === card.template_id) || templates[0];
   const assistantModeLabel = card.assistant_mode === "avatar" ? "avatar mode" : "panel mode";
   const socials = Object.entries(card.social_links || {}).filter(([, v]) => !!(v || "").trim());
+  const logoSrc = (card.logo_url || "").trim() || "/brandmind-logo.svg";
   const contactItems = [
     { key: "email", value: card.email, icon: Mail },
     { key: "phone", value: card.phone, icon: Phone },
@@ -121,6 +123,9 @@ function CardPreview({ card, compact = false, publicMode = false }) {
         <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-violet-500/20 blur-3xl" />
         <div className="absolute -left-16 bottom-[-60px] h-44 w-44 rounded-full bg-fuchsia-500/20 blur-3xl" />
         <div className="relative">
+          <div className="inline-flex items-center rounded-sm border border-violet-300/25 bg-black/20 px-2 py-1">
+            <img src={logoSrc} alt="Brand logo" className="h-6 w-auto object-contain" />
+          </div>
           <p className="text-xs uppercase tracking-[0.35em] text-violet-300/80">Professional Card</p>
           <h3 className="mt-2 text-3xl font-semibold text-white">{card.name || "Your Name"}</h3>
           <p className="text-violet-200/90 text-sm">{card.title || "Title"}{card.company ? ` · ${card.company}` : ""}</p>
@@ -202,6 +207,9 @@ function CardPreview({ card, compact = false, publicMode = false }) {
     <div className={`relative overflow-hidden rounded-sm border border-white/15 bg-gradient-to-br ${template.bg} p-6 shadow-2xl`}>
       <div className="absolute -right-20 -top-20 h-44 w-44 rounded-full bg-white/10 blur-3xl" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.08),transparent_45%)]" />
+      <div className="relative mb-4 inline-flex items-center rounded-sm border border-white/20 bg-black/30 px-2 py-1">
+        <img src={logoSrc} alt="Brand logo" className="h-6 w-auto object-contain" />
+      </div>
       <div className="relative flex items-start gap-4">
         <div className="h-20 w-20 shrink-0 overflow-hidden rounded-sm border border-white/25 bg-black/25">
           {card.avatar ? (
@@ -436,6 +444,7 @@ export default function AIBusinessCard() {
   const [current, setCurrent] = useState(emptyCard);
   const [saving, setSaving] = useState(false);
   const avatarFileInputRef = useRef(null);
+  const logoFileInputRef = useRef(null);
 
   const link = useMemo(() => (current.url_hash ? publicUrl(current.url_hash) : "Save to generate link"), [current.url_hash]);
 
@@ -514,6 +523,25 @@ export default function AIBusinessCard() {
     reader.readAsDataURL(file);
   };
 
+  const onLogoUpload = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      toast.error("Image too large (max 6MB)");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      update("logo_url", String(reader.result || ""));
+      toast.success("Logo uploaded");
+    };
+    reader.onerror = () => toast.error("Logo upload failed");
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -548,7 +576,7 @@ export default function AIBusinessCard() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            {["name", "title", "company", "avatar", "phone", "email", "website", "address"].map((f) => (
+            {["name", "title", "company", "logo_url", "avatar", "phone", "email", "website", "address"].map((f) => (
               <input
                 key={f}
                 value={current[f] || ""}
@@ -557,6 +585,31 @@ export default function AIBusinessCard() {
                 className="rounded-sm border border-white/10 bg-black px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#7C3AED]/50"
               />
             ))}
+            <div className="md:col-span-2 flex items-center gap-2">
+              <input
+                ref={logoFileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => onLogoUpload(e.target.files?.[0])}
+              />
+              <button
+                type="button"
+                onClick={() => logoFileInputRef.current?.click()}
+                className="inline-flex items-center gap-2 rounded-sm border border-white/10 px-3 py-2 text-xs text-zinc-300 hover:text-white hover:border-white/20 transition-colors"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Upload logo
+              </button>
+              <button
+                type="button"
+                onClick={() => update("logo_url", "")}
+                className="inline-flex items-center gap-2 rounded-sm border border-white/10 px-3 py-2 text-xs text-zinc-300 hover:text-white hover:border-white/20 transition-colors"
+              >
+                Reset to default logo
+              </button>
+              <span className="text-[11px] text-zinc-500">Default: BrandMind logo</span>
+            </div>
             <div className="md:col-span-2 flex items-center gap-2">
               <input
                 ref={avatarFileInputRef}
