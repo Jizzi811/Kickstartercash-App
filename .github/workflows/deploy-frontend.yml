@@ -1,0 +1,70 @@
+name: Deploy Frontend (Netlify)
+
+# Railway auto-deploys the backend on every main push; Netlify was not connected,
+# so this workflow publishes the React build when Netlify secrets are configured.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - "netlify.toml"
+      - ".github/workflows/deploy-frontend.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build & deploy to Netlify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Netlify credentials
+        id: netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          if [ -n "$NETLIFY_AUTH_TOKEN" ] && [ -n "$NETLIFY_SITE_ID" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID fehlen in den GitHub-Secrets."
+            echo "::warning::Frontend-Build läuft nur lokal in CI – kein Netlify-Deploy."
+            echo "::warning::Alternativ: Netlify-Dashboard → Deploys → Trigger deploy (main)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.netlify.outputs.ready == 'true'
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install & build
+        if: steps.netlify.outputs.ready == 'true'
+        working-directory: frontend
+        env:
+          CI: "false"
+          REACT_APP_BACKEND_URL: ${{ secrets.REACT_APP_BACKEND_URL }}
+        run: |
+          npm ci --legacy-peer-deps
+          npm run build
+
+      - name: Publish to Netlify
+        if: steps.netlify.outputs.ready == 'true'
+        uses: nwtgck/actions-netlify@v3.0
+        with:
+          publish-dir: ./frontend/build
+          production-deploy: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy ${{ github.sha }}"
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}

@@ -1,12 +1,12 @@
-# Brandmind frontend on Netlify (reference copy).
-# Production uses /netlify.toml at the repo root (kashbot3.netlify.app).
-# Keep this file for the Brandmind spinoff script (scripts/spinoff-brandmind.sh).
+# Brandmind production frontend (kashbot3.netlify.app).
+# Netlify reads this from the repo root on push to main.
 [build]
   base = "frontend"
-  command = "npm run build"
+  command = "npm ci --legacy-peer-deps && npm run build"
   publish = "frontend/build"
 
 [build.environment]
+  # Match .github/workflows/ci.yml: CRA fails on lint warnings when CI=true.
   CI = "false"
   NODE_VERSION = "20"
 
