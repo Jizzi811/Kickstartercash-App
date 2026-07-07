@@ -39,6 +39,7 @@ class _FakeCollection:
         return deepcopy(rows[0]) if rows else None
 
     async def insert_one(self, doc):
+        doc["_id"] = "mongo-object-id"
         self.docs.append(deepcopy(doc))
         return {"ok": 1}
 
@@ -117,6 +118,7 @@ async def test_decision_create_lock_and_history(monkeypatch):
     history = await server.decisions_history(user=user, ws="ws-founder")
 
     assert locked["status"] == "locked"
+    assert "_id" not in decision
     assert len(history["events"]) == 2
     assert history["events"][0]["event_type"] == "DECISION_LOCKED"
 
@@ -178,5 +180,6 @@ async def test_brand_brief_generate_uses_decisions(monkeypatch):
     latest = await server.brand_brief_latest(user=user, ws="ws4")
 
     assert "Company Summary" in brief["content"]
+    assert "_id" not in brief
     assert latest["id"] == brief["id"]
     assert latest["sources"] == ["d1"]

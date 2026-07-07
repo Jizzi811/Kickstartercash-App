@@ -6712,6 +6712,7 @@ async def decisions_create(payload: DecisionCreatePayload, user: dict = Depends(
     }
     await db.brand_decisions.insert_one(decision)
     await _decision_event(user["id"], ws, decision["id"], "DECISION_CREATED", {"category": decision["category"], "status": decision["status"]})
+    decision.pop("_id", None)
     return decision
 
 
@@ -6806,6 +6807,7 @@ async def brand_brief_generate(payload: BrandBriefGenerateRequest, user: dict = 
         "updated_at": now,
     }
     await db.brand_briefs.insert_one(doc)
+    doc.pop("_id", None)
     return doc
 
 
