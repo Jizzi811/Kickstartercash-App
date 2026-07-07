@@ -29,6 +29,23 @@ import {
   Youtube,
 } from "lucide-react";
 
+const DEFAULT_ASSISTANT_LABEL = "FAQ BOT";
+const DEFAULT_ASSISTANT_GREETING = "Hi, ich bin der FAQ BOT von Brandmind, was möchtest du heute gerne wissen.";
+const LEGACY_ASSISTANT_LABEL = "Ask AI";
+const LEGACY_ASSISTANT_GREETING = "Hi, ask me anything about this profile.";
+
+const normalizeAssistantLabel = (value = "") => {
+  const cleaned = String(value || "").trim();
+  if (!cleaned || cleaned === LEGACY_ASSISTANT_LABEL) return DEFAULT_ASSISTANT_LABEL;
+  return cleaned;
+};
+
+const normalizeAssistantGreeting = (value = "") => {
+  const cleaned = String(value || "").trim();
+  if (!cleaned || cleaned === LEGACY_ASSISTANT_GREETING) return DEFAULT_ASSISTANT_GREETING;
+  return cleaned;
+};
+
 const emptyCard = {
   name: "",
   title: "",
@@ -45,8 +62,8 @@ const emptyCard = {
   show_ai_assistant: true,
   assistant_mode: "avatar",
   assistant_avatar: "",
-  assistant_label: "Ask AI",
-  assistant_greeting: "Hi, ask me anything about this profile.",
+  assistant_label: DEFAULT_ASSISTANT_LABEL,
+  assistant_greeting: DEFAULT_ASSISTANT_GREETING,
   assistant_knowledge: "",
 };
 
@@ -63,6 +80,9 @@ const qrUrl = (url) => `https://api.qrserver.com/v1/create-qr-code/?size=480x480
 const normalizeCard = (card = {}) => ({
   ...emptyCard,
   ...card,
+  logo_url: (card.logo_url || (card.social_links || {})._logo_url || ""),
+  assistant_label: normalizeAssistantLabel(card.assistant_label),
+  assistant_greeting: normalizeAssistantGreeting(card.assistant_greeting),
   social_links: { ...emptyCard.social_links, ...(card.social_links || {}) },
 });
 
@@ -80,7 +100,9 @@ const normalizePhoneForTel = (phone = "") => phone.replace(/[^\d+]/g, "");
 function CardPreview({ card, compact = false, publicMode = false }) {
   const template = templates.find((t) => t.id === card.template_id) || templates[0];
   const assistantModeLabel = card.assistant_mode === "avatar" ? "avatar mode" : "panel mode";
-  const socials = Object.entries(card.social_links || {}).filter(([, v]) => !!(v || "").trim());
+  const socials = Object.entries(card.social_links || {}).filter(
+    ([k, v]) => !String(k || "").startsWith("_") && !!(v || "").trim(),
+  );
   const logoSrc = (card.logo_url || "").trim() || "/brandmind-logo.svg";
   const contactItems = [
     { key: "email", value: card.email, icon: Mail },
@@ -281,8 +303,8 @@ function AssistantPanel({ card, messages, q, setQ, ask, asking }) {
 
   return (
     <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-      <h2 className="mb-2 font-semibold">Ask about {card.name || "this profile"}</h2>
-      <p className="text-xs text-zinc-400">{card.assistant_greeting}</p>
+      <h2 className="mb-2 font-semibold">FAQ BOT von Brandmind</h2>
+      <p className="text-xs text-zinc-400">{normalizeAssistantGreeting(card.assistant_greeting)}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         {quickQuestions.map((qText) => (
           <button
@@ -305,7 +327,7 @@ function AssistantPanel({ card, messages, q, setQ, ask, asking }) {
                 : "bg-violet-600/90 text-white"
             }`}>
               <div className="text-[10px] uppercase tracking-wider mb-1 opacity-80">
-                {m.role === "ai" ? card.assistant_label || "AI Assistant" : "You"}
+                {m.role === "ai" ? normalizeAssistantLabel(card.assistant_label) : "You"}
               </div>
               <div>{m.text}</div>
             </div>
@@ -314,7 +336,7 @@ function AssistantPanel({ card, messages, q, setQ, ask, asking }) {
         {asking && (
           <div className="flex justify-start">
             <div className="max-w-[85%] rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2 text-violet-100">
-              <div className="text-[10px] uppercase tracking-wider mb-1 opacity-80">{card.assistant_label || "AI Assistant"}</div>
+              <div className="text-[10px] uppercase tracking-wider mb-1 opacity-80">{normalizeAssistantLabel(card.assistant_label)}</div>
               <div className="inline-flex items-center gap-2 text-xs">
                 <Loader2 className="h-3 w-3 animate-spin" /> thinking...
               </div>
@@ -365,7 +387,7 @@ function FloatingAvatarAssistant({ card, messages, q, setQ, ask, asking }) {
           )}
           <span className="absolute inset-0 rounded-full border border-violet-300/80 animate-ping" />
         </span>
-        <span className="pr-2 text-sm font-medium">{card.assistant_label || "Ask AI"}</span>
+        <span className="pr-2 text-sm font-medium">{normalizeAssistantLabel(card.assistant_label)}</span>
       </motion.button>
 
       {open && (
@@ -374,7 +396,7 @@ function FloatingAvatarAssistant({ card, messages, q, setQ, ask, asking }) {
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MessageCircle className="h-4 w-4 text-violet-300" />
-                <h3 className="font-semibold">{card.assistant_label || "Ask AI"}</h3>
+                <h3 className="font-semibold">{normalizeAssistantLabel(card.assistant_label)}</h3>
               </div>
               <button
                 onClick={() => setOpen(false)}
@@ -443,32 +465,35 @@ export default function AIBusinessCard() {
   const [cards, setCards] = useState([]);
   const [current, setCurrent] = useState(emptyCard);
   const [saving, setSaving] = useState(false);
+  const [loadingCards, setLoadingCards] = useState(true);
   const avatarFileInputRef = useRef(null);
   const logoFileInputRef = useRef(null);
 
   const link = useMemo(() => (current.url_hash ? publicUrl(current.url_hash) : "Save to generate link"), [current.url_hash]);
 
-  const load = async () => {
+  const load = async ({ syncCurrent = true } = {}) => {
     const r = await axios.get(`${API}/business-cards`);
     const next = (r.data || []).map((card) => normalizeCard(card));
     setCards(next);
-    if (!current.id && next[0]) {
+    if (syncCurrent && !current.id && next[0]) {
       setCurrent(next[0]);
     }
+    setLoadingCards(false);
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load({ syncCurrent: true }); }, []);
 
   const save = async () => {
     setSaving(true);
     try {
       const payload = normalizeCard(current);
+      payload.social_links = { ...(payload.social_links || {}), _logo_url: payload.logo_url || "" };
       const r = current.id
         ? await axios.put(`${API}/business-cards/${current.id}`, payload)
         : await axios.post(`${API}/business-cards`, payload);
-      setCurrent(normalizeCard(r.data));
-      await load();
+      setCurrent(normalizeCard({ ...payload, ...(r.data || {}) }));
+      await load({ syncCurrent: false });
       toast.success("Business card saved");
     } finally {
       setSaving(false);
@@ -478,14 +503,14 @@ export default function AIBusinessCard() {
   const duplicate = async (id) => {
     const r = await axios.post(`${API}/business-cards/${id}/duplicate`);
     setCurrent(normalizeCard(r.data));
-    await load();
+    await load({ syncCurrent: false });
   };
 
   const remove = async (id) => {
     if (!window.confirm("Delete this business card?")) return;
     await axios.delete(`${API}/business-cards/${id}`);
     setCurrent(emptyCard);
-    await load();
+    await load({ syncCurrent: false });
   };
 
   const update = (k, v) => setCurrent((c) => ({ ...c, [k]: v }));
@@ -541,6 +566,20 @@ export default function AIBusinessCard() {
     reader.onerror = () => toast.error("Logo upload failed");
     reader.readAsDataURL(file);
   };
+
+  if (loadingCards) {
+    return (
+      <div className="space-y-8">
+        <PageHeader
+          icon={Users}
+          title="AI Business Card"
+          subtitle="Create Brandmind-native digital business cards with public links, QR codes, templates and a profile-bounded AI assistant."
+          badge="Brandmind Module"
+        />
+        <div className="rounded-sm border border-white/10 bg-[#0A0A0A] p-6 text-sm text-zinc-400">Loading business cards…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -671,7 +710,7 @@ export default function AIBusinessCard() {
             <input
               value={current.assistant_label || ""}
               onChange={(e) => update("assistant_label", e.target.value)}
-              placeholder="Assistant button label (e.g. Ask AI)"
+              placeholder={`Assistant button label (e.g. ${DEFAULT_ASSISTANT_LABEL})`}
               className="rounded-sm border border-white/10 bg-black px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#7C3AED]/50"
             />
             <input
