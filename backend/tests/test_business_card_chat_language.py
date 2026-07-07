@@ -26,7 +26,7 @@ class _FakeDB:
     business_cards = _FakeBusinessCards()
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_business_card_chat_returns_german_contact_answer(monkeypatch):
     monkeypatch.setattr(server, "db", _FakeDB())
     payload = server.BusinessCardChatRequest(question="Wie ist die Telefonnummer?")
@@ -34,7 +34,7 @@ async def test_business_card_chat_returns_german_contact_answer(monkeypatch):
     assert "Telefon:" in result["answer"]
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_business_card_chat_uses_german_system_prompt(monkeypatch):
     monkeypatch.setattr(server, "db", _FakeDB())
 
@@ -47,7 +47,7 @@ async def test_business_card_chat_uses_german_system_prompt(monkeypatch):
 
     monkeypatch.setattr(server, "llm_text", _fake_llm_text)
 
-    payload = server.BusinessCardChatRequest(question="Erzähle mir etwas über das Angebot.")
+    payload = server.BusinessCardChatRequest(question="Wie würdest du dein Profil kurz beschreiben?")
     result = await server.chat_public_business_card("hash", payload)
 
     assert result["answer"] == "Antwort auf Deutsch"
