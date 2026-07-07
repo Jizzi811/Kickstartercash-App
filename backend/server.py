@@ -6586,24 +6586,28 @@ async def chat_public_business_card(url_hash: str, payload: BusinessCardChatRequ
     socials = card.get("social_links") or {}
     assistant_knowledge = (card.get("assistant_knowledge") or "").strip()[:6000]
     if any(w in q for w in ["phone", "telefon", "call"]):
-        answer = f"Phone: {allowed.get('phone') or 'not provided on this card.'}"
+        answer = f"Telefon: {allowed.get('phone') or 'Nicht auf dieser Karte hinterlegt.'}"
     elif "email" in q or "mail" in q:
-        answer = f"Email: {allowed.get('email') or 'not provided on this card.'}"
+        answer = f"E-Mail: {allowed.get('email') or 'Nicht auf dieser Karte hinterlegt.'}"
     elif "website" in q or "web" in q:
-        answer = f"Website: {allowed.get('website') or 'not provided on this card.'}"
+        answer = f"Website: {allowed.get('website') or 'Nicht auf dieser Karte hinterlegt.'}"
     elif "social" in q or "linkedin" in q or "instagram" in q:
-        answer = "Social links: " + (", ".join(f"{k}: {v}" for k, v in socials.items() if v) or "not provided on this card.")
+        answer = "Social Links: " + (", ".join(f"{k}: {v}" for k, v in socials.items() if v) or "Nicht auf dieser Karte hinterlegt.")
     elif assistant_knowledge and any(w in q for w in ["service", "services", "offer", "offering", "angebot", "leistungen"]):
         answer = assistant_knowledge[:900]
     else:
-        prompt = "Answer only from this business card profile. If unknown, say it is not provided.\nProfile: " + json.dumps({**allowed, "social_links": socials, "assistant_knowledge": assistant_knowledge}) + "\nQuestion: " + payload.question[:500]
+        prompt = "Antworte nur auf Basis dieses Business-Card-Profils. Wenn etwas unbekannt ist, sage klar, dass es nicht hinterlegt ist.\nProfil: " + json.dumps({**allowed, "social_links": socials, "assistant_knowledge": assistant_knowledge}, ensure_ascii=False) + "\nFrage: " + payload.question[:500]
         try:
-            answer = await llm_text(OPENAI_TEXT_MODEL, "You are a business-card assistant. Answer only from the provided profile data.", prompt)
+            answer = await llm_text(
+                OPENAI_TEXT_MODEL,
+                "Du bist der FAQ BOT einer Business Card. Antworte ausschließlich auf Deutsch und nur mit Informationen aus den bereitgestellten Profildaten.",
+                prompt,
+            )
         except Exception:
             if assistant_knowledge:
                 answer = assistant_knowledge[:900]
             else:
-                answer = f"{allowed.get('name', 'This person')} is {allowed.get('title', 'a professional')} at {allowed.get('company', 'their company')}. {allowed.get('bio', '')}".strip()
+                answer = f"{allowed.get('name', 'Diese Person')} ist {allowed.get('title', 'ein Profi')} bei {allowed.get('company', 'seinem/ihrem Unternehmen')}. {allowed.get('bio', '')}".strip()
     return {"answer": answer}
 
 app.include_router(api_router)

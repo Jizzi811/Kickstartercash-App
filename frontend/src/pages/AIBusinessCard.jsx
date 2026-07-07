@@ -81,6 +81,7 @@ const normalizeCard = (card = {}) => ({
   ...emptyCard,
   ...card,
   logo_url: (card.logo_url || (card.social_links || {})._logo_url || ""),
+  assistant_knowledge: (card.assistant_knowledge || (card.social_links || {})._assistant_knowledge || ""),
   assistant_label: normalizeAssistantLabel(card.assistant_label),
   assistant_greeting: normalizeAssistantGreeting(card.assistant_greeting),
   social_links: { ...emptyCard.social_links, ...(card.social_links || {}) },
@@ -296,9 +297,9 @@ function CardPreview({ card, compact = false, publicMode = false }) {
 
 function AssistantPanel({ card, messages, q, setQ, ask, asking }) {
   const quickQuestions = [
-    "What services do you offer?",
-    "How can I contact you?",
-    "What is your website?",
+    "Welche Leistungen bietest du an?",
+    "Wie kann ich dich kontaktieren?",
+    "Wie lautet deine Website?",
   ];
 
   return (
@@ -338,7 +339,7 @@ function AssistantPanel({ card, messages, q, setQ, ask, asking }) {
             <div className="max-w-[85%] rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2 text-violet-100">
               <div className="text-[10px] uppercase tracking-wider mb-1 opacity-80">{normalizeAssistantLabel(card.assistant_label)}</div>
               <div className="inline-flex items-center gap-2 text-xs">
-                <Loader2 className="h-3 w-3 animate-spin" /> thinking...
+                <Loader2 className="h-3 w-3 animate-spin" /> Denke nach...
               </div>
             </div>
           </div>
@@ -350,7 +351,7 @@ function AssistantPanel({ card, messages, q, setQ, ask, asking }) {
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && ask()}
           className="flex-1 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm"
-          placeholder="What services are offered?"
+          placeholder="Welche Leistungen werden angeboten?"
         />
         <button
           onClick={ask}
@@ -436,7 +437,7 @@ export function PublicBusinessCard() {
       const r = await axios.post(`${API}/business-cards/public/${hash}/chat`, { question });
       setMessages((m) => [...m, { role: "ai", text: r.data.answer }]);
     } catch {
-      setMessages((m) => [...m, { role: "ai", text: "Assistant unavailable right now. Please try again." }]);
+      setMessages((m) => [...m, { role: "ai", text: "Der FAQ BOT ist gerade nicht erreichbar. Bitte versuche es erneut." }]);
     } finally {
       setAsking(false);
     }
@@ -488,7 +489,11 @@ export default function AIBusinessCard() {
     setSaving(true);
     try {
       const payload = normalizeCard(current);
-      payload.social_links = { ...(payload.social_links || {}), _logo_url: payload.logo_url || "" };
+      payload.social_links = {
+        ...(payload.social_links || {}),
+        _logo_url: payload.logo_url || "",
+        _assistant_knowledge: payload.assistant_knowledge || "",
+      };
       const r = current.id
         ? await axios.put(`${API}/business-cards/${current.id}`, payload)
         : await axios.post(`${API}/business-cards`, payload);
