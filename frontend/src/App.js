@@ -122,6 +122,7 @@ import AIBusinessCard, { PublicBusinessCard } from "@/pages/AIBusinessCard";
 import FounderPathSelect from "@/pages/FounderPathSelect";
 import FounderIntake from "@/pages/FounderIntake";
 import FounderIdeas from "@/pages/FounderIdeas";
+import FounderOperations from "@/pages/FounderOperations";
 
 function App() {
   return (
@@ -194,6 +195,7 @@ function AppShell() {
               <Route path="/onboarding/select-path" element={<FounderPathSelect />} />
               <Route path="/onboarding/founder/intake" element={<FounderIntake />} />
               <Route path="/onboarding/founder/ideas" element={<FounderIdeas />} />
+              <Route path="/onboarding/founder/operations" element={<FounderOperations />} />
               <Route path="/agents" element={<Specialists />} />
               <Route path="/design" element={<DesignStudio />} />
               <Route path="/design-v2" element={<DesignStudioV2Preview />} />
