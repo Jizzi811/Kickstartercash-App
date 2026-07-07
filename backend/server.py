@@ -6585,6 +6585,20 @@ async def chat_public_business_card(url_hash: str, payload: BusinessCardChatRequ
     allowed = {k: card.get(k, "") for k in ["name", "title", "company", "bio", "phone", "email", "website", "address"]}
     socials = card.get("social_links") or {}
     assistant_knowledge = (card.get("assistant_knowledge") or "").strip()[:6000]
+
+    async def _ensure_german(text: str) -> str:
+        base = (text or "").strip()
+        if not base:
+            return base
+        try:
+            translated = await llm_text(
+                OPENAI_TEXT_MODEL,
+                "Du bist ein präziser Übersetzer. Gib ausschließlich eine natürliche deutsche Fassung zurück und füge keine Zusatzkommentare hinzu.",
+                "Bitte ins Deutsche übertragen:\n" + base[:2000],
+            )
+            return (translated or base).strip()
+        except Exception:
+            return base
     if any(w in q for w in ["phone", "telefon", "call"]):
         answer = f"Telefon: {allowed.get('phone') or 'Nicht auf dieser Karte hinterlegt.'}"
     elif "email" in q or "mail" in q:
@@ -6608,6 +6622,7 @@ async def chat_public_business_card(url_hash: str, payload: BusinessCardChatRequ
                 answer = assistant_knowledge[:900]
             else:
                 answer = f"{allowed.get('name', 'Diese Person')} ist {allowed.get('title', 'ein Profi')} bei {allowed.get('company', 'seinem/ihrem Unternehmen')}. {allowed.get('bio', '')}".strip()
+    answer = await _ensure_german(answer)
     return {"answer": answer}
 
 app.include_router(api_router)
