@@ -119,6 +119,9 @@ import CharacterStudio from "@/pages/CharacterStudio";
 import TTSStudio from "@/pages/TTSStudio";
 import OutputFactory from "@/pages/OutputFactory";
 import AIBusinessCard, { PublicBusinessCard } from "@/pages/AIBusinessCard";
+import FounderPathSelect from "@/pages/FounderPathSelect";
+import FounderIntake from "@/pages/FounderIntake";
+import FounderIdeas from "@/pages/FounderIdeas";
 
 function App() {
   return (
@@ -188,6 +191,9 @@ function AppShell() {
               <Route path="/skills/:skillId" element={<SkillsMarketplace />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/permissions" element={<Permissions />} />
+              <Route path="/onboarding/select-path" element={<FounderPathSelect />} />
+              <Route path="/onboarding/founder/intake" element={<FounderIntake />} />
+              <Route path="/onboarding/founder/ideas" element={<FounderIdeas />} />
               <Route path="/agents" element={<Specialists />} />
               <Route path="/design" element={<DesignStudio />} />
               <Route path="/design-v2" element={<DesignStudioV2Preview />} />

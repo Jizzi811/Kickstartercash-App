@@ -11,7 +11,7 @@ import aiohttp
 from collections import defaultdict
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Header
 from dotenv import load_dotenv
@@ -819,6 +819,11 @@ async def current_workspace(
         return await workspace_from_request(authorization, x_workspace_id)
     except Exception:
         return None
+
+
+async def _authed_user(authorization: Optional[str] = Header(default=None)) -> dict:
+    from brandmind import current_user as bm_current_user
+    return await bm_current_user(authorization)
 
 
 def _scope_filter(ws: Optional[str]) -> dict:
@@ -6461,6 +6466,360 @@ async def knowledge_graph_visualization(ws: Optional[str] = Depends(current_work
 
 
 # ---------------------------------------------------------------------------
+# Founder flow + Decision Memory module
+# ---------------------------------------------------------------------------
+class FounderIntakePayload(BaseModel):
+    vision: str = ""
+    motivation: str = ""
+    target_audience: str = ""
+    budget_range: str = ""
+    values: List[str] = Field(default_factory=list)
+    skills: List[str] = Field(default_factory=list)
+
+
+class FounderIdeasGenerateRequest(BaseModel):
+    focus: str = ""
+    market_hint: str = ""
+    language: str = "DE"
+    model: str = OPENAI_TEXT_MODEL
+
+
+class FounderIdeasSelectRequest(BaseModel):
+    idea_id: str
+
+
+class DecisionCreatePayload(BaseModel):
+    category: str
+    selected_option: str = ""
+    alternatives: List[str] = Field(default_factory=list)
+    why_text: str = ""
+    evidence_refs: List[str] = Field(default_factory=list)
+    confidence: int = 70
+    decided_by: str = "user"
+    status: str = "draft"
+
+
+class DecisionUpdatePayload(BaseModel):
+    selected_option: Optional[str] = None
+    alternatives: Optional[List[str]] = None
+    why_text: Optional[str] = None
+    evidence_refs: Optional[List[str]] = None
+    confidence: Optional[int] = None
+    decided_by: Optional[str] = None
+    status: Optional[str] = None
+
+
+class BrandBriefGenerateRequest(BaseModel):
+    language: str = "DE"
+    model: str = OPENAI_TEXT_MODEL
+
+
+def _founder_scope(user_id: str, ws: Optional[str]) -> dict:
+    return {"user_id": user_id, "workspace_id": ws or ""}
+
+
+async def _decision_event(user_id: str, ws: Optional[str], decision_id: str, event_type: str, payload: dict) -> None:
+    await db.decision_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "workspace_id": ws or "",
+        "user_id": user_id,
+        "decision_id": decision_id,
+        "event_type": event_type,
+        "payload": payload,
+        "created_at": _now_iso(),
+    })
+
+
+def _normalize_list(values: List[Any]) -> List[str]:
+    out = []
+    for value in values or []:
+        text = str(value or "").strip()
+        if text:
+            out.append(text[:180])
+    return out[:20]
+
+
+@api_router.get("/founder/intake")
+async def founder_intake_get(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    doc = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0})
+    if not doc:
+        return {
+            "vision": "",
+            "motivation": "",
+            "target_audience": "",
+            "budget_range": "",
+            "values": [],
+            "skills": [],
+            "selected_idea_id": "",
+            "selected_idea": None,
+            "workspace_id": ws or "",
+        }
+    return {**doc, "workspace_id": ws or ""}
+
+
+@api_router.post("/founder/intake")
+async def founder_intake_create(payload: FounderIntakePayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    now = _now_iso()
+    doc = {
+        **_founder_scope(user["id"], ws),
+        "vision": payload.vision.strip()[:2000],
+        "motivation": payload.motivation.strip()[:2000],
+        "target_audience": payload.target_audience.strip()[:500],
+        "budget_range": payload.budget_range.strip()[:120],
+        "values": _normalize_list(payload.values),
+        "skills": _normalize_list(payload.skills),
+        "selected_idea_id": "",
+        "selected_idea": None,
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.founder_profiles.update_one(_founder_scope(user["id"], ws), {"$set": doc}, upsert=True)
+    return doc
+
+
+@api_router.put("/founder/intake")
+async def founder_intake_update(payload: FounderIntakePayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    now = _now_iso()
+    update = {
+        "vision": payload.vision.strip()[:2000],
+        "motivation": payload.motivation.strip()[:2000],
+        "target_audience": payload.target_audience.strip()[:500],
+        "budget_range": payload.budget_range.strip()[:120],
+        "values": _normalize_list(payload.values),
+        "skills": _normalize_list(payload.skills),
+        "updated_at": now,
+    }
+    await db.founder_profiles.update_one(
+        _founder_scope(user["id"], ws),
+        {"$set": update, "$setOnInsert": {"created_at": now, **_founder_scope(user["id"], ws)}},
+        upsert=True,
+    )
+    doc = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0})
+    return {**(doc or update), "workspace_id": ws or ""}
+
+
+@api_router.post("/founder/ideas/generate")
+async def founder_ideas_generate(payload: FounderIdeasGenerateRequest, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    profile = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    language = "Deutsch" if str(payload.language).upper() == "DE" else "English"
+    prompt = (
+        f"Founder profile: {json.dumps(profile, ensure_ascii=False)}\n"
+        f"Focus: {payload.focus[:400]}\nMarket hint: {payload.market_hint[:400]}\n"
+        "Create 5 business ideas with this exact JSON shape:\n"
+        '{"ideas":[{"id":"short-id","title":"...","summary":"...","target_audience":"...","scores":{"demand":0-100,"competition":0-100,"founder_fit":0-100},"first_offer":"..."}]}'
+    )
+    try:
+        raw = await llm_text(
+            payload.model or OPENAI_TEXT_MODEL,
+            f"You are Brandmind Founder Copilot. Answer only valid JSON in {language}. Keep ideas realistic and specific.",
+            prompt,
+        )
+        parsed = _extract_json(raw) or {}
+        ideas = parsed.get("ideas") if isinstance(parsed.get("ideas"), list) else []
+    except Exception:
+        ideas = []
+    if not ideas:
+        ideas = [{
+            "id": f"idea-{idx + 1}",
+            "title": title,
+            "summary": "KI-gestütztes Angebot mit klarer Zielgruppe und schneller Markteinführung.",
+            "target_audience": profile.get("target_audience") or "Selbstständige und KMU",
+            "scores": {"demand": 72 + idx, "competition": 48 + idx, "founder_fit": 68 + idx},
+            "first_offer": "Kickoff-Workshop + 30-Tage-Umsetzungsplan",
+        } for idx, title in enumerate([
+            "AI Positioning Sprint",
+            "Content System as a Service",
+            "Micro-Automation Studio",
+            "Niche Funnel Builder",
+            "Founder Launch Partner",
+        ])]
+    normalized = []
+    for idx, item in enumerate(ideas[:7]):
+        scores = item.get("scores") if isinstance(item, dict) else {}
+        normalized.append({
+            "id": str((item or {}).get("id") or f"idea-{idx + 1}")[:60],
+            "title": str((item or {}).get("title") or f"Idee {idx + 1}")[:160],
+            "summary": str((item or {}).get("summary") or "")[:900],
+            "target_audience": str((item or {}).get("target_audience") or "")[:300],
+            "scores": {
+                "demand": max(0, min(100, int((scores or {}).get("demand", 65)))),
+                "competition": max(0, min(100, int((scores or {}).get("competition", 55)))),
+                "founder_fit": max(0, min(100, int((scores or {}).get("founder_fit", 70)))),
+            },
+            "first_offer": str((item or {}).get("first_offer") or "")[:300],
+        })
+    await db.founder_ideas.update_one(
+        _founder_scope(user["id"], ws),
+        {"$set": {"ideas": normalized, "generated_at": _now_iso(), "updated_at": _now_iso()}, "$setOnInsert": {"created_at": _now_iso(), **_founder_scope(user["id"], ws)}},
+        upsert=True,
+    )
+    return {"ideas": normalized, "workspace_id": ws or ""}
+
+
+@api_router.get("/founder/ideas")
+async def founder_ideas_list(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    doc = await db.founder_ideas.find_one(_founder_scope(user["id"], ws), {"_id": 0})
+    return {"ideas": (doc or {}).get("ideas", []), "workspace_id": ws or ""}
+
+
+@api_router.post("/founder/ideas/select")
+async def founder_ideas_select(payload: FounderIdeasSelectRequest, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    ideas_doc = await db.founder_ideas.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    ideas = ideas_doc.get("ideas") or []
+    selected = next((idea for idea in ideas if str(idea.get("id")) == str(payload.idea_id)), None)
+    if not selected:
+        raise HTTPException(status_code=404, detail="Idea not found")
+    await db.founder_profiles.update_one(
+        _founder_scope(user["id"], ws),
+        {"$set": {"selected_idea_id": selected["id"], "selected_idea": selected, "updated_at": _now_iso()}, "$setOnInsert": {"created_at": _now_iso(), **_founder_scope(user["id"], ws)}},
+        upsert=True,
+    )
+    return {"selected_idea_id": selected["id"], "selected_idea": selected, "workspace_id": ws or ""}
+
+
+@api_router.get("/decisions")
+async def decisions_list(
+    category: Optional[str] = None,
+    status: Optional[str] = None,
+    user: dict = Depends(_authed_user),
+    ws: Optional[str] = Depends(current_workspace),
+):
+    query = _founder_scope(user["id"], ws)
+    if category:
+        query["category"] = category
+    if status:
+        query["status"] = status
+    rows = await db.brand_decisions.find(query, {"_id": 0}).sort("updated_at", -1).to_list(200)
+    return {"decisions": rows, "workspace_id": ws or ""}
+
+
+@api_router.post("/decisions")
+async def decisions_create(payload: DecisionCreatePayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    now = _now_iso()
+    decision = {
+        "id": str(uuid.uuid4()),
+        **_founder_scope(user["id"], ws),
+        "category": payload.category.strip()[:80],
+        "selected_option": payload.selected_option.strip()[:600],
+        "alternatives": _normalize_list(payload.alternatives),
+        "why_text": payload.why_text.strip()[:2000],
+        "evidence_refs": _normalize_list(payload.evidence_refs),
+        "confidence": max(0, min(100, int(payload.confidence))),
+        "decided_by": payload.decided_by.strip()[:40] or "user",
+        "status": payload.status if payload.status in {"draft", "locked", "superseded"} else "draft",
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.brand_decisions.insert_one(decision)
+    await _decision_event(user["id"], ws, decision["id"], "DECISION_CREATED", {"category": decision["category"], "status": decision["status"]})
+    decision.pop("_id", None)
+    return decision
+
+
+@api_router.put("/decisions/{decision_id}")
+async def decisions_update(decision_id: str, payload: DecisionUpdatePayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    query = {"id": decision_id, **_founder_scope(user["id"], ws)}
+    existing = await db.brand_decisions.find_one(query, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Decision not found")
+    update = {"updated_at": _now_iso()}
+    if payload.selected_option is not None:
+        update["selected_option"] = payload.selected_option.strip()[:600]
+    if payload.alternatives is not None:
+        update["alternatives"] = _normalize_list(payload.alternatives)
+    if payload.why_text is not None:
+        update["why_text"] = payload.why_text.strip()[:2000]
+    if payload.evidence_refs is not None:
+        update["evidence_refs"] = _normalize_list(payload.evidence_refs)
+    if payload.confidence is not None:
+        update["confidence"] = max(0, min(100, int(payload.confidence)))
+    if payload.decided_by is not None:
+        update["decided_by"] = payload.decided_by.strip()[:40] or existing.get("decided_by", "user")
+    if payload.status is not None and payload.status in {"draft", "locked", "superseded"}:
+        update["status"] = payload.status
+    await db.brand_decisions.update_one(query, {"$set": update})
+    merged = {**existing, **update}
+    await _decision_event(user["id"], ws, decision_id, "DECISION_UPDATED", {"status": merged.get("status", "draft")})
+    return merged
+
+
+@api_router.post("/decisions/{decision_id}/lock")
+async def decisions_lock(decision_id: str, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    query = {"id": decision_id, **_founder_scope(user["id"], ws)}
+    existing = await db.brand_decisions.find_one(query, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Decision not found")
+    update = {"status": "locked", "updated_at": _now_iso()}
+    await db.brand_decisions.update_one(query, {"$set": update})
+    await _decision_event(user["id"], ws, decision_id, "DECISION_LOCKED", {"category": existing.get("category", "")})
+    return {**existing, **update}
+
+
+@api_router.get("/decisions/history")
+async def decisions_history(limit: int = 200, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    rows = await db.decision_events.find(_founder_scope(user["id"], ws), {"_id": 0}).sort("created_at", -1).to_list(max(1, min(limit, 1000)))
+    return {"events": rows, "workspace_id": ws or ""}
+
+
+@api_router.post("/brand-brief/generate")
+async def brand_brief_generate(payload: BrandBriefGenerateRequest, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    profile = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    decisions = await db.brand_decisions.find(_founder_scope(user["id"], ws), {"_id": 0}).sort("updated_at", -1).to_list(400)
+    if not decisions and not profile:
+        raise HTTPException(status_code=400, detail="No founder profile or decisions available")
+    compact = [
+        {
+            "id": d.get("id", ""),
+            "category": d.get("category", ""),
+            "selected_option": d.get("selected_option", ""),
+            "why_text": d.get("why_text", ""),
+            "status": d.get("status", "draft"),
+        }
+        for d in decisions
+    ]
+    language = "Deutsch" if str(payload.language).upper() == "DE" else "English"
+    prompt = (
+        f"Founder profile: {json.dumps(profile, ensure_ascii=False)}\n"
+        f"Decisions: {json.dumps(compact, ensure_ascii=False)}\n"
+        "Create a concise strategic brand brief with sections: company_summary, positioning, target_audience, tone_of_voice, offers, messaging_rules, visual_direction."
+    )
+    try:
+        brief_text = await llm_text(
+            payload.model or OPENAI_TEXT_MODEL,
+            f"You are Brandmind Strategy Lead. Respond in {language}. Return plain text with clear headings.",
+            prompt,
+        )
+    except Exception:
+        brief_text = (
+            "## Company Summary\n"
+            f"{profile.get('vision', '')}\n\n"
+            "## Positioning\n"
+            + "\n".join(f"- {d.get('selected_option', '')}" for d in compact[:5] if d.get("selected_option"))
+        ).strip()
+    now = _now_iso()
+    doc = {
+        "id": str(uuid.uuid4()),
+        **_founder_scope(user["id"], ws),
+        "content": (brief_text or "").strip()[:12000],
+        "language": str(payload.language).upper(),
+        "sources": [d.get("id", "") for d in compact if d.get("id")],
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.brand_briefs.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+@api_router.get("/brand-brief/latest")
+async def brand_brief_latest(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    latest = await db.brand_briefs.find_one(_founder_scope(user["id"], ws), {"_id": 0}, sort=[("created_at", -1)])
+    if not latest:
+        return {"content": "", "sources": [], "workspace_id": ws or ""}
+    return {**latest, "workspace_id": ws or ""}
+
+
+# ---------------------------------------------------------------------------
 # AI Business Card module
 # ---------------------------------------------------------------------------
 
@@ -6502,21 +6861,15 @@ def _public_business_card_view(card: dict) -> dict:
 def _new_card_hash() -> str:
     return uuid.uuid4().hex[:10]
 
-
-async def _business_card_user(authorization: Optional[str] = Header(default=None)) -> dict:
-    from brandmind import current_user as bm_current_user
-    return await bm_current_user(authorization)
-
-
 @api_router.get("/business-cards")
-async def list_business_cards(user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+async def list_business_cards(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
     query = {"user_id": user["id"], **({"workspace_id": ws} if ws else {})}
     cards = await db.business_cards.find(query, {"_id": 0}).sort("updated_at", -1).to_list(200)
     return cards
 
 
 @api_router.post("/business-cards")
-async def create_business_card(payload: BusinessCardPayload, user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+async def create_business_card(payload: BusinessCardPayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
     now = _now_iso()
     card = payload.dict()
     card.update({
@@ -6532,7 +6885,7 @@ async def create_business_card(payload: BusinessCardPayload, user: dict = Depend
 
 
 @api_router.put("/business-cards/{card_id}")
-async def update_business_card(card_id: str, payload: BusinessCardPayload, user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+async def update_business_card(card_id: str, payload: BusinessCardPayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
     query = {"id": card_id, "user_id": user["id"], **({"workspace_id": ws} if ws else {})}
     existing = await db.business_cards.find_one(query, {"_id": 0})
     if not existing:
@@ -6544,7 +6897,7 @@ async def update_business_card(card_id: str, payload: BusinessCardPayload, user:
 
 
 @api_router.post("/business-cards/{card_id}/duplicate")
-async def duplicate_business_card(card_id: str, user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+async def duplicate_business_card(card_id: str, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
     query = {"id": card_id, "user_id": user["id"], **({"workspace_id": ws} if ws else {})}
     existing = await db.business_cards.find_one(query, {"_id": 0})
     if not existing:
@@ -6556,7 +6909,7 @@ async def duplicate_business_card(card_id: str, user: dict = Depends(_business_c
 
 
 @api_router.delete("/business-cards/{card_id}")
-async def delete_business_card(card_id: str, user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+async def delete_business_card(card_id: str, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
     query = {"id": card_id, "user_id": user["id"], **({"workspace_id": ws} if ws else {})}
     result = await db.business_cards.delete_one(query)
     if not result.deleted_count:
