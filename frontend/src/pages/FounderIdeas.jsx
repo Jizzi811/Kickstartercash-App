@@ -132,6 +132,7 @@ export default function FounderIdeas() {
         actions={(
           <>
             <Btn variant="ghost" onClick={() => navigate("/onboarding/founder/intake")}>Zurück zur Vision</Btn>
+            <Btn variant="ghost" onClick={() => navigate("/onboarding/founder/operations")}>Founder Ops Hub</Btn>
             <Btn onClick={generateBrief} disabled={briefing || !selectedDecision}>
               {briefing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
               Brand Brief generieren

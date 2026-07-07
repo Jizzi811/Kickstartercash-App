@@ -6401,6 +6401,283 @@ async def workflows_runs(ws: Optional[str] = Depends(current_workspace), limit: 
 
 
 # ---------------------------------------------------------------------------
+# Founder Ops module (Phase B): Social Autopost + Visual Planner + Workflows
+# ---------------------------------------------------------------------------
+class SocialConnectionPayload(BaseModel):
+    platform: str
+    account_handle: str = ""
+    active: bool = True
+
+
+class PublishJobPayload(BaseModel):
+    platform: str
+    content: str
+    scheduled_for: str = ""
+    media_url: str = ""
+    tags: List[str] = Field(default_factory=list)
+
+
+class PlannerTaskPayload(BaseModel):
+    title: str
+    description: str = ""
+    column: str = "vision"
+    priority: str = "medium"
+    due_date: str = ""
+    owner: str = "Founder"
+    source: str = "manual"
+
+
+class PlannerTaskUpdatePayload(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    column: Optional[str] = None
+    priority: Optional[str] = None
+    due_date: Optional[str] = None
+    owner: Optional[str] = None
+    status: Optional[str] = None
+
+
+def _ops_scope(user_id: str, ws: Optional[str]) -> dict:
+    return {"user_id": user_id, "workspace_id": ws or ""}
+
+
+def _planner_columns() -> List[dict]:
+    return [
+        {"id": "vision", "title": "Vision"},
+        {"id": "brand", "title": "Brand"},
+        {"id": "offer", "title": "Offer"},
+        {"id": "launch", "title": "Launch"},
+        {"id": "growth", "title": "Growth"},
+    ]
+
+
+FOUNDER_WORKFLOW_TEMPLATES = [
+    {
+        "id": "founder-30-day-launch",
+        "name": "Founder 30-Day Launch",
+        "description": "Build core offer, publish first content wave, and start lead capture.",
+        "tasks": [
+            {"title": "Finalize brand messaging", "column": "brand"},
+            {"title": "Draft first offer landing page", "column": "offer"},
+            {"title": "Queue 5 social launch posts", "column": "launch"},
+        ],
+    },
+    {
+        "id": "weekly-content-engine",
+        "name": "Weekly Content Engine",
+        "description": "Generate and schedule a weekly multi-platform content set.",
+        "tasks": [
+            {"title": "Generate weekly topic cluster", "column": "growth"},
+            {"title": "Create 3 posts + 1 short video script", "column": "growth"},
+            {"title": "Review and schedule posts", "column": "launch"},
+        ],
+    },
+    {
+        "id": "new-offer-go-live",
+        "name": "New Offer Go-Live",
+        "description": "Prepare and publish a fresh offer with campaign touchpoints.",
+        "tasks": [
+            {"title": "Define offer promise + objections", "column": "offer"},
+            {"title": "Create launch sequence emails", "column": "launch"},
+            {"title": "Publish social teaser + CTA", "column": "launch"},
+        ],
+    },
+]
+
+
+@api_router.get("/social/connections")
+async def social_connections_list(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    rows = await db.social_connections.find(_ops_scope(user["id"], ws), {"_id": 0}).sort("updated_at", -1).to_list(30)
+    return {"connections": rows, "workspace_id": ws or ""}
+
+
+@api_router.post("/social/connections")
+async def social_connections_upsert(payload: SocialConnectionPayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    platform = payload.platform.strip()[:60]
+    if not platform:
+        raise HTTPException(status_code=400, detail="platform is required")
+    query = {**_ops_scope(user["id"], ws), "platform": platform}
+    now = _now_iso()
+    doc = {
+        **query,
+        "account_handle": payload.account_handle.strip()[:160],
+        "active": bool(payload.active),
+        "updated_at": now,
+    }
+    await db.social_connections.update_one(query, {"$set": doc, "$setOnInsert": {"created_at": now}}, upsert=True)
+    return doc
+
+
+@api_router.get("/social/publish-jobs")
+async def social_publish_jobs_list(status: Optional[str] = None, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    query = _ops_scope(user["id"], ws)
+    if status:
+        query["status"] = status
+    rows = await db.publish_jobs.find(query, {"_id": 0}).sort("created_at", -1).to_list(300)
+    return {"jobs": rows, "workspace_id": ws or ""}
+
+
+@api_router.post("/social/publish-jobs")
+async def social_publish_jobs_create(payload: PublishJobPayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    platform = payload.platform.strip()[:60]
+    content = payload.content.strip()[:6000]
+    if not platform or not content:
+        raise HTTPException(status_code=400, detail="platform and content are required")
+    now = _now_iso()
+    job = {
+        "id": str(uuid.uuid4()),
+        **_ops_scope(user["id"], ws),
+        "platform": platform,
+        "content": content,
+        "scheduled_for": payload.scheduled_for.strip() or now,
+        "media_url": payload.media_url.strip()[:1000],
+        "tags": _normalize_list(payload.tags),
+        "status": "queued",
+        "retry_count": 0,
+        "last_error": "",
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.publish_jobs.insert_one(job)
+    job.pop("_id", None)
+    return job
+
+
+@api_router.post("/social/publish-jobs/{job_id}/dispatch")
+async def social_publish_job_dispatch(job_id: str, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    query = {"id": job_id, **_ops_scope(user["id"], ws)}
+    existing = await db.publish_jobs.find_one(query, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Publish job not found")
+    now = _now_iso()
+    update = {"status": "published", "updated_at": now, "published_at": now, "last_error": ""}
+    await db.publish_jobs.update_one(query, {"$set": update})
+    return {**existing, **update}
+
+
+@api_router.get("/planner/board")
+async def planner_board(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    rows = await db.planner_tasks.find(_ops_scope(user["id"], ws), {"_id": 0}).sort("created_at", 1).to_list(500)
+    columns = _planner_columns()
+    grouped = {c["id"]: [] for c in columns}
+    for row in rows:
+        col = row.get("column", "vision")
+        if col not in grouped:
+            grouped[col] = []
+        grouped[col].append(row)
+    return {"columns": columns, "tasks_by_column": grouped, "workspace_id": ws or ""}
+
+
+@api_router.post("/planner/tasks")
+async def planner_task_create(payload: PlannerTaskPayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    now = _now_iso()
+    task = {
+        "id": str(uuid.uuid4()),
+        **_ops_scope(user["id"], ws),
+        "title": payload.title.strip()[:220],
+        "description": payload.description.strip()[:2000],
+        "column": payload.column.strip()[:60] or "vision",
+        "priority": payload.priority if payload.priority in {"low", "medium", "high"} else "medium",
+        "due_date": payload.due_date.strip()[:60],
+        "owner": payload.owner.strip()[:120] or "Founder",
+        "source": payload.source.strip()[:80] or "manual",
+        "status": "open",
+        "created_at": now,
+        "updated_at": now,
+    }
+    if not task["title"]:
+        raise HTTPException(status_code=400, detail="title is required")
+    await db.planner_tasks.insert_one(task)
+    task.pop("_id", None)
+    return task
+
+
+@api_router.put("/planner/tasks/{task_id}")
+async def planner_task_update(task_id: str, payload: PlannerTaskUpdatePayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    query = {"id": task_id, **_ops_scope(user["id"], ws)}
+    existing = await db.planner_tasks.find_one(query, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Planner task not found")
+    update = {"updated_at": _now_iso()}
+    if payload.title is not None:
+        update["title"] = payload.title.strip()[:220]
+    if payload.description is not None:
+        update["description"] = payload.description.strip()[:2000]
+    if payload.column is not None:
+        update["column"] = payload.column.strip()[:60] or existing.get("column", "vision")
+    if payload.priority is not None and payload.priority in {"low", "medium", "high"}:
+        update["priority"] = payload.priority
+    if payload.due_date is not None:
+        update["due_date"] = payload.due_date.strip()[:60]
+    if payload.owner is not None:
+        update["owner"] = payload.owner.strip()[:120]
+    if payload.status is not None:
+        update["status"] = payload.status.strip()[:40]
+    await db.planner_tasks.update_one(query, {"$set": update})
+    return {**existing, **update}
+
+
+@api_router.get("/founder/workflow-templates")
+async def founder_workflow_templates():
+    return {"templates": FOUNDER_WORKFLOW_TEMPLATES}
+
+
+@api_router.post("/founder/workflow-templates/{template_id}/run")
+async def founder_workflow_run(template_id: str, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    template = next((tpl for tpl in FOUNDER_WORKFLOW_TEMPLATES if tpl["id"] == template_id), None)
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    created_tasks = []
+    now = _now_iso()
+    for item in template.get("tasks", []):
+        task = {
+            "id": str(uuid.uuid4()),
+            **_ops_scope(user["id"], ws),
+            "title": item.get("title", "")[:220],
+            "description": template.get("description", "")[:2000],
+            "column": item.get("column", "vision"),
+            "priority": "medium",
+            "due_date": "",
+            "owner": "Founder",
+            "source": f"workflow:{template_id}",
+            "status": "open",
+            "created_at": now,
+            "updated_at": now,
+        }
+        await db.planner_tasks.insert_one(task)
+        task.pop("_id", None)
+        created_tasks.append(task)
+        if "social" in task["title"].lower() or "publish" in task["title"].lower():
+            job = {
+                "id": str(uuid.uuid4()),
+                **_ops_scope(user["id"], ws),
+                "platform": "LinkedIn",
+                "content": f"{template['name']} · {task['title']}",
+                "scheduled_for": now,
+                "media_url": "",
+                "tags": ["workflow", "founder"],
+                "status": "queued",
+                "retry_count": 0,
+                "last_error": "",
+                "created_at": now,
+                "updated_at": now,
+            }
+            await db.publish_jobs.insert_one(job)
+    run = {
+        "id": str(uuid.uuid4()),
+        **_ops_scope(user["id"], ws),
+        "template_id": template_id,
+        "template_name": template["name"],
+        "status": "completed",
+        "created_task_ids": [task["id"] for task in created_tasks],
+        "created_at": now,
+    }
+    await db.founder_workflow_runs.insert_one(run)
+    run.pop("_id", None)
+    return {"run": run, "created_tasks": created_tasks}
+
+
+# ---------------------------------------------------------------------------
 # BrandMind Knowledge Graph – semantic facade over current persistence
 # ---------------------------------------------------------------------------
 async def _knowledge_snapshot(ws: Optional[str]) -> knowledge_graph.GraphSnapshot:
