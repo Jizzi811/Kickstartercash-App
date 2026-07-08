@@ -81,7 +81,6 @@ import Specialists from "@/pages/Specialists";       // Agents overview
 
 // Studios
 import DesignStudio from "@/pages/DesignStudio";
-import DesignStudioV2Preview from "@/pages/DesignStudioV2Preview";
 import VideoStudio from "@/pages/VideoStudio";
 import SeoStudio from "@/pages/SeoStudio";
 import AnalyticsStudio from "@/pages/AnalyticsStudio";
@@ -198,7 +197,6 @@ function AppShell() {
               <Route path="/onboarding/founder/operations" element={<FounderOperations />} />
               <Route path="/agents" element={<Specialists />} />
               <Route path="/design" element={<DesignStudio />} />
-              <Route path="/design-v2" element={<DesignStudioV2Preview />} />
               <Route path="/video" element={<VideoStudio />} />
               <Route path="/social" element={<SocialMedia />} />
               <Route path="/seo" element={<SeoStudio />} />
