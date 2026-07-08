@@ -78,7 +78,7 @@ const NAV_GROUPS = [
     items: [
       { to: "/automation", icon: Zap, labelDE: "Automation", labelEN: "Automation" },
       { to: "/workflow-architect", icon: Workflow, labelDE: "Workflow Architect", labelEN: "Workflow Architect" },
-      { to: "/onboarding/founder/operations", icon: Workflow, labelDE: "Founder Ops", labelEN: "Founder Ops" },
+      { to: "/ops", icon: Workflow, labelDE: "Content Ops", labelEN: "Content Ops" },
       { to: "/workflow", icon: Megaphone, labelDE: "Campaign Flow", labelEN: "Campaign Flow" },
       { to: "/orchestrator", icon: Network, labelDE: "Orchestrator", labelEN: "Orchestrator" },
       { to: "/tickets", icon: Ticket, labelDE: "Tickets", labelEN: "Tickets" },
@@ -136,7 +136,7 @@ const PAGE_NAMES = {
   "/linkedin": "LinkedIn Studio",
   "/orchestrator": "Orchestrator",
   "/workflow-architect": "Workflow Architect",
-  "/onboarding/founder/operations": "Founder Ops",
+  "/ops": "Content Ops",
   "/finance-cfo": "CFO Studio",
   "/finance-analyst": "Financial Analyst",
   "/finance-fpa": "FP&A Studio",

@@ -194,7 +194,8 @@ function AppShell() {
               <Route path="/onboarding/select-path" element={<FounderPathSelect />} />
               <Route path="/onboarding/founder/intake" element={<FounderIntake />} />
               <Route path="/onboarding/founder/ideas" element={<FounderIdeas />} />
-              <Route path="/onboarding/founder/operations" element={<FounderOperations />} />
+              <Route path="/ops" element={<FounderOperations />} />
+              <Route path="/onboarding/founder/operations" element={<Navigate to="/ops" replace />} />
               <Route path="/agents" element={<Specialists />} />
               <Route path="/design" element={<DesignStudio />} />
               <Route path="/video" element={<VideoStudio />} />

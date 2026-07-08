@@ -6566,12 +6566,12 @@ async def planner_task_update(task_id: str, payload: PlannerTaskUpdatePayload, u
     return {**existing, **update}
 
 
-@api_router.get("/founder/workflow-templates")
+@api_router.get("/ops/workflow-templates")
 async def founder_workflow_templates():
     return {"templates": FOUNDER_WORKFLOW_TEMPLATES}
 
 
-@api_router.post("/founder/workflow-templates/{template_id}/run")
+@api_router.post("/ops/workflow-templates/{template_id}/run")
 async def founder_workflow_run(template_id: str, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
     template = next((tpl for tpl in FOUNDER_WORKFLOW_TEMPLATES if tpl["id"] == template_id), None)
     if not template:
