@@ -4160,8 +4160,8 @@ async def delete_knowledge(entry_id: str):
 
 
 @api_router.post("/knowledge/search")
-async def search_knowledge(payload: KbSearchRequest):
-    filt: dict = {}
+async def search_knowledge(payload: KbSearchRequest, ws: Optional[str] = Depends(current_workspace)):
+    filt: dict = dict(_scope_filter(ws))
     if payload.category and payload.category != "Alle":
         filt["category"] = payload.category
     docs = await db.knowledge.find(filt, {"_id": 0}).to_list(2000)
@@ -5951,27 +5951,37 @@ async def gateway_health(ws: Optional[str] = Depends(current_workspace)):
 async def gateway_usage(ws: Optional[str] = Depends(current_workspace), limit: int = 500):
     if db is None:
         return {"summary": {}, "by_provider": [], "recent": []}
-    rows = await db.gateway_usage.find(_scope_filter(ws), {"_id": 0}).to_list(5000)
-    rows.sort(key=lambda r: r.get("created_at", ""), reverse=True)
-    total = len(rows)
-    ok = len([r for r in rows if r.get("ok")])
-    cost = round(sum(r.get("cost_usd", 0) for r in rows), 4)
-    lat = [r.get("latency_ms", 0) for r in rows if r.get("ok")]
-    by_provider: dict = {}
-    for r in rows:
-        p = r.get("provider") or "—"
-        b = by_provider.setdefault(p, {"provider": p, "calls": 0, "cost_usd": 0.0, "ok": 0})
-        b["calls"] += 1
-        b["cost_usd"] = round(b["cost_usd"] + r.get("cost_usd", 0), 4)
-        if r.get("ok"):
-            b["ok"] += 1
+    scope = _scope_filter(ws)
+    # Aggregate server-side instead of pulling every usage row into memory —
+    # this collection grows unbounded and was already the cause of one OOM (see _usage_snapshot).
+    pipeline = [
+        {"$match": scope},
+        {"$group": {
+            "_id": "$provider",
+            "calls": {"$sum": 1},
+            "cost_usd": {"$sum": "$cost_usd"},
+            "ok": {"$sum": {"$cond": ["$ok", 1, 0]}},
+            "latency_sum_ok": {"$sum": {"$cond": ["$ok", "$latency_ms", 0]}},
+        }},
+    ]
+    grouped = await db.gateway_usage.aggregate(pipeline).to_list(200)
+    total = sum(g["calls"] for g in grouped)
+    ok = sum(g["ok"] for g in grouped)
+    cost = round(sum(g.get("cost_usd") or 0 for g in grouped), 4)
+    lat_sum = sum(g.get("latency_sum_ok") or 0 for g in grouped)
+    by_provider = sorted(
+        [{"provider": g["_id"] or "—", "calls": g["calls"], "cost_usd": round(g.get("cost_usd") or 0, 4), "ok": g["ok"]}
+         for g in grouped],
+        key=lambda x: -x["calls"],
+    )
+    recent = await db.gateway_usage.find(scope, {"_id": 0}).sort("created_at", -1).to_list(min(max(limit, 0), 50))
     return {
         "summary": {
             "calls": total, "ok": ok, "success_rate": round((ok / total) * 100) if total else 0,
-            "cost_usd": cost, "avg_latency_ms": round(sum(lat) / len(lat)) if lat else 0,
+            "cost_usd": cost, "avg_latency_ms": round(lat_sum / ok) if ok else 0,
         },
-        "by_provider": sorted(by_provider.values(), key=lambda x: -x["calls"]),
-        "recent": rows[:limit][:50],
+        "by_provider": by_provider,
+        "recent": recent,
     }
 
 
