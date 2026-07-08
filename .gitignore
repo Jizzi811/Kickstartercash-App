@@ -104,3 +104,6 @@ CLAUDE.md.pre-ruflo
 
 # Claude Code local config
 CLAUDE.local.md
+
+# claude-flow local tooling state
+.claude-flow/
