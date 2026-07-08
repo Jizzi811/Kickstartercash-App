@@ -440,8 +440,8 @@ async def llm_image(prompt: str, reference_b64: Optional[str] = None) -> Optiona
     return None
 
 
-def _brand_context(brand: dict, language: str, agent_id: Optional[str] = None) -> str:
-    """Brand guidelines + injected Brand Identity DNA.
+async def _brand_context(brand: dict, language: str, agent_id: Optional[str] = None) -> str:
+    """Brand guidelines + injected Brand Identity DNA + locked Decision Memory.
 
     This is the single chokepoint every AI entry point uses, so appending the
     DNA subset here means *every* AI generation is DNA-grounded automatically.
@@ -464,7 +464,25 @@ def _brand_context(brand: dict, language: str, agent_id: Optional[str] = None) -
     except Exception as e:  # never let DNA injection break a generation
         logger.warning(f"DNA injection skipped: {e}")
         dna = ""
-    return f"{base}\n\n{dna}" if dna else base
+    decisions = ""
+    try:
+        if db is not None:
+            rows = await db.brand_decisions.find(
+                {"workspace_id": brand.get("workspace_id") or "", "status": "locked"}, {"_id": 0},
+            ).sort("updated_at", -1).to_list(30)
+            if rows:
+                lines = "\n".join(f"- [{r.get('category')}] {r.get('selected_option')} — {r.get('why_text')}" for r in rows[:15])
+                header = (
+                    "FESTGELEGTE MARKENENTSCHEIDUNGEN (bereits final – nicht widersprechen, ohne es explizit zu kennzeichnen):"
+                    if language == "DE" else
+                    "LOCKED BRAND DECISIONS (already final — do not contradict without explicitly flagging it):"
+                )
+                decisions = f"{header}\n{lines}"
+    except Exception as e:  # never let decision memory break a generation
+        logger.warning(f"Decision memory injection skipped: {e}")
+        decisions = ""
+    parts = [base] + ([dna] if dna else []) + ([decisions] if decisions else [])
+    return "\n\n".join(parts)
 
 
 # ---------------------------------------------------------------------------
@@ -1171,7 +1189,7 @@ def _fetch_logo_b64(brand: dict) -> Optional[str]:
 @api_router.post("/generate/social")
 async def generate_social(req: SocialRequest, ws: Optional[str] = Depends(current_workspace)):
     brand = await _resolve_brand(req.brand_id, ws)
-    ctx = _brand_context(brand, req.language)
+    ctx = await _brand_context(brand, req.language)
     platforms = ", ".join(req.platforms)
     system = (
         "You are a world-class social media marketing strategist. "
@@ -1206,7 +1224,7 @@ async def generate_social(req: SocialRequest, ws: Optional[str] = Depends(curren
 @api_router.post("/generate/copy")
 async def generate_copy(req: CopyRequest, ws: Optional[str] = Depends(current_workspace)):
     brand = await _resolve_brand(req.brand_id, ws)
-    ctx = _brand_context(brand, req.language)
+    ctx = await _brand_context(brand, req.language)
     system = (
         "You are an elite direct-response copywriter. Return strictly valid JSON and nothing else."
     )
@@ -1307,7 +1325,7 @@ async def optimize_prompt(req: PromptOptimizeRequest):
 @api_router.post("/generate/campaign")
 async def generate_campaign(req: CampaignRequest, ws: Optional[str] = Depends(current_workspace)):
     brand = await _resolve_brand(req.brand_id, ws)
-    ctx = _brand_context(brand, req.language)
+    ctx = await _brand_context(brand, req.language)
     platforms = ", ".join(req.platforms)
 
     # One combined text call (posts + ad copy) avoids firing two parallel
@@ -1384,7 +1402,7 @@ async def generate_campaign(req: CampaignRequest, ws: Optional[str] = Depends(cu
 @api_router.post("/generate/calendar")
 async def generate_calendar(req: CalendarRequest, ws: Optional[str] = Depends(current_workspace)):
     brand = await _resolve_brand(req.brand_id, ws)
-    ctx = _brand_context(brand, req.language)
+    ctx = await _brand_context(brand, req.language)
     days = req.days if req.days in (30, 60, 90) else 30
     count = {30: 15, 60: 22, 90: 30}[days]
     platforms = ", ".join(req.platforms)
@@ -1418,7 +1436,7 @@ async def generate_calendar(req: CalendarRequest, ws: Optional[str] = Depends(cu
 @api_router.post("/generate/landingpage")
 async def generate_landingpage(req: LandingpageRequest, ws: Optional[str] = Depends(current_workspace)):
     brand = await _resolve_brand(req.brand_id, ws)
-    ctx = _brand_context(brand, req.language)
+    ctx = await _brand_context(brand, req.language)
     system = "You are an elite conversion copywriter and web strategist. Return strictly valid JSON and nothing else."
     user = (
         f"{ctx}\n\nCreate a complete high-converting landing page for: '{req.topic}'.\n"
@@ -1455,7 +1473,7 @@ async def delete_history(item_id: str):
 @api_router.post("/analyze/content")
 async def analyze_content(req: AnalyzeRequest, ws: Optional[str] = Depends(current_workspace)):
     brand = await _resolve_brand(req.brand_id, ws)
-    ctx = _brand_context(brand, req.language)
+    ctx = await _brand_context(brand, req.language)
     lang = "Deutsch" if req.language == "DE" else "English"
     system = (
         "You are a strict brand guardian and marketing quality auditor. "
@@ -4080,7 +4098,7 @@ async def agent_chat(req: AgentChatRequest, ws: Optional[str] = Depends(current_
     _mem = await _agent_memory_context(req.agent_id, ws, lang)
     system = (
         f"{personality}\n\n"
-        f"{_brand_context(brand, lang, req.agent_id)}\n\n"
+        f"{await _brand_context(brand, lang, req.agent_id)}\n\n"
         f"{(_mem + chr(10) + chr(10)) if _mem else ''}"
         f"Antworte immer auf {lang_label}. "
         f"Du bist Teil des Quantum Multi-Agenten-Systems von Brandmind."
@@ -4417,7 +4435,7 @@ async def generate_agent_workflow(req: AgentBuilderRequest, ws: Optional[str] = 
     brand = await _resolve_brand(req.brand_id, ws)
     system = (
         "Du bist ein KI-Architekten-Assistent für das Brandmind Agent-System. "
-        f"{_brand_context(brand, req.language)}\n"
+        f"{await _brand_context(brand, req.language)}\n"
         "Wenn ein Benutzer einen Workflow beschreibt, antwortest du mit:\n"
         "1. **Agent-Konfiguration**: Name, Persönlichkeit, Rolle des zu erstellenden Agenten\n"
         "2. **Workflow-Schritte**: Nummerierte Schritt-für-Schritt Automatisierung\n"
@@ -5244,7 +5262,7 @@ async def mission_ceo_plan(req: CeoPlanRequest, ws: Optional[str] = Depends(curr
     _mem = await _agent_memory_context('ceo', ws, lang)
     system = (
         f"{personality}\n\n"
-        f"{_brand_context(brand, lang, 'ceo')}\n\n"
+        f"{await _brand_context(brand, lang, 'ceo')}\n\n"
         f"{(_mem + chr(10) + chr(10)) if _mem else ''}"
         "Du bist Quantum Intelligence. Erstelle einen umsetzbaren Executive-Plan für das Ziel des Nutzers. "
         "WICHTIG: Nichts wird automatisch veröffentlicht oder ausgeführt – dein Plan ist ein Vorschlag, "
@@ -5422,7 +5440,7 @@ async def mission_team_chat_ask(plan_id: str, payload: TeamChatAskRequest,
     )
     _mem = await _agent_memory_context('ceo', ws, payload.language)
     system = (
-        f"{_brand_context(brand, payload.language, 'ceo')}\n\n"
+        f"{await _brand_context(brand, payload.language, 'ceo')}\n\n"
         f"{(_mem + chr(10) + chr(10)) if _mem else ''}"
         "You are BrandMind's internal AI Team Chat for a Mission Control plan. "
         "Quantum moderates. Relevant agents respond with short role-specific critique, improvements and next actions. "
