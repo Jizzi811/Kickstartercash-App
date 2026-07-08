@@ -62,10 +62,12 @@ export default function Auth() {
     try {
       if (mode === "register") {
         await register({ email: form.email, password: form.password, name: form.name, company: form.company });
+        // New accounts start on the path selector (existing company vs. founder journey).
+        navigate("/onboarding/select-path");
       } else {
         await login({ email: form.email, password: form.password });
+        navigate("/");
       }
-      navigate("/brand-brain");
     } catch (err) {
       setError(err?.response?.data?.detail || T("Etwas ist schiefgelaufen.", "Something went wrong."));
     } finally {
