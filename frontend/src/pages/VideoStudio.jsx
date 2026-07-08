@@ -7,7 +7,7 @@ import { AgentChatPanel, StudioContextArea } from "@/components/StudioLayout";
 import { PageHeader } from "@/components/PageHeader";
 
 const COLOR = "#F472B6";
-const BACKEND = process.env.REACT_APP_BACKEND_URL || "";
+const BACKEND = process.env.REACT_APP_BACKEND_URL || "https://brandmind-api.onrender.com";
 
 // ── Remotion Templates ──────────────────────────────────────────────────────
 const REMOTION_TEMPLATES = [

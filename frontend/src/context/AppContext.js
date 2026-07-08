@@ -2,7 +2,9 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import axios from "axios";
 import { translations } from "@/i18n";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "";
+// Fallback keeps the app working even when the env var is missing in a new
+// hosting setup (e.g. after moving the Netlify site to another account).
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://brandmind-api.onrender.com";
 export const API = `${BACKEND_URL}/api`;
 
 const AppContext = createContext(null);
@@ -49,7 +51,7 @@ export const AppProvider = ({ children }) => {
   const applyAuth = useCallback((data) => {
     setToken(data.token);
     setUser(data.user);
-    setWorkspaces(data.workspaces || []);
+    setWorkspaces(Array.isArray(data.workspaces) ? data.workspaces : []);
     const wsId = data.active_workspace_id || data.workspaces?.[0]?.id || "";
     setActiveWorkspaceId(wsId);
     if (wsId) localStorage.setItem("bm_workspace", wsId);
@@ -97,7 +99,7 @@ export const AppProvider = ({ children }) => {
           const res = await axios.get(`${API}/auth/me`);
           if (!cancelled) {
             setUser(res.data.user);
-            setWorkspaces(res.data.workspaces || []);
+            setWorkspaces(Array.isArray(res.data.workspaces) ? res.data.workspaces : []);
           }
         } catch {
           if (!cancelled) logout();
@@ -113,8 +115,11 @@ export const AppProvider = ({ children }) => {
 
   const loadBrands = useCallback(async () => {
     const res = await axios.get(`${API}/brands`);
-    setBrands(res.data);
-    return res.data;
+    // A misconfigured backend URL can return the SPA's index.html (an HTML
+    // string) with status 200 — never let a non-array reach `brands`.
+    const list = Array.isArray(res.data) ? res.data : [];
+    setBrands(list);
+    return list;
   }, []);
 
   useEffect(() => {
