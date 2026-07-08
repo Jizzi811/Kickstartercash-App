@@ -30,9 +30,10 @@ Brandmind is a single product with two services:
 - Backend tests: `cd backend && ./venv/bin/python -m pytest tests/backend_test.py` — these are **integration** tests that hit the running backend (they read `REACT_APP_BACKEND_URL` from `frontend/.env`), so the backend + MongoDB must be running. Tests that call LLM generation (GPT/Gemini/image) fail without provider API keys, and `test_list_brands_has_default` expects the legacy `kickstartercash` seed rather than the `brandmind` DB seed — these failures are data/key-dependent, not setup bugs. `backend/pytest.ini` forces `-n 2 --dist loadscope`; do not change `addopts`.
 - Frontend build (CI check): `cd frontend && CI=false npm run build`.
 
-### Known issue (not an environment problem)
+### Frontend runtime notes
 
-- On `main`, authenticated pages crash with `ReferenceError: enabled is not defined` from `frontend/src/components/Layout.jsx` (a stray `if (!enabled) return null;` at the top-level `Layout` component). Registration/login and the `/auth` page work; the black screen after login is this app bug (being addressed in `codex/*` branches), so don't mistake it for a broken dev setup.
+- The `ReferenceError: enabled is not defined` crash in `Layout.jsx` mentioned in earlier versions of this doc is fixed on `main`.
+- If the app shows "Brandmind konnte nicht geladen werden", check `REACT_APP_BACKEND_URL`: without it the API falls back to the production backend (`frontend/src/context/AppContext.js`), and API responses that are not arrays are discarded instead of crashing the shell.
 
 ### LLM / integrations
 
