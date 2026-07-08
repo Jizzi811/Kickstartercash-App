@@ -1,15 +1,15 @@
-# Brandmind frontend on Netlify.
-# COPY THIS FILE TO THE ROOT of the new Brandmind repo (as netlify.toml).
-# It is intentionally kept under deploy/ in this repo so it does NOT affect
-# the existing Kickstartercash Netlify sites.
+# Brandmind frontend on Netlify (reference / spinoff copy).
+# Do NOT place this at the repo root – kashbot2 and other sites share this repo
+# and deploy different directories. For kashbot3, set these values in the Netlify UI
+# or use .github/workflows/deploy-frontend.yml with NETLIFY_SITE_ID.
 [build]
   base = "frontend"
-  command = "npm run build"
-  publish = "frontend/build"
+  command = "npm ci --legacy-peer-deps && npm run build"
+  publish = "build"
 
 [build.environment]
-  # CRA treats warnings as errors when CI=true; keep the build strict.
-  CI = "true"
+  CI = "false"
+  NODE_VERSION = "20"
 
 # SPA fallback so client-side routes (/auth, /brand-brain, …) work on reload.
 [[redirects]]

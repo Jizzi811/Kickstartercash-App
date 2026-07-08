@@ -97,6 +97,15 @@ const QUICK_ACTIONS = [
     color: "#C084FC",
   },
   {
+    to: "/design-v2",
+    icon: Sparkles,
+    labelDE: "Design V2 (Preview)",
+    labelEN: "Design V2 (Preview)",
+    descDE: "Open Design Agent parallel testen",
+    descEN: "Test Open Design Agent in parallel",
+    color: "#A78BFA",
+  },
+  {
     to: "/video",
     icon: Film,
     labelDE: "Video Studio",

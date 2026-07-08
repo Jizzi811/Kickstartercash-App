@@ -1,0 +1,83 @@
+{
+  "agents": {
+    "agent-1783314753026-80b0q7": {
+      "agentId": "agent-1783314753026-80b0q7",
+      "agentType": "coder",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "provider": "anthropic"
+      },
+      "createdAt": "2026-07-06T05:12:33.026Z",
+      "model": "sonnet",
+      "modelRoutedBy": "default"
+    },
+    "agent-1783315000083-t25ks1": {
+      "agentId": "agent-1783315000083-t25ks1",
+      "agentType": "coder",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "provider": "anthropic"
+      },
+      "createdAt": "2026-07-06T05:16:40.083Z",
+      "model": "sonnet",
+      "modelRoutedBy": "default"
+    },
+    "agent-1783315000332-ui43np": {
+      "agentId": "agent-1783315000332-ui43np",
+      "agentType": "tester",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "provider": "anthropic"
+      },
+      "createdAt": "2026-07-06T05:16:40.332Z",
+      "model": "sonnet",
+      "modelRoutedBy": "default"
+    },
+    "agent-1783315000576-qyf1da": {
+      "agentId": "agent-1783315000576-qyf1da",
+      "agentType": "reviewer",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "provider": "anthropic"
+      },
+      "createdAt": "2026-07-06T05:16:40.577Z",
+      "model": "sonnet",
+      "modelRoutedBy": "default"
+    },
+    "agent-1783315008259-e4dug0": {
+      "agentId": "agent-1783315008259-e4dug0",
+      "agentType": "security-architect",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "provider": "anthropic"
+      },
+      "createdAt": "2026-07-06T05:16:48.259Z",
+      "model": "opus",
+      "modelRoutedBy": "default"
+    },
+    "agent-1783315008496-o2cm7r": {
+      "agentId": "agent-1783315008496-o2cm7r",
+      "agentType": "architect",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "provider": "anthropic"
+      },
+      "createdAt": "2026-07-06T05:16:48.496Z",
+      "model": "opus",
+      "modelRoutedBy": "default"
+    }
+  },
+  "version": "3.0.0"
+}

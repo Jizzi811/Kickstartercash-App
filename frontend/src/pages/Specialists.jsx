@@ -155,6 +155,24 @@ function ToolResultCard({ result, color }) {
       </div>
     );
   }
+  if (result.type === "video") {
+    return (
+      <div className="rounded-sm overflow-hidden border border-white/10 bg-[#0A0A0A]">
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-white/8">
+          <Film size={13} style={{ color }} />
+          <span className="text-xs text-zinc-400">{result.tool_label}</span>
+        </div>
+        <div className="px-3 py-3 space-y-2 text-xs text-zinc-400">
+          <p>{result.message || "Video generation started."}</p>
+          {result.operation_name && (
+            <div className="rounded-sm border border-white/10 bg-black/40 px-2 py-1.5 text-[11px] text-zinc-500 break-all">
+              op: {result.operation_name}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
   if (result.type === "error") {
     return <div className="px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-sm text-sm text-red-400">{result.message}</div>;
   }
@@ -232,6 +250,12 @@ function AgentChat({ agent, onClose }) {
         setMessages((prev) => [...prev, {
           role: "assistant",
           content: `**${toolLabel}** — Bild generiert:`,
+          toolResult: res.data,
+        }]);
+      } else if (res.data.type === "video") {
+        setMessages((prev) => [...prev, {
+          role: "assistant",
+          content: `**${toolLabel}** — Video-Job gestartet:`,
           toolResult: res.data,
         }]);
       } else if (res.data.type === "text") {
@@ -320,6 +344,7 @@ function AgentChat({ agent, onClose }) {
                     const isRunning = toolLoading === tool.id;
                     const label = lang === "DE" ? tool.label : tool.label_en;
                     const isImage = tool.type === "image";
+                    const isVideo = tool.type === "video";
                     return (
                       <button
                         key={tool.id}
@@ -328,6 +353,8 @@ function AgentChat({ agent, onClose }) {
                         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm border text-[11px] font-medium transition-all disabled:opacity-40 ${
                           isImage
                             ? "border-[#C084FC]/40 text-[#C084FC] bg-[#C084FC]/8 hover:bg-[#C084FC]/15"
+                            : isVideo
+                              ? "border-[#F472B6]/40 text-[#F472B6] bg-[#F472B6]/8 hover:bg-[#F472B6]/15"
                             : "border-white/10 text-zinc-400 bg-white/3 hover:border-white/20 hover:text-white"
                         }`}
                         style={isRunning ? { borderColor: color, color } : {}}
@@ -338,6 +365,7 @@ function AgentChat({ agent, onClose }) {
                         }
                         {label}
                         {isImage && <span className="text-[9px] opacity-60 ml-0.5">IMG</span>}
+                        {isVideo && <span className="text-[9px] opacity-60 ml-0.5">VID</span>}
                       </button>
                     );
                   })}
@@ -480,10 +508,13 @@ const STATUS_META = [
 ];
 
 export default function Specialists() {
-  const lang = localStorage.getItem("kc_lang") || "DE";
+  const { lang, model, activeBrandId } = useApp();
   const [agents, setAgents] = useState([]);
   const [activeAgent, setActiveAgent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [dispatchTask, setDispatchTask] = useState("");
+  const [dispatchLoading, setDispatchLoading] = useState(false);
+  const [dispatchResult, setDispatchResult] = useState(null);
 
   useEffect(() => {
     axios.get(`${API}/agents`)
@@ -491,6 +522,27 @@ export default function Specialists() {
       .catch(() => setLoading(false));
   }, []);
 
+  const runAutoDispatch = async () => {
+    if (!dispatchTask.trim() || dispatchLoading) return;
+    setDispatchLoading(true);
+    setDispatchResult(null);
+    try {
+      const res = await axios.post(`${API}/agents/dispatch-task`, {
+        task: dispatchTask.trim(),
+        language: lang,
+        model,
+        brand_id: activeBrandId,
+        execute: true,
+      });
+      setDispatchResult(res.data);
+    } catch {
+      setDispatchResult({
+        error: lang === "DE" ? "Task-Routing fehlgeschlagen." : "Task routing failed.",
+      });
+    } finally {
+      setDispatchLoading(false);
+    }
+  };
   const liveAgents = agents.slice(0, 6).map((agent, index) => ({ agent, status: STATUS_META[index % STATUS_META.length] }));
 
   return (
@@ -530,6 +582,58 @@ export default function Specialists() {
             {!liveAgents.length && <p className="text-xs text-zinc-600">{lang === "DE" ? "Lade Live-Aktivitäten…" : "Loading live activity…"}</p>}
           </div>
         </div>
+      </div>
+
+      <div className="bg-[#0A0A0A] border border-white/8 rounded-sm p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Zap size={14} className="text-[#7C3AED]" />
+          <span className="text-xs uppercase tracking-widest text-zinc-500">
+            {lang === "DE" ? "Auto Task Router" : "Auto Task Router"}
+          </span>
+        </div>
+        <div className="flex gap-2">
+          <textarea
+            value={dispatchTask}
+            onChange={(e) => setDispatchTask(e.target.value)}
+            rows={2}
+            placeholder={lang === "DE" ? "Aufgabe eingeben, z. B. 'Erstelle ein Hero-Bild für neue Kampagne'" : "Enter a task, e.g. 'Create a hero image for new campaign'"}
+            className="flex-1 bg-black border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none resize-none"
+          />
+          <button
+            onClick={runAutoDispatch}
+            disabled={!dispatchTask.trim() || dispatchLoading}
+            className="self-stretch px-3 rounded-sm border border-[#7C3AED]/40 text-[#7C3AED] bg-[#7C3AED]/10 disabled:opacity-40"
+          >
+            {dispatchLoading ? <Loader2 size={14} className="animate-spin" /> : <GitBranch size={14} />}
+          </button>
+        </div>
+        {dispatchResult?.routed && (
+          <div className="rounded-sm border border-white/10 bg-black/30 p-3 space-y-2">
+            <p className="text-xs text-zinc-400">
+              {lang === "DE" ? "Geroutet an" : "Routed to"}:{" "}
+              <span className="text-white">{dispatchResult.routed.agent_name}</span> ·{" "}
+              <span className="text-zinc-300">{dispatchResult.routed.tool_label}</span>
+            </p>
+            {dispatchResult.result?.type === "image" && (
+              <img src={dispatchResult.result.image_url} alt="Routed output" className="w-full max-h-64 object-cover rounded-sm border border-white/10" />
+            )}
+            {dispatchResult.result?.type === "video" && (
+              <div className="text-xs text-zinc-400 bg-[#0A0A0A] border border-white/8 rounded-sm p-2">
+                {dispatchResult.result.message}
+              </div>
+            )}
+            {dispatchResult.result?.type === "text" && (
+              <pre className="text-xs text-zinc-300 whitespace-pre-wrap bg-[#0A0A0A] border border-white/8 rounded-sm p-2 max-h-56 overflow-auto">
+                {dispatchResult.result.reply}
+              </pre>
+            )}
+          </div>
+        )}
+        {dispatchResult?.error && (
+          <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-sm p-2">
+            {dispatchResult.error}
+          </div>
+        )}
       </div>
 
       {/* Agent Grid */}

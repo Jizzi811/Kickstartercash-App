@@ -11,7 +11,7 @@ import aiohttp
 from collections import defaultdict
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Header
 from dotenv import load_dotenv
@@ -37,10 +37,11 @@ from app.core.config import (  # noqa: E402
     MONGO_URL, DB_NAME,
     ANTHROPIC_API_KEY, EMERGENT_LLM_KEY, OPENAI_API_KEY, GEMINI_API_KEY,
     RESEND_API_KEY, SENDER_EMAIL, REPORT_EMAILS,
-    POYO_API_KEY, POYO_BASE,
     FREETHEAI_API_KEY, FREETHEAI_BASE, FREETHEAI_IMAGE_MODEL,
     FREETHEAI_TEXT_MODEL, FREETHEAI_TTS_MODEL,
     OPENAI_TEXT_MODEL, LOGO_URL,
+    NVIDIA_API_KEY, NVIDIA_IMAGE_BASE, NVIDIA_MODEL_FLUX2,
+    NVIDIA_MODEL_FLUX_SCHNELL, NVIDIA_MODEL_QWEN, NVIDIA_MODEL_SD3,
 )
 
 from app.core.database import client, db  # noqa: E402
@@ -68,6 +69,31 @@ api_router = APIRouter(prefix="/api")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Muapi proxy (Design Studio V2)
+# ---------------------------------------------------------------------------
+MUAPI_API_KEY = os.environ.get("MUAPI_API_KEY", "").strip()
+MUAPI_BASE_URL = os.environ.get("MUAPI_BASE_URL", "https://muapi.ai").rstrip("/")
+MUAPI_PROXY_TIMEOUT = float(os.environ.get("MUAPI_PROXY_TIMEOUT", "45"))
+_MUAPI_PROXY_HEADER_ALLOWLIST = {
+    "content-type",
+    "cache-control",
+    "etag",
+    "last-modified",
+    "expires",
+    "set-cookie",
+    "content-disposition",
+    "location",
+}
+
+
+def _muapi_target_url(path: str, query: str = "") -> str:
+    clean_path = "/" + (path or "").lstrip("/")
+    url = f"{MUAPI_BASE_URL}{clean_path}"
+    if query:
+        url = f"{url}?{query}"
+    return url
 
 # ---------------------------------------------------------------------------
 # LLM helpers
@@ -105,63 +131,8 @@ async def pollinations_image(prompt: str, width: int = 1024, height: int = 1024)
     return await asyncio.to_thread(_fetch)
 
 
-async def poyo_nano_banana(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
-    """Image generation via poyo.ai Nano Banana (Google Gemini 2.5 Flash Image).
-    When image_urls are provided, uses nano-banana-edit to composite reference images (e.g. brand logo)."""
-    if not POYO_API_KEY:
-        return None
-    auth = {"Authorization": f"Bearer {POYO_API_KEY}"}
-    model = "nano-banana-edit" if image_urls else "nano-banana"
-    payload_input = {"prompt": prompt[:5000], "size": size}
-    if image_urls:
-        payload_input["image_urls"] = image_urls
-
-    def _submit():
-        import requests
-        r = requests.post(
-            f"{POYO_BASE}/api/generate/submit",
-            headers={**auth, "Content-Type": "application/json"},
-            json={"model": model, "input": payload_input},
-            timeout=30,
-        )
-        if r.status_code == 402:
-            raise RuntimeError("Poyo.ai Guthaben aufgebraucht. Bitte unter poyo.ai aufladen. / Poyo.ai credits exhausted, please top up.")
-        r.raise_for_status()
-        return (r.json().get("data") or {}).get("task_id")
-
-    def _status(task_id):
-        import requests
-        r = requests.get(f"{POYO_BASE}/api/generate/status/{task_id}", headers=auth, timeout=30)
-        r.raise_for_status()
-        return r.json().get("data") or {}
-
-    def _fetch_b64(url):
-        import requests
-        r = requests.get(url, timeout=60)
-        if r.ok and r.content:
-            ct = r.headers.get("content-type", "image/png")
-            return f"data:{ct};base64,{base64.b64encode(r.content).decode('utf-8')}"
-        return None
-
-    task_id = await asyncio.to_thread(_submit)
-    if not task_id:
-        return None
-    for _ in range(40):
-        await asyncio.sleep(3)
-        data = await asyncio.to_thread(_status, task_id)
-        status = data.get("status")
-        if status == "finished":
-            img = next((f["file_url"] for f in data.get("files", []) if f.get("file_type") == "image"), None)
-            return await asyncio.to_thread(_fetch_b64, img) if img else None
-        if status == "failed":
-            logger.error(f"Poyo nano-banana failed: {data.get('error_message')}")
-            return None
-    return None
-
-
 async def gemini_nano_banana(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
-    """Image generation via Google's official Gemini API (Nano Banana / gemini-2.5-flash-image).
-    Same underlying model that Poyo resells – used directly with our own GEMINI_API_KEY."""
+    """Image generation via Google's official Gemini API (Nano Banana / gemini-2.5-flash-image)."""
     if not GEMINI_API_KEY:
         return None
 
@@ -330,8 +301,6 @@ async def brand_image_verbose(prompt: str, size: str = "1:1", image_urls: Option
         providers.append(("FreeTheAi", freetheai_image))
     if OPENAI_API_KEY:
         providers.append(("OpenAI", openai_image))
-    if POYO_API_KEY:
-        providers.append(("Poyo", poyo_nano_banana))
     providers.append(("Gemini", gemini_nano_banana))
 
     status = {}
@@ -350,9 +319,109 @@ async def brand_image_verbose(prompt: str, size: str = "1:1", image_urls: Option
 
 
 async def brand_image(prompt: str, size: str = "1:1", image_urls: Optional[list] = None) -> Optional[str]:
-    """Best-available brand image: FreeTheAi -> OpenAI (gpt-image-1) -> Poyo -> Gemini."""
+    """Best-available brand image: FreeTheAi -> OpenAI (gpt-image-1) -> Gemini."""
     img, _ = await brand_image_verbose(prompt, size=size, image_urls=image_urls)
     return img
+
+
+def _size_to_nvidia_wh(size: str) -> tuple:
+    """Map an aspect-ratio label to (width, height) pixels (multiples of 64)."""
+    return {
+        "1:1": (1024, 1024),
+        "16:9": (1344, 768),
+        "9:16": (768, 1344),
+        "4:3": (1152, 896),
+        "3:4": (896, 1152),
+    }.get(size, (1024, 1024))
+
+
+async def nvidia_image(prompt: str, size: str = "1:1", image_urls: Optional[list] = None,
+                       model: str = NVIDIA_MODEL_FLUX2) -> Optional[str]:
+    """Image generation via NVIDIA's cloud genai API (Flux 2 / Flux schnell / Qwen / SD 3.5).
+
+    Uses the same NVIDIA_API_KEY as the text provider:
+      POST {NVIDIA_IMAGE_BASE}/{publisher}/{model}  with "Authorization: Bearer <key>".
+    Payload is the minimal {prompt, width, height, seed} that every NVIDIA image NIM accepts
+    (flux.1-schnell rejects any extra field with 422). Response: {"artifacts":[{"base64": ...}]}.
+    """
+    if not NVIDIA_API_KEY:
+        return None
+    w, h = _size_to_nvidia_wh(size)
+    # Use a dynamic non-zero seed so repeated calls with the same prompt
+    # can still produce diverse variants (seed=0 made outputs too similar).
+    seed = (uuid.uuid4().int % 2_147_483_647) or 1
+
+    def _generate():
+        import requests
+        url = f"{NVIDIA_IMAGE_BASE.rstrip('/')}/{model.strip('/')}"
+        r = requests.post(
+            url,
+            headers={"Authorization": f"Bearer {NVIDIA_API_KEY}",
+                     "Accept": "application/json", "Content-Type": "application/json"},
+            json={"prompt": prompt[:5000], "width": w, "height": h, "seed": seed},
+            timeout=180,
+        )
+        if not r.ok:
+            logger.warning(f"NVIDIA image {r.status_code}: {r.text[:200]}")
+            return None
+        body = r.json()
+        # NVIDIA genai shape: {"artifacts": [{"base64": "..."}]}
+        arts = body.get("artifacts") or []
+        if arts and arts[0].get("base64"):
+            b64 = arts[0]["base64"]
+            return b64 if b64.startswith("data:") else f"data:image/png;base64,{b64}"
+        # OpenAI-compatible fallbacks (self-hosted NIM): data[].b64_json / image
+        data = body.get("data") or []
+        if data and data[0].get("b64_json"):
+            return f"data:image/png;base64,{data[0]['b64_json']}"
+        img = body.get("image")
+        if img:
+            return img if img.startswith("data:") else f"data:image/png;base64,{img}"
+        return None
+
+    try:
+        return await asyncio.wait_for(asyncio.to_thread(_generate), timeout=190)
+    except Exception as e:
+        logger.error(f"NVIDIA image generation failed: {e}")
+        return None
+
+
+# Design-Studio image models: friendly id -> engine (+ NVIDIA model slug).
+# "gpt" keeps the existing best-available provider chain; the rest route to
+# NVIDIA (build.nvidia.com), all served by the single NVIDIA_API_KEY.
+IMAGE_MODELS = {
+    "gpt":          {"label": "GPT Image",            "engine": "default"},
+    "nano-banana":  {"label": "Nano Banana",         "engine": "nano-banana"},
+    "flux2":        {"label": "Flux 2",               "engine": "nvidia", "model": NVIDIA_MODEL_FLUX2},
+    "flux-schnell": {"label": "Flux.1 [schnell]",     "engine": "nvidia", "model": NVIDIA_MODEL_FLUX_SCHNELL},
+    "qwen-image":   {"label": "Qwen Image",           "engine": "nvidia", "model": NVIDIA_MODEL_QWEN},
+    "sd3":          {"label": "Stable Diffusion 3.5", "engine": "nvidia", "model": NVIDIA_MODEL_SD3},
+}
+
+
+async def image_by_model_verbose(model_key: str, prompt: str, size: str = "1:1",
+                                 image_urls: Optional[list] = None):
+    """Route an image request by the Design-Studio model choice.
+
+    Returns (image_or_None, per-provider status dict), matching brand_image_verbose.
+    """
+    spec = IMAGE_MODELS.get(model_key) or IMAGE_MODELS["gpt"]
+    if spec.get("engine") == "nano-banana":
+        try:
+            img = await gemini_nano_banana(prompt, size=size, image_urls=image_urls)
+            return img, {"Gemini Nano Banana": "ok" if img else "kein Bild"}
+        except Exception as e:  # noqa: BLE001
+            return None, {"Gemini Nano Banana": str(e)[:160]}
+    if spec.get("engine") == "nvidia":
+        if not NVIDIA_API_KEY:
+            return None, {spec["label"]: "NVIDIA_API_KEY not set – set it to use this model"}
+        try:
+            img = await nvidia_image(prompt, size=size, image_urls=image_urls, model=spec["model"])
+            return img, {spec["label"]: "ok" if img else "kein Bild"}
+        except Exception as e:  # noqa: BLE001
+            return None, {spec["label"]: str(e)[:160]}
+    # default: existing best-available chain (FreeTheAi -> OpenAI -> Gemini)
+    return await brand_image_verbose(prompt, size=size, image_urls=image_urls)
 
 
 async def llm_image(prompt: str, reference_b64: Optional[str] = None) -> Optional[str]:
@@ -487,6 +556,7 @@ class ImageRequest(BaseModel):
     apply_logo: bool = False
     size: str = "1:1"
     count: int = 1   # number of variants to generate (1-4)
+    model: str = "gpt"   # gpt (default chain) | flux2 | flux-schnell | qwen-image | sd3
 
 
 class PromptOptimizeRequest(BaseModel):
@@ -666,6 +736,79 @@ async def root():
     return {"message": "Kickstarter Content Maschine API"}
 
 
+@api_router.get("/integrations/muapi/status")
+async def muapi_status():
+    return {
+        "provider": "muapi",
+        "configured": bool(MUAPI_API_KEY),
+        "proxy_base_path": "/api/integrations/muapi",
+        "assistant_path": "/api/integrations/muapi/assistant",
+    }
+
+
+@api_router.api_route("/integrations/muapi", methods=["GET"])
+async def muapi_proxy_root(request: Request):
+    return await muapi_proxy("assistant", request)
+
+
+@api_router.api_route(
+    "/integrations/muapi/{path:path}",
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+)
+async def muapi_proxy(path: str, request: Request):
+    """Fixed-domain proxy to Muapi with server-side API key injection.
+
+    This keeps MUAPI_API_KEY out of browser code while allowing the preview route
+    to open/embed Muapi through our backend.
+    """
+    if not MUAPI_API_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="Muapi integration is not configured (MUAPI_API_KEY missing).",
+        )
+
+    target_url = _muapi_target_url(path or "assistant", request.url.query)
+    incoming_body = await request.body()
+
+    forward_headers = {
+        "Authorization": f"Bearer {MUAPI_API_KEY}",
+        "Accept": request.headers.get("accept", "*/*"),
+    }
+    if request.headers.get("content-type"):
+        forward_headers["Content-Type"] = request.headers["content-type"]
+    if request.headers.get("accept-language"):
+        forward_headers["Accept-Language"] = request.headers["accept-language"]
+    if request.headers.get("user-agent"):
+        forward_headers["User-Agent"] = request.headers["user-agent"]
+
+    timeout = aiohttp.ClientTimeout(total=MUAPI_PROXY_TIMEOUT)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        try:
+            async with session.request(
+                request.method,
+                target_url,
+                headers=forward_headers,
+                data=incoming_body if incoming_body else None,
+                allow_redirects=False,
+            ) as upstream:
+                payload = await upstream.read()
+                passthrough_headers = {}
+                for key, value in upstream.headers.items():
+                    lk = key.lower()
+                    if lk in _MUAPI_PROXY_HEADER_ALLOWLIST and lk not in {"content-length", "transfer-encoding"}:
+                        passthrough_headers[key] = value
+                return Response(
+                    content=payload,
+                    status_code=upstream.status,
+                    media_type=upstream.headers.get("content-type"),
+                    headers=passthrough_headers,
+                )
+        except asyncio.TimeoutError as exc:
+            raise HTTPException(status_code=504, detail="Muapi upstream timeout.") from exc
+        except aiohttp.ClientError as exc:
+            raise HTTPException(status_code=502, detail=f"Muapi proxy error: {exc}") from exc
+
+
 async def current_workspace(
     authorization: Optional[str] = Header(default=None),
     x_workspace_id: Optional[str] = Header(default=None, alias="X-Workspace-Id"),
@@ -676,6 +819,11 @@ async def current_workspace(
         return await workspace_from_request(authorization, x_workspace_id)
     except Exception:
         return None
+
+
+async def _authed_user(authorization: Optional[str] = Header(default=None)) -> dict:
+    from brandmind import current_user as bm_current_user
+    return await bm_current_user(authorization)
 
 
 def _scope_filter(ws: Optional[str]) -> dict:
@@ -957,15 +1105,53 @@ def _build_image_prompt(brand: dict, subject: str, style: str) -> str:
         f"Brand color palette: {colors}. {extra} {dna_clause}"
         f"Theme: {subject}. "
         "Design a rich, detailed and FINISHED campaign scene – NOT a plain background with a caption. "
-        "Give it a clear focal point with depth: a real person, a product, or a striking hero object "
-        "interacting with the theme, set in a polished, cinematic environment with supporting details "
-        "(atmosphere, lighting effects, subtle graphic or holographic UI elements). "
-        "Photorealistic or premium 3D render, dramatic lighting, sharp focus, professional composition, "
-        "shallow depth of field. "
-        # Consistency anchors – raise the hit-rate for a cohesive, on-brand look.
-        "Editorial ad-campaign quality with cohesive color grading strictly in the brand palette; "
-        "ONE strong focal subject; clean, uncluttered background with deliberate negative space for a short headline; "
-        "no busy collages, no stock-photo feel. If any text appears, spell it correctly and keep it minimal and elegant."
+        "Create a bold visual story with cinematic production value: layered foreground/midground/background, "
+        "real atmosphere, tactile materials, nuanced light behavior, and intentional camera direction. "
+        "Prefer striking creative choices over safe generic compositions while staying premium and brand-consistent. "
+        "Photorealistic or premium 3D render, dramatic but believable lighting, strong depth, sharp subject separation. "
+        # Consistency anchors without over-constraining creativity.
+        "Editorial ad-campaign quality with cohesive color grading in the brand palette; "
+        "avoid flat layouts, generic stock-photo look, and repetitive low-information scenes. "
+        "If any text appears, keep it minimal, elegant, and correctly spelled."
+    )
+
+
+def _image_variant_prompt(
+    base_prompt: str,
+    index: int,
+    total: int,
+    language: str = "DE",
+    variation_key: Optional[str] = None,
+) -> str:
+    """Inject a strong creative direction per variant to avoid near-duplicates."""
+    variant_directions = [
+        "Cinematic hero scene, low camera angle, dramatic rim light, high contrast, iconic ad look.",
+        "Human-centered narrative scene with candid movement, emotional expression, and warm volumetric light.",
+        "Product-first macro-to-mid composition with rich texture, reflections, and bold material realism.",
+        "Editorial architectural wide shot with dynamic leading lines, layered depth, and kinetic perspective.",
+    ]
+    palettes = ["deep contrast", "warm tonal blend", "cool metallic mood", "vibrant cinematic grade"]
+    lens_styles = ["35mm immersive framing", "50mm portrait realism", "85mm compression drama", "24mm dynamic wide angle"]
+    direction = variant_directions[index % len(variant_directions)]
+    palette = palettes[index % len(palettes)]
+    lens = lens_styles[index % len(lens_styles)]
+    var_key = variation_key or uuid.uuid4().hex[:10]
+    if language == "DE":
+        return (
+            f"{base_prompt} "
+            f"Variante {index + 1} von {total}: {direction} "
+            f"Color grading: {palette}. Lens/Framing: {lens}. "
+            f"Interner Variationsschlüssel: {var_key} (nicht als Text im Bild rendern). "
+            "Erzeuge eine klar eigenständige Interpretation im gleichen Brand-Style: "
+            "andere Komposition, Perspektive, Lichtstimmung, Tiefenstaffelung und Story-Moment als die anderen Varianten."
+        )
+    return (
+        f"{base_prompt} "
+        f"Variant {index + 1} of {total}: {direction} "
+        f"Color grading: {palette}. Lens/framing: {lens}. "
+        f"Internal variation key: {var_key} (do not render as visible text in the image). "
+        "Create a clearly distinct interpretation in the same brand style: "
+        "different composition, perspective, lighting mood, scene depth, and narrative moment than the other variants."
     )
 
 
@@ -1064,8 +1250,14 @@ async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_
         image_urls = [brand_logo]
 
     count = min(max(req.count or 1, 1), 4)
+    prompts = [
+        _image_variant_prompt(
+            full_prompt, i, count, req.language, variation_key=f"v{i+1}-{uuid.uuid4().hex[:8]}"
+        )
+        for i in range(count)
+    ]
     results = await asyncio.gather(
-        *[brand_image_verbose(full_prompt, size=req.size, image_urls=image_urls) for _ in range(count)],
+        *[image_by_model_verbose(req.model, p, size=req.size, image_urls=image_urls) for p in prompts],
         return_exceptions=True,
     )
     images = []
@@ -1089,6 +1281,7 @@ async def generate_image(req: ImageRequest, ws: Optional[str] = Depends(current_
         "prompt": req.prompt,
         "style": req.style,
         "brand_id": req.brand_id,
+        "model": req.model,
         "image": images[0],
         "images": images,
         "created_at": _now_iso(),
@@ -3706,6 +3899,15 @@ class AgentToolRunRequest(BaseModel):
     brand_id: str = "kickstartercash"
 
 
+class AgentTaskDispatchRequest(BaseModel):
+    task: str
+    language: str = "DE"
+    model: str = "gpt"
+    brand_id: str = "kickstartercash"
+    execute: bool = True
+    preferred_agent_id: Optional[str] = None
+
+
 @api_router.get("/agents")
 async def list_agents():
     result = []
@@ -3723,6 +3925,43 @@ async def get_agent_tools(agent_id: str):
     if agent_id not in AGENTS:
         raise HTTPException(status_code=404, detail="Agent not found")
     return skill_registry.skills_for_agent(agent_id)
+
+
+@api_router.post("/agents/dispatch-task")
+async def dispatch_agent_task(req: AgentTaskDispatchRequest, ws: Optional[str] = Depends(current_workspace)):
+    if not (req.task or "").strip():
+        raise HTTPException(status_code=400, detail="Task is required.")
+
+    suggested = skill_registry.suggest_skill_for_task(req.task, req.preferred_agent_id)
+    if not suggested:
+        raise HTTPException(status_code=404, detail="No matching skill found.")
+
+    agent_id = req.preferred_agent_id or suggested.get("agent_ids", [""])[0]
+    agent = AGENTS.get(agent_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Matched agent not found.")
+
+    payload = {
+        "agent_id": agent_id,
+        "agent_name": agent.get("name"),
+        "tool_id": suggested["id"],
+        "tool_label": suggested["label"] if req.language == "DE" else suggested["label_en"],
+        "tool_type": suggested.get("type", "llm"),
+        "task": req.task,
+    }
+    if not req.execute:
+        return {"routed": payload, "executed": False}
+
+    run_req = AgentToolRunRequest(
+        agent_id=agent_id,
+        tool_id=suggested["id"],
+        context=req.task,
+        model=req.model,
+        language=req.language,
+        brand_id=req.brand_id,
+    )
+    result = await run_agent_tool(run_req, ws=ws)
+    return {"routed": payload, "executed": True, "result": result}
 
 
 @api_router.get("/skills/registry")
@@ -3765,6 +4004,69 @@ async def run_agent_tool(req: AgentToolRunRequest, ws: Optional[str] = Depends(c
 
     # Every specialist skill runs inside the active brand's context (never blind).
     brand = await _resolve_brand(req.brand_id, ws)
+    context = (req.context or "").strip()
+
+    if tool.get("type") == "image":
+        if not context:
+            raise HTTPException(status_code=400, detail="Context is required for image generation.")
+        images = []
+        provider = "unknown"
+        try:
+            image_req = ImageRequest(
+                prompt=context,
+                style=brand.get("image_style") or "Luxuriös",
+                brand_id=brand.get("id", req.brand_id),
+                language=lang,
+                apply_logo=False,
+                size="1:1",
+                count=3,
+                model="gpt",
+            )
+            generated = await generate_image(image_req, ws=ws)
+            images = generated.get("images") or []
+            provider = generated.get("provider") or "gpt-chain"
+        except Exception as media_exc:
+            logger.warning(f"Agent image tool primary pipeline failed, using fallback: {media_exc}")
+            fallback = await pollinations_image(context, width=1024, height=1024)
+            if fallback:
+                images = [fallback]
+                provider = "pollinations-fallback"
+        if not images:
+            raise HTTPException(status_code=502, detail="Image generation returned no images.")
+        return {
+            "type": "image",
+            "tool_id": req.tool_id,
+            "tool_label": tool["label"] if lang == "DE" else tool["label_en"],
+            "image_url": images[0],
+            "images": images,
+            "prompt_used": context,
+            "provider": provider,
+        }
+
+    if tool.get("type") == "video":
+        if not context:
+            raise HTTPException(status_code=400, detail="Context is required for video generation.")
+        try:
+            veo = await generate_veo_video(VeoRequest(prompt=context, aspect_ratio="16:9"))
+        except HTTPException as exc:
+            return {
+                "type": "video",
+                "tool_id": req.tool_id,
+                "tool_label": tool["label"] if lang == "DE" else tool["label_en"],
+                "operation_name": "",
+                "status": "unavailable",
+                "prompt_used": context,
+                "message": exc.detail if isinstance(exc.detail, str) else "Video provider unavailable.",
+            }
+        return {
+            "type": "video",
+            "tool_id": req.tool_id,
+            "tool_label": tool["label"] if lang == "DE" else tool["label_en"],
+            "operation_name": veo.get("operation_name", ""),
+            "status": veo.get("status", "processing"),
+            "prompt_used": context,
+            "message": "Video generation started. Track progress in Video Studio.",
+        }
 
     _mem = await _agent_memory_context(req.agent_id, ws, lang)
     cfg = await _load_gateway_config(ws)
@@ -4275,7 +4577,6 @@ async def debug_image():
     out = {
         "freetheai_configured": bool(FREETHEAI_API_KEY),
         "openai_configured": bool(OPENAI_API_KEY),
-        "poyo_configured": bool(POYO_API_KEY),
         "gemini_key": bool(GEMINI_API_KEY),
         "image_model": FREETHEAI_IMAGE_MODEL,
     }
@@ -6100,6 +6401,283 @@ async def workflows_runs(ws: Optional[str] = Depends(current_workspace), limit: 
 
 
 # ---------------------------------------------------------------------------
+# Founder Ops module (Phase B): Social Autopost + Visual Planner + Workflows
+# ---------------------------------------------------------------------------
+class SocialConnectionPayload(BaseModel):
+    platform: str
+    account_handle: str = ""
+    active: bool = True
+
+
+class PublishJobPayload(BaseModel):
+    platform: str
+    content: str
+    scheduled_for: str = ""
+    media_url: str = ""
+    tags: List[str] = Field(default_factory=list)
+
+
+class PlannerTaskPayload(BaseModel):
+    title: str
+    description: str = ""
+    column: str = "vision"
+    priority: str = "medium"
+    due_date: str = ""
+    owner: str = "Founder"
+    source: str = "manual"
+
+
+class PlannerTaskUpdatePayload(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    column: Optional[str] = None
+    priority: Optional[str] = None
+    due_date: Optional[str] = None
+    owner: Optional[str] = None
+    status: Optional[str] = None
+
+
+def _ops_scope(user_id: str, ws: Optional[str]) -> dict:
+    return {"user_id": user_id, "workspace_id": ws or ""}
+
+
+def _planner_columns() -> List[dict]:
+    return [
+        {"id": "vision", "title": "Vision"},
+        {"id": "brand", "title": "Brand"},
+        {"id": "offer", "title": "Offer"},
+        {"id": "launch", "title": "Launch"},
+        {"id": "growth", "title": "Growth"},
+    ]
+
+
+FOUNDER_WORKFLOW_TEMPLATES = [
+    {
+        "id": "founder-30-day-launch",
+        "name": "Founder 30-Day Launch",
+        "description": "Build core offer, publish first content wave, and start lead capture.",
+        "tasks": [
+            {"title": "Finalize brand messaging", "column": "brand"},
+            {"title": "Draft first offer landing page", "column": "offer"},
+            {"title": "Queue 5 social launch posts", "column": "launch"},
+        ],
+    },
+    {
+        "id": "weekly-content-engine",
+        "name": "Weekly Content Engine",
+        "description": "Generate and schedule a weekly multi-platform content set.",
+        "tasks": [
+            {"title": "Generate weekly topic cluster", "column": "growth"},
+            {"title": "Create 3 posts + 1 short video script", "column": "growth"},
+            {"title": "Review and schedule posts", "column": "launch"},
+        ],
+    },
+    {
+        "id": "new-offer-go-live",
+        "name": "New Offer Go-Live",
+        "description": "Prepare and publish a fresh offer with campaign touchpoints.",
+        "tasks": [
+            {"title": "Define offer promise + objections", "column": "offer"},
+            {"title": "Create launch sequence emails", "column": "launch"},
+            {"title": "Publish social teaser + CTA", "column": "launch"},
+        ],
+    },
+]
+
+
+@api_router.get("/social/connections")
+async def social_connections_list(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    rows = await db.social_connections.find(_ops_scope(user["id"], ws), {"_id": 0}).sort("updated_at", -1).to_list(30)
+    return {"connections": rows, "workspace_id": ws or ""}
+
+
+@api_router.post("/social/connections")
+async def social_connections_upsert(payload: SocialConnectionPayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    platform = payload.platform.strip()[:60]
+    if not platform:
+        raise HTTPException(status_code=400, detail="platform is required")
+    query = {**_ops_scope(user["id"], ws), "platform": platform}
+    now = _now_iso()
+    doc = {
+        **query,
+        "account_handle": payload.account_handle.strip()[:160],
+        "active": bool(payload.active),
+        "updated_at": now,
+    }
+    await db.social_connections.update_one(query, {"$set": doc, "$setOnInsert": {"created_at": now}}, upsert=True)
+    return doc
+
+
+@api_router.get("/social/publish-jobs")
+async def social_publish_jobs_list(status: Optional[str] = None, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    query = _ops_scope(user["id"], ws)
+    if status:
+        query["status"] = status
+    rows = await db.publish_jobs.find(query, {"_id": 0}).sort("created_at", -1).to_list(300)
+    return {"jobs": rows, "workspace_id": ws or ""}
+
+
+@api_router.post("/social/publish-jobs")
+async def social_publish_jobs_create(payload: PublishJobPayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    platform = payload.platform.strip()[:60]
+    content = payload.content.strip()[:6000]
+    if not platform or not content:
+        raise HTTPException(status_code=400, detail="platform and content are required")
+    now = _now_iso()
+    job = {
+        "id": str(uuid.uuid4()),
+        **_ops_scope(user["id"], ws),
+        "platform": platform,
+        "content": content,
+        "scheduled_for": payload.scheduled_for.strip() or now,
+        "media_url": payload.media_url.strip()[:1000],
+        "tags": _normalize_list(payload.tags),
+        "status": "queued",
+        "retry_count": 0,
+        "last_error": "",
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.publish_jobs.insert_one(job)
+    job.pop("_id", None)
+    return job
+
+
+@api_router.post("/social/publish-jobs/{job_id}/dispatch")
+async def social_publish_job_dispatch(job_id: str, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    query = {"id": job_id, **_ops_scope(user["id"], ws)}
+    existing = await db.publish_jobs.find_one(query, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Publish job not found")
+    now = _now_iso()
+    update = {"status": "published", "updated_at": now, "published_at": now, "last_error": ""}
+    await db.publish_jobs.update_one(query, {"$set": update})
+    return {**existing, **update}
+
+
+@api_router.get("/planner/board")
+async def planner_board(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    rows = await db.planner_tasks.find(_ops_scope(user["id"], ws), {"_id": 0}).sort("created_at", 1).to_list(500)
+    columns = _planner_columns()
+    grouped = {c["id"]: [] for c in columns}
+    for row in rows:
+        col = row.get("column", "vision")
+        if col not in grouped:
+            grouped[col] = []
+        grouped[col].append(row)
+    return {"columns": columns, "tasks_by_column": grouped, "workspace_id": ws or ""}
+
+
+@api_router.post("/planner/tasks")
+async def planner_task_create(payload: PlannerTaskPayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    now = _now_iso()
+    task = {
+        "id": str(uuid.uuid4()),
+        **_ops_scope(user["id"], ws),
+        "title": payload.title.strip()[:220],
+        "description": payload.description.strip()[:2000],
+        "column": payload.column.strip()[:60] or "vision",
+        "priority": payload.priority if payload.priority in {"low", "medium", "high"} else "medium",
+        "due_date": payload.due_date.strip()[:60],
+        "owner": payload.owner.strip()[:120] or "Founder",
+        "source": payload.source.strip()[:80] or "manual",
+        "status": "open",
+        "created_at": now,
+        "updated_at": now,
+    }
+    if not task["title"]:
+        raise HTTPException(status_code=400, detail="title is required")
+    await db.planner_tasks.insert_one(task)
+    task.pop("_id", None)
+    return task
+
+
+@api_router.put("/planner/tasks/{task_id}")
+async def planner_task_update(task_id: str, payload: PlannerTaskUpdatePayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    query = {"id": task_id, **_ops_scope(user["id"], ws)}
+    existing = await db.planner_tasks.find_one(query, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Planner task not found")
+    update = {"updated_at": _now_iso()}
+    if payload.title is not None:
+        update["title"] = payload.title.strip()[:220]
+    if payload.description is not None:
+        update["description"] = payload.description.strip()[:2000]
+    if payload.column is not None:
+        update["column"] = payload.column.strip()[:60] or existing.get("column", "vision")
+    if payload.priority is not None and payload.priority in {"low", "medium", "high"}:
+        update["priority"] = payload.priority
+    if payload.due_date is not None:
+        update["due_date"] = payload.due_date.strip()[:60]
+    if payload.owner is not None:
+        update["owner"] = payload.owner.strip()[:120]
+    if payload.status is not None:
+        update["status"] = payload.status.strip()[:40]
+    await db.planner_tasks.update_one(query, {"$set": update})
+    return {**existing, **update}
+
+
+@api_router.get("/founder/workflow-templates")
+async def founder_workflow_templates():
+    return {"templates": FOUNDER_WORKFLOW_TEMPLATES}
+
+
+@api_router.post("/founder/workflow-templates/{template_id}/run")
+async def founder_workflow_run(template_id: str, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    template = next((tpl for tpl in FOUNDER_WORKFLOW_TEMPLATES if tpl["id"] == template_id), None)
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    created_tasks = []
+    now = _now_iso()
+    for item in template.get("tasks", []):
+        task = {
+            "id": str(uuid.uuid4()),
+            **_ops_scope(user["id"], ws),
+            "title": item.get("title", "")[:220],
+            "description": template.get("description", "")[:2000],
+            "column": item.get("column", "vision"),
+            "priority": "medium",
+            "due_date": "",
+            "owner": "Founder",
+            "source": f"workflow:{template_id}",
+            "status": "open",
+            "created_at": now,
+            "updated_at": now,
+        }
+        await db.planner_tasks.insert_one(task)
+        task.pop("_id", None)
+        created_tasks.append(task)
+        if "social" in task["title"].lower() or "publish" in task["title"].lower():
+            job = {
+                "id": str(uuid.uuid4()),
+                **_ops_scope(user["id"], ws),
+                "platform": "LinkedIn",
+                "content": f"{template['name']} · {task['title']}",
+                "scheduled_for": now,
+                "media_url": "",
+                "tags": ["workflow", "founder"],
+                "status": "queued",
+                "retry_count": 0,
+                "last_error": "",
+                "created_at": now,
+                "updated_at": now,
+            }
+            await db.publish_jobs.insert_one(job)
+    run = {
+        "id": str(uuid.uuid4()),
+        **_ops_scope(user["id"], ws),
+        "template_id": template_id,
+        "template_name": template["name"],
+        "status": "completed",
+        "created_task_ids": [task["id"] for task in created_tasks],
+        "created_at": now,
+    }
+    await db.founder_workflow_runs.insert_one(run)
+    run.pop("_id", None)
+    return {"run": run, "created_tasks": created_tasks}
+
+
+# ---------------------------------------------------------------------------
 # BrandMind Knowledge Graph – semantic facade over current persistence
 # ---------------------------------------------------------------------------
 async def _knowledge_snapshot(ws: Optional[str]) -> knowledge_graph.GraphSnapshot:
@@ -6165,6 +6743,360 @@ async def knowledge_graph_visualization(ws: Optional[str] = Depends(current_work
 
 
 # ---------------------------------------------------------------------------
+# Founder flow + Decision Memory module
+# ---------------------------------------------------------------------------
+class FounderIntakePayload(BaseModel):
+    vision: str = ""
+    motivation: str = ""
+    target_audience: str = ""
+    budget_range: str = ""
+    values: List[str] = Field(default_factory=list)
+    skills: List[str] = Field(default_factory=list)
+
+
+class FounderIdeasGenerateRequest(BaseModel):
+    focus: str = ""
+    market_hint: str = ""
+    language: str = "DE"
+    model: str = OPENAI_TEXT_MODEL
+
+
+class FounderIdeasSelectRequest(BaseModel):
+    idea_id: str
+
+
+class DecisionCreatePayload(BaseModel):
+    category: str
+    selected_option: str = ""
+    alternatives: List[str] = Field(default_factory=list)
+    why_text: str = ""
+    evidence_refs: List[str] = Field(default_factory=list)
+    confidence: int = 70
+    decided_by: str = "user"
+    status: str = "draft"
+
+
+class DecisionUpdatePayload(BaseModel):
+    selected_option: Optional[str] = None
+    alternatives: Optional[List[str]] = None
+    why_text: Optional[str] = None
+    evidence_refs: Optional[List[str]] = None
+    confidence: Optional[int] = None
+    decided_by: Optional[str] = None
+    status: Optional[str] = None
+
+
+class BrandBriefGenerateRequest(BaseModel):
+    language: str = "DE"
+    model: str = OPENAI_TEXT_MODEL
+
+
+def _founder_scope(user_id: str, ws: Optional[str]) -> dict:
+    return {"user_id": user_id, "workspace_id": ws or ""}
+
+
+async def _decision_event(user_id: str, ws: Optional[str], decision_id: str, event_type: str, payload: dict) -> None:
+    await db.decision_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "workspace_id": ws or "",
+        "user_id": user_id,
+        "decision_id": decision_id,
+        "event_type": event_type,
+        "payload": payload,
+        "created_at": _now_iso(),
+    })
+
+
+def _normalize_list(values: List[Any]) -> List[str]:
+    out = []
+    for value in values or []:
+        text = str(value or "").strip()
+        if text:
+            out.append(text[:180])
+    return out[:20]
+
+
+@api_router.get("/founder/intake")
+async def founder_intake_get(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    doc = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0})
+    if not doc:
+        return {
+            "vision": "",
+            "motivation": "",
+            "target_audience": "",
+            "budget_range": "",
+            "values": [],
+            "skills": [],
+            "selected_idea_id": "",
+            "selected_idea": None,
+            "workspace_id": ws or "",
+        }
+    return {**doc, "workspace_id": ws or ""}
+
+
+@api_router.post("/founder/intake")
+async def founder_intake_create(payload: FounderIntakePayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    now = _now_iso()
+    doc = {
+        **_founder_scope(user["id"], ws),
+        "vision": payload.vision.strip()[:2000],
+        "motivation": payload.motivation.strip()[:2000],
+        "target_audience": payload.target_audience.strip()[:500],
+        "budget_range": payload.budget_range.strip()[:120],
+        "values": _normalize_list(payload.values),
+        "skills": _normalize_list(payload.skills),
+        "selected_idea_id": "",
+        "selected_idea": None,
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.founder_profiles.update_one(_founder_scope(user["id"], ws), {"$set": doc}, upsert=True)
+    return doc
+
+
+@api_router.put("/founder/intake")
+async def founder_intake_update(payload: FounderIntakePayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    now = _now_iso()
+    update = {
+        "vision": payload.vision.strip()[:2000],
+        "motivation": payload.motivation.strip()[:2000],
+        "target_audience": payload.target_audience.strip()[:500],
+        "budget_range": payload.budget_range.strip()[:120],
+        "values": _normalize_list(payload.values),
+        "skills": _normalize_list(payload.skills),
+        "updated_at": now,
+    }
+    await db.founder_profiles.update_one(
+        _founder_scope(user["id"], ws),
+        {"$set": update, "$setOnInsert": {"created_at": now, **_founder_scope(user["id"], ws)}},
+        upsert=True,
+    )
+    doc = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0})
+    return {**(doc or update), "workspace_id": ws or ""}
+
+
+@api_router.post("/founder/ideas/generate")
+async def founder_ideas_generate(payload: FounderIdeasGenerateRequest, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    profile = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    language = "Deutsch" if str(payload.language).upper() == "DE" else "English"
+    prompt = (
+        f"Founder profile: {json.dumps(profile, ensure_ascii=False)}\n"
+        f"Focus: {payload.focus[:400]}\nMarket hint: {payload.market_hint[:400]}\n"
+        "Create 5 business ideas with this exact JSON shape:\n"
+        '{"ideas":[{"id":"short-id","title":"...","summary":"...","target_audience":"...","scores":{"demand":0-100,"competition":0-100,"founder_fit":0-100},"first_offer":"..."}]}'
+    )
+    try:
+        raw = await llm_text(
+            payload.model or OPENAI_TEXT_MODEL,
+            f"You are Brandmind Founder Copilot. Answer only valid JSON in {language}. Keep ideas realistic and specific.",
+            prompt,
+        )
+        parsed = _extract_json(raw) or {}
+        ideas = parsed.get("ideas") if isinstance(parsed.get("ideas"), list) else []
+    except Exception:
+        ideas = []
+    if not ideas:
+        ideas = [{
+            "id": f"idea-{idx + 1}",
+            "title": title,
+            "summary": "KI-gestütztes Angebot mit klarer Zielgruppe und schneller Markteinführung.",
+            "target_audience": profile.get("target_audience") or "Selbstständige und KMU",
+            "scores": {"demand": 72 + idx, "competition": 48 + idx, "founder_fit": 68 + idx},
+            "first_offer": "Kickoff-Workshop + 30-Tage-Umsetzungsplan",
+        } for idx, title in enumerate([
+            "AI Positioning Sprint",
+            "Content System as a Service",
+            "Micro-Automation Studio",
+            "Niche Funnel Builder",
+            "Founder Launch Partner",
+        ])]
+    normalized = []
+    for idx, item in enumerate(ideas[:7]):
+        scores = item.get("scores") if isinstance(item, dict) else {}
+        normalized.append({
+            "id": str((item or {}).get("id") or f"idea-{idx + 1}")[:60],
+            "title": str((item or {}).get("title") or f"Idee {idx + 1}")[:160],
+            "summary": str((item or {}).get("summary") or "")[:900],
+            "target_audience": str((item or {}).get("target_audience") or "")[:300],
+            "scores": {
+                "demand": max(0, min(100, int((scores or {}).get("demand", 65)))),
+                "competition": max(0, min(100, int((scores or {}).get("competition", 55)))),
+                "founder_fit": max(0, min(100, int((scores or {}).get("founder_fit", 70)))),
+            },
+            "first_offer": str((item or {}).get("first_offer") or "")[:300],
+        })
+    await db.founder_ideas.update_one(
+        _founder_scope(user["id"], ws),
+        {"$set": {"ideas": normalized, "generated_at": _now_iso(), "updated_at": _now_iso()}, "$setOnInsert": {"created_at": _now_iso(), **_founder_scope(user["id"], ws)}},
+        upsert=True,
+    )
+    return {"ideas": normalized, "workspace_id": ws or ""}
+
+
+@api_router.get("/founder/ideas")
+async def founder_ideas_list(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    doc = await db.founder_ideas.find_one(_founder_scope(user["id"], ws), {"_id": 0})
+    return {"ideas": (doc or {}).get("ideas", []), "workspace_id": ws or ""}
+
+
+@api_router.post("/founder/ideas/select")
+async def founder_ideas_select(payload: FounderIdeasSelectRequest, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    ideas_doc = await db.founder_ideas.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    ideas = ideas_doc.get("ideas") or []
+    selected = next((idea for idea in ideas if str(idea.get("id")) == str(payload.idea_id)), None)
+    if not selected:
+        raise HTTPException(status_code=404, detail="Idea not found")
+    await db.founder_profiles.update_one(
+        _founder_scope(user["id"], ws),
+        {"$set": {"selected_idea_id": selected["id"], "selected_idea": selected, "updated_at": _now_iso()}, "$setOnInsert": {"created_at": _now_iso(), **_founder_scope(user["id"], ws)}},
+        upsert=True,
+    )
+    return {"selected_idea_id": selected["id"], "selected_idea": selected, "workspace_id": ws or ""}
+
+
+@api_router.get("/decisions")
+async def decisions_list(
+    category: Optional[str] = None,
+    status: Optional[str] = None,
+    user: dict = Depends(_authed_user),
+    ws: Optional[str] = Depends(current_workspace),
+):
+    query = _founder_scope(user["id"], ws)
+    if category:
+        query["category"] = category
+    if status:
+        query["status"] = status
+    rows = await db.brand_decisions.find(query, {"_id": 0}).sort("updated_at", -1).to_list(200)
+    return {"decisions": rows, "workspace_id": ws or ""}
+
+
+@api_router.post("/decisions")
+async def decisions_create(payload: DecisionCreatePayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    now = _now_iso()
+    decision = {
+        "id": str(uuid.uuid4()),
+        **_founder_scope(user["id"], ws),
+        "category": payload.category.strip()[:80],
+        "selected_option": payload.selected_option.strip()[:600],
+        "alternatives": _normalize_list(payload.alternatives),
+        "why_text": payload.why_text.strip()[:2000],
+        "evidence_refs": _normalize_list(payload.evidence_refs),
+        "confidence": max(0, min(100, int(payload.confidence))),
+        "decided_by": payload.decided_by.strip()[:40] or "user",
+        "status": payload.status if payload.status in {"draft", "locked", "superseded"} else "draft",
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.brand_decisions.insert_one(decision)
+    await _decision_event(user["id"], ws, decision["id"], "DECISION_CREATED", {"category": decision["category"], "status": decision["status"]})
+    decision.pop("_id", None)
+    return decision
+
+
+@api_router.put("/decisions/{decision_id}")
+async def decisions_update(decision_id: str, payload: DecisionUpdatePayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    query = {"id": decision_id, **_founder_scope(user["id"], ws)}
+    existing = await db.brand_decisions.find_one(query, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Decision not found")
+    update = {"updated_at": _now_iso()}
+    if payload.selected_option is not None:
+        update["selected_option"] = payload.selected_option.strip()[:600]
+    if payload.alternatives is not None:
+        update["alternatives"] = _normalize_list(payload.alternatives)
+    if payload.why_text is not None:
+        update["why_text"] = payload.why_text.strip()[:2000]
+    if payload.evidence_refs is not None:
+        update["evidence_refs"] = _normalize_list(payload.evidence_refs)
+    if payload.confidence is not None:
+        update["confidence"] = max(0, min(100, int(payload.confidence)))
+    if payload.decided_by is not None:
+        update["decided_by"] = payload.decided_by.strip()[:40] or existing.get("decided_by", "user")
+    if payload.status is not None and payload.status in {"draft", "locked", "superseded"}:
+        update["status"] = payload.status
+    await db.brand_decisions.update_one(query, {"$set": update})
+    merged = {**existing, **update}
+    await _decision_event(user["id"], ws, decision_id, "DECISION_UPDATED", {"status": merged.get("status", "draft")})
+    return merged
+
+
+@api_router.post("/decisions/{decision_id}/lock")
+async def decisions_lock(decision_id: str, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    query = {"id": decision_id, **_founder_scope(user["id"], ws)}
+    existing = await db.brand_decisions.find_one(query, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Decision not found")
+    update = {"status": "locked", "updated_at": _now_iso()}
+    await db.brand_decisions.update_one(query, {"$set": update})
+    await _decision_event(user["id"], ws, decision_id, "DECISION_LOCKED", {"category": existing.get("category", "")})
+    return {**existing, **update}
+
+
+@api_router.get("/decisions/history")
+async def decisions_history(limit: int = 200, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    rows = await db.decision_events.find(_founder_scope(user["id"], ws), {"_id": 0}).sort("created_at", -1).to_list(max(1, min(limit, 1000)))
+    return {"events": rows, "workspace_id": ws or ""}
+
+
+@api_router.post("/brand-brief/generate")
+async def brand_brief_generate(payload: BrandBriefGenerateRequest, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    profile = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    decisions = await db.brand_decisions.find(_founder_scope(user["id"], ws), {"_id": 0}).sort("updated_at", -1).to_list(400)
+    if not decisions and not profile:
+        raise HTTPException(status_code=400, detail="No founder profile or decisions available")
+    compact = [
+        {
+            "id": d.get("id", ""),
+            "category": d.get("category", ""),
+            "selected_option": d.get("selected_option", ""),
+            "why_text": d.get("why_text", ""),
+            "status": d.get("status", "draft"),
+        }
+        for d in decisions
+    ]
+    language = "Deutsch" if str(payload.language).upper() == "DE" else "English"
+    prompt = (
+        f"Founder profile: {json.dumps(profile, ensure_ascii=False)}\n"
+        f"Decisions: {json.dumps(compact, ensure_ascii=False)}\n"
+        "Create a concise strategic brand brief with sections: company_summary, positioning, target_audience, tone_of_voice, offers, messaging_rules, visual_direction."
+    )
+    try:
+        brief_text = await llm_text(
+            payload.model or OPENAI_TEXT_MODEL,
+            f"You are Brandmind Strategy Lead. Respond in {language}. Return plain text with clear headings.",
+            prompt,
+        )
+    except Exception:
+        brief_text = (
+            "## Company Summary\n"
+            f"{profile.get('vision', '')}\n\n"
+            "## Positioning\n"
+            + "\n".join(f"- {d.get('selected_option', '')}" for d in compact[:5] if d.get("selected_option"))
+        ).strip()
+    now = _now_iso()
+    doc = {
+        "id": str(uuid.uuid4()),
+        **_founder_scope(user["id"], ws),
+        "content": (brief_text or "").strip()[:12000],
+        "language": str(payload.language).upper(),
+        "sources": [d.get("id", "") for d in compact if d.get("id")],
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.brand_briefs.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+@api_router.get("/brand-brief/latest")
+async def brand_brief_latest(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    latest = await db.brand_briefs.find_one(_founder_scope(user["id"], ws), {"_id": 0}, sort=[("created_at", -1)])
+    if not latest:
+        return {"content": "", "sources": [], "workspace_id": ws or ""}
+    return {**latest, "workspace_id": ws or ""}
+
+
+# ---------------------------------------------------------------------------
 # AI Business Card module
 # ---------------------------------------------------------------------------
 
@@ -6173,6 +7105,7 @@ class BusinessCardPayload(BaseModel):
     title: str = ""
     company: str = ""
     bio: str = ""
+    logo_url: str = ""
     avatar: str = ""
     phone: str = ""
     email: str = ""
@@ -6181,6 +7114,11 @@ class BusinessCardPayload(BaseModel):
     social_links: dict = Field(default_factory=dict)
     template_id: str = "aurora"
     show_ai_assistant: bool = True
+    assistant_mode: str = "avatar"
+    assistant_avatar: str = ""
+    assistant_label: str = "FAQ BOT"
+    assistant_greeting: str = "Hi, ich bin der FAQ BOT von Brandmind, was möchtest du heute gerne wissen."
+    assistant_knowledge: str = ""
 
 
 def _card_public(card: dict) -> dict:
@@ -6189,24 +7127,26 @@ def _card_public(card: dict) -> dict:
     return card
 
 
+def _public_business_card_view(card: dict) -> dict:
+    card = _card_public(card)
+    # Keep extra assistant notes private; only chat endpoint should consume them.
+    card.pop("assistant_knowledge", None)
+    card.pop("user_id", None)
+    return card
+
+
 def _new_card_hash() -> str:
     return uuid.uuid4().hex[:10]
 
-
-async def _business_card_user(authorization: Optional[str] = Header(default=None)) -> dict:
-    from brandmind import current_user as bm_current_user
-    return await bm_current_user(authorization)
-
-
 @api_router.get("/business-cards")
-async def list_business_cards(user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+async def list_business_cards(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
     query = {"user_id": user["id"], **({"workspace_id": ws} if ws else {})}
     cards = await db.business_cards.find(query, {"_id": 0}).sort("updated_at", -1).to_list(200)
     return cards
 
 
 @api_router.post("/business-cards")
-async def create_business_card(payload: BusinessCardPayload, user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+async def create_business_card(payload: BusinessCardPayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
     now = _now_iso()
     card = payload.dict()
     card.update({
@@ -6222,7 +7162,7 @@ async def create_business_card(payload: BusinessCardPayload, user: dict = Depend
 
 
 @api_router.put("/business-cards/{card_id}")
-async def update_business_card(card_id: str, payload: BusinessCardPayload, user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+async def update_business_card(card_id: str, payload: BusinessCardPayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
     query = {"id": card_id, "user_id": user["id"], **({"workspace_id": ws} if ws else {})}
     existing = await db.business_cards.find_one(query, {"_id": 0})
     if not existing:
@@ -6234,7 +7174,7 @@ async def update_business_card(card_id: str, payload: BusinessCardPayload, user:
 
 
 @api_router.post("/business-cards/{card_id}/duplicate")
-async def duplicate_business_card(card_id: str, user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+async def duplicate_business_card(card_id: str, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
     query = {"id": card_id, "user_id": user["id"], **({"workspace_id": ws} if ws else {})}
     existing = await db.business_cards.find_one(query, {"_id": 0})
     if not existing:
@@ -6246,7 +7186,7 @@ async def duplicate_business_card(card_id: str, user: dict = Depends(_business_c
 
 
 @api_router.delete("/business-cards/{card_id}")
-async def delete_business_card(card_id: str, user: dict = Depends(_business_card_user), ws: Optional[str] = Depends(current_workspace)):
+async def delete_business_card(card_id: str, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
     query = {"id": card_id, "user_id": user["id"], **({"workspace_id": ws} if ws else {})}
     result = await db.business_cards.delete_one(query)
     if not result.deleted_count:
@@ -6259,7 +7199,7 @@ async def get_public_business_card(url_hash: str):
     card = await db.business_cards.find_one({"url_hash": url_hash}, {"_id": 0, "user_id": 0})
     if not card:
         raise HTTPException(status_code=404, detail="Business card not found")
-    return card
+    return _public_business_card_view(card)
 
 
 class BusinessCardChatRequest(BaseModel):
@@ -6274,20 +7214,45 @@ async def chat_public_business_card(url_hash: str, payload: BusinessCardChatRequ
     q = (payload.question or "").lower()[:500]
     allowed = {k: card.get(k, "") for k in ["name", "title", "company", "bio", "phone", "email", "website", "address"]}
     socials = card.get("social_links") or {}
-    if any(w in q for w in ["phone", "telefon", "call"]):
-        answer = f"Phone: {allowed.get('phone') or 'not provided on this card.'}"
-    elif "email" in q or "mail" in q:
-        answer = f"Email: {allowed.get('email') or 'not provided on this card.'}"
-    elif "website" in q or "web" in q:
-        answer = f"Website: {allowed.get('website') or 'not provided on this card.'}"
-    elif "social" in q or "linkedin" in q or "instagram" in q:
-        answer = "Social links: " + (", ".join(f"{k}: {v}" for k, v in socials.items() if v) or "not provided on this card.")
-    else:
-        prompt = "Answer only from this business card profile. If unknown, say it is not provided.\nProfile: " + json.dumps({**allowed, "social_links": socials}) + "\nQuestion: " + payload.question[:500]
+    assistant_knowledge = (card.get("assistant_knowledge") or "").strip()[:6000]
+
+    async def _ensure_german(text: str) -> str:
+        base = (text or "").strip()
+        if not base:
+            return base
         try:
-            answer = await llm_text(OPENAI_TEXT_MODEL, "You are a business-card assistant. Answer only from the provided profile data.", prompt)
+            translated = await llm_text(
+                OPENAI_TEXT_MODEL,
+                "Du bist ein präziser Übersetzer. Gib ausschließlich eine natürliche deutsche Fassung zurück und füge keine Zusatzkommentare hinzu.",
+                "Bitte ins Deutsche übertragen:\n" + base[:2000],
+            )
+            return (translated or base).strip()
         except Exception:
-            answer = f"{allowed.get('name', 'This person')} is {allowed.get('title', 'a professional')} at {allowed.get('company', 'their company')}. {allowed.get('bio', '')}".strip()
+            return base
+    if any(w in q for w in ["phone", "telefon", "call"]):
+        answer = f"Telefon: {allowed.get('phone') or 'Nicht auf dieser Karte hinterlegt.'}"
+    elif "email" in q or "mail" in q:
+        answer = f"E-Mail: {allowed.get('email') or 'Nicht auf dieser Karte hinterlegt.'}"
+    elif "website" in q or "web" in q:
+        answer = f"Website: {allowed.get('website') or 'Nicht auf dieser Karte hinterlegt.'}"
+    elif "social" in q or "linkedin" in q or "instagram" in q:
+        answer = "Social Links: " + (", ".join(f"{k}: {v}" for k, v in socials.items() if v) or "Nicht auf dieser Karte hinterlegt.")
+    elif assistant_knowledge and any(w in q for w in ["service", "services", "offer", "offering", "angebot", "leistungen"]):
+        answer = assistant_knowledge[:900]
+    else:
+        prompt = "Antworte nur auf Basis dieses Business-Card-Profils. Wenn etwas unbekannt ist, sage klar, dass es nicht hinterlegt ist.\nProfil: " + json.dumps({**allowed, "social_links": socials, "assistant_knowledge": assistant_knowledge}, ensure_ascii=False) + "\nFrage: " + payload.question[:500]
+        try:
+            answer = await llm_text(
+                OPENAI_TEXT_MODEL,
+                "Du bist der FAQ BOT einer Business Card. Antworte ausschließlich auf Deutsch und nur mit Informationen aus den bereitgestellten Profildaten.",
+                prompt,
+            )
+        except Exception:
+            if assistant_knowledge:
+                answer = assistant_knowledge[:900]
+            else:
+                answer = f"{allowed.get('name', 'Diese Person')} ist {allowed.get('title', 'ein Profi')} bei {allowed.get('company', 'seinem/ihrem Unternehmen')}. {allowed.get('bio', '')}".strip()
+    answer = await _ensure_german(answer)
     return {"answer": answer}
 
 app.include_router(api_router)

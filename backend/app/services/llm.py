@@ -20,6 +20,7 @@ import anthropic
 from app.core.config import (
     OPENAI_API_KEY, GEMINI_API_KEY, EMERGENT_LLM_KEY, ANTHROPIC_API_KEY,
     FREETHEAI_API_KEY, FREETHEAI_BASE, OPENAI_TEXT_MODEL, FREETHEAI_TEXT_MODEL,
+    NVIDIA_API_KEY, NVIDIA_BASE, NVIDIA_TEXT_MODEL, NVIDIA_MODEL_DEEPSEEK, NVIDIA_MODEL_MISTRAL,
 )
 
 logger = logging.getLogger(__name__)
@@ -61,6 +62,16 @@ MODEL_MAP = {
     "grok-4": ("grok", "grok-4"),
     # FreeTheAi (OpenAI-compatible free gateway)
     "freetheai": ("freetheai", FREETHEAI_TEXT_MODEL),
+    # NVIDIA NIM (OpenAI-compatible – build.nvidia.com)
+    "nvidia": ("nvidia", NVIDIA_TEXT_MODEL),
+    # DeepSeek + Mistral aliases routed through NVIDIA when selected as chat models.
+    # This keeps the UX simple: one NVIDIA key can power these choices.
+    "deepseek": ("nvidia", NVIDIA_MODEL_DEEPSEEK),
+    "deepseek-chat": ("nvidia", NVIDIA_MODEL_DEEPSEEK),
+    "deepseek-reasoner": ("nvidia", NVIDIA_MODEL_DEEPSEEK),
+    "mistral": ("nvidia", NVIDIA_MODEL_MISTRAL),
+    "mistral-large-latest": ("nvidia", NVIDIA_MODEL_MISTRAL),
+    "mistral-small-latest": ("nvidia", NVIDIA_MODEL_MISTRAL),
 }
 IMAGE_MODEL = "gemini-3.1-flash-image-preview"
 
@@ -156,6 +167,28 @@ async def _llm_single(provider: str, model: str, system_message: str, user_text:
             return (((r.json().get("choices") or [{}])[0]).get("message") or {}).get("content", "")
 
         return await asyncio.to_thread(_call)
+
+    if provider == "nvidia":
+        if not NVIDIA_API_KEY:
+            raise RuntimeError("NVIDIA_API_KEY not set")
+
+        def _call_nvidia():
+            import requests
+            messages = []
+            if system_message:
+                messages.append({"role": "system", "content": system_message})
+            messages.append({"role": "user", "content": user_text})
+            r = requests.post(
+                f"{NVIDIA_BASE.rstrip('/')}/chat/completions",
+                headers={"Authorization": f"Bearer {NVIDIA_API_KEY}", "Content-Type": "application/json"},
+                json={"model": model, "messages": messages},
+                timeout=90,
+            )
+            if not r.ok:
+                raise RuntimeError(f"NVIDIA {r.status_code}: {r.text[:200]}")
+            return (((r.json().get("choices") or [{}])[0]).get("message") or {}).get("content", "") or ""
+
+        return await asyncio.to_thread(_call_nvidia)
 
     if provider == "openai" and OPENAI_API_KEY:
         # Direct OpenAI Chat Completions – so the "gpt" button actually uses the

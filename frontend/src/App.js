@@ -81,6 +81,7 @@ import Specialists from "@/pages/Specialists";       // Agents overview
 
 // Studios
 import DesignStudio from "@/pages/DesignStudio";
+import DesignStudioV2Preview from "@/pages/DesignStudioV2Preview";
 import VideoStudio from "@/pages/VideoStudio";
 import SeoStudio from "@/pages/SeoStudio";
 import AnalyticsStudio from "@/pages/AnalyticsStudio";
@@ -118,6 +119,10 @@ import CharacterStudio from "@/pages/CharacterStudio";
 import TTSStudio from "@/pages/TTSStudio";
 import OutputFactory from "@/pages/OutputFactory";
 import AIBusinessCard, { PublicBusinessCard } from "@/pages/AIBusinessCard";
+import FounderPathSelect from "@/pages/FounderPathSelect";
+import FounderIntake from "@/pages/FounderIntake";
+import FounderIdeas from "@/pages/FounderIdeas";
+import FounderOperations from "@/pages/FounderOperations";
 
 function App() {
   return (
@@ -177,6 +182,9 @@ function AppShell() {
               <Route path="/modules" element={<Dashboard />} />
               <Route path="/output-factory" element={<OutputFactory />} />
               <Route path="/ai-business-card" element={<AIBusinessCard />} />
+              <Route path="ai-business-card" element={<AIBusinessCard />} />
+              <Route path="/business-card" element={<Navigate to="/ai-business-card" replace />} />
+              <Route path="business-card" element={<Navigate to="/ai-business-card" replace />} />
               <Route path="/brand-brain" element={<BrandBrain />} />
               <Route path="/brand-identity" element={<BrandIdentity />} />
               <Route path="/memory" element={<Memory />} />
@@ -184,8 +192,13 @@ function AppShell() {
               <Route path="/skills/:skillId" element={<SkillsMarketplace />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/permissions" element={<Permissions />} />
+              <Route path="/onboarding/select-path" element={<FounderPathSelect />} />
+              <Route path="/onboarding/founder/intake" element={<FounderIntake />} />
+              <Route path="/onboarding/founder/ideas" element={<FounderIdeas />} />
+              <Route path="/onboarding/founder/operations" element={<FounderOperations />} />
               <Route path="/agents" element={<Specialists />} />
               <Route path="/design" element={<DesignStudio />} />
+              <Route path="/design-v2" element={<DesignStudioV2Preview />} />
               <Route path="/video" element={<VideoStudio />} />
               <Route path="/social" element={<SocialMedia />} />
               <Route path="/seo" element={<SeoStudio />} />

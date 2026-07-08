@@ -22,8 +22,11 @@ import uuid
 import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
+from urllib.parse import urlencode
 
+import httpx
 from fastapi import APIRouter, HTTPException, Header, Request
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger("brandmind")
@@ -51,6 +54,18 @@ PBKDF2_ITERATIONS = 200_000
 STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 APP_BASE_URL = os.environ.get("BRANDMIND_APP_URL", "http://localhost:3000")
+
+# Canva Connect API (OAuth)
+CANVA_CLIENT_ID = os.environ.get("CANVA_CLIENT_ID", "")
+CANVA_CLIENT_SECRET = os.environ.get("CANVA_CLIENT_SECRET", "")
+CANVA_AUTH_URL = os.environ.get("CANVA_AUTH_URL", "https://www.canva.com/api/oauth/authorize")
+CANVA_TOKEN_URL = os.environ.get("CANVA_TOKEN_URL", "https://api.canva.com/rest/v1/oauth/token")
+CANVA_REDIRECT_URI = os.environ.get("CANVA_REDIRECT_URI", "")
+CANVA_SCOPES = os.environ.get(
+    "CANVA_SCOPES",
+    "profile:read design:meta:read design:content:write asset:read asset:write",
+)
+CANVA_CONNECT_SUCCESS_PATH = os.environ.get("CANVA_CONNECT_SUCCESS_PATH", "/design?canva=connected")
 
 try:
     import stripe as _stripe
@@ -390,6 +405,178 @@ async def _assert_member(user_id: str, workspace_id: str) -> dict:
     if not m:
         raise HTTPException(status_code=403, detail="No access to this workspace")
     return m
+
+
+def _oauth_redirect_uri() -> str:
+    if CANVA_REDIRECT_URI:
+        return CANVA_REDIRECT_URI
+    return f"{APP_BASE_URL.rstrip('/')}/api/integrations/canva/callback"
+
+
+def _require_canva_config():
+    if not CANVA_CLIENT_ID or not CANVA_CLIENT_SECRET:
+        raise HTTPException(
+            status_code=503,
+            detail="Canva integration is not configured (CANVA_CLIENT_ID / CANVA_CLIENT_SECRET missing).",
+        )
+
+
+@router.get("/integrations/canva/status")
+async def canva_status(
+    authorization: Optional[str] = Header(default=None),
+    x_workspace_id: Optional[str] = Header(default=None, alias="X-Workspace-Id"),
+):
+    user = await current_user(authorization)
+    if not x_workspace_id:
+        raise HTTPException(status_code=400, detail="X-Workspace-Id header is required.")
+    await _assert_member(user["id"], x_workspace_id)
+
+    db = _require_db()
+    doc = await db.bm_integrations.find_one(
+        {"workspace_id": x_workspace_id, "provider": "canva"},
+        {"_id": 0, "access_token": 0, "refresh_token": 0},
+    )
+    if not doc:
+        return {"connected": False, "provider": "canva"}
+    return {
+        "connected": True,
+        "provider": "canva",
+        "workspace_id": x_workspace_id,
+        "connected_at": doc.get("connected_at"),
+        "expires_at": doc.get("expires_at"),
+        "scope": doc.get("scope", ""),
+    }
+
+
+@router.get("/integrations/canva/connect")
+async def canva_connect(
+    authorization: Optional[str] = Header(default=None),
+    x_workspace_id: Optional[str] = Header(default=None, alias="X-Workspace-Id"),
+):
+    user = await current_user(authorization)
+    _require_canva_config()
+    if not x_workspace_id:
+        raise HTTPException(status_code=400, detail="X-Workspace-Id header is required.")
+    await _assert_member(user["id"], x_workspace_id)
+    db = _require_db()
+
+    state = secrets.token_urlsafe(24)
+    await db.bm_oauth_states.insert_one({
+        "id": str(uuid.uuid4()),
+        "provider": "canva",
+        "state": state,
+        "user_id": user["id"],
+        "workspace_id": x_workspace_id,
+        "created_at": _now_iso(),
+        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat(),
+        "used_at": None,
+    })
+
+    params = {
+        "response_type": "code",
+        "client_id": CANVA_CLIENT_ID,
+        "redirect_uri": _oauth_redirect_uri(),
+        "scope": CANVA_SCOPES,
+        "state": state,
+    }
+    return {"authorize_url": f"{CANVA_AUTH_URL}?{urlencode(params)}"}
+
+
+@router.get("/integrations/canva/callback")
+async def canva_callback(
+    code: Optional[str] = None,
+    state: Optional[str] = None,
+    error: Optional[str] = None,
+    error_description: Optional[str] = None,
+):
+    if error:
+        raise HTTPException(status_code=400, detail=error_description or error)
+    if not code or not state:
+        raise HTTPException(status_code=400, detail="Missing OAuth code/state.")
+
+    _require_canva_config()
+    db = _require_db()
+    st = await db.bm_oauth_states.find_one({"provider": "canva", "state": state}, {"_id": 0})
+    if not st:
+        raise HTTPException(status_code=400, detail="Invalid OAuth state.")
+    if st.get("used_at"):
+        raise HTTPException(status_code=400, detail="OAuth state already used.")
+
+    expires_at = st.get("expires_at")
+    if expires_at:
+        try:
+            if datetime.fromisoformat(expires_at) < datetime.now(timezone.utc):
+                raise HTTPException(status_code=400, detail="OAuth state expired.")
+        except ValueError:
+            pass
+
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            token_res = await client.post(
+                CANVA_TOKEN_URL,
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                data={
+                    "grant_type": "authorization_code",
+                    "client_id": CANVA_CLIENT_ID,
+                    "client_secret": CANVA_CLIENT_SECRET,
+                    "redirect_uri": _oauth_redirect_uri(),
+                    "code": code,
+                },
+            )
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"Canva token exchange failed: {e}")
+
+    if not token_res.is_success:
+        detail = token_res.text[:400]
+        raise HTTPException(status_code=502, detail=f"Canva token exchange failed: {detail}")
+
+    payload = token_res.json()
+    access_token = payload.get("access_token", "")
+    if not access_token:
+        raise HTTPException(status_code=502, detail="Canva token response missing access_token.")
+
+    refresh_token = payload.get("refresh_token", "")
+    scope = payload.get("scope", CANVA_SCOPES)
+    expires_in = int(payload.get("expires_in") or 0)
+    expires_at_new = (
+        (datetime.now(timezone.utc) + timedelta(seconds=expires_in)).isoformat() if expires_in > 0 else None
+    )
+
+    await db.bm_integrations.update_one(
+        {"workspace_id": st["workspace_id"], "provider": "canva"},
+        {"$set": {
+            "workspace_id": st["workspace_id"],
+            "provider": "canva",
+            "user_id": st["user_id"],
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "scope": scope,
+            "connected_at": _now_iso(),
+            "expires_at": expires_at_new,
+        }},
+        upsert=True,
+    )
+    await db.bm_oauth_states.update_one(
+        {"provider": "canva", "state": state},
+        {"$set": {"used_at": _now_iso()}},
+    )
+
+    redirect_to = f"{APP_BASE_URL.rstrip('/')}{CANVA_CONNECT_SUCCESS_PATH}"
+    return RedirectResponse(url=redirect_to, status_code=302)
+
+
+@router.post("/integrations/canva/disconnect")
+async def canva_disconnect(
+    authorization: Optional[str] = Header(default=None),
+    x_workspace_id: Optional[str] = Header(default=None, alias="X-Workspace-Id"),
+):
+    user = await current_user(authorization)
+    if not x_workspace_id:
+        raise HTTPException(status_code=400, detail="X-Workspace-Id header is required.")
+    await _assert_member(user["id"], x_workspace_id)
+    db = _require_db()
+    await db.bm_integrations.delete_one({"workspace_id": x_workspace_id, "provider": "canva"})
+    return {"ok": True, "provider": "canva", "connected": False}
 
 
 # ---------------------------------------------------------------------------
