@@ -1,0 +1,25 @@
+# Netlify configuration for the BrandMind frontend.
+#
+# Lives in the repository so a fresh Netlify site (any account) builds and
+# deploys correctly with zero manual settings: connect the repo, deploy.
+
+[build]
+  base    = "frontend"
+  command = "npm run build"
+  publish = "build"
+
+[build.environment]
+  # Backend API (FastAPI on Render). Override per-site in the Netlify UI if
+  # the backend ever moves.
+  REACT_APP_BACKEND_URL = "https://brandmind-api.onrender.com"
+  # CRA treats ESLint warnings as errors when CI=true — keep builds green.
+  CI = "false"
+  # The dependency tree needs legacy peer resolution (CRA 5 + newer libs).
+  NPM_FLAGS = "--legacy-peer-deps"
+  NODE_VERSION = "20"
+
+# SPA fallback (also present in frontend/public/_redirects).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
