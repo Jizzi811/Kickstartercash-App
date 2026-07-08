@@ -50,7 +50,6 @@ const NAV_GROUPS = [
       { to: "/gateway", icon: Plug, labelDE: "Gateway", labelEN: "Gateway" },
       { to: "/skills", icon: Sparkles, labelDE: "Skills", labelEN: "Skills" },
       { to: "/modules", icon: LayoutGrid, labelDE: "Marketplace", labelEN: "Marketplace" },
-      { to: "/ai-business-card", icon: IdCard, labelDE: "AI Business Card", labelEN: "AI Business Card" },
       { to: "/arena", icon: MessageSquare, labelDE: "Chat Arena", labelEN: "Chat Arena" },
     ],
   },
