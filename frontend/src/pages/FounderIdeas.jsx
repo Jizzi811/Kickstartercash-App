@@ -24,7 +24,6 @@ export default function FounderIdeas() {
   const [marketHint, setMarketHint] = useState("");
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [briefing, setBriefing] = useState(false);
 
   const selectedIdeaId = profile?.selected_idea_id || "";
 
@@ -108,20 +107,6 @@ export default function FounderIdeas() {
     }
   };
 
-  const generateBrief = async () => {
-    setBriefing(true);
-    try {
-      await axios.post(`${API}/brand-brief/generate`, { language: "DE" });
-      toast.success("Brand Brief erstellt");
-      navigate("/brand-brain");
-    } catch (error) {
-      toast.error("Brand Brief konnte nicht erstellt werden");
-      console.warn(error);
-    } finally {
-      setBriefing(false);
-    }
-  };
-
   return (
     <Page>
       <Hero
@@ -133,9 +118,9 @@ export default function FounderIdeas() {
           <>
             <Btn variant="ghost" onClick={() => navigate("/onboarding/founder/intake")}>Zurück zur Vision</Btn>
             <Btn variant="ghost" onClick={() => navigate("/ops")}>Content Ops Hub</Btn>
-            <Btn onClick={generateBrief} disabled={briefing || !selectedDecision}>
-              {briefing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-              Brand Brief generieren
+            <Btn onClick={() => navigate("/onboarding/founder/brand")} disabled={!selectedDecision}>
+              <Sparkles size={14} />
+              Marke entwickeln
             </Btn>
           </>
         )}

@@ -8114,6 +8114,183 @@ async def brand_brief_latest(user: dict = Depends(_authed_user), ws: Optional[st
 
 
 # ---------------------------------------------------------------------------
+# Founder OS – Phase 3 (Markenentwicklung) + Phase 4 (Corporate Design)
+# ---------------------------------------------------------------------------
+
+class FounderBrandDevelopmentGenerateRequest(BaseModel):
+    language: str = "DE"
+    model: str = OPENAI_TEXT_MODEL
+
+
+class FounderBrandDevelopmentApplyRequest(BaseModel):
+    name: str
+    claim: str = ""
+    reasoning: str = ""
+    mission: str = ""
+    vision: str = ""
+    values: List[str] = Field(default_factory=list)
+    brand_story: str = ""
+    primary_color: str = "#7C3AED"
+    secondary_color: str = "#0A0A0A"
+    accent_color: str = "#F5F5F7"
+    font_heading: str = "Space Grotesk"
+    font_body: str = "Inter"
+    image_style: str = ""
+    logo_concept: str = ""
+
+
+@api_router.post("/founder/brand-development/generate")
+async def founder_brand_development_generate(
+    payload: FounderBrandDevelopmentGenerateRequest,
+    user: dict = Depends(_authed_user),
+    ws: Optional[str] = Depends(current_workspace),
+):
+    profile = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    idea = profile.get("selected_idea") or {}
+    language = "Deutsch" if str(payload.language).upper() == "DE" else "English"
+    prompt = (
+        f"Founder profile: {json.dumps(profile, ensure_ascii=False)}\n"
+        f"Selected business idea: {json.dumps(idea, ensure_ascii=False)}\n"
+        "Create a complete brand foundation with this exact JSON shape:\n"
+        '{"names":[{"name":"...","claim":"...","reasoning":"..."}] (5 distinct candidates),'
+        '"story":{"mission":"...","vision":"...","values":["...","...","..."],"brand_story":"..."},'
+        '"design":{"primary_color":"#hex","secondary_color":"#hex","accent_color":"#hex",'
+        '"font_heading":"...","font_body":"...","image_style":"...","logo_concept":"..."}}'
+    )
+    try:
+        raw = await llm_text(
+            payload.model or OPENAI_TEXT_MODEL,
+            (
+                f"You are Brandmind Brand Strategist. Answer only valid JSON in {language}. "
+                "Name candidates must be distinct, memorable and sound available (avoid generic words), "
+                "each with a short claim/tagline and a one-line reasoning. "
+                "Design must fit the founder's specific business and positioning — do not default to "
+                "Brandmind's own violet/off-white/black palette unless it genuinely fits this business."
+            ),
+            prompt,
+        )
+        parsed = _extract_json(raw) or {}
+    except Exception:
+        parsed = {}
+    names = parsed.get("names") if isinstance(parsed.get("names"), list) else []
+    story = parsed.get("story") if isinstance(parsed.get("story"), dict) else {}
+    design = parsed.get("design") if isinstance(parsed.get("design"), dict) else {}
+    if not names:
+        fallback_name = (idea.get("title") or profile.get("vision") or "Neue Marke")[:40]
+        names = [{"name": fallback_name, "claim": "", "reasoning": "Fallback – KI-Generierung nicht verfügbar."}]
+    normalized_names = [{
+        "name": str((n or {}).get("name") or "")[:80],
+        "claim": str((n or {}).get("claim") or "")[:160],
+        "reasoning": str((n or {}).get("reasoning") or "")[:400],
+    } for n in names[:6]]
+    normalized_story = {
+        "mission": str(story.get("mission") or "")[:600],
+        "vision": str(story.get("vision") or "")[:600],
+        "values": _normalize_list(story.get("values") if isinstance(story.get("values"), list) else []),
+        "brand_story": str(story.get("brand_story") or "")[:2000],
+    }
+    normalized_design = {
+        "primary_color": str(design.get("primary_color") or "#7C3AED")[:20],
+        "secondary_color": str(design.get("secondary_color") or "#0A0A0A")[:20],
+        "accent_color": str(design.get("accent_color") or "#F5F5F7")[:20],
+        "font_heading": str(design.get("font_heading") or "Space Grotesk")[:60],
+        "font_body": str(design.get("font_body") or "Inter")[:60],
+        "image_style": str(design.get("image_style") or "")[:600],
+        "logo_concept": str(design.get("logo_concept") or "")[:600],
+    }
+    now = _now_iso()
+    await db.founder_brand_development.update_one(
+        _founder_scope(user["id"], ws),
+        {
+            "$set": {
+                "names": normalized_names, "story": normalized_story, "design": normalized_design,
+                "updated_at": now,
+            },
+            "$setOnInsert": {"created_at": now, **_founder_scope(user["id"], ws)},
+        },
+        upsert=True,
+    )
+    return {"names": normalized_names, "story": normalized_story, "design": normalized_design, "workspace_id": ws or ""}
+
+
+@api_router.get("/founder/brand-development")
+async def founder_brand_development_get(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    doc = await db.founder_brand_development.find_one(_founder_scope(user["id"], ws), {"_id": 0})
+    if not doc:
+        return {"names": [], "story": {}, "design": {}, "workspace_id": ws or ""}
+    return {"names": doc.get("names", []), "story": doc.get("story", {}), "design": doc.get("design", {}), "workspace_id": ws or ""}
+
+
+@api_router.post("/founder/brand-development/apply")
+async def founder_brand_development_apply(
+    payload: FounderBrandDevelopmentApplyRequest,
+    user: dict = Depends(_authed_user),
+    ws: Optional[str] = Depends(current_workspace),
+):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    profile = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    now = _now_iso()
+    brand_fields = {
+        "name": payload.name.strip()[:120] or "Neue Marke",
+        "slogan": payload.claim.strip()[:200],
+        "primary_color": payload.primary_color.strip()[:20] or "#7C3AED",
+        "secondary_color": payload.secondary_color.strip()[:20] or "#0A0A0A",
+        "accent_color": payload.accent_color.strip()[:20] or "#F5F5F7",
+        "font_heading": payload.font_heading.strip()[:60] or "Space Grotesk",
+        "font_body": payload.font_body.strip()[:60] or "Inter",
+        "image_style": payload.image_style.strip()[:600],
+        "target_audience": profile.get("target_audience", ""),
+    }
+    existing_brand_id = profile.get("brand_id") or ""
+    existing = (
+        await db.brands.find_one({"id": existing_brand_id, **_scope_filter(ws)}, {"_id": 0})
+        if existing_brand_id else None
+    )
+    if existing:
+        await db.brands.update_one({"id": existing_brand_id}, {"$set": brand_fields})
+        brand = {**existing, **brand_fields}
+    else:
+        new_brand = Brand(**brand_fields)
+        if ws:
+            new_brand.workspace_id = ws
+        brand = new_brand.model_dump()
+        await db.brands.insert_one(dict(brand))
+    await db.founder_profiles.update_one(
+        _founder_scope(user["id"], ws), {"$set": {"brand_id": brand["id"], "updated_at": now}},
+    )
+    values_text = ", ".join(_normalize_list(payload.values)) or "—"
+    story_summary = (
+        f"Mission: {payload.mission.strip() or '—'}\nVision: {payload.vision.strip() or '—'}\n"
+        f"Werte: {values_text}\n{payload.brand_story.strip()}"
+    ).strip()
+    # These three decisions are locked immediately (not draft) — applying to the live
+    # Brand record is the definitive commitment, unlike merely picking an idea to review.
+    for category, selected_option, why_text in (
+        ("company_name", payload.name.strip(), payload.reasoning.strip() or "Vom Gründer im Brand-Development-Schritt übernommen."),
+        ("brand_story", payload.name.strip(), story_summary),
+        ("corporate_design", f"{payload.primary_color} / {payload.secondary_color} · {payload.font_heading} / {payload.font_body}", payload.image_style.strip() or payload.logo_concept.strip() or "Design-Richtung aus dem Brand-Development-Schritt."),
+    ):
+        decision = {
+            "id": str(uuid.uuid4()),
+            **_founder_scope(user["id"], ws),
+            "category": category,
+            "selected_option": selected_option[:600],
+            "alternatives": [],
+            "why_text": why_text[:2000],
+            "evidence_refs": [],
+            "confidence": 80,
+            "decided_by": "user",
+            "status": "locked",
+            "created_at": now,
+            "updated_at": now,
+        }
+        await db.brand_decisions.insert_one(decision)
+        await _decision_event(user["id"], ws, decision["id"], "DECISION_CREATED", {"category": category, "status": "locked"})
+    return {"brand": brand}
+
+
+# ---------------------------------------------------------------------------
 # AI Business Card module
 # ---------------------------------------------------------------------------
 
