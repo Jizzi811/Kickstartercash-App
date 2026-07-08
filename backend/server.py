@@ -5911,11 +5911,11 @@ async def _usage_snapshot(ws: Optional[str]) -> dict:
     now = datetime.now(timezone.utc)
     day = now.strftime("%Y-%m-%d")
     month = now.strftime("%Y-%m")
-    rows = await db.gateway_usage.find(_scope_filter(ws), {"_id": 0, "created_at": 1}).to_list(50000)
-    return {
-        "daily_requests": len([r for r in rows if str(r.get("created_at", "")).startswith(day)]),
-        "monthly_requests": len([r for r in rows if str(r.get("created_at", "")).startswith(month)]),
-    }
+    # Count server-side; created_at is an ISO string, so a prefix regex == "starts with".
+    scope = _scope_filter(ws)
+    daily = await db.gateway_usage.count_documents({**scope, "created_at": {"$regex": f"^{day}"}})
+    monthly = await db.gateway_usage.count_documents({**scope, "created_at": {"$regex": f"^{month}"}})
+    return {"daily_requests": daily, "monthly_requests": monthly}
 
 
 async def _load_permission_policy(ws: Optional[str]) -> dict:
