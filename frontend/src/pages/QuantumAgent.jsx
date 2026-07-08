@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { BRANDMIND_AGENTS } from "@/constants/agents";
+import axios from "axios";
+import { API } from "@/context/AppContext";
 import { AGENT_REGISTRY, DEMO_PROMPTS, orchestrateQuantumWorkflow } from "@/lib/quantumOrchestrator";
 import { createMemoryPreviewFromWorkflow, memoryManager } from "@/lib/memory/memoryManager";
 import { MEMORY_TYPE_DEFINITIONS } from "@/lib/memory/memoryTypes";
@@ -17,19 +18,32 @@ import {
   MessageCircle, Settings, BarChart3, MessagesSquare,
 } from "lucide-react";
 
-const AGENT_ICON_MAP = {
-  BarChart3,
-  BookOpen,
-  Cpu,
-  FileText,
-  Megaphone,
-  MessageCircle,
-  MessagesSquare,
-  PenTool,
-  Search,
-  Settings,
-  TrendingUp,
-  Video,
+// Agent identity (name, role, avatar, color) comes from the backend AGENTS
+// registry (GET /agents) — the single source of truth also used by /agents
+// (Specialists.jsx). Only the display icon per agent id is a frontend concern.
+const AGENT_ICON_BY_ID = {
+  ceo: Crown,
+  marketing: Megaphone,
+  designer: PenTool,
+  content: FileText,
+  video: Video,
+  seo: Search,
+  seo_specialist: Search,
+  social: MessageCircle,
+  sales: TrendingUp,
+  analytics: BarChart3,
+  automation: Settings,
+  cfo: Coins,
+  financial_analyst: BarChart2,
+  fpa: TrendingUp,
+  bookkeeper: BookOpen,
+  tax: ShieldCheck,
+  tiktok: Music,
+  email: Mail,
+  linkedin: Linkedin,
+  orchestrator: Network,
+  workflow: Workflow,
+  coding: Cpu,
 };
 
 function AgentAvatar({ agent }) {
@@ -454,7 +468,12 @@ export default function QuantumAgent() {
   const [workflow, setWorkflow] = useState(null);
   const [autoMemory, setAutoMemory] = useState(false);
   const [memoryApprovalReady, setMemoryApprovalReady] = useState(false);
+  const [agents, setAgents] = useState([]);
   const lang = localStorage.getItem("kc_lang") || "DE";
+
+  useEffect(() => {
+    axios.get(`${API}/agents`).then((res) => setAgents(res.data || [])).catch(() => setAgents([]));
+  }, []);
 
   const tasks = lang === "DE" ? TASKS_DE : TASKS_EN;
   const memoryProvider = memoryManager.getProvider();
@@ -608,13 +627,13 @@ export default function QuantumAgent() {
             </p>
           </div>
           <span className="rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/10 px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-[#C4B5FD]">
-            {BRANDMIND_AGENTS.length} {lang === "DE" ? "aktive Agenten" : "active agents"}
+            {agents.length} {lang === "DE" ? "aktive Agenten" : "active agents"}
           </span>
         </div>
 
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {BRANDMIND_AGENTS.map((agent) => {
-            const Icon = AGENT_ICON_MAP[agent.icon] || Bot;
+          {agents.map((agent) => {
+            const Icon = AGENT_ICON_BY_ID[agent.id] || Bot;
 
             return (
               <motion.article
@@ -633,7 +652,7 @@ export default function QuantumAgent() {
                   </div>
                 </div>
                 <h3 className="text-lg font-semibold text-white">{agent.name}</h3>
-                <p className="mx-auto mt-2 max-w-[15rem] text-sm leading-6 text-zinc-400">{agent.description}</p>
+                <p className="mx-auto mt-2 max-w-[15rem] text-sm leading-6 text-zinc-400">{lang === "DE" ? agent.role_de : agent.role_en}</p>
               </motion.article>
             );
           })}
