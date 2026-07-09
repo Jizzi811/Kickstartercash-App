@@ -466,9 +466,13 @@ async def _brand_context(brand: dict, language: str, agent_id: Optional[str] = N
         dna = ""
     decisions = ""
     try:
-        if db is not None:
+        # Only inject decisions for brands with a real workspace: decisions are stored
+        # per workspace, and the legacy fallback (workspace_id == "") would mix every
+        # pre-workspace user's decisions together across accounts.
+        brand_ws = brand.get("workspace_id") or ""
+        if db is not None and brand_ws:
             rows = await db.brand_decisions.find(
-                {"workspace_id": brand.get("workspace_id") or "", "status": "locked"}, {"_id": 0},
+                {"workspace_id": brand_ws, "status": "locked"}, {"_id": 0},
             ).sort("updated_at", -1).to_list(30)
             if rows:
                 lines = "\n".join(f"- [{r.get('category')}] {r.get('selected_option')} — {r.get('why_text')}" for r in rows[:15])
