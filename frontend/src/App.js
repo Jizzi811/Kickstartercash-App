@@ -123,6 +123,8 @@ import FounderIntake from "@/pages/FounderIntake";
 import FounderIdeas from "@/pages/FounderIdeas";
 import FounderBrandDevelopment from "@/pages/FounderBrandDevelopment";
 import FounderOffers from "@/pages/FounderOffers";
+import FounderBusinessPlan from "@/pages/FounderBusinessPlan";
+import FounderFinancePlan from "@/pages/FounderFinancePlan";
 import FounderOperations from "@/pages/FounderOperations";
 
 function App() {
@@ -198,6 +200,8 @@ function AppShell() {
               <Route path="/onboarding/founder/ideas" element={<FounderIdeas />} />
               <Route path="/onboarding/founder/brand" element={<FounderBrandDevelopment />} />
               <Route path="/onboarding/founder/offers" element={<FounderOffers />} />
+              <Route path="/onboarding/founder/business-plan" element={<FounderBusinessPlan />} />
+              <Route path="/onboarding/founder/finance" element={<FounderFinancePlan />} />
               <Route path="/ops" element={<FounderOperations />} />
               <Route path="/onboarding/founder/operations" element={<Navigate to="/ops" replace />} />
               <Route path="/agents" element={<Specialists />} />

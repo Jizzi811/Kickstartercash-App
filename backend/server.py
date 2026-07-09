@@ -8116,6 +8116,28 @@ class FounderOffersApplyRequest(BaseModel):
     positioning: str = ""
 
 
+class FounderBusinessPlanGenerateRequest(BaseModel):
+    language: str = "DE"
+    model: str = OPENAI_TEXT_MODEL
+    focus: str = ""
+
+
+class FounderBusinessPlanApplyRequest(BaseModel):
+    plan: dict = Field(default_factory=dict)
+
+
+class FounderFinancePlanGenerateRequest(BaseModel):
+    language: str = "DE"
+    model: str = OPENAI_TEXT_MODEL
+    currency: str = "EUR"
+    starting_capital: str = ""
+    focus: str = ""
+
+
+class FounderFinancePlanApplyRequest(BaseModel):
+    plan: dict = Field(default_factory=dict)
+
+
 class FounderBrandDevelopmentApplyRequest(BaseModel):
     name: str
     claim: str = ""
@@ -8439,6 +8461,272 @@ async def founder_offers_apply(
         await db.brand_decisions.insert_one(decision)
         await _decision_event(user["id"], ws, decision["id"], "DECISION_CREATED", {"category": category, "status": "locked"})
     return {"locked": ["product_offering", "pricing"], "workspace_id": ws or ""}
+
+
+# ---------------------------------------------------------------------------
+# Founder OS – Phase 6: Businessplan (Carl · CFO) & Phase 7: Finanzplan (Ines)
+# ---------------------------------------------------------------------------
+
+async def _founder_full_context(user_id: str, ws: Optional[str]) -> dict:
+    """Collect everything the founder has decided so far so the plan phases
+    build on the real, locked foundation (Decision Memory)."""
+    profile = await db.founder_profiles.find_one(_founder_scope(user_id, ws), {"_id": 0}) or {}
+    brand_dev = await db.founder_brand_development.find_one(_founder_scope(user_id, ws), {"_id": 0}) or {}
+    offers = await db.founder_offers.find_one(_founder_scope(user_id, ws), {"_id": 0}) or {}
+    decisions_ctx = await _founder_locked_context(user_id, ws)
+    return {
+        "profile": profile,
+        "idea": profile.get("selected_idea") or {},
+        "brand": {"story": brand_dev.get("story", {}), "names": brand_dev.get("names", [])},
+        "offers": {"offers": offers.get("offers", []), "packages": offers.get("packages", []),
+                   "pricing_strategy": offers.get("pricing_strategy", {}), "positioning": offers.get("positioning", "")},
+        "decisions_ctx": decisions_ctx,
+    }
+
+
+@api_router.post("/founder/business-plan/generate")
+async def founder_business_plan_generate(
+    payload: FounderBusinessPlanGenerateRequest,
+    user: dict = Depends(_authed_user),
+    ws: Optional[str] = Depends(current_workspace),
+):
+    ctx = await _founder_full_context(user["id"], ws)
+    language = "Deutsch" if str(payload.language).upper() == "DE" else "English"
+    prompt = (
+        f"Founder profile: {json.dumps(ctx['profile'], ensure_ascii=False)}\n"
+        f"Business idea: {json.dumps(ctx['idea'], ensure_ascii=False)}\n"
+        f"Brand foundation: {json.dumps(ctx['brand'], ensure_ascii=False)}\n"
+        f"Offers & pricing: {json.dumps(ctx['offers'], ensure_ascii=False)}\n"
+        f"{ctx['decisions_ctx']}\n"
+        f"Extra focus from founder: {payload.focus or '—'}\n"
+        "Write a complete, investor-ready business plan with this exact JSON shape:\n"
+        '{"executive_summary":"...","problem":"...","solution":"...",'
+        '"market_analysis":{"target_market":"...","market_size":"...","trends":["...","..."]},'
+        '"competition":{"landscape":"...","advantage":"..."},'
+        '"business_model":"how the company makes money",'
+        '"go_to_market":{"strategy":"...","channels":["...","..."],"first_steps":["...","..."]},'
+        '"milestones":[{"timeframe":"e.g. Monat 1-3","goal":"..."}] (3-5),'
+        '"team":"who is needed / roles to hire",'
+        '"risks":[{"risk":"...","mitigation":"..."}] (2-4)}'
+    )
+    try:
+        raw = await llm_text(
+            payload.model or OPENAI_TEXT_MODEL,
+            (
+                f"You are Carl, Brandmind's CFO & business-plan strategist. Answer only valid JSON in {language}. "
+                "Ground every section in this founder's real idea, offers and locked decisions — concrete and "
+                "actionable, not generic boilerplate. Never contradict the locked decisions."
+            ),
+            prompt,
+        )
+        parsed = _extract_json(raw) or {}
+    except Exception:
+        parsed = {}
+
+    def _s(v, n=2000):
+        return str(v or "")[:n]
+
+    market = parsed.get("market_analysis") if isinstance(parsed.get("market_analysis"), dict) else {}
+    comp = parsed.get("competition") if isinstance(parsed.get("competition"), dict) else {}
+    gtm = parsed.get("go_to_market") if isinstance(parsed.get("go_to_market"), dict) else {}
+    milestones = [
+        {"timeframe": _s((m or {}).get("timeframe"), 80), "goal": _s((m or {}).get("goal"), 400)}
+        for m in (parsed.get("milestones") or [])[:6] if (m or {}).get("goal")
+    ]
+    risks = [
+        {"risk": _s((r or {}).get("risk"), 300), "mitigation": _s((r or {}).get("mitigation"), 400)}
+        for r in (parsed.get("risks") or [])[:5] if (r or {}).get("risk")
+    ]
+    plan = {
+        "executive_summary": _s(parsed.get("executive_summary")),
+        "problem": _s(parsed.get("problem")),
+        "solution": _s(parsed.get("solution")),
+        "market_analysis": {
+            "target_market": _s(market.get("target_market"), 600),
+            "market_size": _s(market.get("market_size"), 400),
+            "trends": _normalize_list(market.get("trends") if isinstance(market.get("trends"), list) else []),
+        },
+        "competition": {
+            "landscape": _s(comp.get("landscape"), 800),
+            "advantage": _s(comp.get("advantage"), 600),
+        },
+        "business_model": _s(parsed.get("business_model")),
+        "go_to_market": {
+            "strategy": _s(gtm.get("strategy"), 800),
+            "channels": _normalize_list(gtm.get("channels") if isinstance(gtm.get("channels"), list) else []),
+            "first_steps": _normalize_list(gtm.get("first_steps") if isinstance(gtm.get("first_steps"), list) else []),
+        },
+        "milestones": milestones,
+        "team": _s(parsed.get("team"), 800),
+        "risks": risks,
+    }
+    now = _now_iso()
+    await db.founder_business_plan.update_one(
+        _founder_scope(user["id"], ws),
+        {"$set": {"plan": plan, "updated_at": now},
+         "$setOnInsert": {"created_at": now, **_founder_scope(user["id"], ws)}},
+        upsert=True,
+    )
+    return {"plan": plan, "workspace_id": ws or ""}
+
+
+@api_router.get("/founder/business-plan")
+async def founder_business_plan_get(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    doc = await db.founder_business_plan.find_one(_founder_scope(user["id"], ws), {"_id": 0})
+    return {"plan": (doc or {}).get("plan", {}), "workspace_id": ws or ""}
+
+
+@api_router.post("/founder/business-plan/apply")
+async def founder_business_plan_apply(
+    payload: FounderBusinessPlanApplyRequest,
+    user: dict = Depends(_authed_user),
+    ws: Optional[str] = Depends(current_workspace),
+):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    plan = payload.plan or {}
+    now = _now_iso()
+    summary = str(plan.get("executive_summary") or plan.get("business_model") or "Businessplan").strip()[:2000]
+    decision = {
+        "id": str(uuid.uuid4()),
+        **_founder_scope(user["id"], ws),
+        "category": "business_plan",
+        "selected_option": (str(plan.get("business_model") or "Businessplan")).strip()[:600],
+        "alternatives": [],
+        "why_text": summary,
+        "evidence_refs": [],
+        "confidence": 76,
+        "decided_by": "user",
+        "status": "locked",
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.brand_decisions.insert_one(decision)
+    await _decision_event(user["id"], ws, decision["id"], "DECISION_CREATED", {"category": "business_plan", "status": "locked"})
+    return {"locked": ["business_plan"], "workspace_id": ws or ""}
+
+
+@api_router.post("/founder/finance-plan/generate")
+async def founder_finance_plan_generate(
+    payload: FounderFinancePlanGenerateRequest,
+    user: dict = Depends(_authed_user),
+    ws: Optional[str] = Depends(current_workspace),
+):
+    ctx = await _founder_full_context(user["id"], ws)
+    biz = await db.founder_business_plan.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    language = "Deutsch" if str(payload.language).upper() == "DE" else "English"
+    currency = (payload.currency or "EUR").strip()[:8]
+    prompt = (
+        f"Business idea: {json.dumps(ctx['idea'], ensure_ascii=False)}\n"
+        f"Offers & pricing: {json.dumps(ctx['offers'], ensure_ascii=False)}\n"
+        f"Business plan: {json.dumps(biz.get('plan', {}), ensure_ascii=False)}\n"
+        f"{ctx['decisions_ctx']}\n"
+        f"Currency: {currency}. Starting capital available: {payload.starting_capital or 'unknown'}.\n"
+        f"Extra focus from founder: {payload.focus or '—'}\n"
+        "Build a realistic 3-year financial plan with this exact JSON shape:\n"
+        f'{{"assumptions":["...","..."],"currency":"{currency}",'
+        '"revenue_projection":[{"period":"Jahr 1","revenue":"...","note":"..."},{"period":"Jahr 2",...},{"period":"Jahr 3",...}],'
+        '"cost_structure":[{"item":"...","monthly":"...","yearly":"..."}] (main cost lines),'
+        '"break_even":{"timeframe":"e.g. Monat 14","units_or_customers":"...","explanation":"..."},'
+        '"funding_need":{"amount":"...","use_of_funds":["...","..."],"runway":"e.g. 18 Monate"},'
+        '"profitability":"short narrative on the path to profit","kpis":["e.g. CAC, LTV, MRR targets"]}'
+    )
+    try:
+        raw = await llm_text(
+            payload.model or OPENAI_TEXT_MODEL,
+            (
+                f"You are Ines, Brandmind's Investment Researcher & financial-planning expert. "
+                f"Answer only valid JSON in {language}. Derive numbers from the founder's actual pricing, "
+                "offers and business plan — be conservative and defensible, state assumptions explicitly. "
+                "Never contradict the locked decisions."
+            ),
+            prompt,
+        )
+        parsed = _extract_json(raw) or {}
+    except Exception:
+        parsed = {}
+
+    def _s(v, n=800):
+        return str(v or "")[:n]
+
+    revenue = [
+        {"period": _s((r or {}).get("period"), 40), "revenue": _s((r or {}).get("revenue"), 80), "note": _s((r or {}).get("note"), 300)}
+        for r in (parsed.get("revenue_projection") or [])[:6] if (r or {}).get("period")
+    ]
+    costs = [
+        {"item": _s((c or {}).get("item"), 120), "monthly": _s((c or {}).get("monthly"), 80), "yearly": _s((c or {}).get("yearly"), 80)}
+        for c in (parsed.get("cost_structure") or [])[:12] if (c or {}).get("item")
+    ]
+    be = parsed.get("break_even") if isinstance(parsed.get("break_even"), dict) else {}
+    fn = parsed.get("funding_need") if isinstance(parsed.get("funding_need"), dict) else {}
+    plan = {
+        "currency": currency,
+        "assumptions": _normalize_list(parsed.get("assumptions") if isinstance(parsed.get("assumptions"), list) else []),
+        "revenue_projection": revenue,
+        "cost_structure": costs,
+        "break_even": {
+            "timeframe": _s(be.get("timeframe"), 80),
+            "units_or_customers": _s(be.get("units_or_customers"), 120),
+            "explanation": _s(be.get("explanation"), 500),
+        },
+        "funding_need": {
+            "amount": _s(fn.get("amount"), 80),
+            "use_of_funds": _normalize_list(fn.get("use_of_funds") if isinstance(fn.get("use_of_funds"), list) else []),
+            "runway": _s(fn.get("runway"), 60),
+        },
+        "profitability": _s(parsed.get("profitability"), 800),
+        "kpis": _normalize_list(parsed.get("kpis") if isinstance(parsed.get("kpis"), list) else []),
+    }
+    now = _now_iso()
+    await db.founder_finance_plan.update_one(
+        _founder_scope(user["id"], ws),
+        {"$set": {"plan": plan, "updated_at": now},
+         "$setOnInsert": {"created_at": now, **_founder_scope(user["id"], ws)}},
+        upsert=True,
+    )
+    return {"plan": plan, "workspace_id": ws or ""}
+
+
+@api_router.get("/founder/finance-plan")
+async def founder_finance_plan_get(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    doc = await db.founder_finance_plan.find_one(_founder_scope(user["id"], ws), {"_id": 0})
+    return {"plan": (doc or {}).get("plan", {}), "workspace_id": ws or ""}
+
+
+@api_router.post("/founder/finance-plan/apply")
+async def founder_finance_plan_apply(
+    payload: FounderFinancePlanApplyRequest,
+    user: dict = Depends(_authed_user),
+    ws: Optional[str] = Depends(current_workspace),
+):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    plan = payload.plan or {}
+    now = _now_iso()
+    fn = plan.get("funding_need") or {}
+    be = plan.get("break_even") or {}
+    summary = (
+        f"Kapitalbedarf: {fn.get('amount', '—')} · Runway: {fn.get('runway', '—')}\n"
+        f"Break-even: {be.get('timeframe', '—')} ({be.get('units_or_customers', '—')})\n"
+        f"{str(plan.get('profitability') or '').strip()}"
+    ).strip()[:2000]
+    decision = {
+        "id": str(uuid.uuid4()),
+        **_founder_scope(user["id"], ws),
+        "category": "finance_plan",
+        "selected_option": (str(fn.get("amount") or "Finanzplan")).strip()[:600],
+        "alternatives": [],
+        "why_text": summary,
+        "evidence_refs": [],
+        "confidence": 74,
+        "decided_by": "user",
+        "status": "locked",
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.brand_decisions.insert_one(decision)
+    await _decision_event(user["id"], ws, decision["id"], "DECISION_CREATED", {"category": "finance_plan", "status": "locked"})
+    return {"locked": ["finance_plan"], "workspace_id": ws or ""}
 
 
 # ---------------------------------------------------------------------------

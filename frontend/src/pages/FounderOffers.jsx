@@ -117,7 +117,7 @@ export default function FounderOffers() {
         positioning,
       });
       toast.success("Produkt-Portfolio & Preisstrategie im Decision Memory gespeichert");
-      navigate("/ops");
+      navigate("/onboarding/founder/business-plan");
     } catch (error) {
       console.warn(error);
       toast.error("Angebote konnten nicht übernommen werden");
@@ -136,6 +136,7 @@ export default function FounderOffers() {
         actions={(
           <>
             <Btn variant="ghost" onClick={() => navigate("/onboarding/founder/brand")}>Zurück zur Marke</Btn>
+            <Btn variant="ghost" onClick={() => navigate("/onboarding/founder/business-plan")}>Weiter zum Businessplan</Btn>
             <Btn onClick={generate} disabled={generating}>
               {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
               {offers.length ? "Erneut generieren" : "Angebote entwickeln"}

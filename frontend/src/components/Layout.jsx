@@ -138,6 +138,8 @@ const PAGE_NAMES = {
   "/workflow-architect": "Workflow Architect",
   "/ops": "Content Ops",
   "/onboarding/founder/offers": "Produkte & Angebote",
+  "/onboarding/founder/business-plan": "Businessplan",
+  "/onboarding/founder/finance": "Finanzplan",
   "/finance-cfo": "CFO Studio",
   "/finance-analyst": "Financial Analyst",
   "/finance-fpa": "FP&A Studio",
