@@ -128,6 +128,7 @@ export default function FounderBrandDevelopment() {
         actions={(
           <>
             <Btn variant="ghost" onClick={() => navigate("/onboarding/founder/ideas")}>Zurück zu Ideen</Btn>
+            <Btn variant="ghost" onClick={() => navigate("/onboarding/founder/offers")}>Weiter zu Produkten</Btn>
             <Btn onClick={generate} disabled={generating}>
               {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
               {names.length ? "Erneut generieren" : "Marke entwickeln"}

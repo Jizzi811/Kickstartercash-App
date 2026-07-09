@@ -137,6 +137,7 @@ const PAGE_NAMES = {
   "/orchestrator": "Orchestrator",
   "/workflow-architect": "Workflow Architect",
   "/ops": "Content Ops",
+  "/onboarding/founder/offers": "Produkte & Angebote",
   "/finance-cfo": "CFO Studio",
   "/finance-analyst": "Financial Analyst",
   "/finance-fpa": "FP&A Studio",

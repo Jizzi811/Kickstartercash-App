@@ -8103,6 +8103,19 @@ class FounderBrandDevelopmentGenerateRequest(BaseModel):
     model: str = OPENAI_TEXT_MODEL
 
 
+class FounderOffersGenerateRequest(BaseModel):
+    language: str = "DE"
+    model: str = OPENAI_TEXT_MODEL
+    focus: str = ""
+
+
+class FounderOffersApplyRequest(BaseModel):
+    offers: List[dict] = Field(default_factory=list)
+    packages: List[dict] = Field(default_factory=list)
+    pricing_strategy: dict = Field(default_factory=dict)
+    positioning: str = ""
+
+
 class FounderBrandDevelopmentApplyRequest(BaseModel):
     name: str
     claim: str = ""
@@ -8269,6 +8282,163 @@ async def founder_brand_development_apply(
         await db.brand_decisions.insert_one(decision)
         await _decision_event(user["id"], ws, decision["id"], "DECISION_CREATED", {"category": category, "status": "locked"})
     return {"brand": brand}
+
+
+# ---------------------------------------------------------------------------
+# Founder OS – Phase 5: Produkte & Angebote
+# ---------------------------------------------------------------------------
+
+async def _founder_locked_context(user_id: str, ws: Optional[str]) -> str:
+    """Summarize the founder's locked decisions so later phases build on them
+    (Decision Memory feedback loop)."""
+    rows = await db.brand_decisions.find(
+        {**_founder_scope(user_id, ws), "status": "locked"}, {"_id": 0}
+    ).sort("updated_at", -1).to_list(50)
+    if not rows:
+        return ""
+    lines = [f"- {r.get('category')}: {r.get('selected_option')} ({r.get('why_text','')[:160]})" for r in rows]
+    return "Locked founder decisions so far (respect these, do not contradict):\n" + "\n".join(lines)
+
+
+@api_router.post("/founder/offers/generate")
+async def founder_offers_generate(
+    payload: FounderOffersGenerateRequest,
+    user: dict = Depends(_authed_user),
+    ws: Optional[str] = Depends(current_workspace),
+):
+    profile = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    idea = profile.get("selected_idea") or {}
+    brand_dev = await db.founder_brand_development.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    language = "Deutsch" if str(payload.language).upper() == "DE" else "English"
+    decisions_ctx = await _founder_locked_context(user["id"], ws)
+    prompt = (
+        f"Founder profile: {json.dumps(profile, ensure_ascii=False)}\n"
+        f"Selected business idea: {json.dumps(idea, ensure_ascii=False)}\n"
+        f"Brand foundation: {json.dumps({'story': brand_dev.get('story', {}), 'names': brand_dev.get('names', [])}, ensure_ascii=False)}\n"
+        f"{decisions_ctx}\n"
+        f"Extra focus from founder: {payload.focus or '—'}\n"
+        "Design the product & offer portfolio with this exact JSON shape:\n"
+        '{"positioning":"one-paragraph market positioning statement",'
+        '"offers":[{"name":"...","type":"product|service|subscription","summary":"...",'
+        '"target_segment":"...","deliverables":["...","..."],"price":"e.g. 49€/Monat or 990€",'
+        '"price_model":"one-time|monthly|tiered","value_proposition":"..."}] (3-5 distinct offers),'
+        '"packages":[{"name":"Starter|Pro|Premium","price":"...","includes":["...","..."],"best_for":"..."}] (2-3 tiers),'
+        '"pricing_strategy":{"model":"value-based|cost-plus|competitive|freemium","rationale":"...","positioning":"budget|mid|premium"}}'
+    )
+    try:
+        raw = await llm_text(
+            payload.model or OPENAI_TEXT_MODEL,
+            (
+                f"You are Brandmind Offer & Pricing Strategist. Answer only valid JSON in {language}. "
+                "Offers must fit this specific founder's idea, audience and brand foundation — concrete, "
+                "sellable, and priced realistically for the market. Packages must ladder up in value. "
+                "Never contradict the locked founder decisions."
+            ),
+            prompt,
+        )
+        parsed = _extract_json(raw) or {}
+    except Exception:
+        parsed = {}
+
+    def _norm_offer(o):
+        o = o or {}
+        return {
+            "name": str(o.get("name") or "")[:120],
+            "type": str(o.get("type") or "service")[:40],
+            "summary": str(o.get("summary") or "")[:600],
+            "target_segment": str(o.get("target_segment") or "")[:200],
+            "deliverables": _normalize_list(o.get("deliverables") if isinstance(o.get("deliverables"), list) else []),
+            "price": str(o.get("price") or "")[:80],
+            "price_model": str(o.get("price_model") or "one-time")[:40],
+            "value_proposition": str(o.get("value_proposition") or "")[:400],
+        }
+
+    def _norm_pkg(p):
+        p = p or {}
+        return {
+            "name": str(p.get("name") or "")[:80],
+            "price": str(p.get("price") or "")[:80],
+            "includes": _normalize_list(p.get("includes") if isinstance(p.get("includes"), list) else []),
+            "best_for": str(p.get("best_for") or "")[:200],
+        }
+
+    offers = [_norm_offer(o) for o in (parsed.get("offers") or [])[:6] if (o or {}).get("name")]
+    packages = [_norm_pkg(p) for p in (parsed.get("packages") or [])[:4] if (p or {}).get("name")]
+    strat = parsed.get("pricing_strategy") if isinstance(parsed.get("pricing_strategy"), dict) else {}
+    pricing_strategy = {
+        "model": str(strat.get("model") or "")[:80],
+        "rationale": str(strat.get("rationale") or "")[:800],
+        "positioning": str(strat.get("positioning") or "")[:40],
+    }
+    positioning = str(parsed.get("positioning") or "")[:800]
+    now = _now_iso()
+    await db.founder_offers.update_one(
+        _founder_scope(user["id"], ws),
+        {
+            "$set": {
+                "positioning": positioning, "offers": offers, "packages": packages,
+                "pricing_strategy": pricing_strategy, "updated_at": now,
+            },
+            "$setOnInsert": {"created_at": now, **_founder_scope(user["id"], ws)},
+        },
+        upsert=True,
+    )
+    return {"positioning": positioning, "offers": offers, "packages": packages,
+            "pricing_strategy": pricing_strategy, "workspace_id": ws or ""}
+
+
+@api_router.get("/founder/offers")
+async def founder_offers_get(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    doc = await db.founder_offers.find_one(_founder_scope(user["id"], ws), {"_id": 0})
+    if not doc:
+        return {"positioning": "", "offers": [], "packages": [], "pricing_strategy": {}, "workspace_id": ws or ""}
+    return {
+        "positioning": doc.get("positioning", ""), "offers": doc.get("offers", []),
+        "packages": doc.get("packages", []), "pricing_strategy": doc.get("pricing_strategy", {}),
+        "workspace_id": ws or "",
+    }
+
+
+@api_router.post("/founder/offers/apply")
+async def founder_offers_apply(
+    payload: FounderOffersApplyRequest,
+    user: dict = Depends(_authed_user),
+    ws: Optional[str] = Depends(current_workspace),
+):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not available")
+    now = _now_iso()
+    offer_names = [str((o or {}).get("name") or "") for o in payload.offers if (o or {}).get("name")]
+    pkg_names = [str((p or {}).get("name") or "") for p in payload.packages if (p or {}).get("name")]
+    offering_summary = "Angebote: " + (", ".join(offer_names) or "—")
+    if payload.positioning:
+        offering_summary = f"{payload.positioning.strip()[:400]}\n{offering_summary}"
+    strat = payload.pricing_strategy or {}
+    pricing_summary = (
+        f"Modell: {strat.get('model', '—')} · Positionierung: {strat.get('positioning', '—')}\n"
+        f"Pakete: {', '.join(pkg_names) or '—'}\n{str(strat.get('rationale', '')).strip()}"
+    ).strip()
+    for category, selected_option, why_text in (
+        ("product_offering", (offer_names[0] if offer_names else "Produkt-Portfolio")[:600], offering_summary),
+        ("pricing", (strat.get("model") or "Preisstrategie")[:600], pricing_summary),
+    ):
+        decision = {
+            "id": str(uuid.uuid4()),
+            **_founder_scope(user["id"], ws),
+            "category": category,
+            "selected_option": selected_option[:600],
+            "alternatives": offer_names[1:4] if category == "product_offering" else pkg_names[:4],
+            "why_text": why_text[:2000],
+            "evidence_refs": [],
+            "confidence": 78,
+            "decided_by": "user",
+            "status": "locked",
+            "created_at": now,
+            "updated_at": now,
+        }
+        await db.brand_decisions.insert_one(decision)
+        await _decision_event(user["id"], ws, decision["id"], "DECISION_CREATED", {"category": category, "status": "locked"})
+    return {"locked": ["product_offering", "pricing"], "workspace_id": ws or ""}
 
 
 # ---------------------------------------------------------------------------
