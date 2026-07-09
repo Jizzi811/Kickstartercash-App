@@ -4739,7 +4739,7 @@ AGENTS = {
         "role_de": "App Store Optimizer & Mobile-Discoverability-Experte",
         "role_en": "App Store Optimizer & Mobile Discoverability Expert",
         "color": "#22D3EE",
-        "avatar": "",
+        "avatar": "/agents/brandmind_avatars_v3/aso_specialist.jpg",
         "personality_de": (
             "Du bist Aaron, der offizielle App Store Optimizer von Brandmind. "
             "Du bist Experte für: App Store Optimization (ASO), Keyword-Recherche für iOS und Android, "
