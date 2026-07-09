@@ -118,6 +118,7 @@ import CharacterStudio from "@/pages/CharacterStudio";
 import TTSStudio from "@/pages/TTSStudio";
 import OutputFactory from "@/pages/OutputFactory";
 import AIBusinessCard, { PublicBusinessCard } from "@/pages/AIBusinessCard";
+import Landing from "@/pages/Landing";
 import FounderPathSelect from "@/pages/FounderPathSelect";
 import FounderIntake from "@/pages/FounderIntake";
 import FounderIdeas from "@/pages/FounderIdeas";
@@ -131,6 +132,8 @@ function App() {
         <AppProvider>
         <BrowserRouter>
           <Routes>
+            {/* Public product/sales page – shown before authentication */}
+            <Route path="/" element={<Landing />} />
             {/* Brandmind auth – standalone, no app chrome */}
             <Route path="/auth" element={<Auth />} />
             <Route path="/card/:hash" element={<PublicBusinessCard />} />
@@ -174,7 +177,7 @@ function AppShell() {
     <Layout>
       <Routes>
               {/* Phase 5 – Main Navigation */}
-              <Route path="/" element={<BrandMindHQ />} />
+              <Route path="/app" element={<BrandMindHQ />} />
               <Route path="/mission" element={<MissionControl />} />
               <Route path="/intelligence" element={<IntelligenceStudio />} />
               <Route path="/gateway" element={<GatewayStudio />} />

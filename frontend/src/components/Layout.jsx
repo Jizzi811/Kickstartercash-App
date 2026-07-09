@@ -21,7 +21,7 @@ const NAV_GROUPS = [
     labelDE: "Headquarters",
     labelEN: "Headquarters",
     items: [
-      { to: "/", icon: Building2, labelDE: "BrandMind HQ", labelEN: "BrandMind HQ", end: true },
+      { to: "/app", icon: Building2, labelDE: "BrandMind HQ", labelEN: "BrandMind HQ", end: true },
       { to: "/mission", icon: Target, labelDE: "Mission Control", labelEN: "Mission Control" },
       { to: "/intelligence", icon: TrendingUp, labelDE: "Intelligence", labelEN: "Intelligence" },
     ],
@@ -288,7 +288,7 @@ export const Layout = ({ children }) => {
   const [ceoMode, setCeoMode] = useState(false);
 
   const handleLogoClick = useCallback(() => {
-    navigate("/");
+    navigate("/app");
     const now = Date.now();
     logoClickTimes.current = logoClickTimes.current
       .filter((t) => now - t < 3000)

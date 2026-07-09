@@ -66,7 +66,7 @@ export default function Auth() {
         navigate("/onboarding/select-path");
       } else {
         await login({ email: form.email, password: form.password });
-        navigate("/");
+        navigate("/app");
       }
     } catch (err) {
       setError(err?.response?.data?.detail || T("Etwas ist schiefgelaufen.", "Something went wrong."));
