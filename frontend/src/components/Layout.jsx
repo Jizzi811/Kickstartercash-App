@@ -59,7 +59,6 @@ const NAV_GROUPS = [
     labelEN: "Studios",
     items: [
       { to: "/design", icon: Palette, labelDE: "Design", labelEN: "Design" },
-      { to: "/design-v2", icon: Sparkles, labelDE: "Design V2 (Preview)", labelEN: "Design V2 (Preview)" },
       { to: "/video", icon: Film, labelDE: "Video", labelEN: "Video" },
       { to: "/seo", icon: Globe, labelDE: "SEO", labelEN: "SEO" },
       { to: "/seo-specialist", icon: Search, labelDE: "SEO Specialist", labelEN: "SEO Specialist" },
@@ -79,7 +78,7 @@ const NAV_GROUPS = [
     items: [
       { to: "/automation", icon: Zap, labelDE: "Automation", labelEN: "Automation" },
       { to: "/workflow-architect", icon: Workflow, labelDE: "Workflow Architect", labelEN: "Workflow Architect" },
-      { to: "/onboarding/founder/operations", icon: Workflow, labelDE: "Founder Ops", labelEN: "Founder Ops" },
+      { to: "/ops", icon: Workflow, labelDE: "Content Ops", labelEN: "Content Ops" },
       { to: "/workflow", icon: Megaphone, labelDE: "Campaign Flow", labelEN: "Campaign Flow" },
       { to: "/orchestrator", icon: Network, labelDE: "Orchestrator", labelEN: "Orchestrator" },
       { to: "/tickets", icon: Ticket, labelDE: "Tickets", labelEN: "Tickets" },
@@ -119,7 +118,6 @@ const PAGE_NAMES = {
   "/permissions": "Permissions",
   "/agents": "Agenten",
   "/design": "Design Studio",
-  "/design-v2": "Design Studio V2",
   "/video": "Video Studio",
   "/social": "Social Media",
   "/seo": "SEO",
@@ -138,7 +136,7 @@ const PAGE_NAMES = {
   "/linkedin": "LinkedIn Studio",
   "/orchestrator": "Orchestrator",
   "/workflow-architect": "Workflow Architect",
-  "/onboarding/founder/operations": "Founder Ops",
+  "/ops": "Content Ops",
   "/finance-cfo": "CFO Studio",
   "/finance-analyst": "Financial Analyst",
   "/finance-fpa": "FP&A Studio",

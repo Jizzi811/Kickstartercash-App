@@ -81,7 +81,6 @@ import Specialists from "@/pages/Specialists";       // Agents overview
 
 // Studios
 import DesignStudio from "@/pages/DesignStudio";
-import DesignStudioV2Preview from "@/pages/DesignStudioV2Preview";
 import VideoStudio from "@/pages/VideoStudio";
 import SeoStudio from "@/pages/SeoStudio";
 import AnalyticsStudio from "@/pages/AnalyticsStudio";
@@ -122,6 +121,7 @@ import AIBusinessCard, { PublicBusinessCard } from "@/pages/AIBusinessCard";
 import FounderPathSelect from "@/pages/FounderPathSelect";
 import FounderIntake from "@/pages/FounderIntake";
 import FounderIdeas from "@/pages/FounderIdeas";
+import FounderBrandDevelopment from "@/pages/FounderBrandDevelopment";
 import FounderOperations from "@/pages/FounderOperations";
 
 function App() {
@@ -195,10 +195,11 @@ function AppShell() {
               <Route path="/onboarding/select-path" element={<FounderPathSelect />} />
               <Route path="/onboarding/founder/intake" element={<FounderIntake />} />
               <Route path="/onboarding/founder/ideas" element={<FounderIdeas />} />
-              <Route path="/onboarding/founder/operations" element={<FounderOperations />} />
+              <Route path="/onboarding/founder/brand" element={<FounderBrandDevelopment />} />
+              <Route path="/ops" element={<FounderOperations />} />
+              <Route path="/onboarding/founder/operations" element={<Navigate to="/ops" replace />} />
               <Route path="/agents" element={<Specialists />} />
               <Route path="/design" element={<DesignStudio />} />
-              <Route path="/design-v2" element={<DesignStudioV2Preview />} />
               <Route path="/video" element={<VideoStudio />} />
               <Route path="/social" element={<SocialMedia />} />
               <Route path="/seo" element={<SeoStudio />} />

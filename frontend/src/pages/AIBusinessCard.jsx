@@ -77,6 +77,29 @@ const templates = [
 const publicUrl = (hash) => `${window.location.origin}/card/${hash}`;
 const qrUrl = (url) => `https://api.qrserver.com/v1/create-qr-code/?size=480x480&margin=18&data=${encodeURIComponent(url)}`;
 
+// Business cards store images inline as data URLs (no separate file storage), so an
+// unresized phone photo can easily blow past MongoDB's 16MB document limit and bloats
+// every list fetch. Downscale + re-encode to JPEG client-side before it ever gets stored.
+const resizeImageFile = (file, maxDim = 640, quality = 0.82) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onerror = () => reject(new Error("read failed"));
+  reader.onload = () => {
+    const img = new Image();
+    img.onerror = () => reject(new Error("decode failed"));
+    img.onload = () => {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.src = String(reader.result || "");
+  };
+  reader.readAsDataURL(file);
+});
+
 const normalizeCard = (card = {}) => ({
   ...emptyCard,
   ...card,
@@ -544,13 +567,12 @@ export default function AIBusinessCard() {
       toast.error("Image too large (max 6MB)");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      update("avatar", String(reader.result || ""));
+    try {
+      update("avatar", await resizeImageFile(file, 640));
       toast.success("Profile image uploaded");
-    };
-    reader.onerror = () => toast.error("Image upload failed");
-    reader.readAsDataURL(file);
+    } catch {
+      toast.error("Image upload failed");
+    }
   };
 
   const onLogoUpload = async (file) => {
@@ -563,13 +585,12 @@ export default function AIBusinessCard() {
       toast.error("Image too large (max 6MB)");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      update("logo_url", String(reader.result || ""));
+    try {
+      update("logo_url", await resizeImageFile(file, 400));
       toast.success("Logo uploaded");
-    };
-    reader.onerror = () => toast.error("Logo upload failed");
-    reader.readAsDataURL(file);
+    } catch {
+      toast.error("Logo upload failed");
+    }
   };
 
   if (loadingCards) {
@@ -620,7 +641,7 @@ export default function AIBusinessCard() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            {["name", "title", "company", "logo_url", "avatar", "phone", "email", "website", "address"].map((f) => (
+            {["name", "title", "company", "phone", "email", "website", "address"].map((f) => (
               <input
                 key={f}
                 value={current[f] || ""}
@@ -629,7 +650,10 @@ export default function AIBusinessCard() {
                 className="rounded-sm border border-white/10 bg-black px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#7C3AED]/50"
               />
             ))}
-            <div className="md:col-span-2 flex items-center gap-2">
+            <div className="md:col-span-2 flex flex-wrap items-center gap-3">
+              <span className="h-10 w-10 shrink-0 overflow-hidden rounded-sm border border-white/10 bg-black">
+                <img src={(current.logo_url || "").trim() || "/brandmind-logo.svg"} alt="Logo preview" className="h-full w-full object-contain" />
+              </span>
               <input
                 ref={logoFileInputRef}
                 type="file"
@@ -654,7 +678,14 @@ export default function AIBusinessCard() {
               </button>
               <span className="text-[11px] text-zinc-500">Default: BrandMind logo</span>
             </div>
-            <div className="md:col-span-2 flex items-center gap-2">
+            <div className="md:col-span-2 flex flex-wrap items-center gap-3">
+              <span className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/10 bg-black">
+                {current.avatar ? (
+                  <img src={current.avatar} alt="Avatar preview" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center text-[10px] text-zinc-500">—</span>
+                )}
+              </span>
               <input
                 ref={avatarFileInputRef}
                 type="file"
@@ -670,6 +701,15 @@ export default function AIBusinessCard() {
                 <Upload className="h-3.5 w-3.5" />
                 Upload your real photo
               </button>
+              {current.avatar && (
+                <button
+                  type="button"
+                  onClick={() => update("avatar", "")}
+                  className="inline-flex items-center gap-2 rounded-sm border border-white/10 px-3 py-2 text-xs text-zinc-300 hover:text-white hover:border-white/20 transition-colors"
+                >
+                  Remove photo
+                </button>
+              )}
               <span className="text-[11px] text-zinc-500">JPG/PNG/WebP, max 6MB</span>
             </div>
             <textarea

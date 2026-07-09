@@ -36,7 +36,7 @@ export default function FounderOperations() {
       axios.get(`${API}/social/connections`),
       axios.get(`${API}/social/publish-jobs`),
       axios.get(`${API}/planner/board`),
-      axios.get(`${API}/founder/workflow-templates`),
+      axios.get(`${API}/ops/workflow-templates`),
     ]);
     setConnections(connRes.data.connections || []);
     setJobs(jobsRes.data.jobs || []);
@@ -51,7 +51,7 @@ export default function FounderOperations() {
         await load();
       } catch (error) {
         console.warn(error);
-        toast.error("Founder Ops konnte nicht geladen werden");
+        toast.error("Content Ops konnte nicht geladen werden");
       } finally {
         if (alive) setLoading(false);
       }
@@ -123,7 +123,7 @@ export default function FounderOperations() {
 
   const runTemplate = async (templateId) => {
     try {
-      await axios.post(`${API}/founder/workflow-templates/${templateId}/run`);
+      await axios.post(`${API}/ops/workflow-templates/${templateId}/run`);
       await load();
       toast.success("Workflow ausgeführt");
     } catch (error) {
@@ -138,8 +138,8 @@ export default function FounderOperations() {
     <Page>
       <Hero
         icon={Workflow}
-        badge="Founder Flow · Phase B"
-        title="Founder Ops Hub"
+        badge="Content Ops"
+        title="Content Ops Hub"
         description="Auto-Posting Queue, visueller Planer und Workflow-Templates für den operativen Aufbau deiner Marke."
       />
 
@@ -153,7 +153,7 @@ export default function FounderOperations() {
         <Card>
           <div className="inline-flex items-center gap-2 text-sm text-zinc-400">
             <Loader2 size={14} className="animate-spin" />
-            Founder Ops wird geladen…
+            Content Ops wird geladen…
           </div>
         </Card>
       ) : (
