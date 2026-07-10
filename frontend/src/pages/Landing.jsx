@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import {
-  ArrowRight, Sparkles, Check, BrainCircuit, Star, Quote, ShieldCheck, Rocket,
+  ArrowRight, Sparkles, Check, Star, Quote, ShieldCheck, Rocket,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { BRANDMIND } from "@/brandmind";
@@ -10,6 +10,31 @@ import QuantumOrb from "@/components/landing/QuantumOrb";
 import { STEPS, FEATURES, BENEFITS, AUDIENCES, OUTPUT_SAMPLES, TESTIMONIALS } from "@/pages/landingContent";
 
 const C = BRANDMIND.colors;
+
+// A little burst of sparks — the brain "sparking an idea" when you tap the logo.
+function SparkBurst({ triggerKey }) {
+  if (!triggerKey) return null;
+  const sparks = Array.from({ length: 8 });
+  return (
+    <AnimatePresence>
+      <motion.div key={triggerKey} className="absolute inset-0 pointer-events-none">
+        {sparks.map((_, i) => {
+          const angle = (i / sparks.length) * Math.PI * 2;
+          return (
+            <motion.span
+              key={i}
+              className="absolute rounded-full"
+              style={{ width: 4, height: 4, left: "50%", top: "50%", background: C.primary, boxShadow: `0 0 6px ${C.primary}` }}
+              initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+              animate={{ x: Math.cos(angle) * 28, y: Math.sin(angle) * 28, opacity: 0, scale: 0.4 }}
+              transition={{ duration: 0.55, ease: "easeOut" }}
+            />
+          );
+        })}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
 
 function Glow({ size = 900 }) {
   return (
@@ -28,6 +53,7 @@ export default function Landing() {
   const isDE = lang === "DE";
   const T = (de, en) => (isDE ? de : en);
   const [activeAgent, setActiveAgent] = useState(FEATURES[3].id);
+  const [sparkKey, setSparkKey] = useState(0);
 
   if (!authReady) {
     return (
@@ -48,9 +74,14 @@ export default function Landing() {
     <div className="min-h-screen relative overflow-hidden" style={{ background: C.base, color: "#fff" }}>
       {/* Nav */}
       <header className="relative z-20 flex items-center justify-between px-6 md:px-10 py-5 max-w-7xl mx-auto">
-        <div className="flex items-center gap-2">
-          <BrainCircuit size={22} style={{ color: C.primary }} />
-          <span className="font-bold tracking-tight text-lg">{BRANDMIND.name}</span>
+        <div className="relative flex items-center">
+          <img
+            src="/brand/brandmind-logo.png"
+            alt={BRANDMIND.name}
+            className="h-7 w-auto cursor-pointer select-none"
+            onClick={() => setSparkKey((k) => k + 1)}
+          />
+          <SparkBurst triggerKey={sparkKey} />
         </div>
         <div className="flex items-center gap-3">
           <button onClick={login} className="text-sm text-zinc-400 hover:text-white transition-colors px-3 py-2">
@@ -69,11 +100,12 @@ export default function Landing() {
       {/* Hero */}
       <section className="relative px-6 md:px-10 pt-10 md:pt-16 pb-20 max-w-7xl mx-auto">
         <Glow />
-        <div className="relative grid lg:grid-cols-[1.05fr,0.95fr] items-center gap-10">
+        <div className="relative grid grid-cols-1 lg:grid-cols-[1.05fr,0.95fr] items-center gap-10">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="text-center lg:text-left flex flex-col items-center lg:items-start"
           >
             <div
               className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full text-xs font-medium"
@@ -90,7 +122,7 @@ export default function Landing() {
                 "Brandmind connects strategy, content, design, automation and AI agents in one system — instead of tool chaos, freelancer chaos and endless back-and-forth."
               )}
             </p>
-            <div className="mt-10 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div className="mt-10 flex flex-col sm:flex-row items-center gap-3">
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -107,7 +139,7 @@ export default function Landing() {
                 {T("Ich habe bereits ein Konto", "I already have an account")}
               </button>
             </div>
-            <div className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-xs text-zinc-500">
+            <div className="mt-7 flex flex-wrap justify-center lg:justify-start gap-x-6 gap-y-2 text-xs text-zinc-500">
               <span className="flex items-center gap-1.5"><Check size={13} style={{ color: C.primary }} /> {T("Ohne Kreditkarte", "No credit card")}</span>
               <span className="flex items-center gap-1.5"><Check size={13} style={{ color: C.primary }} /> {T("In Minuten startklar", "Ready in minutes")}</span>
               <span className="flex items-center gap-1.5"><Check size={13} style={{ color: C.primary }} /> {T("Markenkonform auf jedem Kanal", "On-brand on every channel")}</span>
@@ -119,9 +151,24 @@ export default function Landing() {
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
-            className="flex items-center justify-center"
+            className="flex items-center justify-center mx-auto lg:mx-0 relative"
           >
-            <QuantumOrb size={380} agents={FEATURES.slice(0, 6)} />
+            <div
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{ background: C.glow, filter: "blur(90px)", opacity: 0.5 }}
+            />
+            <motion.img
+              src="/brand/hero-brain.jpg"
+              alt="Brandmind — die KI-Zentrale deiner Marke"
+              className="relative w-full max-w-md lg:max-w-lg"
+              style={{
+                mixBlendMode: "screen",
+                WebkitMaskImage: "radial-gradient(ellipse 62% 68% at 50% 46%, black 55%, transparent 88%)",
+                maskImage: "radial-gradient(ellipse 62% 68% at 50% 46%, black 55%, transparent 88%)",
+              }}
+              animate={{ y: [0, -14, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            />
           </motion.div>
         </div>
       </section>
@@ -332,11 +379,23 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="relative px-6 md:px-10 py-8 border-t border-white/5">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600">
-          <div className="flex items-center gap-2">
-            <BrainCircuit size={16} style={{ color: C.primary }} />
-            <span>{BRANDMIND.name}</span>
+      <footer className="relative px-6 md:px-10 py-8 border-t border-white/5 overflow-hidden">
+        <motion.div
+          className="absolute left-1/2 -translate-x-1/2 rounded-full pointer-events-none"
+          style={{
+            bottom: -260,
+            width: "150%",
+            maxWidth: 1400,
+            height: 320,
+            background: `radial-gradient(ellipse at center, ${C.primary}66 0%, ${C.primary}22 40%, transparent 72%)`,
+            filter: "blur(50px)",
+          }}
+          animate={{ opacity: [0.6, 0.9, 0.6] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <div className="relative max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600">
+          <div className="flex items-center">
+            <img src="/brand/brandmind-logo.png" alt={BRANDMIND.name} className="h-5 w-auto opacity-80" />
           </div>
           <span>© {new Date().getFullYear()} {BRANDMIND.name}</span>
           <Link to="/auth" className="hover:text-zinc-300 transition-colors">
