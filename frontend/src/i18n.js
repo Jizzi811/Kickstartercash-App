@@ -34,7 +34,7 @@ export const translations = {
     mod_prompts_desc: "Kuratierte Profi-Prompts, sortiert nach Kategorie.",
     mod_quantum_desc: "Dein Quantum-Agent delegiert Aufgaben an Marketing, Design, Video, Sales, SEO, Automation & Support.",
     mod_knowledge_desc: "Produkte, FAQs, Corporate Design, Texte & Strategien – Brandmind Wissensdatenbank ohne Halluzinationen.",
-    mod_specialists_desc: "10 KI-Agenten mit eigener Persönlichkeit: Quantum, Content, Designer, Video, SEO, Social, Sales, Analytics, Automation & Coding.",
+    mod_specialists_desc: "40+ KI-Agenten mit eigener Persönlichkeit: Quantum, Content, Designer, Video, SEO, Social, Sales, Analytics, Finance, Support & Coding.",
     mod_campaign_desc: "Ein Thema → Social-Posts, Werbetext UND Markenbild gleichzeitig.",
     mod_landing_desc: "Komplette Landingpage mit Headline, Benefits, FAQ & SEO.",
     mod_calendar_desc: "30/60/90-Tage-Plan mit Texten, Hashtags & Posting-Zeiten.",

@@ -544,6 +544,7 @@ export default function Specialists() {
     }
   };
   const liveAgents = agents.slice(0, 6).map((agent, index) => ({ agent, status: STATUS_META[index % STATUS_META.length] }));
+  const visibleAgentCount = agents.length || 40;
 
   return (
     <div className="min-w-0 space-y-6 pb-6 sm:space-y-8">
@@ -552,8 +553,8 @@ export default function Specialists() {
         badge="Brandmind Specialists"
         title={lang === "DE" ? "Brandmind Spezialisten" : "Brandmind Specialists"}
         subtitle={lang === "DE"
-          ? "17 KI-Agenten mit eigener Persönlichkeit, spezialisierten Tools & KB-Zugriff."
-          : "17 AI agents with their own personality, specialized tools & KB access."}
+          ? `${visibleAgentCount} KI-Agenten mit eigener Persönlichkeit, spezialisierten Tools & KB-Zugriff.`
+          : `${visibleAgentCount} AI agents with their own personality, specialized tools & KB access.`}
       />
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[1.1fr_0.9fr]">

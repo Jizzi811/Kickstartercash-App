@@ -4598,6 +4598,11 @@ class AgentTaskDispatchRequest(BaseModel):
 async def list_agents():
     result = []
     for a in AGENTS.values():
+        # Sofia's SEO Director profile already includes the full SEO/GEO skill set.
+        # Keep the legacy seo_specialist id addressable for older workflows, but
+        # hide it from the overview to avoid showing two indistinguishable SEO agents.
+        if a["id"] == "seo_specialist":
+            continue
         entry = dict(a)
         skills = skill_registry.skills_for_agent(a["id"])
         entry["skills"] = skills
@@ -5467,7 +5472,7 @@ WAS BRANDMIND KANN (erkläre es einfach und konkret):
 ✦ Brand Brain: Marken-Identität + Wissensbasis – einmal einrichten, alle Agenten nutzen es.
 ✦ Kampagnen: Bild + Werbetext + Social-Media-Posts auf Knopfdruck.
 ✦ Studios: Bildgenerator, Design, Video, TikTok, LinkedIn, SEO, E-Mail, Funnels, Content-Kalender, Landingpages.
-✦ 23 KI-Agenten (Content, Designer, SEO, Social, Sales, Analytics, Finanzen u.v.m.) + Chat Arena (mehrere KI-Modelle).
+✦ 40+ KI-Agenten (Content, Designer, SEO, Social, Sales, Analytics, Finanzen u.v.m.) + Chat Arena (mehrere KI-Modelle).
 
 TARIFE: Es gibt eine kostenlose Testphase sowie die Pläne Starter, Pro und Agency.
 Nenne KEINE erfundenen Preise – verweise für Details auf die Seite "Preise" in der App.
