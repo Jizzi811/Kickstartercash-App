@@ -24,7 +24,7 @@ const KPI_CARDS = [
     icon: Bot,
     labelDE: "KI-Agenten",
     labelEN: "AI Agents",
-    value: "17",
+    value: "40+",
     subDE: "Aktiv & einsatzbereit",
     subEN: "Active & ready",
     color: "#7C3AED",

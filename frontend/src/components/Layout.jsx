@@ -3,7 +3,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutGrid, Building2, Bot, Palette, Film, Smartphone, Globe, BarChart2,
   Zap, Database, Wrench, ChevronDown, ChevronRight, Menu, X, MessageSquare, ShieldCheck,
-  Music, Mail, Linkedin, Network, Workflow, Search, Ticket,
+  Music, Mail, Linkedin, Network, Workflow, Ticket,
   TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, LogOut, Check, Volume2, Target, Factory, Plug, Dna, Brain, Sparkles, User, Bell, BriefcaseBusiness, IdCard,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
@@ -61,7 +61,6 @@ const NAV_GROUPS = [
       { to: "/design", icon: Palette, labelDE: "Design", labelEN: "Design" },
       { to: "/video", icon: Film, labelDE: "Video", labelEN: "Video" },
       { to: "/seo", icon: Globe, labelDE: "SEO", labelEN: "SEO" },
-      { to: "/seo-specialist", icon: Search, labelDE: "SEO Specialist", labelEN: "SEO Specialist" },
       { to: "/social", icon: Smartphone, labelDE: "Social", labelEN: "Social" },
       { to: "/email", icon: Mail, labelDE: "Email", labelEN: "Email" },
       { to: "/analytics", icon: BarChart2, labelDE: "Analytics", labelEN: "Analytics" },
@@ -122,7 +121,6 @@ const NAV_ITEM_DESCRIPTIONS = {
   "/design": { de: "Werbemittel, Bildprompts, Canva-Briefings und Brand-Guides.", en: "Ad assets, image prompts, Canva briefs and brand guides." },
   "/video": { de: "Skripte, Storyboards und Prompts für Video-Tools.", en: "Scripts, storyboards and prompts for video tools." },
   "/seo": { de: "Keywords, Meta-Texte, Audits und strukturierte Daten.", en: "Keywords, meta copy, audits and structured data." },
-  "/seo-specialist": { de: "Tiefe SEO-Analysen, GEO und technische Optimierung.", en: "Deep SEO analysis, GEO and technical optimization." },
   "/social": { de: "Posts, Reels, Captions, Hashtags und Contentpläne.", en: "Posts, reels, captions, hashtags and content plans." },
   "/email": { de: "Newsletter, Sequenzen, CRM-Texte und Reaktivierung.", en: "Newsletters, sequences, CRM copy and reactivation." },
   "/analytics": { de: "KPIs, Reports, A/B-Tests und Wachstumsentscheidungen.", en: "KPIs, reports, A/B tests and growth decisions." },
@@ -174,7 +172,6 @@ const PAGE_NAMES = {
   "/arena": "Chat Arena",
   "/quantum": "Quantum",
   "/tiktok": "TikTok Studio",
-  "/seo-specialist": "SEO Specialist",
   "/email": "E-Mail Marketing",
   "/linkedin": "LinkedIn Studio",
   "/orchestrator": "Orchestrator",
