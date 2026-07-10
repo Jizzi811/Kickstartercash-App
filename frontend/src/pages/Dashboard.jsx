@@ -75,6 +75,10 @@ const QUICK_ACTIONS = [
     labelEN: "Brand Brain",
     descDE: "Marke einrichten – Basis für alles",
     descEN: "Set up your brand – the base for all",
+    howDE: "Speichert Tonalität, Zielgruppe, Farben und Angebote als zentrale Markenbasis.",
+    howEN: "Stores tone, audience, colors and offers as the central brand base.",
+    canDE: "Damit erzeugst du konsistente Texte, Designs, Kampagnen und Agenten-Antworten.",
+    canEN: "Use it to generate consistent copy, designs, campaigns and agent answers.",
     color: "#7C3AED",
     featured: true,
   },
@@ -85,6 +89,10 @@ const QUICK_ACTIONS = [
     labelEN: "Agents",
     descDE: "KI-Spezialisten starten",
     descEN: "Launch your AI specialists",
+    howDE: "Wähle einen Fachagenten aus und übergib ihm Ziel, Kontext oder Aufgabe.",
+    howEN: "Choose a specialist agent and pass it a goal, context or task.",
+    canDE: "Ideal für Strategie, Content, Sales, Support, Finance und operative Umsetzung.",
+    canEN: "Ideal for strategy, content, sales, support, finance and execution work.",
     color: "#7C3AED",
   },
   {
@@ -94,6 +102,10 @@ const QUICK_ACTIONS = [
     labelEN: "Design Studio",
     descDE: "GPT · Canva · Leonardo",
     descEN: "GPT · Canva · Leonardo",
+    howDE: "Beschreibe Kampagne oder Asset, Brandmind baut daraus Design-Prompts und Layouts.",
+    howEN: "Describe a campaign or asset; Brandmind turns it into design prompts and layouts.",
+    canDE: "Erstelle Anzeigenbilder, Canva-Briefings, Brand-Guides und KI-Bild-Prompts.",
+    canEN: "Create ad visuals, Canva briefs, brand guides and AI image prompts.",
     color: "#C084FC",
   },
   {
@@ -103,6 +115,10 @@ const QUICK_ACTIONS = [
     labelEN: "Video Studio",
     descDE: "Veo 3 · Kling · Runway ML",
     descEN: "Veo 3 · Kling · Runway ML",
+    howDE: "Aus deiner Idee entstehen Skript, Szenenlogik, Shots und Modell-Prompts.",
+    howEN: "Your idea becomes a script, scene logic, shots and model prompts.",
+    canDE: "Plane Reels, Produktvideos, Intros, Storyboards und virale Kurzformate.",
+    canEN: "Plan reels, product videos, intros, storyboards and viral short-form formats.",
     color: "#F472B6",
   },
   {
@@ -112,6 +128,10 @@ const QUICK_ACTIONS = [
     labelEN: "Social Media",
     descDE: "Posts · Reels · Strategie",
     descEN: "Posts · Reels · Strategy",
+    howDE: "Gib Thema, Plattform und Ziel ein; das Modul erstellt passende Content-Bausteine.",
+    howEN: "Enter topic, platform and goal; the module creates matching content blocks.",
+    canDE: "Nutze es für Captions, Hook-Ideen, Contentpläne, Hashtags und Kampagnenwinkel.",
+    canEN: "Use it for captions, hooks, content plans, hashtags and campaign angles.",
     color: "#7C3AED",
   },
   {
@@ -121,6 +141,10 @@ const QUICK_ACTIONS = [
     labelEN: "SEO",
     descDE: "Keywords · Audit · Schema",
     descEN: "Keywords · Audit · Schema",
+    howDE: "Analysiert Suchintention, Seitenstruktur und Optimierungspotenzial deiner Inhalte.",
+    howEN: "Analyzes search intent, page structure and optimization potential in your content.",
+    canDE: "Erstelle Keyword-Sets, Meta-Texte, SEO-Audits, Schema und GEO-Briefings.",
+    canEN: "Create keyword sets, meta copy, SEO audits, schema and GEO briefs.",
     color: "#34D399",
   },
   {
@@ -130,6 +154,10 @@ const QUICK_ACTIONS = [
     labelEN: "Analytics",
     descDE: "KPIs · Reports · A/B-Tests",
     descEN: "KPIs · Reports · A/B Tests",
+    howDE: "Übersetzt Ziele und Datenpunkte in messbare KPIs, Reports und Testpläne.",
+    howEN: "Turns goals and data points into measurable KPIs, reports and test plans.",
+    canDE: "Definiere Dashboards, Wachstumsexperimente, A/B-Tests und Entscheidungsgrundlagen.",
+    canEN: "Define dashboards, growth experiments, A/B tests and decision inputs.",
     color: "#A78BFA",
   },
   {
@@ -139,6 +167,10 @@ const QUICK_ACTIONS = [
     labelEN: "Automations",
     descDE: "n8n · Make · Zapier",
     descEN: "n8n · Make · Zapier",
+    howDE: "Beschreibe deinen Prozess; Brandmind zerlegt ihn in Trigger, Schritte und Tools.",
+    howEN: "Describe your process; Brandmind breaks it into triggers, steps and tools.",
+    canDE: "Baue Lead-Flows, Webhooks, E-Mail-Sequenzen, CRM-Routinen und SOPs.",
+    canEN: "Build lead flows, webhooks, email sequences, CRM routines and SOPs.",
     color: "#F87171",
   },
   {
@@ -148,6 +180,10 @@ const QUICK_ACTIONS = [
     labelEN: "Knowledge Base",
     descDE: "Produkte · FAQs · CI",
     descEN: "Products · FAQs · CI",
+    howDE: "Du hinterlegst Wissen, damit Agenten mit verlässlichem Kontext arbeiten.",
+    howEN: "Add knowledge so agents work with reliable context.",
+    canDE: "Pflege Produkte, FAQs, Preisinfos, CI-Regeln, Vorlagen und wiederkehrende Antworten.",
+    canEN: "Maintain products, FAQs, pricing, CI rules, templates and repeat answers.",
     color: "#60A5FA",
   },
   {
@@ -157,6 +193,10 @@ const QUICK_ACTIONS = [
     labelEN: "Custom Agents",
     descDE: "Agenten-Builder & Vorlagen",
     descEN: "Agent builder & templates",
+    howDE: "Beschreibe Rolle, Aufgabe und Stil; daraus entsteht ein eigener KI-Mitarbeiter.",
+    howEN: "Describe role, task and style; it becomes a custom AI teammate.",
+    canDE: "Erstelle Spezialagenten für interne Prozesse, Kundenservice oder Nischenaufgaben.",
+    canEN: "Create specialist agents for internal processes, customer support or niche tasks.",
     color: "#FB923C",
   },
   {
@@ -166,6 +206,10 @@ const QUICK_ACTIONS = [
     labelEN: "Chat Arena",
     descDE: "Modelle vergleichen",
     descEN: "Compare models",
+    howDE: "Eine Anfrage läuft parallel durch mehrere Modelle, damit du Ergebnisse vergleichen kannst.",
+    howEN: "One request runs through multiple models so you can compare outputs.",
+    canDE: "Teste Qualität, Stil, Geschwindigkeit und beste Modellwahl für wichtige Aufgaben.",
+    canEN: "Test quality, style, speed and the best model choice for important tasks.",
     color: "#38BDF8",
   },
 ];
@@ -588,7 +632,7 @@ export default function Dashboard() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {QUICK_ACTIONS.map((m, i) => {
               const Icon = m.icon;
               const isHov = hovered === i;
@@ -625,7 +669,7 @@ export default function Dashboard() {
                     }}
                   />
 
-                  <div className="relative flex flex-col h-full min-h-[100px]">
+                  <div className="relative flex flex-col h-full min-h-[188px]">
                     {/* icon in gem shape */}
                     <div
                       className="mb-3 flex items-center justify-center transition-transform duration-300"
@@ -647,8 +691,23 @@ export default function Dashboard() {
                     >
                       {lang === "DE" ? m.labelDE : m.labelEN}
                     </div>
-                    <div className="text-[10px] text-zinc-600 leading-relaxed flex-1">
+                    <div className="text-[10px] text-zinc-600 leading-relaxed">
                       {lang === "DE" ? m.descDE : m.descEN}
+                    </div>
+
+                    <div className="mt-3 space-y-2 text-[10px] leading-relaxed text-zinc-500 flex-1">
+                      <p>
+                        <span className="font-semibold text-zinc-400">
+                          {lang === "DE" ? "So funktioniert’s:" : "How it works:"}
+                        </span>{" "}
+                        {lang === "DE" ? m.howDE : m.howEN}
+                      </p>
+                      <p>
+                        <span className="font-semibold text-zinc-400">
+                          {lang === "DE" ? "Das kannst du machen:" : "What you can do:"}
+                        </span>{" "}
+                        {lang === "DE" ? m.canDE : m.canEN}
+                      </p>
                     </div>
 
                     {/* slide-in CTA */}
