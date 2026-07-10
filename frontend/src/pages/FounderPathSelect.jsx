@@ -40,7 +40,7 @@ export default function FounderPathSelect() {
         <PathCard
           icon={Building2}
           title="Ich habe bereits ein Unternehmen"
-          description="Analysiere Website, Marken-DNA und bestehende Assets. Nutze die bekannten Brandmind-Module für Content, Design und Wachstum."
+          description="Analysiere Website, Marken-DNA und bestehende Assets. Wochenplaner und Auto-Posting stehen dir in Content Ops direkt zur Verfügung."
           cta="Zur Unternehmens-Zentrale"
           onClick={() => navigate("/app")}
         />

@@ -6,6 +6,20 @@ import { API } from "@/context/AppContext";
 import { Page, Hero, Card, Btn, FieldLabel, Input, Textarea, BMBadge } from "@/components/bm";
 
 const DEFAULT_PLATFORMS = ["LinkedIn", "Instagram", "X", "Facebook"];
+const WEEK_DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+
+function formatSchedule(value) {
+  if (!value) return "Sofort / nächster Slot";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+function getWeekdayIndex(value) {
+  const date = value ? new Date(value) : new Date();
+  if (Number.isNaN(date.getTime())) return 0;
+  return (date.getDay() + 6) % 7;
+}
 
 function TabButton({ active, onClick, children }) {
   return (
@@ -24,7 +38,7 @@ export default function FounderOperations() {
 
   const [connections, setConnections] = useState([]);
   const [jobs, setJobs] = useState([]);
-  const [jobForm, setJobForm] = useState({ platform: "LinkedIn", content: "", tags: "" });
+  const [jobForm, setJobForm] = useState({ platform: "LinkedIn", content: "", tags: "", scheduled_for: "" });
 
   const [board, setBoard] = useState({ columns: [], tasks_by_column: {} });
   const [taskForm, setTaskForm] = useState({ title: "", column: "vision", priority: "medium" });
@@ -77,8 +91,9 @@ export default function FounderOperations() {
         platform: jobForm.platform,
         content: jobForm.content,
         tags: jobForm.tags.split(",").map((item) => item.trim()).filter(Boolean),
+        scheduled_for: jobForm.scheduled_for ? new Date(jobForm.scheduled_for).toISOString() : "",
       });
-      setJobForm((prev) => ({ ...prev, content: "", tags: "" }));
+      setJobForm((prev) => ({ ...prev, content: "", tags: "", scheduled_for: "" }));
       await load();
       toast.success("Post wurde zur Queue hinzugefügt");
     } catch (error) {
@@ -133,6 +148,12 @@ export default function FounderOperations() {
   };
 
   const connectedPlatforms = useMemo(() => new Set((connections || []).map((item) => item.platform)), [connections]);
+  const jobsByWeekday = useMemo(() => {
+    const grouped = WEEK_DAYS.map((day) => ({ day, jobs: [] }));
+    (jobs || []).forEach((job) => grouped[getWeekdayIndex(job.scheduled_for)].jobs.push(job));
+    grouped.forEach((group) => group.jobs.sort((a, b) => String(a.scheduled_for || "").localeCompare(String(b.scheduled_for || ""))));
+    return grouped;
+  }, [jobs]);
 
   return (
     <Page>
@@ -140,12 +161,13 @@ export default function FounderOperations() {
         icon={Workflow}
         badge="Content Ops"
         title="Content Ops Hub"
-        description="Auto-Posting Queue, visueller Planer und Workflow-Templates für den operativen Aufbau deiner Marke."
+        description="Wochenplaner, Auto-Posting Queue und Workflow-Templates für Gründer, Teams und bestehende Unternehmen."
       />
 
       <div className="flex flex-wrap gap-2">
         <TabButton active={tab === "social"} onClick={() => setTab("social")}>Auto-Posting</TabButton>
-        <TabButton active={tab === "planner"} onClick={() => setTab("planner")}>Visueller Planer</TabButton>
+        <TabButton active={tab === "week"} onClick={() => setTab("week")}>Wochenplaner</TabButton>
+        <TabButton active={tab === "planner"} onClick={() => setTab("planner")}>Task-Board</TabButton>
         <TabButton active={tab === "workflows"} onClick={() => setTab("workflows")}>Workflow Templates</TabButton>
       </div>
 
@@ -185,6 +207,10 @@ export default function FounderOperations() {
                     <Textarea rows={4} value={jobForm.content} onChange={(event) => setJobForm((prev) => ({ ...prev, content: event.target.value }))} />
                   </div>
                   <div>
+                    <FieldLabel>Geplanter Zeitpunkt</FieldLabel>
+                    <Input type="datetime-local" value={jobForm.scheduled_for} onChange={(event) => setJobForm((prev) => ({ ...prev, scheduled_for: event.target.value }))} />
+                  </div>
+                  <div>
                     <FieldLabel>Tags (Komma-getrennt)</FieldLabel>
                     <Input value={jobForm.tags} onChange={(event) => setJobForm((prev) => ({ ...prev, tags: event.target.value }))} />
                   </div>
@@ -200,6 +226,7 @@ export default function FounderOperations() {
                       <BMBadge tone={job.status === "published" ? "success" : "info"}>{job.status}</BMBadge>
                       <span className="text-sm font-semibold text-zinc-100">{job.platform}</span>
                     </div>
+                    <p className="mb-1 text-[11px] text-violet-300">{formatSchedule(job.scheduled_for)}</p>
                     <p className="text-xs text-zinc-400">{job.content}</p>
                     {job.status !== "published" && (
                       <Btn size="sm" className="mt-2" onClick={() => dispatchJob(job.id)}>
@@ -210,6 +237,35 @@ export default function FounderOperations() {
                   </div>
                 )) : <p className="text-sm text-zinc-500">Noch keine Queue-Einträge.</p>}
               </Card>
+            </section>
+          )}
+
+          {tab === "week" && (
+            <section className="space-y-4">
+              <Card className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-300">Wochenplaner für alle Workspaces</h3>
+                  <p className="mt-1 text-sm text-zinc-500">Plane Posts zeitlich vor und behalte die Veröffentlichungen der ganzen Woche im Blick.</p>
+                </div>
+                <Btn variant="ghost" onClick={() => setTab("social")}><Plus size={14} />Post planen</Btn>
+              </Card>
+              <div className="grid gap-4 lg:grid-cols-7">
+                {jobsByWeekday.map((group) => (
+                  <Card key={group.day} className="space-y-3">
+                    <h3 className="text-sm font-semibold text-zinc-200">{group.day}</h3>
+                    {group.jobs.length ? group.jobs.map((job) => (
+                      <div key={job.id} className="rounded-xl border border-white/10 bg-black/20 p-3">
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                          <BMBadge tone={job.status === "published" ? "success" : "info"}>{job.status}</BMBadge>
+                          <span className="text-xs font-semibold text-zinc-200">{job.platform}</span>
+                        </div>
+                        <p className="mb-1 text-[11px] text-violet-300">{formatSchedule(job.scheduled_for)}</p>
+                        <p className="line-clamp-4 text-xs text-zinc-500">{job.content}</p>
+                      </div>
+                    )) : <p className="text-xs text-zinc-600">Noch nichts geplant.</p>}
+                  </Card>
+                ))}
+              </div>
             </section>
           )}
 
