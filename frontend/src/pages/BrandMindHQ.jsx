@@ -73,6 +73,7 @@ export default function BrandMindHQ() {
     [de ? "Ziel erstellen" : "Create Goal", "/mission", Target],
     [de ? "Kampagne starten" : "Start Campaign", "/workflow", Rocket],
     [de ? "Workflow starten" : "Launch Workflow", "/workflow-architect", Zap],
+    [de ? "Wochenplaner & Auto-Posting" : "Weekly planner & auto-posting", "/ops", Megaphone],
     [de ? "Assets prüfen" : "Review Assets", "/output-factory", ShieldCheck],
     [de ? "Team-Chat öffnen" : "Open Team Chat", "/mission", MessageSquare],
   ];
