@@ -102,6 +102,49 @@ const NAV_GROUPS = [
 
 const NAV = NAV_GROUPS.flatMap((group) => group.items);
 
+const NAV_ITEM_DESCRIPTIONS = {
+  "/app": { de: "Zentrale Übersicht für Ziele, Module und nächste Schritte.", en: "Central overview for goals, modules and next steps." },
+  "/mission": { de: "Plane Ziele und lasse Agenten Aufgaben verteilen.", en: "Plan goals and let agents distribute tasks." },
+  "/intelligence": { de: "Erkennt Chancen, Risiken und Wachstumsimpulse.", en: "Finds opportunities, risks and growth signals." },
+  "/brand-brain": { de: "Markenbasis: Zielgruppe, Tonalität, Angebot und Positionierung.", en: "Brand base: audience, tone, offer and positioning." },
+  "/brand-identity": { de: "Visuelle Identität, Farben, Logo-Richtung und Designregeln.", en: "Visual identity, colors, logo direction and design rules." },
+  "/knowledge-graph": { de: "Verknüpft Wissen, Entitäten und Beziehungen deiner Marke.", en: "Connects knowledge, entities and brand relationships." },
+  "/knowledge": { de: "Produkte, FAQs, Vorlagen und verlässliche Antworten pflegen.", en: "Maintain products, FAQs, templates and trusted answers." },
+  "/memory": { de: "Speichert Entscheidungen, Learnings und bewährte Muster.", en: "Stores decisions, learnings and proven patterns." },
+  "/ai-business-card": { de: "Interaktive KI-Visitenkarte für Leads und Erstkontakt.", en: "Interactive AI business card for leads and first contact." },
+  "/agents": { de: "Starte Fachagenten für Strategie, Content, Sales und Support.", en: "Launch specialists for strategy, content, sales and support." },
+  "/builder": { de: "Eigene KI-Mitarbeiter aus Rolle, Stil und Aufgabe bauen.", en: "Build custom AI teammates from role, style and task." },
+  "/character-studio": { de: "Agenten-Charaktere, Avatare und visuelle Briefings entwerfen.", en: "Design agent characters, avatars and visual briefs." },
+  "/gateway": { de: "KI-Anbieter, Modelle, Defaults und Fallbacks steuern.", en: "Control AI providers, models, defaults and fallbacks." },
+  "/skills": { de: "Modulare Fähigkeiten für Agenten entdecken und nutzen.", en: "Discover and use modular capabilities for agents." },
+  "/modules": { de: "Marktplatz für Module, Workflows und Erweiterungen.", en: "Marketplace for modules, workflows and extensions." },
+  "/arena": { de: "Vergleiche Antworten mehrerer KI-Modelle direkt nebeneinander.", en: "Compare multiple AI model answers side by side." },
+  "/design": { de: "Werbemittel, Bildprompts, Canva-Briefings und Brand-Guides.", en: "Ad assets, image prompts, Canva briefs and brand guides." },
+  "/video": { de: "Skripte, Storyboards und Prompts für Video-Tools.", en: "Scripts, storyboards and prompts for video tools." },
+  "/seo": { de: "Keywords, Meta-Texte, Audits und strukturierte Daten.", en: "Keywords, meta copy, audits and structured data." },
+  "/seo-specialist": { de: "Tiefe SEO-Analysen, GEO und technische Optimierung.", en: "Deep SEO analysis, GEO and technical optimization." },
+  "/social": { de: "Posts, Reels, Captions, Hashtags und Contentpläne.", en: "Posts, reels, captions, hashtags and content plans." },
+  "/email": { de: "Newsletter, Sequenzen, CRM-Texte und Reaktivierung.", en: "Newsletters, sequences, CRM copy and reactivation." },
+  "/analytics": { de: "KPIs, Reports, A/B-Tests und Wachstumsentscheidungen.", en: "KPIs, reports, A/B tests and growth decisions." },
+  "/tiktok": { de: "Hooks, Skripte, Trends und TikTok-Contentpläne.", en: "Hooks, scripts, trends and TikTok content plans." },
+  "/linkedin": { de: "Thought Leadership, Karussells und Personal Branding.", en: "Thought leadership, carousels and personal branding." },
+  "/tts": { de: "Texte in Sprache verwandeln und Voice-Ausgaben testen.", en: "Turn text into speech and test voice outputs." },
+  "/output-factory": { de: "Fertige Inhalte bündeln, prüfen und exportieren.", en: "Bundle, review and export finished outputs." },
+  "/automation": { de: "Prozesse als n8n-, Make-, Zapier- oder Webhook-Flows planen.", en: "Plan processes as n8n, Make, Zapier or webhook flows." },
+  "/workflow-architect": { de: "SOPs, Prozesslogik und Automatisierungsarchitektur erstellen.", en: "Create SOPs, process logic and automation architecture." },
+  "/ops": { de: "Content-Produktion, Planung und operative Abläufe steuern.", en: "Manage content production, planning and operations." },
+  "/workflow": { de: "Kampagnen vom Lead bis Follow-up als Flow strukturieren.", en: "Structure campaigns from lead to follow-up as a flow." },
+  "/orchestrator": { de: "Komplexe Aufgaben zerlegen und Agenten koordinieren.", en: "Break down complex tasks and coordinate agents." },
+  "/tickets": { de: "Support-Anfragen erfassen, priorisieren und beantworten.", en: "Capture, prioritize and answer support requests." },
+  "/billing": { de: "Pläne, Preise und Upgrade-Optionen verwalten.", en: "Manage plans, pricing and upgrade options." },
+  "/permissions": { de: "Zugriffe, Rollen und Workspace-Rechte steuern.", en: "Control access, roles and workspace permissions." },
+  "/finance-cfo": { de: "Kapital, Cashflow, Investor- und Board-Themen planen.", en: "Plan capital, cash flow, investor and board topics." },
+  "/finance-analyst": { de: "Finanzmodelle, Bewertungen und Szenarien erstellen.", en: "Create financial models, valuations and scenarios." },
+  "/finance-fpa": { de: "Budgets, Forecasts, Plan-Ist und KPI-Governance.", en: "Budgets, forecasts, variance and KPI governance." },
+  "/finance-bookkeeper": { de: "Buchhaltung, Monatsabschluss und Kontrollen strukturieren.", en: "Structure bookkeeping, month-end close and controls." },
+  "/finance-tax": { de: "Steuerplanung, Compliance und Strukturfragen prüfen.", en: "Review tax planning, compliance and structure questions." },
+};
+
 const PAGE_NAMES = {
   "/": "BrandMind HQ",
   "/mission": "Mission Control",
@@ -314,6 +357,57 @@ export const Layout = ({ children }) => {
     </div>
   );
 
+  const SidebarNavItem = ({ item, onNavigate }) => {
+    const { to, icon: Icon, labelDE, labelEN, end } = item;
+    const description = NAV_ITEM_DESCRIPTIONS[to];
+    const text = lang === "DE" ? labelDE : labelEN;
+    const helper = description ? (lang === "DE" ? description.de : description.en) : "";
+
+    return (
+      <NavLink
+        key={to}
+        to={to}
+        end={end}
+        onClick={onNavigate}
+        title={helper ? `${text} — ${helper}` : text}
+        aria-label={helper ? `${text}: ${helper}` : text}
+        className={({ isActive }) =>
+          `group flex items-start gap-3 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 ${
+            isActive
+              ? "text-violet-200 border-l-2 border-[var(--bm-primary)]"
+              : "text-zinc-500 hover:text-zinc-200 hover:bg-white/4 border-l-2 border-transparent"
+          }`
+        }
+        style={({ isActive }) =>
+          isActive
+            ? {
+                background: "rgba(124,58,237,0.12)",
+                boxShadow: "inset 3px 0 0 var(--bm-primary), inset 0 0 20px rgba(124,58,237,0.05)",
+              }
+            : {}
+        }
+      >
+        {({ isActive }) => (
+          <>
+            <Icon size={16} strokeWidth={1.6} className="mt-0.5 flex-shrink-0" />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate">{text}</span>
+              {helper && (
+                <span
+                  className={`block overflow-hidden text-[10px] leading-snug text-zinc-600 transition-all duration-200 ${
+                    isActive ? "mt-1 max-h-10 opacity-100" : "max-h-0 opacity-0 group-hover:mt-1 group-hover:max-h-10 group-hover:opacity-100"
+                  }`}
+                >
+                  {helper}
+                </span>
+              )}
+            </span>
+          </>
+        )}
+      </NavLink>
+    );
+  };
+
   return (
     <div className="min-h-screen flex bg-[var(--bm-bg)] font-['Sora',ui-sans-serif,system-ui]">
       {/* Global whimsy layers */}
@@ -376,30 +470,8 @@ export const Layout = ({ children }) => {
                 {lang === "DE" ? group.labelDE : group.labelEN}
               </div>
               <div className="space-y-0.5">
-                {group.items.map(({ to, icon: Icon, labelDE, labelEN, end }) => (
-                  <NavLink
-                    key={to}
-                    to={to}
-                    end={end}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 ${
-                        isActive
-                          ? "text-violet-200 border-l-2 border-[var(--bm-primary)]"
-                          : "text-zinc-500 hover:text-zinc-200 hover:bg-white/4 border-l-2 border-transparent"
-                      }`
-                    }
-                    style={({ isActive }) =>
-                      isActive
-                        ? {
-                            background: "rgba(124,58,237,0.12)",
-                            boxShadow: "inset 3px 0 0 var(--bm-primary), inset 0 0 20px rgba(124,58,237,0.05)",
-                          }
-                        : {}
-                    }
-                  >
-                    <Icon size={16} strokeWidth={1.6} />
-                    {lang === "DE" ? labelDE : labelEN}
-                  </NavLink>
+                {group.items.map((item) => (
+                  <SidebarNavItem key={item.to} item={item} />
                 ))}
               </div>
             </div>
@@ -469,31 +541,8 @@ export const Layout = ({ children }) => {
                 {lang === "DE" ? group.labelDE : group.labelEN}
               </div>
               <div className="space-y-0.5">
-                {group.items.map(({ to, icon: Icon, labelDE, labelEN, end }) => (
-                  <NavLink
-                    key={to}
-                    to={to}
-                    end={end}
-                    onClick={() => setMobileOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-2 rounded-xl text-[12px] font-medium transition-all duration-150 ${
-                        isActive
-                          ? "text-violet-200 border-l-2 border-[var(--bm-primary)]"
-                          : "text-zinc-500 hover:text-zinc-200 hover:bg-white/4 border-l-2 border-transparent"
-                      }`
-                    }
-                    style={({ isActive }) =>
-                      isActive
-                        ? {
-                            background: "rgba(124,58,237,0.12)",
-                            boxShadow: "inset 3px 0 0 var(--bm-primary), inset 0 0 20px rgba(124,58,237,0.05)",
-                          }
-                        : {}
-                    }
-                  >
-                    <Icon size={16} strokeWidth={1.6} />
-                    {lang === "DE" ? labelDE : labelEN}
-                  </NavLink>
+                {group.items.map((item) => (
+                  <SidebarNavItem key={item.to} item={item} onNavigate={() => setMobileOpen(false)} />
                 ))}
               </div>
             </div>
