@@ -5202,6 +5202,38 @@ async def audio_speech(req: TTSRequest):
     raise HTTPException(status_code=502, detail=detail[:300])
 
 
+
+
+@api_router.get("/stats")
+async def product_stats(ws: Optional[str] = Depends(current_workspace)):
+    """Return only workspace-scoped, persisted product counters for dashboard UI."""
+    if db is None:
+        return {
+            "agents": len(AGENTS),
+            "custom_agents": 0,
+            "assets_total": 0,
+            "projects_total": 0,
+            "knowledge_docs": 0,
+            "data_sources_connected": 0,
+        }
+
+    scope = _scope_filter(ws)
+    custom_agents = await db.custom_agents.count_documents(scope)
+    assets_total = await db.output_factory_assets.count_documents(scope)
+    mission_plans = await db.mission_plans.count_documents(scope)
+    mission_tasks = await db.mission_tasks.count_documents(scope)
+    knowledge_docs = await db.knowledge.count_documents(scope)
+
+    return {
+        "agents": len(AGENTS),
+        "custom_agents": custom_agents,
+        "assets_total": assets_total,
+        "projects_total": mission_plans + mission_tasks,
+        "knowledge_docs": knowledge_docs,
+        "data_sources_connected": 0,
+    }
+
+
 @api_router.get("/health")
 async def health():
     # DB diagnostics: shows whether Mongo is configured, reachable, and why not.
