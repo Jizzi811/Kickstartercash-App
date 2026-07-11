@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { API } from "@/context/AppContext";
@@ -6,6 +7,7 @@ import { AGENT_REGISTRY, DEMO_PROMPTS, orchestrateQuantumWorkflow } from "@/lib/
 import { createMemoryPreviewFromWorkflow, memoryManager } from "@/lib/memory/memoryManager";
 import { MEMORY_TYPE_DEFINITIONS } from "@/lib/memory/memoryTypes";
 import { completeNextWorkflowStep, createWorkflow, startWorkflow, WORKFLOW_STATUSES } from "@/lib/workflowEngine";
+import { clearQuantumHomePrompt, readQuantumHomePrompt } from "@/lib/quantumPromptTransfer";
 import ActivityFeed from "@/components/quantum/ActivityFeed";
 import OutputSummary from "@/components/quantum/OutputSummary";
 import WorkflowInspector from "@/components/quantum/WorkflowInspector";
@@ -469,11 +471,27 @@ export default function QuantumAgent() {
   const [autoMemory, setAutoMemory] = useState(false);
   const [memoryApprovalReady, setMemoryApprovalReady] = useState(false);
   const [agents, setAgents] = useState([]);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const transferredPromptConsumed = useRef(false);
   const lang = localStorage.getItem("kc_lang") || "DE";
 
   useEffect(() => {
     axios.get(`${API}/agents`).then((res) => setAgents(res.data || [])).catch(() => setAgents([]));
   }, []);
+
+  useEffect(() => {
+    if (transferredPromptConsumed.current) return;
+    const transfer = readQuantumHomePrompt(location.state);
+    if (!transfer?.prompt) return;
+    transferredPromptConsumed.current = true;
+    setOrchestratorPrompt(transfer.prompt);
+    clearQuantumHomePrompt();
+    if (location.state?.quantumPrompt) {
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.pathname, location.state, navigate]);
+
 
   const tasks = lang === "DE" ? TASKS_DE : TASKS_EN;
   const memoryProvider = memoryManager.getProvider();
@@ -717,13 +735,13 @@ export default function QuantumAgent() {
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm font-semibold text-white"><PlayCircle size={16} className="text-[#7C3AED]" /> Quantum Orchestrator Engine</div>
-            <p className="mt-1 text-xs text-zinc-500">{lang === "DE" ? "Beschreibe eine Aufgabe. Quantum analysiert Ziel, Kontext, Output, Plattform und baut einen Mock-Workflow." : "Describe a task. Quantum analyzes goal, context, output, platform and builds a mock workflow."}</p>
+            <p className="mt-1 text-xs text-zinc-500">{lang === "DE" ? "Beschreibe eine Aufgabe. Quantum analysiert Ziel, Kontext, Output, Plattform und baut einen Workflow-Vorschlag." : "Describe a task. Quantum analyzes goal, context, output, platform and builds a workflow proposal."}</p>
           </div>
           <div className="flex flex-wrap gap-2">{DEMO_PROMPTS.map((prompt) => <button key={prompt} onClick={() => handleOrchestrate(prompt)} className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px] text-zinc-300 hover:border-[#7C3AED]/50">{prompt}</button>)}</div>
         </div>
         <div className="flex flex-col gap-3 md:flex-row">
           <textarea value={orchestratorPrompt} onChange={(event) => setOrchestratorPrompt(event.target.value)} className="min-h-[92px] flex-1 rounded-sm border border-white/10 bg-black/40 p-3 text-sm text-zinc-200 outline-none focus:border-[#7C3AED]/60" placeholder={lang === "DE" ? "z. B. Erstelle eine Facebook-Kampagne für BrandMind." : "e.g. Create a Facebook campaign for BrandMind."} />
-          <div className="flex min-w-0 flex-col gap-2 md:w-[190px] md:shrink-0"><button onClick={() => handleOrchestrate()} className="rounded-sm border border-[#7C3AED]/40 bg-[#7C3AED]/20 px-5 py-3 text-sm font-semibold text-[#DDD6FE] hover:bg-[#7C3AED]/30">{lang === "DE" ? "Workflow ableiten" : "Derive workflow"}</button><button onClick={handleStartWorkflow} disabled={!workflow || workflow.status === WORKFLOW_STATUSES.RUNNING || workflow.status === WORKFLOW_STATUSES.COMPLETED} className="rounded-sm border border-emerald-400/30 bg-emerald-400/10 px-5 py-3 text-sm font-semibold text-emerald-200 hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-40">{workflow?.status === WORKFLOW_STATUSES.RUNNING ? (lang === "DE" ? "Workflow läuft…" : "Workflow running…") : (lang === "DE" ? "Workflow starten" : "Start workflow")}</button></div>
+          <div className="flex min-w-0 flex-col gap-2 md:w-[190px] md:shrink-0"><button onClick={() => handleOrchestrate()} className="rounded-sm border border-[#7C3AED]/40 bg-[#7C3AED]/20 px-5 py-3 text-sm font-semibold text-[#DDD6FE] hover:bg-[#7C3AED]/30">{lang === "DE" ? "Workflow-Vorschlag erstellen" : "Create workflow proposal"}</button><button onClick={handleStartWorkflow} disabled={!workflow || workflow.status === WORKFLOW_STATUSES.RUNNING || workflow.status === WORKFLOW_STATUSES.COMPLETED} className="rounded-sm border border-emerald-400/30 bg-emerald-400/10 px-5 py-3 text-sm font-semibold text-emerald-200 hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-40">{workflow?.status === WORKFLOW_STATUSES.RUNNING ? (lang === "DE" ? "Workflow wird ausgeführt…" : "Workflow executing…") : (lang === "DE" ? "Vorbereiteten Workflow starten" : "Start prepared workflow")}</button></div>
         </div>
         {orchestratorThinking && <div className="mt-4 flex items-center gap-3 rounded-sm border border-[#7C3AED]/20 bg-[#7C3AED]/10 p-3 text-sm text-[#C4B5FD]"><Clock3 size={16} className="animate-pulse" /> {lang === "DE" ? "Analyse läuft… Ziel, Skills und Agenten werden gematcht." : "Analysis running… matching goal, skills and agents."}</div>}
         {orchestratorResult && !orchestratorThinking && <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-5 space-y-4">

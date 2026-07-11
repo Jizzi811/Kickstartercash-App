@@ -2,6 +2,7 @@ import React from "react";
 import { CheckCircle2, Clock3, PlayCircle, XCircle, SkipForward } from "lucide-react";
 
 const ICONS = { pending: Clock3, running: PlayCircle, completed: CheckCircle2, failed: XCircle, skipped: SkipForward };
+const STATUS_LABELS = { pending: "Workflow-Vorschlag", ready: "Workflow vorbereitet", running: "Workflow wird ausgeführt", completed: "Workflow abgeschlossen", failed: "Fehlgeschlagen", skipped: "Übersprungen" };
 
 export default function WorkflowTimeline({ workflow }) {
   if (!workflow) return null;
@@ -19,7 +20,7 @@ export default function WorkflowTimeline({ workflow }) {
               <div className="flex items-start gap-2 text-zinc-200"><Icon size={14} className="mt-0.5 text-[#A78BFA]" /><span>{step.phase}<span className="block text-zinc-500">{step.agentName}</span></span></div>
               <div className="break-words text-zinc-400">{step.task}</div>
               <div className="break-words text-zinc-300">{step.outputPreview || `Erwartet: ${step.expectedOutput}`}</div>
-              <div className="text-[#A78BFA]">{step.status}<span className="block text-zinc-500">{step.durationMs}ms</span></div>
+              <div className="text-[#A78BFA]">{STATUS_LABELS[step.status] || step.status}<span className="block text-zinc-500">{step.durationMs}ms</span></div>
             </div>
           );
         })}
