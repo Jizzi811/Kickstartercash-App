@@ -66,6 +66,7 @@ from app.skills import registry as skill_registry, service as skill_service  # n
 from app.workflows import engine as workflow_engine  # noqa: E402
 from app import knowledge_graph  # noqa: E402
 from app import permissions as permission_framework  # noqa: E402
+from app.services.website_import import analyze_website, new_draft, FIELD_KEYS, _field  # noqa: E402
 
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
@@ -718,6 +719,117 @@ async def delete_brand(brand_id: str, ws: Optional[str] = Depends(current_worksp
     await db.brands.delete_one({"id": brand_id, **_scope_filter(ws)})
     return {"ok": True}
 
+
+
+# ---------------------------------------------------------------------------
+# Website-to-brand import drafts
+# ---------------------------------------------------------------------------
+class WebsiteImportRequest(BaseModel):
+    url: str
+    brand_id: Optional[str] = None
+
+class BrandImportConfirmRequest(BaseModel):
+    selected_fields: dict = Field(default_factory=dict)
+    conflict_resolutions: dict = Field(default_factory=dict)
+
+_IMPORT_HITS: dict[str, list[float]] = defaultdict(list)
+_IMPORT_ACTIVE: set[str] = set()
+
+def _draft_scope(draft_id: str, user_id: str, ws: Optional[str]) -> dict:
+    return {"id": draft_id, "user_id": user_id, "workspace_id": ws or ""}
+
+def _rate_key(user_id: str, ws: Optional[str]) -> str:
+    return f"{ws or 'legacy'}:{user_id}"
+
+def _check_import_limit(user_id: str, ws: Optional[str]) -> None:
+    now = time.time(); key = _rate_key(user_id, ws)
+    hits = [t for t in _IMPORT_HITS.get(key, []) if now - t < 3600]
+    if len(hits) >= 5:
+        raise HTTPException(status_code=429, detail="Rate Limit erreicht. Bitte später erneut versuchen.")
+    if key in _IMPORT_ACTIVE:
+        raise HTTPException(status_code=429, detail="Es läuft bereits eine Website-Analyse für diesen Workspace.")
+    hits.append(now); _IMPORT_HITS[key] = hits
+
+def _safe_draft(doc: dict) -> dict:
+    out = {k: doc.get(k) for k in ["id","workspace_id","user_id","brand_id","submitted_url","normalized_url","status","analyzed_pages","extracted_fields","warnings","created_at","updated_at","expires_at"]}
+    return out
+
+def _target_brand_field(import_key: str) -> Optional[str]:
+    return {
+        "brand_name": "name", "industry": "industry", "website": "website",
+        "short_description": "slogan", "products_services": "products",
+        "target_audience": "target_audience", "tone": "tone",
+        "primary_colors": "primary_color", "logo_candidate": "logo_url",
+        "social_links": "social_accounts", "visual_style": "image_style",
+    }.get(import_key)
+
+def _string_value(value: Any) -> str:
+    if isinstance(value, list): return ", ".join(str(v).strip() for v in value if str(v).strip())[:2000]
+    return str(value or "").strip()[:2000]
+
+@api_router.post("/brand-imports/website")
+async def brand_import_website(req: WebsiteImportRequest, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    if db is None: raise HTTPException(status_code=503, detail="Database not available")
+    _check_import_limit(user["id"], ws)
+    key = _rate_key(user["id"], ws); _IMPORT_ACTIVE.add(key)
+    try:
+        brand = await _resolve_brand(req.brand_id, ws)
+        brand_id = (brand or {}).get("id", req.brand_id or "")
+        analysis = await analyze_website(req.url)
+        draft = new_draft(user["id"], ws, brand_id, req.url, analysis)
+        await db.brand_import_drafts.insert_one({**draft})
+        draft.pop("_id", None)
+        return _safe_draft(draft)
+    except HTTPException as e:
+        analysis = {"normalized_url": "", "status": "failed", "analyzed_pages": [], "extracted_fields": {k: _field() for k in FIELD_KEYS}, "warnings": [str(e.detail)]}
+        draft = new_draft(user["id"], ws, req.brand_id or "", req.url, analysis)
+        await db.brand_import_drafts.insert_one({**draft})
+        raise e
+    finally:
+        _IMPORT_ACTIVE.discard(key)
+
+@api_router.get("/brand-imports/{draft_id}")
+async def brand_import_get(draft_id: str, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    doc = await db.brand_import_drafts.find_one(_draft_scope(draft_id, user["id"], ws), {"_id": 0})
+    if not doc: raise HTTPException(status_code=404, detail="Importentwurf nicht gefunden")
+    return _safe_draft(doc)
+
+@api_router.delete("/brand-imports/{draft_id}")
+async def brand_import_delete(draft_id: str, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    now = _now_iso()
+    result = await db.brand_import_drafts.update_one(_draft_scope(draft_id, user["id"], ws), {"$set": {"status": "discarded", "updated_at": now}})
+    if result.matched_count == 0: raise HTTPException(status_code=404, detail="Importentwurf nicht gefunden")
+    return {"ok": True, "status": "discarded"}
+
+@api_router.post("/brand-imports/{draft_id}/confirm")
+async def brand_import_confirm(draft_id: str, req: BrandImportConfirmRequest, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    doc = await db.brand_import_drafts.find_one(_draft_scope(draft_id, user["id"], ws), {"_id": 0})
+    if not doc: raise HTTPException(status_code=404, detail="Importentwurf nicht gefunden")
+    if doc.get("status") in {"confirmed", "discarded"}: raise HTTPException(status_code=400, detail="Entwurf ist nicht mehr bearbeitbar")
+    brand = await _resolve_brand(doc.get("brand_id"), ws)
+    if not brand: raise HTTPException(status_code=404, detail="Brand not found")
+    update, conflicts, skipped = {}, [], []
+    fields = doc.get("extracted_fields") or {}
+    for key, payload in (req.selected_fields or {}).items():
+        if key not in fields or not payload: continue
+        target = _target_brand_field(key)
+        val = _string_value(payload.get("value") if isinstance(payload, dict) else payload)
+        if not target or not val: skipped.append(key); continue
+        if target in {"primary_color"} and not re.fullmatch(r"#[0-9A-Fa-f]{6}", val.split(",")[0].strip()): skipped.append(key); continue
+        if target == "primary_color": val = val.split(",")[0].strip()
+        current = _string_value(brand.get(target))
+        resolution = (req.conflict_resolutions or {}).get(key, "keep_existing" if current else "use_new")
+        if current and current != val and resolution == "keep_existing":
+            conflicts.append({"field": key, "brand_field": target, "existing_value": current, "new_value": val, "resolution_required": True}); continue
+        if current and current != val and resolution == "merge": val = f"{current}; {val}"[:2000]
+        update[target] = val
+    if update:
+        update["onboarded"] = True; update["workspace_id"] = ws or brand.get("workspace_id", "")
+        await db.brands.update_one({"id": brand["id"], **_scope_filter(ws)}, {"$set": update})
+    now = _now_iso()
+    await db.brand_import_drafts.update_one(_draft_scope(draft_id, user["id"], ws), {"$set": {"status": "confirmed", "updated_at": now, "confirmed_fields": list(update.keys()), "conflicts": conflicts}})
+    updated = await db.brands.find_one({"id": brand["id"], **_scope_filter(ws)}, {"_id": 0})
+    return {"ok": True, "brand": updated, "updated_fields": list(update.keys()), "conflicts": conflicts, "skipped_fields": skipped, "readiness": calculate_brand_readiness(updated, await db.knowledge.count_documents({**_scope_filter(ws)}), ws or "")}
 
 # ---------------------------------------------------------------------------
 # Brand Brain – onboarding: turns a handful of answers into a full brand
@@ -7600,7 +7712,7 @@ async def knowledge_graph_visualization(ws: Optional[str] = Depends(current_work
 ONBOARDING_STATUSES = {"not_started", "path_selected", "in_progress", "completed", "skipped"}
 ONBOARDING_PATHS = {"existing_brand", "founder", "explore"}
 ONBOARDING_STEPS = {
-    "existing_brand": ["brand_brain", "brand_identity", "knowledge", "home"],
+    "existing_brand": ["website_import", "brand_brain", "brand_identity", "knowledge", "home"],
     "founder": ["intake", "ideas", "brand", "offers", "business_plan", "finance", "operations", "summary"],
     "explore": ["home", "quantum", "brand", "create", "projects"],
 }
@@ -7618,7 +7730,7 @@ def _onboarding_scope(user_id: str, ws: Optional[str]) -> dict:
 
 def _onboarding_route(selected_path: str = "", current_step: str = "") -> str:
     if selected_path == "existing_brand":
-        return {"brand_identity": "/brand-identity", "knowledge": "/knowledge", "home": "/app"}.get(current_step, "/brand-brain")
+        return {"website_import": "/onboarding/existing-brand/import", "brand_brain": "/brand-brain", "brand_identity": "/brand-identity", "knowledge": "/knowledge", "home": "/app"}.get(current_step, "/onboarding/existing-brand/import")
     if selected_path == "founder":
         return {
             "ideas": "/onboarding/founder/ideas", "brand": "/onboarding/founder/brand", "offers": "/onboarding/founder/offers",

@@ -55,7 +55,7 @@ export default function FounderPathSelect() {
   };
   return <Page><Hero icon={Sparkles} badge="Brandmind Onboarding" title={copy.title} description={copy.desc} actions={<Btn variant="ghost" onClick={skip}>{copy.skip}</Btn>} />
     <section className="grid gap-4 lg:grid-cols-3">
-      <PathCard icon={Building2} title={copy.existing[0]} description={copy.existing[1]} outcome={{ label: copy.outcome, text: copy.existing[2] }} steps={{ label: copy.steps, text: copy.existing[3] }} cta={copy.existing[4]} onClick={() => choose("existing_brand", "brand_brain", "/brand-brain")} />
+      <PathCard icon={Building2} title={copy.existing[0]} description={copy.existing[1]} outcome={{ label: copy.outcome, text: copy.existing[2] }} steps={{ label: copy.steps, text: copy.existing[3] }} cta={copy.existing[4]} onClick={() => choose("existing_brand", "website_import", "/onboarding/existing-brand/import")} />
       <PathCard icon={Sparkles} title={copy.founder[0]} description={copy.founder[1]} outcome={{ label: copy.outcome, text: copy.founder[2] }} steps={{ label: copy.steps, text: copy.founder[3] }} cta={copy.founder[4]} onClick={() => choose("founder", "intake", "/onboarding/founder/intake")} />
       <PathCard icon={Compass} title={copy.explore[0]} description={copy.explore[1]} outcome={{ label: copy.outcome, text: copy.explore[2] }} steps={{ label: copy.steps, text: copy.explore[3] }} cta={copy.explore[4]} onClick={() => choose("explore", "home", "/app")} />
     </section>

@@ -103,3 +103,6 @@ Für öffentlichen Early Access: finale Rechtstexte, echte Browser-QA, Mongo-Int
 - Geschlossener Early Access: CONDITIONAL GO nach Browser-/Mongo-/Legal-/Legacy-Nachprüfung.
 - Öffentlicher Early Access: NO-GO.
 - Produktivlaunch: NO-GO.
+
+## Website-to-Brand Import
+Brandmind kann im Existing-Brand-Onboarding öffentliche Websites serverseitig analysieren und daraus einen editierbaren Importentwurf erzeugen. Felder werden mit Quellen, Konfidenz und explizit/abgeleitet-Kennzeichnung dargestellt und erst nach Nutzerauswahl in bestehende Brand-Felder übernommen. Bekannte Produktionsanforderungen sind in `docs/WEBSITE_TO_BRAND_IMPORT.md` aufgeführt.

@@ -233,3 +233,8 @@ Ein nutzersichtbarer PDF-Export-Dateiname mit altem `kickstartercash`-Prefix wur
 
 Details: siehe `docs/SPRINT_E_RELEASE_VALIDATION.md`, `docs/PRODUCT_READINESS_REPORT.md` und `docs/EARLY_ACCESS_RELEASE_CHECKLIST.md`.
 
+
+## Website-to-Brand Import Readiness Update
+- Existing-Brand-Onboarding bietet jetzt zuerst einen serverseitigen Website-Import mit Draft-Prüfung an.
+- SSRF-Schutz, Seiten-/Größenlimits, Workspace/User/Brand-Scoping und manuelle Fallbacks sind dokumentiert in `docs/WEBSITE_TO_BRAND_IMPORT.md`.
+- Produktionslücke: In-Memory Rate Limits sollten vor Multi-Instance-Betrieb durch einen verteilten Store ersetzt werden.
