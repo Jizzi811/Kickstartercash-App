@@ -27,6 +27,7 @@ export const AppProvider = ({ children }) => {
     () => localStorage.getItem("bm_workspace") || ""
   );
   const [authReady, setAuthReady] = useState(false);
+  const [onboardingStatus, setOnboardingStatus] = useState(null);
 
   // Attach the bearer token to every request while logged in.
   useEffect(() => {
@@ -82,11 +83,25 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem("bm_workspace", id);
   }, []);
 
+  const loadOnboardingStatus = useCallback(async () => {
+    if (!token) return null;
+    const res = await axios.get(`${API}/onboarding/status`);
+    setOnboardingStatus(res.data);
+    return res.data;
+  }, [token]);
+
+  const updateOnboardingStatus = useCallback(async (payload) => {
+    const res = await axios.put(`${API}/onboarding/status`, payload);
+    setOnboardingStatus(res.data);
+    return res.data;
+  }, []);
+
   const logout = useCallback(() => {
     setToken("");
     setUser(null);
     setWorkspaces([]);
     setActiveWorkspaceId("");
+    setOnboardingStatus(null);
     localStorage.removeItem("bm_workspace");
   }, []);
 
@@ -129,6 +144,10 @@ export const AppProvider = ({ children }) => {
       setBrands([]);
     });
   }, [loadBrands, activeWorkspaceId]);
+  useEffect(() => {
+    if (token && user) loadOnboardingStatus().catch(() => setOnboardingStatus(null));
+  }, [token, user, activeWorkspaceId, loadOnboardingStatus]);
+
   useEffect(() => { localStorage.setItem("kc_lang", lang); }, [lang]);
   useEffect(() => { localStorage.setItem("kc_model", model); }, [model]);
   useEffect(() => { localStorage.setItem("kc_brand", activeBrandId); }, [activeBrandId]);
@@ -147,6 +166,7 @@ export const AppProvider = ({ children }) => {
       token, user, workspaces, activeWorkspaceId, setActiveWorkspaceId,
       activeWorkspace, authReady, isAuthenticated: !!token && !!user,
       register, login, logout, createWorkspace, switchWorkspace,
+      onboardingStatus, loadOnboardingStatus, updateOnboardingStatus,
     }}>
       {children}
     </AppContext.Provider>

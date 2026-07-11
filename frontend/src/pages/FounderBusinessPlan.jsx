@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import { FileText, Loader2, Sparkles, CheckCircle2, ShieldAlert, Flag } from "lucide-react";
+import FounderProgress from "@/components/FounderProgress";
 import { API } from "@/context/AppContext";
 import { Page, Hero, Card, Btn, BMBadge, FieldLabel, Input } from "@/components/bm";
 
@@ -72,6 +73,7 @@ export default function FounderBusinessPlan() {
 
   return (
     <Page>
+      <FounderProgress current="business_plan" />
       <Hero
         icon={FileText}
         badge="Founder Flow · Phase 6 · Carl (CFO)"
@@ -90,6 +92,7 @@ export default function FounderBusinessPlan() {
       />
 
       <Card>
+        <p className="mb-3 rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs leading-5 text-amber-100">Die erstellten Inhalte sind Entwürfe zur Planung und allgemeinen Information. Sie ersetzen keine individuelle Steuer-, Rechts-, Finanz- oder Anlageberatung.<br />The generated content is a planning draft for general information. It does not replace individual tax, legal, financial, or investment advice.</p>
         <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
           <div>
             <FieldLabel>Fokus (optional)</FieldLabel>

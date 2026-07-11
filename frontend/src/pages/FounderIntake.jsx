@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import { Compass, Loader2, Save, ArrowRight } from "lucide-react";
+import FounderProgress from "@/components/FounderProgress";
 import { API } from "@/context/AppContext";
 import { Page, Hero, Card, Btn, FieldLabel, Input, Textarea } from "@/components/bm";
 
@@ -70,6 +71,7 @@ export default function FounderIntake() {
 
   return (
     <Page>
+      <FounderProgress current="intake" />
       <Hero
         icon={Compass}
         badge="Founder Flow · Phase 1"

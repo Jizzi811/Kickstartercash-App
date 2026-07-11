@@ -69,6 +69,8 @@ Stand: 2026-07-10. Fokus Sprint A: Funktionsstatus, Glaubwürdigkeitsrisiken auf
 - Home-Quantum-Eingabe, Onboarding-Verbesserung und Brand Readiness Score folgen Sprint B/C.
 - Vollständige Legacy- und Security-Bereinigung folgt Sprint D.
 
+---
+
 ## Sprint B – Navigation & Quantum Home Entry
 
 Stand: 2026-07-11. Sprint B konsolidiert ausschließlich Navigation, Home/HQ-Struktur und die Prompt-Übergabe zu Quantum. Sprint C/D/E-Themen wie Brand-Readiness-Score, Onboarding-Entscheidungen, Security-/Legacy-Bereinigung oder neue Backend-Datenmodelle wurden bewusst nicht umgesetzt.
@@ -130,3 +132,37 @@ Strukturell geprüft: mobile Navigation schließt per Escape und bei Navigation;
 - Sprint C: Brand Readiness Score, Onboarding-Entscheidungen und neue Ersteinstiegslogik.
 - Sprint D: Security-/Legacy-Audit, rechtliche Finance-Hinweise, umfassende Route-/Permission-Härtung.
 - Sprint E: weitergehende Integrationen, echte Agenten-/Workflow-Ausführung und neue persistente Datenmodelle.
+
+---
+
+# Sprint C Ergänzung – Onboarding & Brand Readiness
+
+## Umsetzungsplan und Datenmodell
+Sprint C nutzt keine parallelen Nutzer-, Workspace- oder Brandmodelle. Der Onboarding-Fortschritt wird in `onboarding_status` pro `user_id` und `workspace_id` gespeichert. Zulässige Statuswerte sind `not_started`, `path_selected`, `in_progress`, `completed` und `skipped`; zulässige Pfade sind `existing_brand`, `founder` und `explore`.
+
+## Pfadauswahl und Auslöselogik
+Neue Registrierungen werden nach `/onboarding/select-path` geführt. Bestehende Nutzer ohne Status werden nicht ausgesperrt und erreichen `/app`; Home zeigt nur einen nicht blockierenden Hinweis „Brandmind gemeinsam einrichten“. Übersprungene Nutzer können später neu starten.
+
+## Wiederaufnahmeverhalten
+Der Backend-Status liefert `resume_route`. Für bestehende Marken führt die Wiederaufnahme zu Brand Brain, Brand Identity, Knowledge oder Home. Für Founder führt sie zu Intake, Ideas, Brand, Offers, Business Plan, Finance oder Operations. Explore bleibt auf Home als Checkliste.
+
+## Founder-Fortschritt
+Die Founder-Seiten verwenden eine gemeinsame Fortschrittsanzeige und persistieren den aktuellen Schritt über `/api/onboarding/status`. Business- und Finanzpläne sind als Entwürfe gekennzeichnet und enthalten den Steuer-/Rechts-/Finanzhinweis.
+
+## Brand-Readiness-Berechnung
+Der Score wird im Backend über `calculate_brand_readiness` und `GET /api/brand-readiness` berechnet. Grundlage sind nur gespeicherte, workspace-/brand-gescopte Werte aus Brand, Brand-DNA-Feldern und Knowledge Base. Whitespace, Platzhalter und offensichtliche Default-Leerwerte zählen nicht.
+
+## Gewichtung
+Grundlagen 14, Zielgruppe 14, Positionierung 14, Angebot 14, Persönlichkeit 12, visuelle Identität 12, Marketingausrichtung 10, Markenwissen 10 Punkte. Der Score ist deterministisch, kein Qualitätsurteil und keine Erfolgsprognose.
+
+## Home-Darstellung
+Home zeigt Einrichtungsstand, Kategorien, maximal drei nächste Schritte, Quickstarts und ehrliche Lade-/Fehler-/Empty-States. Bei API-Fehler wird kein Fake-Wert angezeigt.
+
+## Schnellstarts
+Die drei Schnellstarts öffnen Quantum mit editierbaren Prompts über Router-State plus `sessionStorage`-Fallback. Es erfolgt keine automatische Ausführung und keine Ergebnis-Persistenz ohne Nutzeraktion.
+
+## Tests
+Neu: `backend/tests/test_sprint_c_onboarding_readiness.py` und `frontend/src/sprintC.test.js`. Sie decken Statuswerte, Score-Determinismus, Scope-Felder, leere Werte, Pfadauswahl, Quickstarts, Readiness-Fehlerzustand und Finanzhinweise ab.
+
+## Offene Risiken und verschobene Sprint-D/E-Aufgaben
+Provider-abhängige Founder-Generierung kann lokal ohne Keys fehlschlagen. Browser-QA an echten Viewports ist weiterhin offen. Vollständige Security-/Legacy-Bereinigung, Early-Access-Backendformular und breite Regression-Suite wurden bewusst nicht vorgezogen.
