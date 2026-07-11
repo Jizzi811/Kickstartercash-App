@@ -12,7 +12,7 @@ import { API } from "@/context/AppContext";
 
 const CATEGORY_META = {
   "Produkte":              { icon: ShoppingBag,  color: "#7C3AED" },
-  "Exclusive Cards":       { icon: CreditCard,   color: "#C084FC" },
+  "Angebote":              { icon: CreditCard,   color: "#C084FC" },
   "FAQs":                  { icon: HelpCircle,   color: "#60A5FA" },
   "PDFs & Schulung":       { icon: FileText,     color: "#34D399" },
   "Corporate Design":      { icon: Palette,      color: "#F472B6" },
@@ -250,7 +250,7 @@ export default function KnowledgeBase() {
             value={aiQuery}
             onChange={(e) => setAiQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAiSearch()}
-            placeholder="z.B. Was kostet die Exclusive Card? Wie hoch ist die Provision?"
+            placeholder="z.B. Welche Fragen stellen Interessenten vor dem Kauf?"
             className="flex-1 bg-black border border-white/10 rounded-sm px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-[#7C3AED]/40"
           />
           <button

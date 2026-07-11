@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   ArrowRight, Sparkles, Check, ShieldCheck, Rocket,
 } from "lucide-react";
-import { useApp } from "@/context/AppContext";
+import { API, useApp } from "@/context/AppContext";
 import { BRANDMIND } from "@/brandmind";
 import QuantumOrb from "@/components/landing/QuantumOrb";
 import StatusBadge from "@/components/StatusBadge";
@@ -55,6 +56,11 @@ export default function Landing() {
   const T = (de, en) => (isDE ? de : en);
   const [activeAgent, setActiveAgent] = useState(FEATURES[3].id);
   const [sparkKey, setSparkKey] = useState(0);
+  const [earlyAccessForm, setEarlyAccessForm] = useState({
+    name: "", email: "", company_or_project: "", audience_status: "",
+    marketing_challenge: "", privacy_consent: false, website: "",
+  });
+  const [earlyAccessState, setEarlyAccessState] = useState({ loading: false, success: "", error: "" });
 
   if (!authReady) {
     return (
@@ -66,8 +72,31 @@ export default function Landing() {
 
   if (isAuthenticated) return <Navigate to="/app" replace />;
 
-  const requestEarlyAccess = () => navigate("/auth");
+  const requestEarlyAccess = () => {
+    document.getElementById("early-access-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const login = () => navigate("/auth");
+  const setEarlyAccessField = (key, value) => setEarlyAccessForm((form) => ({ ...form, [key]: value }));
+  const submitEarlyAccess = async (event) => {
+    event.preventDefault();
+    if (earlyAccessState.loading || earlyAccessState.success) return;
+    setEarlyAccessState({ loading: false, success: "", error: "" });
+    if (!earlyAccessForm.name.trim() || !earlyAccessForm.email.trim() || !earlyAccessForm.audience_status || !earlyAccessForm.marketing_challenge.trim()) {
+      setEarlyAccessState({ loading: false, success: "", error: T("Bitte fülle alle Pflichtfelder aus.", "Please complete all required fields.") });
+      return;
+    }
+    if (!earlyAccessForm.privacy_consent) {
+      setEarlyAccessState({ loading: false, success: "", error: T("Bitte stimme der Datenschutzerklärung zu.", "Please agree to the privacy notice.") });
+      return;
+    }
+    setEarlyAccessState({ loading: true, success: "", error: "" });
+    try {
+      const res = await axios.post(`${API}/early-access`, { ...earlyAccessForm, locale: lang, source: "landing_page" });
+      setEarlyAccessState({ loading: false, success: res.data?.message || T("Danke, deine Anfrage wurde erfasst.", "Thank you, your request has been received."), error: "" });
+    } catch {
+      setEarlyAccessState({ loading: false, success: "", error: T("Die Anfrage konnte nicht gesendet werden. Bitte prüfe deine Angaben und versuche es erneut.", "The request could not be sent. Please check your details and try again.") });
+    }
+  };
   const activeFeature = FEATURES.find((f) => f.id === activeAgent) || FEATURES[0];
   const ActiveIcon = activeFeature.icon;
 
@@ -330,27 +359,58 @@ export default function Landing() {
       </section>
 
       {/* Early Access */}
-      <section className="relative px-6 md:px-10 py-20 border-t border-white/5">
-        <div className="max-w-4xl mx-auto rounded-3xl p-8 md:p-10 bg-white/[0.03] border border-white/8 text-center">
-          <StatusBadge status="beta" lang={lang} className="mb-5" />
-          <h2 className="text-2xl md:text-3xl font-bold">
-            {T("Werde Teil der ersten Brandmind-Pioniere", "Become one of the first Brandmind pioneers")}
-          </h2>
-          <p className="mt-4 text-zinc-400 leading-relaxed max-w-2xl mx-auto">
-            {T(
-              "Teste Brandmind frühzeitig, teile dein Feedback und hilf mit, die KI-Zentrale für moderne Marken weiterzuentwickeln.",
-              "Test Brandmind early, share your feedback and help evolve the AI command center for modern brands."
-            )}
-          </p>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={requestEarlyAccess}
-            className="mt-8 inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-base font-semibold text-white"
-            style={{ background: C.primary, boxShadow: `0 10px 40px ${C.glow}` }}
-          >
-            {T("Early Access anfragen", "Request early access")} <ArrowRight size={18} />
-          </motion.button>
+      <section id="early-access-form" className="relative scroll-mt-6 px-6 md:px-10 py-20 border-t border-white/5">
+        <div className="max-w-4xl mx-auto rounded-3xl p-8 md:p-10 bg-white/[0.03] border border-white/8">
+          <div className="text-center">
+            <StatusBadge status="beta" lang={lang} className="mb-5" />
+            <h2 className="text-2xl md:text-3xl font-bold">
+              {T("Werde Teil der ersten Brandmind-Pioniere", "Become one of the first Brandmind pioneers")}
+            </h2>
+            <p className="mt-4 text-zinc-400 leading-relaxed max-w-2xl mx-auto">
+              {T("Teste Brandmind frühzeitig, teile dein Feedback und hilf mit, die KI-Zentrale für moderne Marken weiterzuentwickeln.", "Test Brandmind early, share your feedback and help evolve the AI command center for modern brands.")}
+            </p>
+          </div>
+
+          <form onSubmit={submitEarlyAccess} className="mt-8 grid gap-4 text-left" noValidate>
+            <input aria-hidden="true" tabIndex="-1" autoComplete="off" className="hidden" value={earlyAccessForm.website} onChange={(e) => setEarlyAccessField("website", e.target.value)} />
+            <div className="grid md:grid-cols-2 gap-4">
+              <label className="grid gap-2 text-sm text-zinc-300">
+                {T("Name *", "Name *")}
+                <input required maxLength="120" value={earlyAccessForm.name} onChange={(e) => setEarlyAccessField("name", e.target.value)} className="rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-[#7C3AED]" />
+              </label>
+              <label className="grid gap-2 text-sm text-zinc-300">
+                {T("E-Mail-Adresse *", "Email address *")}
+                <input required type="email" maxLength="254" value={earlyAccessForm.email} onChange={(e) => setEarlyAccessField("email", e.target.value)} className="rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-[#7C3AED]" />
+              </label>
+            </div>
+            <label className="grid gap-2 text-sm text-zinc-300">
+              {T("Unternehmen oder Projekt", "Company or project")}
+              <input maxLength="160" value={earlyAccessForm.company_or_project} onChange={(e) => setEarlyAccessField("company_or_project", e.target.value)} className="rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-[#7C3AED]" />
+            </label>
+            <label className="grid gap-2 text-sm text-zinc-300">
+              {T("Aktueller Status *", "Current status *")}
+              <select required value={earlyAccessForm.audience_status} onChange={(e) => setEarlyAccessField("audience_status", e.target.value)} className="rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-[#7C3AED]">
+                <option value="">{T("Bitte auswählen", "Please choose")}</option>
+                <option value="founding">{T("Ich gründe gerade", "I am currently founding")}</option>
+                <option value="self_employed">{T("Ich bin selbstständig", "I am self-employed")}</option>
+                <option value="company">{T("Ich arbeite in einem Unternehmen", "I work at a company")}</option>
+                <option value="agency">{T("Ich führe eine Agentur", "I run an agency")}</option>
+              </select>
+            </label>
+            <label className="grid gap-2 text-sm text-zinc-300">
+              {T("Größte Marketing-Herausforderung *", "Biggest marketing challenge *")}
+              <textarea required maxLength="1200" rows="4" value={earlyAccessForm.marketing_challenge} onChange={(e) => setEarlyAccessField("marketing_challenge", e.target.value)} className="rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:border-[#7C3AED]" />
+            </label>
+            <label className="flex gap-3 text-sm leading-6 text-zinc-300">
+              <input type="checkbox" checked={earlyAccessForm.privacy_consent} onChange={(e) => setEarlyAccessField("privacy_consent", e.target.checked)} className="mt-1 h-4 w-4" />
+              <span>{T("Ich stimme der Datenschutzerklärung zu. *", "I agree to the privacy notice. *")} <Link className="text-violet-300 underline" to={isDE ? "/datenschutz" : "/privacy"}>{T("Datenschutz öffnen", "Open privacy notice")}</Link></span>
+            </label>
+            {earlyAccessState.error && <p role="alert" className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">{earlyAccessState.error}</p>}
+            {earlyAccessState.success && <p role="status" className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-100">{earlyAccessState.success}</p>}
+            <button type="submit" disabled={earlyAccessState.loading || !!earlyAccessState.success} className="inline-flex items-center justify-center gap-2 rounded-xl px-7 py-3.5 text-base font-semibold text-white disabled:opacity-60" style={{ background: C.primary, boxShadow: `0 10px 40px ${C.glow}` }}>
+              {earlyAccessState.loading ? T("Wird gesendet…", "Sending…") : T("Early Access anfragen", "Request early access")} <ArrowRight size={18} />
+            </button>
+          </form>
         </div>
       </section>
 
@@ -402,9 +462,12 @@ export default function Landing() {
             <img src="/brand/brandmind-logo.png" alt={BRANDMIND.name} className="h-5 w-auto opacity-80" />
           </div>
           <span>© {new Date().getFullYear()} {BRANDMIND.name}</span>
-          <Link to="/auth" className="hover:text-zinc-300 transition-colors">
-            {T("Anmelden", "Log in")}
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/impressum" className="hover:text-zinc-300 transition-colors">{T("Impressum", "Imprint")}</Link>
+            <Link to={isDE ? "/datenschutz" : "/privacy"} className="hover:text-zinc-300 transition-colors">{T("Datenschutz", "Privacy")}</Link>
+            <Link to={isDE ? "/kontakt" : "/contact"} className="hover:text-zinc-300 transition-colors">{T("Kontakt", "Contact")}</Link>
+            <Link to="/auth" className="hover:text-zinc-300 transition-colors">{T("Anmelden", "Log in")}</Link>
+          </div>
         </div>
       </footer>
     </div>

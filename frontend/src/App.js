@@ -119,6 +119,7 @@ import TTSStudio from "@/pages/TTSStudio";
 import OutputFactory from "@/pages/OutputFactory";
 import AIBusinessCard, { PublicBusinessCard } from "@/pages/AIBusinessCard";
 import Landing from "@/pages/Landing";
+import LegalPlaceholder from "@/pages/LegalPlaceholder";
 import FounderPathSelect from "@/pages/FounderPathSelect";
 import FounderIntake from "@/pages/FounderIntake";
 import FounderIdeas from "@/pages/FounderIdeas";
@@ -139,6 +140,11 @@ function App() {
             <Route path="/" element={<Landing />} />
             {/* Brandmind auth – standalone, no app chrome */}
             <Route path="/auth" element={<Auth />} />
+            <Route path="/impressum" element={<LegalPlaceholder type="imprint" />} />
+            <Route path="/privacy" element={<LegalPlaceholder type="privacy" />} />
+            <Route path="/datenschutz" element={<LegalPlaceholder type="privacy" />} />
+            <Route path="/contact" element={<LegalPlaceholder type="contact" />} />
+            <Route path="/kontakt" element={<LegalPlaceholder type="contact" />} />
             <Route path="/card/:hash" element={<PublicBusinessCard />} />
             {/* Everything else runs inside the app shell */}
             <Route path="/*" element={<AppShell />} />

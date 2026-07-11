@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { BrainCircuit, Loader2, ArrowRight, Sparkles } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { BRANDMIND } from "@/brandmind";
@@ -221,6 +221,11 @@ export default function Auth() {
             ? T("Kostenlos starten · keine Kreditkarte nötig", "Start free · no credit card")
             : T("Willkommen zurück", "Welcome back")}
         </p>
+        <div className="mt-4 flex items-center justify-center gap-4 text-xs text-zinc-600">
+          <Link to="/impressum" className="hover:text-zinc-300">{T("Impressum", "Imprint")}</Link>
+          <Link to={isDE ? "/datenschutz" : "/privacy"} className="hover:text-zinc-300">{T("Datenschutz", "Privacy")}</Link>
+          <Link to={isDE ? "/kontakt" : "/contact"} className="hover:text-zinc-300">{T("Kontakt", "Contact")}</Link>
+        </div>
       </motion.div>
     </div>
   );

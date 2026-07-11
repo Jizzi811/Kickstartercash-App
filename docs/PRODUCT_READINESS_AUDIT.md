@@ -166,3 +166,45 @@ Neu: `backend/tests/test_sprint_c_onboarding_readiness.py` und `frontend/src/spr
 
 ## Offene Risiken und verschobene Sprint-D/E-Aufgaben
 Provider-abhängige Founder-Generierung kann lokal ohne Keys fehlschlagen. Browser-QA an echten Viewports ist weiterhin offen. Vollständige Security-/Legacy-Bereinigung, Early-Access-Backendformular und breite Regression-Suite wurden bewusst nicht vorgezogen.
+
+---
+
+# Sprint D Ergänzung – Legacy, Early Access & Security
+
+## Umsetzungsplan Sprint D
+1. Legacy-Kategorien: sichtbare Altmarke/Domain, technische Backward-Compatibility-IDs, erreichbare Legacy-Funktionen, Test-/Seed-Daten, historische Dokumentation und Assets.
+2. Early-Access-Datenmodell: neue Collection `early_access_requests` mit normalisierter E-Mail, Einwilligung, Status und serverseitigen Zeitstempeln.
+3. Export-Berechtigung: nur explizite globale Plattform-Adminclaims; Workspace-Owner/Admin reicht nicht.
+4. Sicherheitsprüfschwerpunkte: Auth, Workspace-/Brand-Scoping, neue öffentliche Route, Provider-Secrets, Uploads, Business Cards, Tickets, Fehlerausgaben.
+5. Kleine Korrekturen: sichtbare Legacy-Beispiele neutralisiert, Brand-Detail/Update/Delete gescopet, Legal-Platzhalter verlinkt.
+6. Bewusst nicht angefasst: vollständige Legacy-KASH/Funnel-Entfernung, breite Auth-Architektur, Deployment, Browser-E2E, neue Bezahlstruktur.
+
+## Legacy-Bereinigung
+Nutzersichtbare alte Domains, Black-/Exclusive-Card-Beispiele und Referral-Placeholder in Kernseiten wurden ersetzt. Verbleibende technische/historische Treffer sind in `docs/LEGACY_CLEANUP.md` dokumentiert, insbesondere Legacy-KASH/Funnel, Root-`index.html`, generierte Bundles, alte Tests und Backward-Compatibility-IDs.
+
+## Early-Access-Datenmodell und Endpunkte
+`POST /api/early-access` validiert öffentlich zugängliche Formularanfragen ohne Login, ohne Provider-Abhängigkeit und ohne externe E-Mail. Gespeichert werden `id`, `name`, `normalized_email`, `display_email`, `company_or_project`, `audience_status`, `marketing_challenge`, `privacy_consent`, `privacy_consent_at`, `locale`, `source`, `created_at`, `updated_at`, `request_status`.
+
+## Berechtigungsmodell und Export
+`GET /api/early-access/requests`, `PATCH /api/early-access/requests/{id}` und `GET /api/early-access/export.csv` sind nicht öffentlich. Sie verlangen Auth plus globalen Adminclaim (`is_platform_admin` oder `early_access.admin`). Tenant-lokale Workspace-Rollen werden nicht als Plattformrechte interpretiert. Der CSV-Export schützt vor CSV-Injection und exportiert keine Secrets/IPs/Tokens.
+
+## Spam-/Rate-Limit-Schutz
+Der öffentliche Submit-Endpunkt nutzt Längenbegrenzung, Enums, E-Mail-Validierung, Honeypot, idempotente E-Mail-Deduplizierung und ein einfaches In-Memory-Rate-Limit pro unmittelbarem Client. Das ist nur Basisschutz; für Produktion wird ein externer Store oder Plattformschutz empfohlen.
+
+## Rechtliche Platzhalter
+Landing und Auth verlinken Impressum, Datenschutz/Privacy und Kontakt. Die Seiten sind bewusst als vor Veröffentlichung zu ergänzende Platzhalter gekennzeichnet und enthalten keine erfundenen Unternehmensdaten.
+
+## Sicherheitsprüfung und behobene Risiken
+Dokumentiert in `docs/SECURITY_REVIEW.md`. Behoben wurden kleine IDOR-Risiken bei Brand-Detail/Update/Delete, neue Early-Access-Adminroute-Härtung, CSV-Injection-Schutz und sichtbare Legacy-Beispiele.
+
+## Offene Risiken
+- Legacy-KASH/Funnel bleibt erreichbar und muss vor öffentlichem Early Access deaktiviert, separiert oder migriert werden.
+- Upload-, Ticket- und Public-Business-Card-Payloads benötigen vor Launch Detail-Härtung.
+- Rechtstexte sind noch Platzhalter.
+- In-Memory-Rate-Limit ist nicht instanzübergreifend.
+
+## Tests
+Ergänzt wurden fokussierte Backend-Tests für Early-Access-Validierung/Adminschutz/CSV-Schutz und Frontend-Tests für CTA/Formular/Privacy-Link/Legacy-Kernseiten. Sprint-E-Browser-QA wurde bewusst nicht durchgeführt.
+
+## Nach Sprint E verschoben
+Vollständige E2E-Browser-QA, Deployment, umfassende Regression, neue Zahlungsstruktur, breite Architekturmodernisierung und vollständige Legacy-Funktionsentfernung.

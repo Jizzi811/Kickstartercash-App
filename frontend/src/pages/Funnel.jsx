@@ -107,7 +107,7 @@ export default function Funnel() {
             <span className="font-display text-lg">{editing ? t("funnel_update") : t("funnel_new")}</span>
           </div>
           <Field label={t("funnel_reflink")}>
-            <Input data-testid="funnel-reflink" className={inputCls} value={form.reflink} onChange={(e) => set("reflink", e.target.value)} placeholder="https://portal.kickstartercash.club/?ref=DEINNAME" />
+            <Input data-testid="funnel-reflink" className={inputCls} value={form.reflink} onChange={(e) => set("reflink", e.target.value)} placeholder="https://example.com/angebot" />
           </Field>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label={t("funnel_name")}><Input data-testid="funnel-name" className={inputCls} value={form.name} onChange={(e) => set("name", e.target.value)} /></Field>
