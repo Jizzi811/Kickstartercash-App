@@ -106,3 +106,9 @@ Für öffentlichen Early Access: finale Rechtstexte, echte Browser-QA, Mongo-Int
 
 ## Website-to-Brand Import
 Brandmind kann im Existing-Brand-Onboarding öffentliche Websites serverseitig analysieren und daraus einen editierbaren Importentwurf erzeugen. Felder werden mit Quellen, Konfidenz und explizit/abgeleitet-Kennzeichnung dargestellt und erst nach Nutzerauswahl in bestehende Brand-Felder übernommen. Bekannte Produktionsanforderungen sind in `docs/WEBSITE_TO_BRAND_IMPORT.md` aufgeführt.
+
+## Founder Entry & Idea Discovery Update
+- Founder Journey starts at `/onboarding/founder/start` with three persisted paths: `no_idea`, `rough_direction`, `concrete_idea`.
+- Founder profile and ideas reuse existing founder/onboarding persistence with user/workspace scoping.
+- Ideas are unverified planning suggestions only; market, demand, competition and financing remain later validation steps.
+- Provider failures do not create fake ideas; generation is rate-limited and favorite selection is explicit.

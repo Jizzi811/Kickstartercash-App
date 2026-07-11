@@ -1,235 +1,29 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
-import { Lightbulb, Loader2, Sparkles, Lock, CheckCircle2 } from "lucide-react";
+import { Lightbulb, Loader2, Sparkles, CheckCircle2, Scale } from "lucide-react";
 import FounderProgress from "@/components/FounderProgress";
-import { API } from "@/context/AppContext";
+import { API, useApp } from "@/context/AppContext";
 import { Page, Hero, Card, Btn, FieldLabel, Input, Textarea, BMBadge } from "@/components/bm";
 
-function Score({ label, value }) {
-  return (
-    <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs text-zinc-300">
-      <span>{label}</span>
-      <span className="font-semibold text-zinc-100">{value}</span>
-    </div>
-  );
-}
+const emptyIdea = { title: "", short_description: "", problem: "", target_audience: "", offer_type: "", revenue_model: "", delivery_model: "hybrid", estimated_start_budget: "noch offen", time_to_first_offer: "noch offen", assumptions: [], risks: [], to_validate: ["Markt, Nachfrage, Wettbewerb und Geschäftsmodell später prüfen"], source_type: "user_provided" };
 
 export default function FounderIdeas() {
-  const navigate = useNavigate();
-  const [profile, setProfile] = useState(null);
-  const [ideas, setIdeas] = useState([]);
-  const [decisions, setDecisions] = useState([]);
-  const [focus, setFocus] = useState("");
-  const [marketHint, setMarketHint] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
-
-  const selectedIdeaId = profile?.selected_idea_id || "";
-
-  const load = async () => {
-    const [intakeRes, ideasRes, decisionsRes] = await Promise.all([
-      axios.get(`${API}/founder/intake`),
-      axios.get(`${API}/founder/ideas`),
-      axios.get(`${API}/decisions`, { params: { category: "business_idea" } }),
-    ]);
-    setProfile(intakeRes.data);
-    setIdeas(ideasRes.data.ideas || []);
-    setDecisions(decisionsRes.data.decisions || []);
-  };
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        await load();
-      } catch (error) {
-        toast.error("Founder-Ideen konnten nicht geladen werden");
-        console.warn(error);
-      } finally {
-        if (alive) setLoading(false);
-      }
-    })();
-    return () => { alive = false; };
-  }, []);
-
-  const selectedDecision = useMemo(
-    () => decisions.find((decision) => decision.status === "locked") || decisions[0],
-    [decisions]
-  );
-
-  const generateIdeas = async () => {
-    setGenerating(true);
-    try {
-      const { data } = await axios.post(`${API}/founder/ideas/generate`, {
-        focus,
-        market_hint: marketHint,
-        language: "DE",
-      });
-      setIdeas(data.ideas || []);
-      toast.success("Neue Ideen wurden erstellt");
-    } catch (error) {
-      toast.error("Ideen konnten nicht erstellt werden");
-      console.warn(error);
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const selectIdea = async (idea) => {
-    try {
-      await axios.post(`${API}/founder/ideas/select`, { idea_id: idea.id });
-      await axios.post(`${API}/decisions`, {
-        category: "business_idea",
-        selected_option: idea.title,
-        alternatives: ideas.filter((item) => item.id !== idea.id).slice(0, 3).map((item) => item.title),
-        why_text: idea.summary || "Ausgewählte Founder-Idee.",
-        evidence_refs: [idea.target_audience || "", idea.first_offer || ""].filter(Boolean),
-        confidence: 74,
-        decided_by: "user",
-      });
-      await load();
-      toast.success("Idee ausgewählt und als Decision gespeichert");
-    } catch (error) {
-      toast.error("Idee konnte nicht gespeichert werden");
-      console.warn(error);
-    }
-  };
-
-  const lockDecision = async (decisionId) => {
-    try {
-      await axios.post(`${API}/decisions/${decisionId}/lock`);
-      await load();
-      toast.success("Decision wurde gelockt");
-    } catch (error) {
-      toast.error("Decision konnte nicht gelockt werden");
-      console.warn(error);
-    }
-  };
-
-  return (
-    <Page>
-      <FounderProgress current="ideas" />
-      <Hero
-        icon={Lightbulb}
-        badge="Founder Flow · Phase 2 & 3"
-        title="Ideenfindung & Entscheidungen"
-        description="Generiere Geschäftsideen, wähle eine Richtung und speichere die Begründung im Decision Memory."
-        actions={(
-          <>
-            <Btn variant="ghost" onClick={() => navigate("/onboarding/founder/intake")}>Zurück zur Vision</Btn>
-            <Btn variant="ghost" onClick={() => navigate("/ops")}>Content Ops Hub</Btn>
-            <Btn onClick={() => navigate("/onboarding/founder/brand")} disabled={!selectedDecision}>
-              <Sparkles size={14} />
-              Marke entwickeln
-            </Btn>
-          </>
-        )}
-      />
-
-      {loading ? (
-        <Card>
-          <div className="inline-flex items-center gap-2 text-sm text-zinc-400">
-            <Loader2 size={14} className="animate-spin" />
-            Founder-Ideen werden geladen…
-          </div>
-        </Card>
-      ) : (
-        <>
-          <Card>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <FieldLabel>Fokus (optional)</FieldLabel>
-                <Input
-                  value={focus}
-                  onChange={(event) => setFocus(event.target.value)}
-                  placeholder="z. B. AI-Beratung für Coaches"
-                />
-              </div>
-              <div>
-                <FieldLabel>Markt-Hinweis (optional)</FieldLabel>
-                <Input
-                  value={marketHint}
-                  onChange={(event) => setMarketHint(event.target.value)}
-                  placeholder="z. B. DACH, B2B, digitale Produkte"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <Btn onClick={generateIdeas} disabled={generating}>
-                  {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                  Ideen generieren
-                </Btn>
-              </div>
-            </div>
-          </Card>
-
-          <section className="grid gap-4 lg:grid-cols-3">
-            <div className="space-y-4 lg:col-span-2">
-              {(ideas || []).map((idea) => {
-                const isSelected = selectedIdeaId && selectedIdeaId === idea.id;
-                return (
-                  <Card key={idea.id} className="space-y-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <BMBadge tone={isSelected ? "success" : "info"}>
-                        {isSelected ? "Ausgewählt" : "Vorschlag"}
-                      </BMBadge>
-                      <h3 className="text-base font-semibold text-zinc-100">{idea.title}</h3>
-                    </div>
-                    <p className="text-sm leading-relaxed text-zinc-400">{idea.summary}</p>
-                    <div className="grid gap-2 md:grid-cols-3">
-                      <Score label="Demand" value={idea.scores?.demand ?? 0} />
-                      <Score label="Competition" value={idea.scores?.competition ?? 0} />
-                      <Score label="Founder Fit" value={idea.scores?.founder_fit ?? 0} />
-                    </div>
-                    <div className="text-xs text-zinc-500">
-                      Zielgruppe: {idea.target_audience || "n/a"} · Erstes Angebot: {idea.first_offer || "n/a"}
-                    </div>
-                    <Btn variant={isSelected ? "secondary" : "primary"} onClick={() => selectIdea(idea)}>
-                      <CheckCircle2 size={14} />
-                      {isSelected ? "Erneut speichern" : "Als Richtung wählen"}
-                    </Btn>
-                  </Card>
-                );
-              })}
-              {!ideas.length && (
-                <Card>
-                  <p className="text-sm text-zinc-400">Noch keine Ideen vorhanden. Starte oben die Generierung.</p>
-                </Card>
-              )}
-            </div>
-
-            <Card className="space-y-4">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-300">Decision Memory</h3>
-              {(decisions || []).length ? (
-                <div className="space-y-3">
-                  {decisions.map((decision) => (
-                    <div key={decision.id} className="rounded-xl border border-white/10 bg-black/20 p-3">
-                      <div className="mb-1 flex items-center justify-between gap-2">
-                        <span className="text-sm font-semibold text-zinc-100">{decision.selected_option || "Ohne Titel"}</span>
-                        <BMBadge tone={decision.status === "locked" ? "success" : "neutral"}>{decision.status}</BMBadge>
-                      </div>
-                      <p className="text-xs leading-relaxed text-zinc-400">{decision.why_text || "Keine Begründung gespeichert."}</p>
-                      {decision.status !== "locked" && (
-                        <Btn size="sm" variant="ghost" className="mt-2" onClick={() => lockDecision(decision.id)}>
-                          <Lock size={13} />
-                          Lock
-                        </Btn>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-zinc-500">Noch keine Decisions vorhanden.</p>
-              )}
-              <div>
-                <FieldLabel>Kurznotiz</FieldLabel>
-                <Textarea rows={3} disabled value={profile?.vision || ""} />
-              </div>
-            </Card>
-          </section>
-        </>
-      )}
-    </Page>
-  );
+  const navigate = useNavigate(); const { language } = useApp(); const isEN = language === "EN";
+  const [profile, setProfile] = useState({}); const [ideas, setIdeas] = useState([]); const [selected, setSelected] = useState([]); const [form, setForm] = useState(emptyIdea); const [loading, setLoading] = useState(true); const [generating, setGenerating] = useState(false); const [error, setError] = useState("");
+  const load = async () => { const [p, i] = await Promise.all([axios.get(`${API}/founder/profile`), axios.get(`${API}/founder/ideas`)]); setProfile(p.data || {}); setIdeas(i.data.ideas || []); };
+  useEffect(() => { let alive = true; (async()=>{ try { await load(); } catch { toast.error("Founder-Ideen konnten nicht geladen werden"); } finally { if (alive) setLoading(false); } })(); return()=>{alive=false}; }, []);
+  useEffect(()=>{ if (profile.founder_path === 'concrete_idea') setForm((p)=>({ ...p, founder_path: 'concrete_idea', title: profile.idea_working_title || p.title, short_description: profile.idea_description || p.short_description, offer_type: profile.planned_offer || p.offer_type, target_audience: profile.assumed_target_group || p.target_audience, revenue_model: profile.planned_revenue_source || p.revenue_model })); }, [profile]);
+  const generate = async () => { setGenerating(true); setError(""); try { const { data } = await axios.post(`${API}/founder/ideas/generate`, { focus: profile.rough_topic || "", language: isEN ? "EN" : "DE" }); setIdeas((prev)=>[...(data.ideas||[]), ...prev]); toast.success("Passende Vorschläge erzeugt"); } catch (e) { setError(e.response?.data?.detail || "Provider nicht verfügbar. Es wurden keine Fake-Ideen erzeugt."); } finally { setGenerating(false); } };
+  const createConcrete = async () => { try { await axios.post(`${API}/founder/ideas`, { ...form, founder_path: profile.founder_path || 'concrete_idea' }); await load(); toast.success("Idee strukturiert gespeichert"); } catch { toast.error("Idee konnte nicht gespeichert werden"); } };
+  const toggleCompare = (id) => setSelected((p) => p.includes(id) ? p.filter(x=>x!==id) : (p.length < 3 ? [...p, id] : p));
+  const favorite = async (id) => { if (!window.confirm("Diese Idee ausdrücklich als Favorit bestätigen? Bestehende Inhalte bleiben erhalten.")) return; const { data } = await axios.post(`${API}/founder/ideas/${id}/favorite`); toast.success("Favorit bestätigt"); navigate(data.next_route || "/onboarding/founder/intake"); };
+  return <Page><FounderProgress current="ideas" /><Hero icon={Lightbulb} badge="Gründungs-KI-Experte" title={isEN ? "Idea discovery" : "Ideenentwicklung"} description={isEN ? "Suggestions are unverified planning input, not market validation." : "Ideen werden als ungeprüfte passende Vorschläge gespeichert – ohne Profitabilitätsversprechen."} actions={<><Btn variant="ghost" onClick={()=>navigate('/onboarding/founder/profile')}>Zurück</Btn><Btn variant="ghost" onClick={()=>navigate('/onboarding/founder/ideas/compare')} disabled={!selected.length}><Scale size={14}/>Vergleichen</Btn></>} />
+    {loading ? <Card><Loader2 className="animate-spin" /></Card> : <>
+      {profile.founder_path !== 'concrete_idea' && <Card><p className="mb-4 text-sm text-zinc-400">{profile.founder_path === 'rough_direction' ? 'Aus deiner groben Richtung entstehen unterscheidbare Varianten.' : 'Aus deinem Gründerprofil entstehen maximal 6–8 passende Vorschläge.'}</p><Btn onClick={generate} disabled={generating}>{generating ? <Loader2 size={14} className="animate-spin"/> : <Sparkles size={14}/>}Weitere Ideen erzeugen</Btn>{error && <p className="mt-3 text-sm text-amber-300">{error}</p>}</Card>}
+      {profile.founder_path === 'concrete_idea' && <Card className="space-y-4"><h2 className="text-lg font-semibold text-zinc-100">Konkrete Idee strukturieren</h2><p className="text-sm text-zinc-400">Deine Idee ist jetzt strukturiert. Im nächsten Schritt prüfen wir Zielgruppe, Nachfrage, Wettbewerb und Geschäftsmodell.</p><div className="grid gap-4 md:grid-cols-2"><div><FieldLabel>Titel</FieldLabel><Input value={form.title} onChange={(e)=>setForm({...form,title:e.target.value})}/></div><div><FieldLabel>Zielgruppe</FieldLabel><Input value={form.target_audience} onChange={(e)=>setForm({...form,target_audience:e.target.value})}/></div><div className="md:col-span-2"><FieldLabel>Beschreibung</FieldLabel><Textarea value={form.short_description} onChange={(e)=>setForm({...form,short_description:e.target.value})}/></div><div><FieldLabel>Angebot</FieldLabel><Input value={form.offer_type} onChange={(e)=>setForm({...form,offer_type:e.target.value})}/></div><div><FieldLabel>Erlösmodell</FieldLabel><Input value={form.revenue_model} onChange={(e)=>setForm({...form,revenue_model:e.target.value})}/></div></div><Btn onClick={createConcrete}>Idee speichern</Btn></Card>}
+      <div className="grid gap-4 lg:grid-cols-3">{ideas.map((idea)=> <Card key={idea.id} className="space-y-3"><div className="flex flex-wrap gap-2"><BMBadge tone={idea.favorite ? 'success' : 'info'}>{idea.favorite ? 'Favorit' : 'Passender Vorschlag'}</BMBadge><BMBadge tone="neutral">{idea.evidence_status || 'unverified'}</BMBadge></div><h3 className="text-base font-semibold text-zinc-100">{idea.title}</h3><p className="text-sm text-zinc-400">{idea.short_description}</p><p className="text-xs text-zinc-500">Marktpotenzial: {idea.market_potential_status || 'noch zu prüfen'} · Wettbewerb: {idea.competition_status || 'noch zu prüfen'}</p><p className="text-xs text-zinc-400">Annahmen: {(idea.assumptions || []).join(', ') || 'noch zu prüfen'}</p><label className="flex items-center gap-2 text-sm text-zinc-300"><input type="checkbox" checked={selected.includes(idea.id)} disabled={!selected.includes(idea.id) && selected.length >= 3} onChange={()=>toggleCompare(idea.id)}/> Für Vergleich auswählen (max. 3)</label><Btn onClick={()=>favorite(idea.id)}><CheckCircle2 size={14}/>Als Favorit bestätigen</Btn></Card>)}</div>
+      {!ideas.length && <Card><p className="text-sm text-zinc-400">Noch keine Ideen. Für konkrete Ideen speichere oben deine Zusammenfassung; für andere Wege nutze die Provider-Generierung.</p></Card>}
+    </>}</Page>;
 }

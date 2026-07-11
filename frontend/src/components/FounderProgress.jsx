@@ -4,8 +4,11 @@ import { CheckCircle2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 const STEPS = [
+  ["start", "/onboarding/founder/start", "Start"],
+  ["profile", "/onboarding/founder/profile", "Profil"],
+  ["ideas", "/onboarding/founder/ideas", "Ideen"],
+  ["compare", "/onboarding/founder/ideas/compare", "Vergleich"],
   ["intake", "/onboarding/founder/intake", "Intake"],
-  ["ideas", "/onboarding/founder/ideas", "Ideas"],
   ["brand", "/onboarding/founder/brand", "Brand"],
   ["offers", "/onboarding/founder/offers", "Offers"],
   ["business_plan", "/onboarding/founder/business-plan", "Business"],

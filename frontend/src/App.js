@@ -122,8 +122,11 @@ import AIBusinessCard, { PublicBusinessCard } from "@/pages/AIBusinessCard";
 import Landing from "@/pages/Landing";
 import LegalPlaceholder from "@/pages/LegalPlaceholder";
 import FounderPathSelect from "@/pages/FounderPathSelect";
+import FounderStart from "@/pages/FounderStart";
+import FounderProfile from "@/pages/FounderProfile";
 import FounderIntake from "@/pages/FounderIntake";
 import FounderIdeas from "@/pages/FounderIdeas";
+import FounderIdeaCompare from "@/pages/FounderIdeaCompare";
 import FounderBrandDevelopment from "@/pages/FounderBrandDevelopment";
 import FounderOffers from "@/pages/FounderOffers";
 import FounderBusinessPlan from "@/pages/FounderBusinessPlan";
@@ -207,8 +210,11 @@ function AppShell() {
               <Route path="/permissions" element={<Permissions />} />
               <Route path="/onboarding/select-path" element={<FounderPathSelect />} />
               <Route path="/onboarding/existing-brand/import" element={<WebsiteBrandImport />} />
+              <Route path="/onboarding/founder/start" element={<FounderStart />} />
+              <Route path="/onboarding/founder/profile" element={<FounderProfile />} />
               <Route path="/onboarding/founder/intake" element={<FounderIntake />} />
               <Route path="/onboarding/founder/ideas" element={<FounderIdeas />} />
+              <Route path="/onboarding/founder/ideas/compare" element={<FounderIdeaCompare />} />
               <Route path="/onboarding/founder/brand" element={<FounderBrandDevelopment />} />
               <Route path="/onboarding/founder/offers" element={<FounderOffers />} />
               <Route path="/onboarding/founder/business-plan" element={<FounderBusinessPlan />} />

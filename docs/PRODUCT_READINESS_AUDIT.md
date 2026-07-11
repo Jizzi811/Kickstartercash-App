@@ -238,3 +238,9 @@ Details: siehe `docs/SPRINT_E_RELEASE_VALIDATION.md`, `docs/PRODUCT_READINESS_RE
 - Existing-Brand-Onboarding bietet jetzt zuerst einen serverseitigen Website-Import mit Draft-Prüfung an.
 - SSRF-Schutz, Seiten-/Größenlimits, Workspace/User/Brand-Scoping und manuelle Fallbacks sind dokumentiert in `docs/WEBSITE_TO_BRAND_IMPORT.md`.
 - Produktionslücke: In-Memory Rate Limits sollten vor Multi-Instance-Betrieb durch einen verteilten Store ersetzt werden.
+
+## Founder Entry & Idea Discovery Update
+- Founder Journey starts at `/onboarding/founder/start` with three persisted paths: `no_idea`, `rough_direction`, `concrete_idea`.
+- Founder profile and ideas reuse existing founder/onboarding persistence with user/workspace scoping.
+- Ideas are unverified planning suggestions only; market, demand, competition and financing remain later validation steps.
+- Provider failures do not create fake ideas; generation is rate-limited and favorite selection is explicit.
