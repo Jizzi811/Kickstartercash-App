@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { Calendar, Link2, Loader2, Play, Plus, Send, Workflow } from "lucide-react";
+import FounderProgress from "@/components/FounderProgress";
 import { API } from "@/context/AppContext";
 import { Page, Hero, Card, Btn, FieldLabel, Input, Textarea, BMBadge } from "@/components/bm";
 
@@ -157,6 +158,7 @@ export default function FounderOperations() {
 
   return (
     <Page>
+      <FounderProgress current="operations" />
       <Hero
         icon={Workflow}
         badge="Content Ops"

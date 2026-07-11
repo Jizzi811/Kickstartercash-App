@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import { Lightbulb, Loader2, Sparkles, Lock, CheckCircle2 } from "lucide-react";
+import FounderProgress from "@/components/FounderProgress";
 import { API } from "@/context/AppContext";
 import { Page, Hero, Card, Btn, FieldLabel, Input, Textarea, BMBadge } from "@/components/bm";
 
@@ -109,6 +110,7 @@ export default function FounderIdeas() {
 
   return (
     <Page>
+      <FounderProgress current="ideas" />
       <Hero
         icon={Lightbulb}
         badge="Founder Flow · Phase 2 & 3"

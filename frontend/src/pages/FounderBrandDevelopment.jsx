@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import { Sparkles, Loader2, CheckCircle2, Palette } from "lucide-react";
+import FounderProgress from "@/components/FounderProgress";
 import { API, useApp } from "@/context/AppContext";
 import { Page, Hero, Card, Btn, BMBadge } from "@/components/bm";
 
@@ -120,6 +121,7 @@ export default function FounderBrandDevelopment() {
 
   return (
     <Page>
+      <FounderProgress current="brand" />
       <Hero
         icon={Sparkles}
         badge="Founder Flow · Phase 3 & 4"

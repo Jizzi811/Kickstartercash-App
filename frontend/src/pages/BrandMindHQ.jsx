@@ -4,7 +4,7 @@ import axios from "axios";
 import {
   Activity, BarChart2, Brain, Building2, Crown, Dna, Film, LifeBuoy,
   Megaphone, MessageSquare, Palette, Rocket, Search, ShieldCheck, Sparkles,
-  Target, Users, Zap, ThumbsUp, ClipboardList, AlertTriangle, PlayCircle,
+  Target, Users, Zap, ThumbsUp, ClipboardList, AlertTriangle, PlayCircle, ArrowRight,
 } from "lucide-react";
 import { API, useApp } from "@/context/AppContext";
 import {
@@ -18,7 +18,7 @@ const DEPT_ICON = {
 
 export default function BrandMindHQ() {
   const navigate = useNavigate();
-  const { activeBrand, activeWorkspace, activeBrandId, user, lang } = useApp();
+  const { activeBrand, activeWorkspace, activeBrandId, user, lang, onboardingStatus, updateOnboardingStatus } = useApp();
   const de = lang === "DE";
   const firstName = (user?.name || user?.email?.split("@")[0] || "").split(" ")[0];
 
@@ -27,6 +27,8 @@ export default function BrandMindHQ() {
   const [intel, setIntel] = useState(null);
   const [plans, setPlans] = useState([]);
   const [dna, setDna] = useState(null);
+  const [readiness, setReadiness] = useState(null);
+  const [readinessError, setReadinessError] = useState(false);
 
   const load = useCallback(async () => {
     const settle = (p) => p.catch(() => null);
@@ -40,6 +42,14 @@ export default function BrandMindHQ() {
     setIntel(i?.data || null);
     setPlans(pl?.data?.plans || []);
     setDna(d?.data || null);
+    try {
+      const r = await axios.get(`${API}/brand-readiness`, { params: activeBrandId ? { brand_id: activeBrandId } : {} });
+      setReadiness(r.data);
+      setReadinessError(false);
+    } catch {
+      setReadiness(null);
+      setReadinessError(true);
+    }
   }, [activeBrandId, lang]);
 
   useEffect(() => { load(); }, [load]);
@@ -69,6 +79,23 @@ export default function BrandMindHQ() {
     { icon: AlertTriangle, label: de ? "Risiko" : "Risk", text: counts.tasks_open ? (de ? `${counts.tasks_open} offene Aufgaben können den Flow bremsen.` : `${counts.tasks_open} open tasks may slow the flow.`) : (de ? "Keine kritischen Risiken sichtbar." : "No critical risks visible.") },
   ];
 
+
+  const resumeOnboarding = () => navigate(onboardingStatus?.resume_route || "/onboarding/select-path");
+  const restartOnboarding = () => navigate("/onboarding/select-path");
+  const completeExplore = async () => {
+    await updateOnboardingStatus({ status: "completed", selected_path: "explore", current_step: "home", completed_steps: ["home", "quantum", "brand", "create", "projects"] }).catch(() => null);
+  };
+  const startQuick = (kind) => {
+    const prompts = {
+      social: de ? "Erstelle einen Social-Media-Post-Entwurf für meine Marke. Nutze vorhandenes Markenwissen, stelle fehlende Fragen und führe nichts automatisch aus." : "Create a draft social media post for my brand. Use existing brand knowledge, ask for missing inputs, and do not execute automatically.",
+      positioning: de ? "Prüfe die Positionierung meiner Marke anhand der gespeicherten Markenbasis. Nenne Lücken und nächste Fragen, ohne neue Fakten zu erfinden." : "Review my brand positioning based on saved brand data. Name gaps and next questions without inventing facts.",
+      campaign: de ? "Plane eine Mini-Kampagne als editierbaren Vorschlag. Nutze vorhandenes Markenwissen und kennzeichne Annahmen klar." : "Plan a mini campaign as an editable proposal. Use saved brand knowledge and clearly mark assumptions.",
+    };
+    const prompt = prompts[kind];
+    sessionStorage.setItem("brandmind_quantum_prompt", prompt);
+    navigate("/quantum", { state: { prompt } });
+  };
+
   const actions = [
     [de ? "Ziel erstellen" : "Create Goal", "/mission", Target],
     [de ? "Kampagne starten" : "Start Campaign", "/workflow", Rocket],
@@ -92,6 +119,65 @@ export default function BrandMindHQ() {
           <BMBadge tone="neutral" icon={Building2}>{activeWorkspace?.name || "—"}</BMBadge>
         </>}
       />
+
+
+      {onboardingStatus && onboardingStatus.status !== "completed" && (
+        <Card className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-sm font-semibold text-zinc-100">{de ? "Brandmind gemeinsam einrichten" : "Set up Brandmind together"}</div>
+            <p className="mt-1 text-xs text-zinc-500">{de ? "Onboarding-Fortschritt ist getrennt vom Brand-Readiness-Score und wird in deinem Workspace gespeichert." : "Onboarding progress is separate from Brand Readiness and stored in your workspace."}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {onboardingStatus.status === "skipped" && <Btn variant="ghost" onClick={restartOnboarding}>{de ? "Neu starten" : "Restart"}</Btn>}
+            <Btn onClick={resumeOnboarding}>{de ? "Fortsetzen" : "Resume"}<ArrowRight size={14} /></Btn>
+          </div>
+        </Card>
+      )}
+
+      <Section icon={Target} title={de ? "Brand Readiness" : "Brand Readiness"}>
+        <Card>
+          {readinessError ? (
+            <p className="text-sm text-zinc-400">{de ? "Der Einrichtungsstand konnte nicht geladen werden. Es wird kein Ersatzwert angezeigt." : "Readiness could not be loaded. No fallback score is shown."}</p>
+          ) : !readiness ? (
+            <p className="text-sm text-zinc-500">{de ? "Einrichtungsstand wird geladen…" : "Loading readiness…"}</p>
+          ) : readiness.state === "no_active_brand" ? (
+            <EmptyState icon={Dna} title={de ? "Noch keine aktive Marke" : "No active brand yet"} description={de ? "Lege eine Marke an, damit Brandmind den Einrichtungsstand aus echten Daten berechnen kann." : "Create a brand so Brandmind can calculate readiness from real data."} actionLabel={de ? "Marke einrichten" : "Set up brand"} onAction={() => navigate("/brand-brain")} />
+          ) : (
+            <div className="space-y-5">
+              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <div className="text-4xl font-bold text-white">{readiness.score}%</div>
+                  <p className="mt-1 text-sm text-zinc-300">{de ? `Deine Marke ist zu ${readiness.score} % eingerichtet.` : `Your brand is ${readiness.score}% set up.`}</p>
+                  <p className="mt-1 max-w-2xl text-xs text-zinc-500">{de ? "Je vollständiger deine Markenbasis ist, desto konsistenter können Quantum und deine Agenten arbeiten. Der Wert ist kein Qualitätsurteil und keine Erfolgsprognose." : "The more complete your brand foundation is, the more consistently Quantum and your agents can work. This is not a quality rating or success prediction."}</p>
+                </div>
+              </div>
+              <div className="grid gap-2 md:grid-cols-4">
+                {(readiness.category_details || []).map((cat) => <div key={cat.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-3"><div className="text-xs font-semibold text-zinc-200">{de ? cat.label_de : cat.label_en}</div><div className="mt-1 text-[11px] text-zinc-500">{cat.earned_points}/{cat.possible_points} · {cat.status}</div></div>)}
+              </div>
+              {(readiness.next_actions || []).slice(0, 3).length > 0 && <div className="grid gap-2 md:grid-cols-3">{readiness.next_actions.slice(0, 3).map((a) => <button key={a.category} onClick={() => navigate(a.route)} className="rounded-xl border border-violet-400/20 bg-violet-500/10 p-3 text-left hover:bg-violet-500/15"><div className="text-sm font-semibold text-violet-100">{de ? a.title_de : a.title_en}</div><p className="mt-1 text-xs text-zinc-500">{de ? a.description_de : a.description_en}</p></button>)}</div>}
+            </div>
+          )}
+        </Card>
+      </Section>
+
+      <Section icon={Sparkles} title={de ? "Schnellstarts" : "Quick starts"}>
+        <div className="grid gap-3 md:grid-cols-3">
+          {[
+            ["social", de ? "Social Post erstellen" : "Create a social post", de ? "Öffnet Quantum mit einem editierbaren Prompt. Keine automatische Ausführung." : "Opens Quantum with an editable prompt. No automatic execution."],
+            ["positioning", de ? "Positionierung prüfen" : "Review positioning", de ? "Nutze gespeichertes Markenwissen und erkenne Lücken." : "Use saved brand knowledge and identify gaps."],
+            ["campaign", de ? "Mini-Kampagne planen" : "Plan a mini campaign", de ? "Starte mit einem Vorschlag, den du bestätigst oder änderst." : "Start with a proposal you confirm or edit."],
+          ].map(([id, title, text]) => <Card key={id} className="space-y-3"><h3 className="text-sm font-semibold text-zinc-100">{title}</h3><p className="text-xs leading-5 text-zinc-500">{text}</p><Btn variant="ghost" onClick={() => startQuick(id)}>{de ? "In Quantum öffnen" : "Open in Quantum"}<ArrowRight size={14} /></Btn></Card>)}
+        </div>
+      </Section>
+
+      {onboardingStatus?.selected_path === "explore" && onboardingStatus.status !== "completed" && (
+        <Section icon={Sparkles} title={de ? "Brandmind entdecken" : "Explore Brandmind"}>
+          <Card>
+            <div className="grid gap-2 md:grid-cols-5">{["Home", "Quantum", de ? "Meine Marke" : "My Brand", de ? "Erstellen" : "Create", de ? "Projekte" : "Projects"].map((x) => <div key={x} className="rounded-lg border border-white/10 bg-white/[0.03] p-3 text-xs text-zinc-300">{x}</div>)}</div>
+            <div className="mt-4 flex gap-2"><Btn variant="ghost" onClick={() => updateOnboardingStatus({ status: "skipped", selected_path: "explore", current_step: "home" })}>{de ? "Beenden" : "End"}</Btn><Btn onClick={completeExplore}>{de ? "Als erledigt markieren" : "Mark complete"}</Btn></div>
+          </Card>
+        </Section>
+      )}
 
       {/* Real KPIs – or em-dash while loading, never invented numbers */}
       <StatGrid>

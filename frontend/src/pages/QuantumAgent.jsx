@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { API } from "@/context/AppContext";
@@ -458,6 +459,7 @@ const TASKS_EN = {
 };
 
 export default function QuantumAgent() {
+  const location = useLocation();
   const [activeDept, setActiveDept] = useState(null);
   const [activeTask, setActiveTask] = useState(null);
   const [ceoResponse, setCeoResponse] = useState(null);
@@ -560,6 +562,15 @@ export default function QuantumAgent() {
   };
 
 
+
+  useEffect(() => {
+    const incoming = location.state?.prompt || sessionStorage.getItem("brandmind_quantum_prompt");
+    if (incoming) {
+      setOrchestratorPrompt(incoming);
+      sessionStorage.removeItem("brandmind_quantum_prompt");
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const handleStartWorkflow = () => {
     if (!workflow || workflow.status === WORKFLOW_STATUSES.RUNNING) return;
