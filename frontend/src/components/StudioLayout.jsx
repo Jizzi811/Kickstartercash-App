@@ -128,7 +128,7 @@ const generatePDF = async (content, title) => {
     doc.text(`Brandmind — Seite ${p} von ${pageCount}`, pageW / 2, pageH - 10, { align: "center" });
   }
 
-  doc.save(`kickstartercash-export-${Date.now()}.pdf`);
+  doc.save(`brandmind-export-${Date.now()}.pdf`);
 };
 
 export function StudioContextArea({ color, context, setContext, label, labelEN, placeholder, placeholderEN, title }) {
