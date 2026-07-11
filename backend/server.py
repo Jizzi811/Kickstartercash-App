@@ -57,6 +57,7 @@ from app.services.image import (  # noqa: E402
     openai_image, pollinations_image,
 )
 from app.services import intelligence as intel  # noqa: E402
+from app.services import early_access as early_access_service  # noqa: E402
 from app.gateway import gateway as ai_gateway  # noqa: E402
 from app.gateway import registry as gw_registry, capabilities as gw_caps, config as gw_config  # noqa: E402
 from app.identity import service as identity_service, schema as identity_schema  # noqa: E402
@@ -69,7 +70,7 @@ from app import permissions as permission_framework  # noqa: E402
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
 
-app = FastAPI(title="Kickstarter Content Maschine")
+app = FastAPI(title="Brandmind API")
 api_router = APIRouter(prefix="/api")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -362,6 +363,175 @@ class FunnelLead(BaseModel):
     nachricht: str = ""
 
 
+class EarlyAccessRequest(BaseModel):
+    name: str
+    email: str
+    audience_status: str
+    marketing_challenge: str
+    privacy_consent: bool
+    company_or_project: str = ""
+    locale: str = "DE"
+    source: str = "landing_page"
+    website: str = ""  # honeypot, must stay empty
+
+
+class EarlyAccessStatusUpdate(BaseModel):
+    request_status: str
+
+
+async def current_workspace(
+    authorization: Optional[str] = Header(default=None),
+    x_workspace_id: Optional[str] = Header(default=None, alias="X-Workspace-Id"),
+) -> Optional[str]:
+    """FastAPI dependency – validated workspace id, or None for legacy requests."""
+    try:
+        from brandmind import workspace_from_request
+        return await workspace_from_request(authorization, x_workspace_id)
+    except Exception:
+        return None
+
+
+async def _authed_user(authorization: Optional[str] = Header(default=None)) -> dict:
+    from brandmind import current_user as bm_current_user
+    return await bm_current_user(authorization)
+
+
+def _scope_filter(ws: Optional[str]) -> dict:
+    """Mongo filter that isolates a workspace's data.
+
+    Authed workspace  -> exactly that workspace's records.
+    Legacy (ws=None)  -> only un-scoped records (the original single-brand data),
+                         so existing deployments keep seeing their data untouched.
+    """
+    if ws:
+        return {"workspace_id": ws}
+    return {"$or": [{"workspace_id": {"$exists": False}}, {"workspace_id": {"$in": [None, ""]}}]}
+
+
+# ---------------------------------------------------------------------------
+# Early Access endpoints
+# ---------------------------------------------------------------------------
+_EARLY_ACCESS_RATE: dict[str, list[float]] = defaultdict(list)
+
+
+def _early_access_rate_key(request: Request) -> str:
+    # Do not trust Forwarded/X-Forwarded-For here; use the immediate client only.
+    return request.client.host if request.client else "unknown"
+
+
+def _check_early_access_rate_limit(request: Request) -> None:
+    now = time.time()
+    key = _early_access_rate_key(request)
+    recent = [ts for ts in _EARLY_ACCESS_RATE[key] if now - ts < 600]
+    if len(recent) >= 10:
+        _EARLY_ACCESS_RATE[key] = recent
+        raise HTTPException(status_code=429, detail="Please wait before sending another request.")
+    recent.append(now)
+    _EARLY_ACCESS_RATE[key] = recent
+
+
+@api_router.post("/early-access")
+async def early_access_submit(payload: EarlyAccessRequest, request: Request):
+    _check_early_access_rate_limit(request)
+    try:
+        doc = early_access_service.validate_request(payload.model_dump())
+    except ValueError as exc:
+        code = str(exc)
+        if code == "spam":
+            return early_access_service.neutral_success(False, payload.locale)
+        detail = {
+            "required": "Please complete all required fields.",
+            "email": "Please enter a valid email address.",
+            "audience_status": "Please choose one of the allowed status values.",
+            "privacy_consent": "Privacy consent is required.",
+            "too_long": "One of the fields is too long.",
+            "source": "Invalid source.",
+        }.get(code, "Invalid request.")
+        raise HTTPException(status_code=422, detail=detail) from exc
+
+    existing = await db.early_access_requests.find_one({
+        "normalized_email": doc["normalized_email"],
+        "request_status": {"$ne": "archived"},
+    }, {"_id": 0})
+    if existing:
+        return early_access_service.neutral_success(True, doc["locale"])
+
+    try:
+        await db.early_access_requests.create_index(
+            "normalized_email",
+            unique=True,
+            partialFilterExpression={"request_status": {"$in": ["new", "contacted", "invited"]}},
+        )
+    except Exception as exc:
+        logger.warning(f"Early access index creation skipped: {exc}")
+    try:
+        await db.early_access_requests.insert_one(doc)
+    except Exception as exc:
+        logger.warning(f"Early access duplicate/insert handled neutrally: {type(exc).__name__}")
+        return early_access_service.neutral_success(True, doc["locale"])
+    return early_access_service.neutral_success(False, doc["locale"])
+
+
+def _is_global_early_access_admin(user: dict) -> bool:
+    # Existing workspace owner/admin roles are tenant-local and are not treated as global admin.
+    # A deployment can explicitly grant this claim later without exposing routes by default.
+    return bool(user.get("is_platform_admin") or "early_access.admin" in (user.get("permissions") or []))
+
+
+@api_router.get("/early-access/requests")
+async def early_access_list(
+    status: Optional[str] = None,
+    limit: int = 50,
+    skip: int = 0,
+    user: dict = Depends(_authed_user),
+):
+    if not _is_global_early_access_admin(user):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    filt = {}
+    if status:
+        if status not in early_access_service.REQUEST_STATUSES:
+            raise HTTPException(status_code=422, detail="Invalid status")
+        filt["request_status"] = status
+    safe_limit = max(1, min(limit, 100))
+    docs = await db.early_access_requests.find(filt, {"_id": 0}).sort("created_at", -1).skip(max(skip, 0)).to_list(safe_limit)
+    total = await db.early_access_requests.count_documents(filt)
+    return {"requests": docs, "total": total, "limit": safe_limit, "skip": max(skip, 0)}
+
+
+@api_router.patch("/early-access/requests/{request_id}")
+async def early_access_update(request_id: str, payload: EarlyAccessStatusUpdate, user: dict = Depends(_authed_user)):
+    if not _is_global_early_access_admin(user):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    if payload.request_status not in early_access_service.REQUEST_STATUSES:
+        raise HTTPException(status_code=422, detail="Invalid status")
+    result = await db.early_access_requests.update_one(
+        {"id": request_id},
+        {"$set": {"request_status": payload.request_status, "updated_at": _now_iso()}},
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Request not found")
+    doc = await db.early_access_requests.find_one({"id": request_id}, {"_id": 0})
+    return doc
+
+
+@api_router.get("/early-access/export.csv")
+async def early_access_export(status: Optional[str] = None, user: dict = Depends(_authed_user)):
+    if not _is_global_early_access_admin(user):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    filt = {}
+    if status:
+        if status not in early_access_service.REQUEST_STATUSES:
+            raise HTTPException(status_code=422, detail="Invalid status")
+        filt["request_status"] = status
+    rows = await db.early_access_requests.find(filt, {"_id": 0, "normalized_email": 0}).sort("created_at", -1).to_list(5000)
+    csv_body = early_access_service.render_csv(rows)
+    return Response(
+        content="\ufeff" + csv_body,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=brandmind-early-access.csv"},
+    )
+
+
 # ---------------------------------------------------------------------------
 # Brand endpoints
 # ---------------------------------------------------------------------------
@@ -430,7 +600,7 @@ async def _kash_daily_report_scheduler():
 
 @api_router.get("/")
 async def root():
-    return {"message": "Kickstarter Content Maschine API"}
+    return {"message": "Brandmind API"}
 
 
 @api_router.get("/integrations/muapi/status")
@@ -506,35 +676,6 @@ async def muapi_proxy(path: str, request: Request):
             raise HTTPException(status_code=502, detail=f"Muapi proxy error: {exc}") from exc
 
 
-async def current_workspace(
-    authorization: Optional[str] = Header(default=None),
-    x_workspace_id: Optional[str] = Header(default=None, alias="X-Workspace-Id"),
-) -> Optional[str]:
-    """FastAPI dependency – validated workspace id, or None for legacy requests."""
-    try:
-        from brandmind import workspace_from_request
-        return await workspace_from_request(authorization, x_workspace_id)
-    except Exception:
-        return None
-
-
-async def _authed_user(authorization: Optional[str] = Header(default=None)) -> dict:
-    from brandmind import current_user as bm_current_user
-    return await bm_current_user(authorization)
-
-
-def _scope_filter(ws: Optional[str]) -> dict:
-    """Mongo filter that isolates a workspace's data.
-
-    Authed workspace  -> exactly that workspace's records.
-    Legacy (ws=None)  -> only un-scoped records (the original single-brand data),
-                         so existing deployments keep seeing their data untouched.
-    """
-    if ws:
-        return {"workspace_id": ws}
-    return {"$or": [{"workspace_id": {"$exists": False}}, {"workspace_id": {"$in": [None, ""]}}]}
-
-
 @api_router.get("/brands", response_model=List[Brand])
 async def list_brands(ws: Optional[str] = Depends(current_workspace)):
     docs = await db.brands.find(_scope_filter(ws), {"_id": 0}).to_list(1000)
@@ -543,8 +684,8 @@ async def list_brands(ws: Optional[str] = Depends(current_workspace)):
 
 
 @api_router.get("/brands/{brand_id}", response_model=Brand)
-async def get_brand(brand_id: str):
-    doc = await db.brands.find_one({"id": brand_id}, {"_id": 0})
+async def get_brand(brand_id: str, ws: Optional[str] = Depends(current_workspace)):
+    doc = await db.brands.find_one({"id": brand_id, **_scope_filter(ws)}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Brand not found")
     return doc
@@ -560,21 +701,21 @@ async def create_brand(payload: BrandCreate, ws: Optional[str] = Depends(current
 
 
 @api_router.put("/brands/{brand_id}", response_model=Brand)
-async def update_brand(brand_id: str, payload: BrandCreate):
-    doc = await db.brands.find_one({"id": brand_id}, {"_id": 0})
+async def update_brand(brand_id: str, payload: BrandCreate, ws: Optional[str] = Depends(current_workspace)):
+    doc = await db.brands.find_one({"id": brand_id, **_scope_filter(ws)}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Brand not found")
     update = payload.model_dump()
-    await db.brands.update_one({"id": brand_id}, {"$set": update})
+    await db.brands.update_one({"id": brand_id, **_scope_filter(ws)}, {"$set": update})
     doc.update(update)
     return doc
 
 
 @api_router.delete("/brands/{brand_id}")
-async def delete_brand(brand_id: str):
+async def delete_brand(brand_id: str, ws: Optional[str] = Depends(current_workspace)):
     if brand_id == DEFAULT_BRAND["id"]:
         raise HTTPException(status_code=400, detail="Cannot delete the default brand")
-    await db.brands.delete_one({"id": brand_id})
+    await db.brands.delete_one({"id": brand_id, **_scope_filter(ws)})
     return {"ok": True}
 
 
@@ -3023,7 +3164,7 @@ AGENTS = {
             "SaaS-Integrationen, Business Process Management, Low-Code/No-Code, KI-Agenten und Multi-Agent-Systeme. "
             "Du arbeitest wie ein Senior Solution Architect eines internationalen Technologieunternehmens. "
             "\n\nAI SOLUTIONS ARCHITECT: Du erkennst automatisch, welcher Agent oder welche Kombination "
-            "von Agenten für eine Aufgabe am sinnvollsten ist. Beispiel 'Exclusive Card bewerben': "
+            "von Agenten für eine Aufgabe am sinnvollsten ist. Beispiel 'Early-Access-Kampagne planen': "
             "Marketing Director → Creative Director → Video Director → Social Media Director → "
             "Sales Director → SEO Director → Analytics Agent. "
             "Du erstellst automatisch den n8n-Workflow, der diese Agenten orchestriert, "
@@ -4796,7 +4937,7 @@ async def agent_chat(req: AgentChatRequest, ws: Optional[str] = Depends(current_
 # ---------------------------------------------------------------------------
 
 KB_CATEGORIES = [
-    "Produkte", "Exclusive Cards", "FAQs", "PDFs & Schulung",
+    "Produkte", "Angebote", "FAQs", "PDFs & Schulung",
     "Corporate Design", "Texte & Landingpages", "Blogartikel", "Marketingstrategien",
 ]
 
@@ -5309,7 +5450,7 @@ async def test_kash():
     try:
         reply = await _llm_single("anthropic", "claude-haiku-4-5-20251001",
                                   "You are KASH, a helpful assistant.",
-                                  "Say exactly: KASH is working!")
+                                  "Say exactly: Brandmind assistant is working!")
         return {"ok": True, "reply": reply}
     except Exception as e:
         return {"ok": False, "error": str(e), "type": type(e).__name__}

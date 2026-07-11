@@ -119,8 +119,8 @@ export default function SeoStudio() {
             setContext={setContext}
             label="Thema / URL / Nische"
             labelEN="Topic / URL / Niche"
-            placeholder="z.B. kickstartercash.club – Affiliate-Marketing, passives Einkommen, MLM-Alternative…"
-            placeholderEN="e.g. kickstartercash.club – affiliate marketing, passive income, MLM alternative…"
+            placeholder="z.B. brandmind.example – KI-Marketing-System, Markenaufbau, Content-Workflows…"
+            placeholderEN="e.g. brandmind.example – AI marketing system, brand building, content workflows…"
             title="SEO Studio"
           />
 
