@@ -379,6 +379,35 @@ class EarlyAccessStatusUpdate(BaseModel):
     request_status: str
 
 
+async def current_workspace(
+    authorization: Optional[str] = Header(default=None),
+    x_workspace_id: Optional[str] = Header(default=None, alias="X-Workspace-Id"),
+) -> Optional[str]:
+    """FastAPI dependency – validated workspace id, or None for legacy requests."""
+    try:
+        from brandmind import workspace_from_request
+        return await workspace_from_request(authorization, x_workspace_id)
+    except Exception:
+        return None
+
+
+async def _authed_user(authorization: Optional[str] = Header(default=None)) -> dict:
+    from brandmind import current_user as bm_current_user
+    return await bm_current_user(authorization)
+
+
+def _scope_filter(ws: Optional[str]) -> dict:
+    """Mongo filter that isolates a workspace's data.
+
+    Authed workspace  -> exactly that workspace's records.
+    Legacy (ws=None)  -> only un-scoped records (the original single-brand data),
+                         so existing deployments keep seeing their data untouched.
+    """
+    if ws:
+        return {"workspace_id": ws}
+    return {"$or": [{"workspace_id": {"$exists": False}}, {"workspace_id": {"$in": [None, ""]}}]}
+
+
 # ---------------------------------------------------------------------------
 # Early Access endpoints
 # ---------------------------------------------------------------------------
@@ -645,35 +674,6 @@ async def muapi_proxy(path: str, request: Request):
             raise HTTPException(status_code=504, detail="Muapi upstream timeout.") from exc
         except aiohttp.ClientError as exc:
             raise HTTPException(status_code=502, detail=f"Muapi proxy error: {exc}") from exc
-
-
-async def current_workspace(
-    authorization: Optional[str] = Header(default=None),
-    x_workspace_id: Optional[str] = Header(default=None, alias="X-Workspace-Id"),
-) -> Optional[str]:
-    """FastAPI dependency – validated workspace id, or None for legacy requests."""
-    try:
-        from brandmind import workspace_from_request
-        return await workspace_from_request(authorization, x_workspace_id)
-    except Exception:
-        return None
-
-
-async def _authed_user(authorization: Optional[str] = Header(default=None)) -> dict:
-    from brandmind import current_user as bm_current_user
-    return await bm_current_user(authorization)
-
-
-def _scope_filter(ws: Optional[str]) -> dict:
-    """Mongo filter that isolates a workspace's data.
-
-    Authed workspace  -> exactly that workspace's records.
-    Legacy (ws=None)  -> only un-scoped records (the original single-brand data),
-                         so existing deployments keep seeing their data untouched.
-    """
-    if ws:
-        return {"workspace_id": ws}
-    return {"$or": [{"workspace_id": {"$exists": False}}, {"workspace_id": {"$in": [None, ""]}}]}
 
 
 @api_router.get("/brands", response_model=List[Brand])
