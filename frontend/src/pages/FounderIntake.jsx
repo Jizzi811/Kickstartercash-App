@@ -21,13 +21,22 @@ export default function FounderIntake() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [accessAllowed, setAccessAllowed] = useState(false);
 
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const { data } = await axios.get(`${API}/founder/intake`);
+        const [{ data }, { data: ideasData }] = await Promise.all([axios.get(`${API}/founder/intake`), axios.get(`${API}/founder/ideas`)]);
         if (!alive) return;
+        const founderPath = data.founder_path || "";
+        const selectedIdeaId = data.selected_idea_id || "";
+        const selectedIdea = data.selected_idea || {};
+        const hasConfirmedProfileIdea = Boolean(selectedIdeaId && selectedIdea?.id === selectedIdeaId && selectedIdea?.user_confirmed);
+        const hasConfirmedStoredIdea = (ideasData.ideas || []).some((idea) => idea.user_confirmed && idea.favorite && (!selectedIdeaId || idea.id === selectedIdeaId));
+        if (!founderPath) { navigate("/onboarding/founder/start", { replace: true }); return; }
+        if (!hasConfirmedProfileIdea && !hasConfirmedStoredIdea) { navigate("/onboarding/founder/ideas", { replace: true }); return; }
+        setAccessAllowed(true);
         setForm({
           vision: data.vision || "",
           motivation: data.motivation || "",
@@ -44,7 +53,7 @@ export default function FounderIntake() {
       }
     })();
     return () => { alive = false; };
-  }, []);
+  }, [navigate]);
 
   const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -69,6 +78,19 @@ export default function FounderIntake() {
     }
   };
 
+  if (!accessAllowed) {
+    return (
+      <Page>
+        <Card>
+          <div className="inline-flex items-center gap-2 text-sm text-zinc-400">
+            <Loader2 size={14} className="animate-spin" />
+            Founder-Daten werden geprüft…
+          </div>
+        </Card>
+      </Page>
+    );
+  }
+
   return (
     <Page>
       <FounderProgress current="intake" />
@@ -79,7 +101,7 @@ export default function FounderIntake() {
         description="Brandmind speichert deine Gründungsentscheidung als Basis für spätere Inhalte, Designs und Strategien."
         actions={(
           <>
-            <Btn variant="ghost" onClick={() => navigate("/onboarding/select-path")}>Pfad wechseln</Btn>
+            <Btn variant="ghost" onClick={() => navigate("/onboarding/founder/start")}>Pfad wechseln</Btn>
             <Btn onClick={() => save("/onboarding/founder/ideas")} disabled={saving}>
               {saving ? <Loader2 size={14} className="animate-spin" /> : <ArrowRight size={14} />}
               Speichern & weiter

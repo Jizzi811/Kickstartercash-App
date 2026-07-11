@@ -68,6 +68,7 @@ class _FakeDB:
     def __init__(self):
         self.founder_profiles = _FakeCollection()
         self.founder_ideas = _FakeCollection()
+        self.onboarding_status = _FakeCollection()
         self.brand_decisions = _FakeCollection()
         self.decision_events = _FakeCollection()
         self.brand_briefs = _FakeCollection()
@@ -124,7 +125,7 @@ async def test_decision_create_lock_and_history(monkeypatch):
 
 
 @pytest.mark.anyio
-async def test_founder_ideas_generate_fallback_and_select(monkeypatch):
+async def test_founder_ideas_generation_provider_error_creates_no_fake_ideas(monkeypatch):
     fake_db = _FakeDB()
     monkeypatch.setattr(server, "db", fake_db)
     user = {"id": "u3"}
@@ -134,19 +135,15 @@ async def test_founder_ideas_generate_fallback_and_select(monkeypatch):
 
     monkeypatch.setattr(server, "llm_text", _broken_llm)
 
-    generated = await server.founder_ideas_generate(
-        server.FounderIdeasGenerateRequest(focus="AI Services", market_hint="DACH"),
-        user=user,
-        ws="ws3",
-    )
-    selected = await server.founder_ideas_select(
-        server.FounderIdeasSelectRequest(idea_id=generated["ideas"][0]["id"]),
-        user=user,
-        ws="ws3",
-    )
+    with pytest.raises(server.HTTPException) as exc:
+        await server.founder_ideas_generate(
+            server.FounderIdeasGenerateRequest(focus="AI Services", market_hint="DACH"),
+            user=user,
+            ws="ws3",
+        )
 
-    assert len(generated["ideas"]) == 5
-    assert selected["selected_idea_id"] == generated["ideas"][0]["id"]
+    assert exc.value.status_code == 502
+    assert (await server.founder_ideas_list(user=user, ws="ws3"))["ideas"] == []
 
 
 @pytest.mark.anyio
