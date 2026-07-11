@@ -43,3 +43,5 @@ Stand: 2026-07-11. Statuswerte: bestanden, bedingt bestanden, offen, blockiert, 
 | Backup-/Recovery-Konzept | offen | Nicht Bestandteil lokaler Sprint-E-Prüfung. |
 | Monitoring | offen | Kein Deployment/Monitoring eingerichtet. |
 | Produktions-Rate-Limit | offen | In-Memory-Limiter reicht nicht für Multi-Instance-Produktion. |
+
+| Website-to-Brand Import | umgesetzt | Import-first Existing-Brand-Flow, serverseitiger SSRF-geschützter Abruf, Draft-Bestätigung und manueller Fallback ergänzt. |

@@ -71,6 +71,7 @@ import Dashboard from "@/pages/Dashboard";
 import KnowledgeBase from "@/pages/KnowledgeBase";
 import KnowledgeExplorer from "@/pages/KnowledgeExplorer";
 import BrandBrain from "@/pages/BrandBrain";
+import WebsiteBrandImport from "@/pages/WebsiteBrandImport";
 import Auth from "@/pages/Auth";
 import Billing from "@/pages/Billing";
 import Permissions from "@/pages/Permissions";
@@ -205,6 +206,7 @@ function AppShell() {
               <Route path="/billing" element={<Billing />} />
               <Route path="/permissions" element={<Permissions />} />
               <Route path="/onboarding/select-path" element={<FounderPathSelect />} />
+              <Route path="/onboarding/existing-brand/import" element={<WebsiteBrandImport />} />
               <Route path="/onboarding/founder/intake" element={<FounderIntake />} />
               <Route path="/onboarding/founder/ideas" element={<FounderIdeas />} />
               <Route path="/onboarding/founder/brand" element={<FounderBrandDevelopment />} />
