@@ -435,7 +435,7 @@ def _check_early_access_rate_limit(request: Request) -> None:
 async def early_access_submit(payload: EarlyAccessRequest, request: Request):
     _check_early_access_rate_limit(request)
     try:
-        doc = early_access_service.validate_request(payload.model_dump())
+        doc = early_access_service.validate_request(payload.dict())
     except ValueError as exc:
         code = str(exc)
         if code == "spam":
@@ -694,7 +694,7 @@ async def get_brand(brand_id: str, ws: Optional[str] = Depends(current_workspace
 
 @api_router.post("/brands", response_model=Brand)
 async def create_brand(payload: BrandCreate, ws: Optional[str] = Depends(current_workspace)):
-    brand = Brand(**payload.model_dump())
+    brand = Brand(**payload.dict())
     if ws:
         brand.workspace_id = ws
     await db.brands.insert_one(brand.model_dump())
@@ -706,7 +706,7 @@ async def update_brand(brand_id: str, payload: BrandCreate, ws: Optional[str] = 
     doc = await db.brands.find_one({"id": brand_id, **_scope_filter(ws)}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Brand not found")
-    update = payload.model_dump()
+    update = payload.dict()
     await db.brands.update_one({"id": brand_id, **_scope_filter(ws)}, {"$set": update})
     doc.update(update)
     return doc
@@ -2462,7 +2462,7 @@ async def arena_chat(req: ArenaChatRequest):
 # ---------------------------------------------------------------------------
 @api_router.post("/funnel", response_model=FunnelConfig)
 async def create_funnel(payload: FunnelCreate):
-    cfg = FunnelConfig(**payload.model_dump())
+    cfg = FunnelConfig(**payload.dict())
     await db.funnels.insert_one(cfg.model_dump())
     return cfg
 
@@ -2486,7 +2486,7 @@ async def update_funnel(funnel_id: str, payload: FunnelCreate):
     doc = await db.funnels.find_one({"id": funnel_id}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Funnel not found")
-    update = payload.model_dump()
+    update = payload.dict()
     await db.funnels.update_one({"id": funnel_id}, {"$set": update})
     doc.update(update)
     return doc
@@ -5110,7 +5110,7 @@ async def list_knowledge(category: Optional[str] = None, q: Optional[str] = None
 async def create_knowledge(payload: KbEntryCreate, ws: Optional[str] = Depends(current_workspace)):
     if db is None:
         raise HTTPException(status_code=503, detail="Database not available")
-    entry = KbEntry(**payload.model_dump())
+    entry = KbEntry(**payload.dict())
     if ws:
         entry.workspace_id = ws
     await db.knowledge.insert_one(entry.model_dump())
@@ -5124,7 +5124,7 @@ async def update_knowledge(entry_id: str, payload: KbEntryUpdate):
     doc = await db.knowledge.find_one({"id": entry_id}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Entry not found")
-    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    updates = {k: v for k, v in _payload_data(payload).items() if v is not None}
     updates["updated_at"] = _now_iso()
     await db.knowledge.update_one({"id": entry_id}, {"$set": updates})
     doc.update(updates)
@@ -5227,7 +5227,7 @@ async def list_custom_agents(ws: Optional[str] = Depends(current_workspace)):
 
 @api_router.post("/custom-agents", response_model=CustomAgent)
 async def create_custom_agent(payload: CustomAgentCreate, ws: Optional[str] = Depends(current_workspace)):
-    agent = CustomAgent(**payload.model_dump())
+    agent = CustomAgent(**payload.dict())
     if ws:
         agent.workspace_id = ws
     await db.custom_agents.insert_one(agent.model_dump())
@@ -5240,7 +5240,7 @@ async def update_custom_agent(agent_id: str, payload: CustomAgentUpdate, ws: Opt
     doc = await db.custom_agents.find_one(scope, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Agent not found")
-    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    updates = {k: v for k, v in _payload_data(payload).items() if v is not None}
     updates["updated_at"] = _now_iso()
     await db.custom_agents.update_one(scope, {"$set": updates})
     doc.update(updates)
@@ -6804,7 +6804,7 @@ async def intelligence_put_preferences(payload: IntelPreferences,
         raise HTTPException(status_code=503, detail="Database not available")
     brand = await _resolve_brand(brand_id, ws)
     key = {"workspace_id": ws or "", "brand_id": brand.get("id", "")}
-    update = {k: v for k, v in payload.model_dump().items() if v is not None}
+    update = {k: v for k, v in _payload_data(payload).items() if v is not None}
     update.update(key)
     update["updated_at"] = _now_iso()
     await db.intelligence_preferences.update_one(key, {"$set": update}, upsert=True)
@@ -7207,7 +7207,7 @@ async def memory_business_update(entry_id: str, payload: BusinessMemoryUpdate,
     doc = await db.business_memory.find_one({"id": entry_id, **_scope_filter(ws)}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Entry not found")
-    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    updates = {k: v for k, v in _payload_data(payload).items() if v is not None}
     if "category" in updates and updates["category"] not in mem_registry.BUSINESS_CATEGORY_IDS:
         raise HTTPException(status_code=400, detail="Invalid category")
     updates["updated_at"] = _now_iso()
@@ -7713,7 +7713,7 @@ ONBOARDING_STATUSES = {"not_started", "path_selected", "in_progress", "completed
 ONBOARDING_PATHS = {"existing_brand", "founder", "explore"}
 ONBOARDING_STEPS = {
     "existing_brand": ["website_import", "brand_brain", "brand_identity", "knowledge", "home"],
-    "founder": ["intake", "ideas", "brand", "offers", "business_plan", "finance", "operations", "summary"],
+    "founder": ["start", "profile", "ideas", "compare", "intake", "brand", "offers", "business_plan", "finance", "operations", "summary"],
     "explore": ["home", "quantum", "brand", "create", "projects"],
 }
 
@@ -7733,10 +7733,11 @@ def _onboarding_route(selected_path: str = "", current_step: str = "") -> str:
         return {"website_import": "/onboarding/existing-brand/import", "brand_brain": "/brand-brain", "brand_identity": "/brand-identity", "knowledge": "/knowledge", "home": "/app"}.get(current_step, "/onboarding/existing-brand/import")
     if selected_path == "founder":
         return {
-            "ideas": "/onboarding/founder/ideas", "brand": "/onboarding/founder/brand", "offers": "/onboarding/founder/offers",
-            "business_plan": "/onboarding/founder/business-plan", "finance": "/onboarding/founder/finance",
+            "start": "/onboarding/founder/start", "profile": "/onboarding/founder/profile", "ideas": "/onboarding/founder/ideas",
+            "compare": "/onboarding/founder/ideas/compare", "intake": "/onboarding/founder/intake", "brand": "/onboarding/founder/brand",
+            "offers": "/onboarding/founder/offers", "business_plan": "/onboarding/founder/business-plan", "finance": "/onboarding/founder/finance",
             "operations": "/ops", "summary": "/app",
-        }.get(current_step, "/onboarding/founder/intake")
+        }.get(current_step, "/onboarding/founder/start")
     if selected_path == "explore":
         return "/app"
     return "/onboarding/select-path"
@@ -7829,6 +7830,15 @@ async def brand_readiness(brand_id: Optional[str] = None, ws: Optional[str] = De
 # ---------------------------------------------------------------------------
 # Founder flow + Decision Memory module
 # ---------------------------------------------------------------------------
+FOUNDER_PATHS = {"no_idea", "rough_direction", "concrete_idea"}
+FOUNDER_OPEN = "noch offen"
+MARKET_STATUSES = {"ungeprüfte Einschätzung", "noch zu prüfen"}
+COMPETITION_STATUSES = {"noch zu prüfen"}
+EVIDENCE_STATUSES = {"unverified"}
+SOURCE_TYPES = {"generated", "user_provided", "refined"}
+MAX_FOUNDER_IDEAS = 24
+GENERATION_LIMIT = 5
+
 class FounderIntakePayload(BaseModel):
     vision: str = ""
     motivation: str = ""
@@ -7837,6 +7847,26 @@ class FounderIntakePayload(BaseModel):
     values: List[str] = Field(default_factory=list)
     skills: List[str] = Field(default_factory=list)
 
+class FounderProfilePayload(BaseModel):
+    founder_path: Optional[str] = None
+    interests: str = ""
+    skills_experience: str = ""
+    enjoyable_activities: str = ""
+    preferred_work_style: str = FOUNDER_OPEN
+    preferred_work_location: str = FOUNDER_OPEN
+    desired_customer_group: str = FOUNDER_OPEN
+    available_time: str = FOUNDER_OPEN
+    start_budget: str = FOUNDER_OPEN
+    desired_speed: str = FOUNDER_OPEN
+    constraints: str = ""
+    excluded_industries: str = ""
+    rough_topic: str = ""
+    rough_thoughts: str = ""
+    idea_working_title: str = ""
+    idea_description: str = ""
+    planned_offer: str = ""
+    assumed_target_group: str = ""
+    planned_revenue_source: str = ""
 
 class FounderIdeasGenerateRequest(BaseModel):
     focus: str = ""
@@ -7844,10 +7874,39 @@ class FounderIdeasGenerateRequest(BaseModel):
     language: str = "DE"
     model: str = OPENAI_TEXT_MODEL
 
+class FounderIdeaPayload(BaseModel):
+    founder_path: str = "concrete_idea"
+    title: str
+    short_description: str = ""
+    problem: str = ""
+    target_audience: str = ""
+    offer_type: str = ""
+    revenue_model: str = ""
+    delivery_model: str = FOUNDER_OPEN
+    estimated_start_budget: str = FOUNDER_OPEN
+    time_to_first_offer: str = FOUNDER_OPEN
+    skill_fit: str = "noch zu prüfen"
+    interest_fit: str = "noch zu prüfen"
+    market_potential_status: str = "noch zu prüfen"
+    competition_status: str = "noch zu prüfen"
+    scalability: str = "noch zu prüfen"
+    regulatory_complexity: str = "noch zu prüfen"
+    assumptions: List[str] = Field(default_factory=list)
+    risks: List[str] = Field(default_factory=list)
+    to_validate: List[str] = Field(default_factory=list)
+    evidence_status: str = "unverified"
+    source_type: str = "user_provided"
+    user_notes: str = ""
+
+class FounderIdeaPatchPayload(BaseModel):
+    user_notes: Optional[str] = None
+    favorite: Optional[bool] = None
 
 class FounderIdeasSelectRequest(BaseModel):
     idea_id: str
 
+class FounderComparePayload(BaseModel):
+    idea_ids: List[str]
 
 class DecisionCreatePayload(BaseModel):
     category: str
@@ -7859,7 +7918,6 @@ class DecisionCreatePayload(BaseModel):
     decided_by: str = "user"
     status: str = "draft"
 
-
 class DecisionUpdatePayload(BaseModel):
     selected_option: Optional[str] = None
     alternatives: Optional[List[str]] = None
@@ -7869,174 +7927,156 @@ class DecisionUpdatePayload(BaseModel):
     decided_by: Optional[str] = None
     status: Optional[str] = None
 
-
 class BrandBriefGenerateRequest(BaseModel):
     language: str = "DE"
     model: str = OPENAI_TEXT_MODEL
 
-
 def _founder_scope(user_id: str, ws: Optional[str]) -> dict:
     return {"user_id": user_id, "workspace_id": ws or ""}
 
-
 async def _decision_event(user_id: str, ws: Optional[str], decision_id: str, event_type: str, payload: dict) -> None:
-    await db.decision_events.insert_one({
-        "id": str(uuid.uuid4()),
-        "workspace_id": ws or "",
-        "user_id": user_id,
-        "decision_id": decision_id,
-        "event_type": event_type,
-        "payload": payload,
-        "created_at": _now_iso(),
-    })
+    await db.decision_events.insert_one({"id": str(uuid.uuid4()), "workspace_id": ws or "", "user_id": user_id, "decision_id": decision_id, "event_type": event_type, "payload": payload, "created_at": _now_iso()})
 
+def _payload_data(payload: Any) -> dict:
+    if hasattr(payload, "model_dump"):
+        return payload.model_dump()
+    return payload.dict()
+
+def _limit_text(value: Any, limit: int = 900) -> str:
+    return str(value or "").strip()[:limit]
 
 def _normalize_list(values: List[Any]) -> List[str]:
-    out = []
-    for value in values or []:
-        text = str(value or "").strip()
-        if text:
-            out.append(text[:180])
-    return out[:20]
+    return [_limit_text(v, 180) for v in (values or []) if _limit_text(v, 180)][:20]
 
+def _clean_founder_idea(item: dict, user_id: str, ws: Optional[str], founder_path: str, source_type: str = "generated") -> dict:
+    now = _now_iso()
+    market = _limit_text(item.get("market_potential_status") or "ungeprüfte Einschätzung", 80)
+    if market not in MARKET_STATUSES: market = "ungeprüfte Einschätzung"
+    competition = _limit_text(item.get("competition_status") or "noch zu prüfen", 80)
+    if competition not in COMPETITION_STATUSES: competition = "noch zu prüfen"
+    src = _limit_text(item.get("source_type") or source_type, 40)
+    if src not in SOURCE_TYPES: src = source_type
+    return {"id": _limit_text(item.get("id") or str(uuid.uuid4()), 80), **_founder_scope(user_id, ws), "brand_id": _limit_text(item.get("brand_id"), 80), "founder_path": founder_path if founder_path in FOUNDER_PATHS else "no_idea", "title": _limit_text(item.get("title") or "Geschäftsidee", 160), "short_description": _limit_text(item.get("short_description") or item.get("summary"), 900), "problem": _limit_text(item.get("problem"), 900), "target_audience": _limit_text(item.get("target_audience"), 500), "offer_type": _limit_text(item.get("offer_type") or item.get("first_offer"), 300), "revenue_model": _limit_text(item.get("revenue_model"), 300), "delivery_model": _limit_text(item.get("delivery_model") or FOUNDER_OPEN, 80), "estimated_start_budget": _limit_text(item.get("estimated_start_budget") or FOUNDER_OPEN, 120), "time_to_first_offer": _limit_text(item.get("time_to_first_offer") or FOUNDER_OPEN, 120), "skill_fit": _limit_text(item.get("skill_fit") or "noch zu prüfen", 180), "interest_fit": _limit_text(item.get("interest_fit") or "noch zu prüfen", 180), "market_potential_status": market, "competition_status": competition, "scalability": _limit_text(item.get("scalability") or "noch zu prüfen", 180), "regulatory_complexity": _limit_text(item.get("regulatory_complexity") or "noch zu prüfen", 180), "assumptions": _normalize_list(item.get("assumptions") or []), "risks": _normalize_list(item.get("risks") or []), "to_validate": _normalize_list(item.get("to_validate") or ["Markt, Nachfrage, Wettbewerb und Geschäftsmodell später prüfen"]), "evidence_status": "unverified", "source_type": src, "user_notes": _limit_text(item.get("user_notes"), 1000), "favorite": bool(item.get("favorite", False)), "user_confirmed": bool(item.get("user_confirmed", False)), "created_at": item.get("created_at") or now, "updated_at": now}
+
+async def _set_onboarding(user_id: str, ws: Optional[str], step: str) -> None:
+    await db.onboarding_status.update_one(_onboarding_scope(user_id, ws), {"$set": {"status": "in_progress", "selected_path": "founder", "current_step": step, "updated_at": _now_iso()}, "$setOnInsert": {"created_at": _now_iso(), **_onboarding_scope(user_id, ws)}}, upsert=True)
 
 @api_router.get("/founder/intake")
 async def founder_intake_get(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
     doc = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0})
     if not doc:
-        return {
-            "vision": "",
-            "motivation": "",
-            "target_audience": "",
-            "budget_range": "",
-            "values": [],
-            "skills": [],
-            "selected_idea_id": "",
-            "selected_idea": None,
-            "workspace_id": ws or "",
-        }
+        return {"vision":"", "motivation":"", "target_audience":"", "budget_range":"", "values":[], "skills":[], "selected_idea_id":"", "selected_idea":None, "workspace_id": ws or ""}
     return {**doc, "workspace_id": ws or ""}
 
+@api_router.get("/founder/profile")
+async def founder_profile_get(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    doc = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    return {**doc, "workspace_id": ws or "", "founder_path": doc.get("founder_path", "")}
 
-@api_router.post("/founder/intake")
-async def founder_intake_create(payload: FounderIntakePayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
-    now = _now_iso()
-    doc = {
-        **_founder_scope(user["id"], ws),
-        "vision": payload.vision.strip()[:2000],
-        "motivation": payload.motivation.strip()[:2000],
-        "target_audience": payload.target_audience.strip()[:500],
-        "budget_range": payload.budget_range.strip()[:120],
-        "values": _normalize_list(payload.values),
-        "skills": _normalize_list(payload.skills),
-        "selected_idea_id": "",
-        "selected_idea": None,
-        "created_at": now,
-        "updated_at": now,
-    }
-    await db.founder_profiles.update_one(_founder_scope(user["id"], ws), {"$set": doc}, upsert=True)
-    return doc
-
-
-@api_router.put("/founder/intake")
-async def founder_intake_update(payload: FounderIntakePayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
-    now = _now_iso()
-    update = {
-        "vision": payload.vision.strip()[:2000],
-        "motivation": payload.motivation.strip()[:2000],
-        "target_audience": payload.target_audience.strip()[:500],
-        "budget_range": payload.budget_range.strip()[:120],
-        "values": _normalize_list(payload.values),
-        "skills": _normalize_list(payload.skills),
-        "updated_at": now,
-    }
-    await db.founder_profiles.update_one(
-        _founder_scope(user["id"], ws),
-        {"$set": update, "$setOnInsert": {"created_at": now, **_founder_scope(user["id"], ws)}},
-        upsert=True,
-    )
+@api_router.put("/founder/profile")
+async def founder_profile_update(payload: FounderProfilePayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    if payload.founder_path and payload.founder_path not in FOUNDER_PATHS:
+        raise HTTPException(status_code=400, detail="Invalid founder_path")
+    now = _now_iso(); update = {"updated_at": now}
+    for k, v in _payload_data(payload).items():
+        if v is not None:
+            update[k] = _limit_text(v, 1200 if isinstance(v, str) else 200)
+    await db.founder_profiles.update_one(_founder_scope(user["id"], ws), {"$set": update, "$setOnInsert": {"created_at": now, **_founder_scope(user["id"], ws)}}, upsert=True)
+    await _set_onboarding(user["id"], ws, "profile" if update.get("founder_path") else "start")
     doc = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0})
     return {**(doc or update), "workspace_id": ws or ""}
 
+@api_router.post("/founder/intake")
+async def founder_intake_create(payload: FounderIntakePayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    return await founder_intake_update(payload, user, ws)
+
+@api_router.put("/founder/intake")
+async def founder_intake_update(payload: FounderIntakePayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    now = _now_iso(); update = {"vision": _limit_text(payload.vision, 2000), "motivation": _limit_text(payload.motivation, 2000), "target_audience": _limit_text(payload.target_audience, 500), "budget_range": _limit_text(payload.budget_range, 120), "values": _normalize_list(payload.values), "skills": _normalize_list(payload.skills), "updated_at": now}
+    await db.founder_profiles.update_one(_founder_scope(user["id"], ws), {"$set": update, "$setOnInsert": {"created_at": now, **_founder_scope(user["id"], ws)}}, upsert=True)
+    await _set_onboarding(user["id"], ws, "intake")
+    doc = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0})
+    return {**(doc or update), "workspace_id": ws or ""}
 
 @api_router.post("/founder/ideas/generate")
 async def founder_ideas_generate(payload: FounderIdeasGenerateRequest, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
     profile = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    founder_path = profile.get("founder_path") or "no_idea"
+    existing = await db.founder_ideas.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    today = _now_iso()[:10]
+    if len([t for t in existing.get("generation_log", []) if str(t).startswith(today)]) >= GENERATION_LIMIT:
+        raise HTTPException(status_code=429, detail="Idea generation rate limit reached")
+    if founder_path == "concrete_idea" and not payload.focus:
+        raise HTTPException(status_code=400, detail="Concrete ideas can be saved without generation")
     language = "Deutsch" if str(payload.language).upper() == "DE" else "English"
-    prompt = (
-        f"Founder profile: {json.dumps(profile, ensure_ascii=False)}\n"
-        f"Focus: {payload.focus[:400]}\nMarket hint: {payload.market_hint[:400]}\n"
-        "Create 5 business ideas with this exact JSON shape:\n"
-        '{"ideas":[{"id":"short-id","title":"...","summary":"...","target_audience":"...","scores":{"demand":0-100,"competition":0-100,"founder_fit":0-100},"first_offer":"..."}]}'
-    )
+    count = 6 if founder_path == "no_idea" else 5
+    prompt = f"Founder profile: {json.dumps(profile, ensure_ascii=False)}\nFocus: {_limit_text(payload.focus,400)}\nCreate {count} {'distinct business model variants' if founder_path=='rough_direction' else 'suitable business idea suggestions'}. No market research claims. Return only JSON with ideas using keys title, short_description, problem, target_audience, offer_type, revenue_model, delivery_model, estimated_start_budget, time_to_first_offer, skill_fit, interest_fit, scalability, regulatory_complexity, assumptions, risks, to_validate. market_potential_status must be ungeprüfte Einschätzung or noch zu prüfen; competition_status must be noch zu prüfen; evidence_status unverified."
     try:
-        raw = await llm_text(
-            payload.model or OPENAI_TEXT_MODEL,
-            f"You are Brandmind Founder Copilot. Answer only valid JSON in {language}. Keep ideas realistic and specific.",
-            prompt,
-        )
+        raw = await llm_text(payload.model or OPENAI_TEXT_MODEL, f"You are Gründungs-KI-Experte, Brandmind's founder guide. Valid JSON only in {language}; never guarantee profit.", prompt)
         parsed = _extract_json(raw) or {}
         ideas = parsed.get("ideas") if isinstance(parsed.get("ideas"), list) else []
-    except Exception:
-        ideas = []
+    except Exception as e:
+        raise HTTPException(status_code=502, detail="Idea generation provider unavailable; no fake ideas were created") from e
     if not ideas:
-        ideas = [{
-            "id": f"idea-{idx + 1}",
-            "title": title,
-            "summary": "KI-gestütztes Angebot mit klarer Zielgruppe und schneller Markteinführung.",
-            "target_audience": profile.get("target_audience") or "Selbstständige und KMU",
-            "scores": {"demand": 72 + idx, "competition": 48 + idx, "founder_fit": 68 + idx},
-            "first_offer": "Kickoff-Workshop + 30-Tage-Umsetzungsplan",
-        } for idx, title in enumerate([
-            "AI Positioning Sprint",
-            "Content System as a Service",
-            "Micro-Automation Studio",
-            "Niche Funnel Builder",
-            "Founder Launch Partner",
-        ])]
-    normalized = []
-    for idx, item in enumerate(ideas[:7]):
-        scores = item.get("scores") if isinstance(item, dict) else {}
-        normalized.append({
-            "id": str((item or {}).get("id") or f"idea-{idx + 1}")[:60],
-            "title": str((item or {}).get("title") or f"Idee {idx + 1}")[:160],
-            "summary": str((item or {}).get("summary") or "")[:900],
-            "target_audience": str((item or {}).get("target_audience") or "")[:300],
-            "scores": {
-                "demand": max(0, min(100, int((scores or {}).get("demand", 65)))),
-                "competition": max(0, min(100, int((scores or {}).get("competition", 55)))),
-                "founder_fit": max(0, min(100, int((scores or {}).get("founder_fit", 70)))),
-            },
-            "first_offer": str((item or {}).get("first_offer") or "")[:300],
-        })
-    await db.founder_ideas.update_one(
-        _founder_scope(user["id"], ws),
-        {"$set": {"ideas": normalized, "generated_at": _now_iso(), "updated_at": _now_iso()}, "$setOnInsert": {"created_at": _now_iso(), **_founder_scope(user["id"], ws)}},
-        upsert=True,
-    )
-    return {"ideas": normalized, "workspace_id": ws or ""}
-
+        raise HTTPException(status_code=502, detail="Idea generation returned no valid ideas; no fake ideas were created")
+    normalized = [_clean_founder_idea(item if isinstance(item, dict) else {}, user["id"], ws, founder_path, "generated") for item in ideas[:8]]
+    prior = existing.get("ideas", [])
+    combined = (prior + normalized)[-MAX_FOUNDER_IDEAS:]
+    await db.founder_ideas.update_one(_founder_scope(user["id"], ws), {"$set": {"ideas": combined, "generation_log": (existing.get("generation_log", []) + [_now_iso()])[-50:], "updated_at": _now_iso()}, "$setOnInsert": {"created_at": _now_iso(), **_founder_scope(user["id"], ws)}}, upsert=True)
+    await _set_onboarding(user["id"], ws, "ideas")
+    return {"ideas": normalized, "workspace_id": ws or "", "notice": "Passende Vorschläge; Markt, Nachfrage und Wettbewerb sind unverified."}
 
 @api_router.get("/founder/ideas")
 async def founder_ideas_list(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
-    doc = await db.founder_ideas.find_one(_founder_scope(user["id"], ws), {"_id": 0})
-    return {"ideas": (doc or {}).get("ideas", []), "workspace_id": ws or ""}
+    doc = await db.founder_ideas.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    return {"ideas": doc.get("ideas", []), "workspace_id": ws or ""}
 
+@api_router.post("/founder/ideas")
+async def founder_idea_create(payload: FounderIdeaPayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    if payload.founder_path not in FOUNDER_PATHS: raise HTTPException(status_code=400, detail="Invalid founder_path")
+    item = _clean_founder_idea(_payload_data(payload), user["id"], ws, payload.founder_path, payload.source_type)
+    await db.founder_ideas.update_one(_founder_scope(user["id"], ws), {"$push": {"ideas": item}, "$set": {"updated_at": _now_iso()}, "$setOnInsert": {"created_at": _now_iso(), **_founder_scope(user["id"], ws)}}, upsert=True)
+    await _set_onboarding(user["id"], ws, "ideas")
+    return {"idea": item, "workspace_id": ws or ""}
+
+@api_router.patch("/founder/ideas/{idea_id}")
+async def founder_idea_patch(idea_id: str, payload: FounderIdeaPatchPayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    doc = await db.founder_ideas.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}; ideas = doc.get("ideas", [])
+    found = False
+    for idea in ideas:
+        if idea.get("id") == idea_id:
+            found = True
+            if payload.user_notes is not None: idea["user_notes"] = _limit_text(payload.user_notes, 1000)
+            if payload.favorite is not None: idea["favorite"] = bool(payload.favorite)
+            idea["updated_at"] = _now_iso()
+    if not found: raise HTTPException(status_code=404, detail="Idea not found")
+    await db.founder_ideas.update_one(_founder_scope(user["id"], ws), {"$set": {"ideas": ideas, "updated_at": _now_iso()}})
+    return {"ideas": ideas, "workspace_id": ws or ""}
+
+@api_router.post("/founder/ideas/{idea_id}/favorite")
+async def founder_idea_favorite(idea_id: str, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    doc = await db.founder_ideas.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}; ideas = doc.get("ideas", [])
+    selected = None
+    for idea in ideas:
+        if idea.get("id") == idea_id:
+            selected = idea; idea["favorite"] = True; idea["user_confirmed"] = True; idea["confirmed_at"] = _now_iso()
+        else: idea["favorite"] = False
+        idea["updated_at"] = _now_iso()
+    if not selected: raise HTTPException(status_code=404, detail="Idea not found")
+    await db.founder_ideas.update_one(_founder_scope(user["id"], ws), {"$set": {"ideas": ideas, "updated_at": _now_iso()}})
+    await db.founder_profiles.update_one(_founder_scope(user["id"], ws), {"$set": {"selected_idea_id": selected["id"], "selected_idea": selected, "target_audience": selected.get("target_audience", ""), "vision": selected.get("short_description", ""), "updated_at": _now_iso()}, "$setOnInsert": {"created_at": _now_iso(), **_founder_scope(user["id"], ws)}}, upsert=True)
+    await _set_onboarding(user["id"], ws, "intake")
+    return {"selected_idea_id": selected["id"], "selected_idea": selected, "next_route": "/onboarding/founder/intake", "message": "Deine Geschäftsidee steht als Arbeitsgrundlage fest. Als Nächstes prüfen und entwickeln wir Zielgruppe, Angebot und Geschäftsmodell.", "workspace_id": ws or ""}
 
 @api_router.post("/founder/ideas/select")
 async def founder_ideas_select(payload: FounderIdeasSelectRequest, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
-    ideas_doc = await db.founder_ideas.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
-    ideas = ideas_doc.get("ideas") or []
-    selected = next((idea for idea in ideas if str(idea.get("id")) == str(payload.idea_id)), None)
-    if not selected:
-        raise HTTPException(status_code=404, detail="Idea not found")
-    await db.founder_profiles.update_one(
-        _founder_scope(user["id"], ws),
-        {"$set": {"selected_idea_id": selected["id"], "selected_idea": selected, "updated_at": _now_iso()}, "$setOnInsert": {"created_at": _now_iso(), **_founder_scope(user["id"], ws)}},
-        upsert=True,
-    )
-    return {"selected_idea_id": selected["id"], "selected_idea": selected, "workspace_id": ws or ""}
+    return await founder_idea_favorite(payload.idea_id, user, ws)
 
+@api_router.post("/founder/ideas/compare")
+async def founder_ideas_compare(payload: FounderComparePayload, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    if len(payload.idea_ids) > 3: raise HTTPException(status_code=400, detail="Compare at most three ideas")
+    doc = await db.founder_ideas.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}; ideas = [i for i in doc.get("ideas", []) if i.get("id") in payload.idea_ids]
+    return {"items": [{"id": i.get("id"), "title": i.get("title"), "personal_fit": i.get("skill_fit") or "teilweise passend", "interest_fit": i.get("interest_fit") or "teilweise passend", "start_budget": i.get("estimated_start_budget"), "time_to_first_offer": i.get("time_to_first_offer"), "delivery_model": i.get("delivery_model"), "audience": i.get("target_audience"), "scalability": i.get("scalability"), "regulatory_complexity": i.get("regulatory_complexity"), "risks": i.get("risks", []), "assumptions": i.get("assumptions", []), "market_note": "Markt noch zu prüfen", "calculation": "Regelbasierter Vergleich der Profil- und Ideenangaben; keine Erfolgswahrscheinlichkeit."} for i in ideas], "workspace_id": ws or ""}
 
 @api_router.get("/decisions")
 async def decisions_list(

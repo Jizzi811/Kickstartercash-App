@@ -16,8 +16,8 @@ test("path selection contains three German and English options", () => {
 
 test("path selection persists status and routes to existing modules", () => {
   const page = read("src/pages/FounderPathSelect.jsx");
-  expect(page).toContain('choose("existing_brand", "brand_brain", "/brand-brain")');
-  expect(page).toContain('choose("founder", "intake", "/onboarding/founder/intake")');
+  expect(page).toContain('choose("existing_brand", "website_import", "/onboarding/existing-brand/import")');
+  expect(page).toContain('choose("founder", "start", "/onboarding/founder/start")');
   expect(page).toContain('choose("explore", "home", "/app")');
   expect(page).toContain('status: "skipped"');
 });

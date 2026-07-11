@@ -45,3 +45,9 @@ Stand: 2026-07-11. Statuswerte: bestanden, bedingt bestanden, offen, blockiert, 
 | Produktions-Rate-Limit | offen | In-Memory-Limiter reicht nicht für Multi-Instance-Produktion. |
 
 | Website-to-Brand Import | umgesetzt | Import-first Existing-Brand-Flow, serverseitiger SSRF-geschützter Abruf, Draft-Bestätigung und manueller Fallback ergänzt. |
+
+## Founder Entry & Idea Discovery Update
+- Founder Journey starts at `/onboarding/founder/start` with three persisted paths: `no_idea`, `rough_direction`, `concrete_idea`.
+- Founder profile and ideas reuse existing founder/onboarding persistence with user/workspace scoping.
+- Ideas are unverified planning suggestions only; market, demand, competition and financing remain later validation steps.
+- Provider failures do not create fake ideas; generation is rate-limited and favorite selection is explicit.
