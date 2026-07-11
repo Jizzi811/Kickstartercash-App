@@ -38,6 +38,35 @@ jobs:
             exit 1
           fi
 
+  backend-tests:
+    name: Backend – unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install backend dependencies
+        run: |
+          pip install -r backend/requirements-deploy.txt
+          pip install pytest pytest-xdist pytest-asyncio anyio
+      - name: Run unit tests
+        working-directory: backend
+        env:
+          MONGO_URL: ""
+          DB_NAME: brandmind_ci
+        # The --ignore list skips live-integration tests that need a deployed
+        # backend URL (REACT_APP_BACKEND_URL) or real provider keys. Everything
+        # else runs fully offline (fake HTTP servers + monkeypatched providers).
+        run: |
+          python -m pytest tests \
+            --ignore=tests/backend_test.py \
+            --ignore=tests/test_guardian.py \
+            --ignore=tests/test_new_features.py \
+            --ignore=tests/test_funnel_photo.py \
+            --ignore=tests/test_gemini_generation.py \
+            --ignore=tests/test_gpt_generation.py
+
   frontend:
     name: Frontend – build
     runs-on: ubuntu-latest
