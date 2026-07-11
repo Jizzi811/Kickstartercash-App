@@ -71,7 +71,7 @@ export function createWorkflow({ analysis, selectedAgents, executionPlan, inputs
     selectedAgents,
     sharedContext,
     outputBus: createOutputBus().snapshot(),
-    activity: [{ id: "activity-created", at: now(), type: "system", message: "Workflow wurde aus Analyse, Agent Matching und Execution Plan erstellt." }],
+    activity: [{ id: "activity-created", at: now(), type: "system", message: "Workflow-Vorschlag wurde aus Analyse, Agent Matching und Execution Plan erstellt." }],
     steps,
   };
 }
@@ -102,7 +102,7 @@ const addActivity = (workflow, message, type = "agent") => ({
 });
 
 export function startWorkflow(workflow) {
-  return addActivity({ ...workflow, status: WORKFLOW_STATUSES.RUNNING, startedAt: now() }, "Workflow gestartet. Quantum koordiniert die Agenten.", "system");
+  return addActivity({ ...workflow, status: WORKFLOW_STATUSES.RUNNING, startedAt: now() }, "Workflow wird ausgeführt. Quantum koordiniert die vorbereiteten Demo-Schritte.", "system");
 }
 
 export function completeNextWorkflowStep(workflow) {
@@ -120,5 +120,5 @@ export function completeNextWorkflowStep(workflow) {
   const isDone = completed === steps.length;
   const sharedContext = { ...workflow.sharedContext, outputs: outputBusSnapshot.byStepId };
 
-  return addActivity({ ...workflow, steps, outputBus: outputBusSnapshot, sharedContext, progress: Math.round((completed / steps.length) * 100), status: isDone ? WORKFLOW_STATUSES.COMPLETED : WORKFLOW_STATUSES.RUNNING, completedAt: isDone ? now() : null }, `${completedStep.agentName} hat ${completedStep.expectedOutput} erstellt.`, "agent");
+  return addActivity({ ...workflow, steps, outputBus: outputBusSnapshot, sharedContext, progress: Math.round((completed / steps.length) * 100), status: isDone ? WORKFLOW_STATUSES.COMPLETED : WORKFLOW_STATUSES.RUNNING, completedAt: isDone ? now() : null }, `${completedStep.agentName} hat einen Vorschau-Output für ${completedStep.expectedOutput} vorbereitet.`, "agent");
 }

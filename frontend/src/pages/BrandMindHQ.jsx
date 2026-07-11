@@ -7,6 +7,7 @@ import {
   Target, Users, Zap, ThumbsUp, ClipboardList, AlertTriangle, PlayCircle, ArrowRight,
 } from "lucide-react";
 import { API, useApp } from "@/context/AppContext";
+import { HOME_QUANTUM_PROMPTS, saveQuantumHomePrompt } from "@/lib/quantumPromptTransfer";
 import {
   Page, Hero, Section, Card, Metric, StatGrid, Btn, BMBadge, EmptyState, SORA, V,
 } from "@/components/bm";
@@ -29,6 +30,7 @@ export default function BrandMindHQ() {
   const [dna, setDna] = useState(null);
   const [readiness, setReadiness] = useState(null);
   const [readinessError, setReadinessError] = useState(false);
+  const [quantumPrompt, setQuantumPrompt] = useState("");
 
   const load = useCallback(async () => {
     const settle = (p) => p.catch(() => null);
@@ -92,18 +94,29 @@ export default function BrandMindHQ() {
       campaign: de ? "Plane eine Mini-Kampagne als editierbaren Vorschlag. Nutze vorhandenes Markenwissen und kennzeichne Annahmen klar." : "Plan a mini campaign as an editable proposal. Use saved brand knowledge and clearly mark assumptions.",
     };
     const prompt = prompts[kind];
-    sessionStorage.setItem("brandmind_quantum_prompt", prompt);
-    navigate("/quantum", { state: { prompt } });
+    saveQuantumHomePrompt(prompt);
+    navigate("/quantum", { state: { quantumPrompt: prompt, source: "quick-start" } });
   };
 
   const actions = [
-    [de ? "Ziel erstellen" : "Create Goal", "/mission", Target],
-    [de ? "Kampagne starten" : "Start Campaign", "/workflow", Rocket],
-    [de ? "Workflow starten" : "Launch Workflow", "/workflow-architect", Zap],
-    [de ? "Wochenplaner & Auto-Posting" : "Weekly planner & auto-posting", "/ops", Megaphone],
-    [de ? "Assets prüfen" : "Review Assets", "/output-factory", ShieldCheck],
-    [de ? "Team-Chat öffnen" : "Open Team Chat", "/mission", MessageSquare],
+    [de ? "Brand Brain öffnen" : "Open Brand Brain", "/brand-brain", Brain],
+    [de ? "Projekt planen" : "Plan project", "/mission", Target],
+    [de ? "Assets prüfen" : "Review assets", "/output-factory", ShieldCheck],
   ];
+
+  const submitQuantumPrompt = () => {
+    const prompt = quantumPrompt.trim();
+    if (!prompt) return;
+    saveQuantumHomePrompt(prompt);
+    navigate("/quantum", { state: { quantumPrompt: prompt, source: "home" } });
+  };
+
+  const handleQuantumKeyDown = (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      submitQuantumPrompt();
+    }
+  };
 
   return (
     <Page>
@@ -120,6 +133,43 @@ export default function BrandMindHQ() {
         </>}
       />
 
+
+      <Section icon={Crown} title={de ? "Was möchtest du heute für deine Marke erreichen?" : "What do you want to achieve for your brand today?"}>
+        <Card tinted>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+            <div>
+              <p className="mb-3 text-sm leading-6 text-zinc-400">
+                {de
+                  ? "Beschreibe dein Ziel in deinen eigenen Worten. Quantum analysiert die Aufgabe und bereitet den passenden Ablauf vor."
+                  : "Describe your goal in your own words. Quantum analyzes the task and prepares the right workflow."}
+              </p>
+              <textarea
+                aria-label={de ? "Quantum-Ziel eingeben" : "Enter Quantum goal"}
+                value={quantumPrompt}
+                onChange={(event) => setQuantumPrompt(event.target.value)}
+                onKeyDown={handleQuantumKeyDown}
+                className="min-h-[116px] w-full rounded-xl border border-white/10 bg-black/35 p-4 text-sm text-zinc-100 outline-none transition focus:border-violet-300 focus:ring-2 focus:ring-violet-300/40"
+                placeholder={de ? "Beschreibe dein Ziel…" : "Describe your goal…"}
+              />
+            </div>
+            <Btn onClick={submitQuantumPrompt} disabled={!quantumPrompt.trim()} className="min-h-11 disabled:cursor-not-allowed disabled:opacity-50">
+              {de ? "An Quantum übergeben" : "Send to Quantum"}
+            </Btn>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {HOME_QUANTUM_PROMPTS[lang].map((prompt) => (
+              <button
+                key={prompt}
+                type="button"
+                onClick={() => setQuantumPrompt(prompt)}
+                className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-left text-xs text-zinc-300 transition hover:border-violet-300/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300"
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+        </Card>
+      </Section>
 
       {onboardingStatus && onboardingStatus.status !== "completed" && (
         <Card className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -178,7 +228,6 @@ export default function BrandMindHQ() {
           </Card>
         </Section>
       )}
-
       {/* Real KPIs – or em-dash while loading, never invented numbers */}
       <StatGrid>
         <div className="animate-[pulse_3s_ease-in-out_infinite]"><Metric icon={Dna} label={de ? "DNA-Vollständigkeit" : "DNA completeness"}

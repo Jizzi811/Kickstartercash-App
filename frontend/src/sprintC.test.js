@@ -32,9 +32,9 @@ test("home renders readiness from API and no fake fallback score", () => {
 test("quick starts hand editable prompts to Quantum without automatic execution", () => {
   const home = read("src/pages/BrandMindHQ.jsx");
   const quantum = read("src/pages/QuantumAgent.jsx");
-  expect(home).toContain("brandmind_quantum_prompt");
+  expect(home).toContain("saveQuantumHomePrompt(prompt)");
   expect(home).toContain("Keine automatische Ausführung");
-  expect(quantum).toContain("setOrchestratorPrompt(incoming)");
+  expect(quantum).toContain("setOrchestratorPrompt(transfer.prompt)");
   expect(quantum).not.toContain("handleOrchestrate(incoming)");
 });
 

@@ -71,6 +71,70 @@ Stand: 2026-07-10. Fokus Sprint A: Funktionsstatus, Glaubwürdigkeitsrisiken auf
 
 ---
 
+## Sprint B – Navigation & Quantum Home Entry
+
+Stand: 2026-07-11. Sprint B konsolidiert ausschließlich Navigation, Home/HQ-Struktur und die Prompt-Übergabe zu Quantum. Sprint C/D/E-Themen wie Brand-Readiness-Score, Onboarding-Entscheidungen, Security-/Legacy-Bereinigung oder neue Backend-Datenmodelle wurden bewusst nicht umgesetzt.
+
+### Umsetzungsplan Sprint B
+
+1. `/app` bleibt die authentifizierte Home-/HQ-Seite; `/` bleibt die öffentliche Landingpage.
+2. `/quantum` bleibt die zentrale Quantum-Command-Route und wird als eigener Hauptpunkt sichtbar gemacht.
+3. Bestehende Routen bleiben in `frontend/src/App.js` registriert; die Navigation gruppiert sie nur neu.
+4. Home übergibt Prompts über React-Router-State plus Session-Storage-Fallback an Quantum; keine Query-Parameter.
+5. Quantum übernimmt den Prompt in das bestehende Orchestrator-Eingabefeld, löscht temporären Zustand nach Übernahme und führt ihn nicht automatisch aus.
+
+### Neue Navigationsarchitektur
+
+Sichtbare Hauptnavigation: Home, Quantum, Meine Marke/My Brand, Erstellen/Create, Projekte/Projects, Mehr/More. Desktop und Mobile nutzen dieselbe Konfiguration. Primäre Bereiche werden nicht dauerhaft alle aufgeklappt; Home und Quantum sind Direktlinks, die übrigen Gruppen sind Tastatur-bedienbare Buttons mit `aria-expanded` und `aria-controls`.
+
+### Route-zu-Gruppe-Zuordnung
+
+| Gruppe | Routen |
+|---|---|
+| Home | `/app` |
+| Quantum | `/quantum` |
+| Meine Marke / My Brand | `/brand-brain`, `/brand-identity`, `/knowledge`, `/knowledge-graph`, `/memory` |
+| Erstellen / Create | `/social`, `/design`, `/video`, `/seo`, `/email`, `/linkedin`, `/tiktok`, `/tts`, `/output-factory` |
+| Projekte / Projects | `/mission`, `/campaign`, `/workflow`, `/automation`, `/workflow-architect`, `/orchestrator`, `/ops`, `/tickets` |
+| Mehr / More | `/agents`, `/builder`, `/character-studio`, `/ai-business-card`, `/intelligence`, `/analytics`, `/skills`, `/modules`, `/arena`, `/gateway`, `/billing`, `/permissions` |
+| Mehr → Business & Finanzen / Business & Finance | `/finance-cfo`, `/finance-analyst`, `/finance-fpa`, `/finance-bookkeeper`, `/finance-tax` |
+
+### Home-Entscheidung
+
+`/app` ist die Home-/HQ-Seite für angemeldete Nutzer. Die bestehende Dashboard-/Marketplace-Seite bleibt unter `/modules`; es wurde keine zweite Dashboard-Architektur erzeugt.
+
+### Quantum-Promptübergabe
+
+Home speichert einen validierten, nicht-leeren Prompt mit `saveQuantumHomePrompt()` in Session Storage und navigiert zusätzlich mit Router-State nach `/quantum`. Quantum liest zuerst Router-State, danach Session Storage, setzt den Text in `orchestratorPrompt`, löscht den temporären Speicher und ersetzt den Router-State. Dadurch bleibt der Prompt bei verzögerter Initialisierung erhalten, ohne sensible Inhalte in der URL offenzulegen.
+
+### Mock-Workflow-Kennzeichnung
+
+Die Orchestrator-Oberfläche bezeichnet den initialen Ablauf als „Workflow-Vorschlag“ / “workflow proposal”. Die spätere lokale Demo-Ausführung wird als vorbereiteter Workflow beziehungsweise Vorschau-Output beschrieben und nicht als veröffentlichte Kampagne oder reale Agentenarbeit.
+
+### Responsive- und Accessibility-Prüfung
+
+Strukturell geprüft: mobile Navigation schließt per Escape und bei Navigation; lange Gruppen sind scrollbar; Fokuszustände sind über `focus-visible` sichtbar; aufklappbare Gruppen besitzen `aria-expanded`/`aria-controls`; Hauptinhalt bleibt durch `overflow-x-hidden` und responsive Grids nutzbar. Eine echte Browser-Viewport-Screenshotprüfung für 1440×900, 1280×720, 768×1024, 390×844 und 360×800 wurde in dieser Umgebung nicht automatisiert ausgeführt.
+
+### Ausgeführte Tests
+
+- `npm test -- --watchAll=false`
+- `CI=false npm run build`
+- `npx eslint src/lib/navigationConfig.js src/lib/quantumPromptTransfer.js src/pages/BrandMindHQ.jsx src/pages/QuantumAgent.jsx src/components/Layout.jsx src/components/quantum/WorkflowTimeline.jsx src/lib/workflowEngine.js` wurde versucht; ESLint 9 bricht ab, weil im Frontend kein `eslint.config.js` vorhanden ist.
+
+### Offene Risiken
+
+- Vollständige visuelle Prüfung über alle Ziel-Viewports benötigt Browser-Automation oder manuelle QA.
+- Einige Quantum-Bereiche enthalten weiterhin historische Demo-/Preview-Module; Sprint B hat nur die irreführende Workflow-Ausführungsbezeichnung entschärft.
+- Reale LLM-/Provider-Ausführung hängt weiterhin von API-Keys ab.
+
+### Bewusst verschoben
+
+- Sprint C: Brand Readiness Score, Onboarding-Entscheidungen und neue Ersteinstiegslogik.
+- Sprint D: Security-/Legacy-Audit, rechtliche Finance-Hinweise, umfassende Route-/Permission-Härtung.
+- Sprint E: weitergehende Integrationen, echte Agenten-/Workflow-Ausführung und neue persistente Datenmodelle.
+
+---
+
 # Sprint C Ergänzung – Onboarding & Brand Readiness
 
 ## Umsetzungsplan und Datenmodell

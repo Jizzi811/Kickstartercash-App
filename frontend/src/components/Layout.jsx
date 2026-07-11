@@ -14,92 +14,12 @@ import {
 import { CursorTrail } from "@/components/CursorTrail";
 import { AmbientOrb } from "@/components/AmbientOrb";
 import { DEFAULT_BM_APPEARANCE, getAppearanceConfig } from "@/design-system";
+import { NAV_GROUPS } from "@/lib/navigationConfig";
 
-const NAV_GROUPS = [
-  {
-    id: "headquarters",
-    labelDE: "Headquarters",
-    labelEN: "Headquarters",
-    items: [
-      { to: "/app", icon: Building2, labelDE: "BrandMind HQ", labelEN: "BrandMind HQ", end: true },
-      { to: "/mission", icon: Target, labelDE: "Mission Control", labelEN: "Mission Control" },
-      { to: "/intelligence", icon: TrendingUp, labelDE: "Intelligence", labelEN: "Intelligence" },
-    ],
-  },
-  {
-    id: "company",
-    labelDE: "Company",
-    labelEN: "Company",
-    items: [
-      { to: "/brand-brain", icon: BrainCircuit, labelDE: "Brand Brain", labelEN: "Brand Brain" },
-      { to: "/brand-identity", icon: Dna, labelDE: "Identity", labelEN: "Identity" },
-      { to: "/knowledge-graph", icon: Network, labelDE: "Knowledge Graph", labelEN: "Knowledge Graph" },
-      { to: "/knowledge", icon: Database, labelDE: "Knowledge Base", labelEN: "Knowledge Base" },
-      { to: "/memory", icon: Brain, labelDE: "Memory", labelEN: "Memory" },
-    ],
-  },
-  {
-    id: "ai",
-    labelDE: "AI",
-    labelEN: "AI",
-    items: [
-      { to: "/ai-business-card", icon: IdCard, labelDE: "AI Business Card", labelEN: "AI Business Card" },
-      { to: "/agents", icon: Bot, labelDE: "Agents", labelEN: "Agents" },
-      { to: "/builder", icon: Wrench, labelDE: "Custom Agents", labelEN: "Custom Agents" },
-      { to: "/character-studio", icon: Dna, labelDE: "Character Studio", labelEN: "Character Studio" },
-      { to: "/gateway", icon: Plug, labelDE: "Gateway", labelEN: "Gateway" },
-      { to: "/skills", icon: Sparkles, labelDE: "Skills", labelEN: "Skills" },
-      { to: "/modules", icon: LayoutGrid, labelDE: "Marketplace", labelEN: "Marketplace" },
-      { to: "/arena", icon: MessageSquare, labelDE: "Chat Arena", labelEN: "Chat Arena" },
-    ],
-  },
-  {
-    id: "studios",
-    labelDE: "Studios",
-    labelEN: "Studios",
-    items: [
-      { to: "/design", icon: Palette, labelDE: "Design", labelEN: "Design" },
-      { to: "/video", icon: Film, labelDE: "Video", labelEN: "Video" },
-      { to: "/seo", icon: Globe, labelDE: "SEO", labelEN: "SEO" },
-      { to: "/social", icon: Smartphone, labelDE: "Social", labelEN: "Social" },
-      { to: "/email", icon: Mail, labelDE: "Email", labelEN: "Email" },
-      { to: "/analytics", icon: BarChart2, labelDE: "Analytics", labelEN: "Analytics" },
-      { to: "/tiktok", icon: Music, labelDE: "TikTok", labelEN: "TikTok" },
-      { to: "/linkedin", icon: Linkedin, labelDE: "LinkedIn", labelEN: "LinkedIn" },
-      { to: "/tts", icon: Volume2, labelDE: "TTS", labelEN: "TTS" },
-      { to: "/output-factory", icon: Factory, labelDE: "Output Factory", labelEN: "Output Factory" },
-    ],
-  },
-  {
-    id: "workflow",
-    labelDE: "Workflow",
-    labelEN: "Workflow",
-    items: [
-      { to: "/automation", icon: Zap, labelDE: "Automation", labelEN: "Automation" },
-      { to: "/workflow-architect", icon: Workflow, labelDE: "Workflow Architect", labelEN: "Workflow Architect" },
-      { to: "/ops", icon: Workflow, labelDE: "Content Ops", labelEN: "Content Ops" },
-      { to: "/workflow", icon: Megaphone, labelDE: "Campaign Flow", labelEN: "Campaign Flow" },
-      { to: "/orchestrator", icon: Network, labelDE: "Orchestrator", labelEN: "Orchestrator" },
-      { to: "/tickets", icon: Ticket, labelDE: "Tickets", labelEN: "Tickets" },
-    ],
-  },
-  {
-    id: "settings",
-    labelDE: "Settings",
-    labelEN: "Settings",
-    items: [
-      { to: "/billing", icon: Crown, labelDE: "Plans", labelEN: "Plans" },
-      { to: "/permissions", icon: ShieldCheck, labelDE: "Permissions", labelEN: "Permissions" },
-      { to: "/finance-cfo", icon: TrendingUp, labelDE: "CFO Studio", labelEN: "CFO Studio" },
-      { to: "/finance-analyst", icon: BarChart2, labelDE: "Financial Analyst", labelEN: "Financial Analyst" },
-      { to: "/finance-fpa", icon: TrendingUp, labelDE: "FP&A Studio", labelEN: "FP&A Studio" },
-      { to: "/finance-bookkeeper", icon: BookOpen, labelDE: "Bookkeeper", labelEN: "Bookkeeper" },
-      { to: "/finance-tax", icon: FileText, labelDE: "Tax Studio", labelEN: "Tax Studio" },
-    ],
-  },
-];
 
-const NAV = NAV_GROUPS.flatMap((group) => group.items);
+const NAV_ICONS = {
+  LayoutGrid, Building2, Bot, Palette, Film, Smartphone, Globe, BarChart2, Zap, Database, Wrench, MessageSquare, ShieldCheck, Music, Mail, Linkedin, Network, Workflow, Ticket, TrendingUp, BookOpen, FileText, Megaphone, BrainCircuit, Crown, Volume2, Target, Factory, Plug, Dna, Brain, Sparkles, IdCard,
+};
 
 const NAV_ITEM_DESCRIPTIONS = {
   "/app": { de: "Zentrale Übersicht für Ziele, Module und nächste Schritte.", en: "Central overview for goals, modules and next steps." },
@@ -323,6 +243,8 @@ export const Layout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const activeGroup = NAV_GROUPS.find((group) => [...(group.items || []), ...(group.subgroups || []).flatMap((subgroup) => subgroup.items || [])].some((item) => item.to === location.pathname || (!item.end && location.pathname.startsWith(`${item.to}/`))))?.id;
+  const [openGroup, setOpenGroup] = useState(activeGroup || "my-brand");
   const appearanceMode = activeWorkspace?.appearanceMode || DEFAULT_BM_APPEARANCE;
   const appearance = getAppearanceConfig(appearanceMode);
 
@@ -349,6 +271,16 @@ export const Layout = ({ children }) => {
   const userLabel = user?.name || user?.email || (lang === "DE" ? "Nutzer" : "User");
   const brandLabel = activeBrand?.name || (lang === "DE" ? "Aktive Brand" : "Active Brand");
 
+
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileOpen]);
+
   const TopContextPill = ({ icon: Icon, label, value, className = "" }) => (
     <div className={`hidden lg:flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-1.5 text-xs text-zinc-300 ${className}`}>
       <Icon size={13} className="text-violet-300" aria-hidden="true" />
@@ -358,7 +290,8 @@ export const Layout = ({ children }) => {
   );
 
   const SidebarNavItem = ({ item, onNavigate }) => {
-    const { to, icon: Icon, labelDE, labelEN, end } = item;
+    const { to, icon, labelDE, labelEN, end } = item;
+    const Icon = NAV_ICONS[icon] || LayoutGrid;
     const description = NAV_ITEM_DESCRIPTIONS[to];
     const text = lang === "DE" ? labelDE : labelEN;
     const helper = description ? (lang === "DE" ? description.de : description.en) : "";
@@ -464,18 +397,34 @@ export const Layout = ({ children }) => {
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
-          {NAV_GROUPS.map((group) => (
-            <div key={group.id} className="space-y-1.5">
-              <div className="px-3 text-[10px] font-bold uppercase tracking-[0.22em] text-zinc-600">
-                {lang === "DE" ? group.labelDE : group.labelEN}
+          {NAV_GROUPS.map((group) => {
+            const GroupIcon = NAV_ICONS[group.icon] || LayoutGrid;
+            const groupLabel = lang === "DE" ? group.labelDE : group.labelEN;
+            const isOpen = group.primary || openGroup === group.id;
+            const isActiveGroup = group.id === activeGroup;
+            if (group.primary) {
+              const item = group.items[0];
+              return <SidebarNavItem key={group.id} item={{ ...item, icon: group.icon, labelDE: group.labelDE, labelEN: group.labelEN }} />;
+            }
+            return (
+              <div key={group.id} className="space-y-1.5">
+                <button type="button" aria-expanded={isOpen} aria-controls={`nav-group-${group.id}`} onClick={() => setOpenGroup(isOpen ? "" : group.id)} className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[12px] font-bold uppercase tracking-[0.12em] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 ${isActiveGroup ? "text-violet-200 bg-violet-500/10" : "text-zinc-500 hover:text-zinc-200 hover:bg-white/4"}`}>
+                  <GroupIcon size={15} aria-hidden="true" />
+                  <span className="flex-1">{groupLabel}</span>
+                  {isOpen ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
+                </button>
+                <div id={`nav-group-${group.id}`} className={`${isOpen ? "block" : "hidden"} space-y-0.5`}>
+                  {(group.items || []).map((item) => <SidebarNavItem key={item.to} item={item} />)}
+                  {(group.subgroups || []).map((subgroup) => (
+                    <div key={subgroup.id} className="pt-2">
+                      <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-600">{lang === "DE" ? subgroup.labelDE : subgroup.labelEN}</div>
+                      {subgroup.items.map((item) => <SidebarNavItem key={item.to} item={item} />)}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="space-y-0.5">
-                {group.items.map((item) => (
-                  <SidebarNavItem key={item.to} item={item} />
-                ))}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
         {/* Footer – status badge */}
@@ -535,18 +484,34 @@ export const Layout = ({ children }) => {
               </button>
             </div>
         <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
-          {NAV_GROUPS.map((group) => (
-            <div key={group.id} className="space-y-1.5">
-              <div className="px-3 text-[10px] font-bold uppercase tracking-[0.22em] text-zinc-600">
-                {lang === "DE" ? group.labelDE : group.labelEN}
+          {NAV_GROUPS.map((group) => {
+            const GroupIcon = NAV_ICONS[group.icon] || LayoutGrid;
+            const groupLabel = lang === "DE" ? group.labelDE : group.labelEN;
+            const isOpen = group.primary || openGroup === group.id;
+            const isActiveGroup = group.id === activeGroup;
+            if (group.primary) {
+              const item = group.items[0];
+              return <SidebarNavItem key={group.id} item={{ ...item, icon: group.icon, labelDE: group.labelDE, labelEN: group.labelEN }} onNavigate={() => setMobileOpen(false)} />;
+            }
+            return (
+              <div key={group.id} className="space-y-1.5">
+                <button type="button" aria-expanded={isOpen} aria-controls={`mobile-nav-group-${group.id}`} onClick={() => setOpenGroup(isOpen ? "" : group.id)} className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[12px] font-bold uppercase tracking-[0.12em] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 ${isActiveGroup ? "text-violet-200 bg-violet-500/10" : "text-zinc-500 hover:text-zinc-200 hover:bg-white/4"}`}>
+                  <GroupIcon size={15} aria-hidden="true" />
+                  <span className="flex-1">{groupLabel}</span>
+                  {isOpen ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
+                </button>
+                <div id={`mobile-nav-group-${group.id}`} className={`${isOpen ? "block" : "hidden"} space-y-0.5`}>
+                  {(group.items || []).map((item) => <SidebarNavItem key={item.to} item={item} onNavigate={() => setMobileOpen(false)} />)}
+                  {(group.subgroups || []).map((subgroup) => (
+                    <div key={subgroup.id} className="pt-2">
+                      <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-600">{lang === "DE" ? subgroup.labelDE : subgroup.labelEN}</div>
+                      {subgroup.items.map((item) => <SidebarNavItem key={item.to} item={item} onNavigate={() => setMobileOpen(false)} />)}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="space-y-0.5">
-                {group.items.map((item) => (
-                  <SidebarNavItem key={item.to} item={item} onNavigate={() => setMobileOpen(false)} />
-                ))}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
           </aside>
         </div>
