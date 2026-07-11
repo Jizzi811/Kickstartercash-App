@@ -208,3 +208,28 @@ Ergänzt wurden fokussierte Backend-Tests für Early-Access-Validierung/Adminsch
 
 ## Nach Sprint E verschoben
 Vollständige E2E-Browser-QA, Deployment, umfassende Regression, neue Zahlungsstruktur, breite Architekturmodernisierung und vollständige Legacy-Funktionsentfernung.
+---
+
+# Sprint E Ergänzung – Release Validation
+
+Stand: 2026-07-11. Sprint E prüfte Brandmind als Early-Access-Release-Candidate. Der lokale Checkout hatte keinen Remote und keinen `main`-Branch, enthielt aber die Sprint-D-Commits `c9286d5` und `447decb`; der neue Branch `codex/brandmind-sprint-e-release-validation` wurde auf dieser Basis erstellt.
+
+## Sprint-E Ergebnis
+
+Bestanden sind Backend-Syntax, Compile, Import-Smoke ohne Mongo-Verbindung, Sprint-C-Backendtests, Sprint-D-Backendtests, Frontend-Sprinttests und der Produktionsbuild. Lokal gestartet wurden Backend ohne Mongo-Konfiguration und Frontend; `/api/health` antwortete ohne Crash.
+
+Nicht vollständig erfüllt sind MongoDB-Integration und echte Browser-/Viewport-QA. `mongod` war nicht installiert und `mongodb-org` nicht verfügbar. Playwright konnte Chromium wegen CDN-403 nicht herunterladen; Ubuntu Chromium installierte nur einen nicht startbaren Snap-Wrapper. Deshalb wurden keine visuellen Screenshots erzeugt und keine Browserprüfung behauptet.
+
+## Behobener Sprint-E Fund
+
+Ein nutzersichtbarer PDF-Export-Dateiname mit altem `kickstartercash`-Prefix wurde auf `brandmind-export` geändert.
+
+## Release-Entscheidung Sprint E
+
+- Interner Test: CONDITIONAL GO.
+- Geschlossener Early Access: CONDITIONAL GO, sofern Browser-QA, Mongo-Integration, Legal-Review und Legacy-Entscheidung nachgeholt werden.
+- Öffentlicher Early Access: NO-GO.
+- Produktivlaunch: NO-GO.
+
+Details: siehe `docs/SPRINT_E_RELEASE_VALIDATION.md`, `docs/PRODUCT_READINESS_REPORT.md` und `docs/EARLY_ACCESS_RELEASE_CHECKLIST.md`.
+
