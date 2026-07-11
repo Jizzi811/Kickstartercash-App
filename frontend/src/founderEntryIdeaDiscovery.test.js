@@ -18,3 +18,13 @@ test('ideas compare has max-three and no success probability', () => {
   expect(page).toContain('Maximal drei Ideen');
   expect(page).not.toMatch(/%|probability/i);
 });
+
+test('founder resume routing fix is represented in start and intake UI', () => {
+  const start = read('src/pages/FounderStart.jsx');
+  const intake = read('src/pages/FounderIntake.jsx');
+  expect(start).toContain('Du hast bereits Angaben gespeichert. Sie bleiben erhalten. Wähle bitte, wo du aktuell mit deiner Geschäftsidee stehst.');
+  expect(start).toContain('You already have saved information. It will stay in place.');
+  expect(intake).toContain('navigate("/onboarding/founder/start", { replace: true })');
+  expect(intake).toContain('navigate("/onboarding/founder/ideas", { replace: true })');
+  expect(intake).toContain('navigate("/onboarding/founder/start")');
+});

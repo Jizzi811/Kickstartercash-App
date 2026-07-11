@@ -65,3 +65,79 @@ async def test_compare_limit_and_single_favorite(monkeypatch):
     ideas=(await server.founder_ideas_list(user=user, ws="w1"))["ideas"]
     assert sum(1 for i in ideas if i.get("favorite")) == 1
     assert sum(1 for i in ideas if i.get("user_confirmed")) == 2
+
+
+@pytest.mark.asyncio
+async def test_founder_resume_legacy_intake_without_founder_path_starts_and_preserves_data(monkeypatch):
+    fdb = FakeDB(); monkeypatch.setattr(server, "db", fdb)
+    user = {"id": "legacy"}
+    await fdb.onboarding_status.update_one(
+        {"user_id": "legacy", "workspace_id": "w1"},
+        {"$set": {"selected_path": "founder", "current_step": "intake", "status": "in_progress", "completed_steps": ["profile", "ideas"]}},
+        upsert=True,
+    )
+    await fdb.founder_profiles.update_one(
+        {"user_id": "legacy", "workspace_id": "w1"},
+        {"$set": {"vision": "Legacy vision", "motivation": "Legacy motivation", "target_audience": "Legacy audience"}},
+        upsert=True,
+    )
+
+    status = await server.onboarding_status_get(user=user, ws="w1")
+    profile = await server.founder_profile_get(user=user, ws="w1")
+
+    assert status["resume_route"] == "/onboarding/founder/start"
+    assert profile["vision"] == "Legacy vision"
+    assert profile["founder_path"] == ""
+
+@pytest.mark.asyncio
+async def test_founder_resume_requires_confirmed_idea_before_intake(monkeypatch):
+    fdb = FakeDB(); monkeypatch.setattr(server, "db", fdb)
+    user = {"id": "u-route"}
+    await server.founder_profile_update(server.FounderProfilePayload(founder_path="no_idea"), user=user, ws="w1")
+    await server.onboarding_status_update(server.OnboardingStatusUpdate(status="in_progress", selected_path="founder", current_step="intake"), user=user, ws="w1")
+    assert (await server.onboarding_status_get(user=user, ws="w1"))["resume_route"] == "/onboarding/founder/ideas"
+
+    await server.founder_profile_update(server.FounderProfilePayload(founder_path="rough_direction"), user=user, ws="w1")
+    await server.onboarding_status_update(server.OnboardingStatusUpdate(status="in_progress", selected_path="founder", current_step="intake"), user=user, ws="w1")
+    assert (await server.onboarding_status_get(user=user, ws="w1"))["resume_route"] == "/onboarding/founder/ideas"
+
+    await server.founder_profile_update(server.FounderProfilePayload(founder_path="concrete_idea"), user=user, ws="w1")
+    await server.onboarding_status_update(server.OnboardingStatusUpdate(status="in_progress", selected_path="founder", current_step="intake"), user=user, ws="w1")
+    assert (await server.onboarding_status_get(user=user, ws="w1"))["resume_route"] == "/onboarding/founder/ideas"
+
+@pytest.mark.asyncio
+async def test_founder_resume_allows_intake_after_confirmed_working_idea_and_scopes_workspace(monkeypatch):
+    fdb = FakeDB(); monkeypatch.setattr(server, "db", fdb)
+    user = {"id": "scoped"}
+    other_user = {"id": "other"}
+    await server.founder_profile_update(server.FounderProfilePayload(founder_path="concrete_idea"), user=user, ws="w1")
+    created = await server.founder_idea_create(server.FounderIdeaPayload(founder_path="concrete_idea", title="Confirmed"), user=user, ws="w1")
+    await server.founder_idea_create(server.FounderIdeaPayload(founder_path="concrete_idea", title="Other"), user=other_user, ws="w1")
+    await server.founder_idea_favorite(created["idea"]["id"], user=user, ws="w1")
+
+    status = await server.onboarding_status_get(user=user, ws="w1")
+    profile = await server.founder_profile_get(user=user, ws="w1")
+    other_profile = await server.founder_profile_get(user=other_user, ws="w1")
+
+    assert status["resume_route"] == "/onboarding/founder/intake"
+    assert profile["founder_path"] == "concrete_idea"
+    assert profile["selected_idea_id"] == created["idea"]["id"]
+    assert other_profile["founder_path"] == ""
+
+@pytest.mark.asyncio
+async def test_path_change_keeps_intake_ideas_and_selected_favorite(monkeypatch):
+    fdb = FakeDB(); monkeypatch.setattr(server, "db", fdb)
+    user = {"id": "keep"}
+    await server.founder_profile_update(server.FounderProfilePayload(founder_path="concrete_idea"), user=user, ws="w1")
+    await server.founder_intake_update(server.FounderIntakePayload(vision="Keep vision", motivation="Keep motivation"), user=user, ws="w1")
+    created = await server.founder_idea_create(server.FounderIdeaPayload(founder_path="concrete_idea", title="Keep favorite"), user=user, ws="w1")
+    await server.founder_idea_favorite(created["idea"]["id"], user=user, ws="w1")
+
+    await server.founder_profile_update(server.FounderProfilePayload(founder_path="rough_direction"), user=user, ws="w1")
+    profile = await server.founder_profile_get(user=user, ws="w1")
+    ideas = (await server.founder_ideas_list(user=user, ws="w1"))["ideas"]
+
+    assert profile["vision"] == "Keep vision"
+    assert profile["motivation"] == "Keep motivation"
+    assert profile["selected_idea_id"] == created["idea"]["id"]
+    assert any(idea["id"] == created["idea"]["id"] and idea["favorite"] and idea["user_confirmed"] for idea in ideas)

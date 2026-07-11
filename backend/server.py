@@ -7742,12 +7742,39 @@ def _onboarding_route(selected_path: str = "", current_step: str = "") -> str:
         return "/app"
     return "/onboarding/select-path"
 
+
+def _founder_idea_confirmed(profile: Optional[dict], ideas_doc: Optional[dict]) -> bool:
+    profile = profile or {}
+    selected_idea_id = profile.get("selected_idea_id")
+    selected_idea = profile.get("selected_idea") or {}
+    if selected_idea_id and selected_idea.get("id") == selected_idea_id and selected_idea.get("user_confirmed"):
+        return True
+    for idea in (ideas_doc or {}).get("ideas", []):
+        if idea.get("user_confirmed") and idea.get("favorite") and (not selected_idea_id or idea.get("id") == selected_idea_id):
+            return True
+    return False
+
+async def _founder_resume_route(user_id: str, ws: Optional[str], current_step: str = "") -> str:
+    profile = await db.founder_profiles.find_one(_founder_scope(user_id, ws), {"_id": 0}) or {}
+    founder_path = profile.get("founder_path") or ""
+    if founder_path not in FOUNDER_PATHS:
+        return "/onboarding/founder/start"
+    ideas_doc = await db.founder_ideas.find_one(_founder_scope(user_id, ws), {"_id": 0}) or {}
+    if current_step in {"intake", "brand", "offers", "business_plan", "finance", "operations", "summary"}:
+        if _founder_idea_confirmed(profile, ideas_doc):
+            return _onboarding_route("founder", current_step)
+        if founder_path in {"no_idea", "rough_direction"}:
+            return "/onboarding/founder/ideas"
+        return "/onboarding/founder/ideas"
+    return _onboarding_route("founder", current_step or "start")
+
 @api_router.get("/onboarding/status")
 async def onboarding_status_get(user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
     doc = await db.onboarding_status.find_one(_onboarding_scope(user["id"], ws), {"_id": 0})
     if not doc:
         return {"status": "not_started", "selected_path": "", "current_step": "", "completed_steps": [], "workspace_id": ws or "", "user_id": user["id"], "resume_route": "/onboarding/select-path", "is_new": True}
-    return {**doc, "workspace_id": ws or "", "user_id": user["id"], "resume_route": _onboarding_route(doc.get("selected_path", ""), doc.get("current_step", "")), "is_new": False}
+    resume_route = await _founder_resume_route(user["id"], ws, doc.get("current_step", "")) if doc.get("selected_path", "") == "founder" else _onboarding_route(doc.get("selected_path", ""), doc.get("current_step", ""))
+    return {**doc, "workspace_id": ws or "", "user_id": user["id"], "resume_route": resume_route, "is_new": False}
 
 @api_router.put("/onboarding/status")
 async def onboarding_status_update(payload: OnboardingStatusUpdate, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
@@ -7777,7 +7804,8 @@ async def onboarding_status_update(payload: OnboardingStatusUpdate, user: dict =
         update["skipped_at"] = now
     await db.onboarding_status.update_one(_onboarding_scope(user["id"], ws), {"$set": update, "$setOnInsert": {"created_at": now, **_onboarding_scope(user["id"], ws)}}, upsert=True)
     doc = await db.onboarding_status.find_one(_onboarding_scope(user["id"], ws), {"_id": 0})
-    return {**doc, "workspace_id": ws or "", "user_id": user["id"], "resume_route": _onboarding_route(doc.get("selected_path", ""), doc.get("current_step", ""))}
+    resume_route = await _founder_resume_route(user["id"], ws, doc.get("current_step", "")) if doc.get("selected_path", "") == "founder" else _onboarding_route(doc.get("selected_path", ""), doc.get("current_step", ""))
+    return {**doc, "workspace_id": ws or "", "user_id": user["id"], "resume_route": resume_route}
 
 PLACEHOLDER_VALUES = {"", "—", "n/a", "na", "none", "keine", "kein", "tbd", "todo", "test", "demo", "lorem ipsum"}
 
@@ -7978,8 +8006,9 @@ async def founder_profile_update(payload: FounderProfilePayload, user: dict = De
     if payload.founder_path and payload.founder_path not in FOUNDER_PATHS:
         raise HTTPException(status_code=400, detail="Invalid founder_path")
     now = _now_iso(); update = {"updated_at": now}
+    provided_fields = set(payload.model_fields_set if hasattr(payload, "model_fields_set") else getattr(payload, "__fields_set__", set()))
     for k, v in _payload_data(payload).items():
-        if v is not None:
+        if v is not None and k in provided_fields:
             update[k] = _limit_text(v, 1200 if isinstance(v, str) else 200)
     await db.founder_profiles.update_one(_founder_scope(user["id"], ws), {"$set": update, "$setOnInsert": {"created_at": now, **_founder_scope(user["id"], ws)}}, upsert=True)
     await _set_onboarding(user["id"], ws, "profile" if update.get("founder_path") else "start")
@@ -8064,7 +8093,13 @@ async def founder_idea_favorite(idea_id: str, user: dict = Depends(_authed_user)
         idea["updated_at"] = _now_iso()
     if not selected: raise HTTPException(status_code=404, detail="Idea not found")
     await db.founder_ideas.update_one(_founder_scope(user["id"], ws), {"$set": {"ideas": ideas, "updated_at": _now_iso()}})
-    await db.founder_profiles.update_one(_founder_scope(user["id"], ws), {"$set": {"selected_idea_id": selected["id"], "selected_idea": selected, "target_audience": selected.get("target_audience", ""), "vision": selected.get("short_description", ""), "updated_at": _now_iso()}, "$setOnInsert": {"created_at": _now_iso(), **_founder_scope(user["id"], ws)}}, upsert=True)
+    profile = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    profile_update = {"selected_idea_id": selected["id"], "selected_idea": selected, "updated_at": _now_iso()}
+    if not _has_real_value(profile.get("target_audience")):
+        profile_update["target_audience"] = selected.get("target_audience", "")
+    if not _has_real_value(profile.get("vision")):
+        profile_update["vision"] = selected.get("short_description", "")
+    await db.founder_profiles.update_one(_founder_scope(user["id"], ws), {"$set": profile_update, "$setOnInsert": {"created_at": _now_iso(), **_founder_scope(user["id"], ws)}}, upsert=True)
     await _set_onboarding(user["id"], ws, "intake")
     return {"selected_idea_id": selected["id"], "selected_idea": selected, "next_route": "/onboarding/founder/intake", "message": "Deine Geschäftsidee steht als Arbeitsgrundlage fest. Als Nächstes prüfen und entwickeln wir Zielgruppe, Angebot und Geschäftsmodell.", "workspace_id": ws or ""}
 
