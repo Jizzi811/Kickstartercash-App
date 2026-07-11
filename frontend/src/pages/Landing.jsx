@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import {
-  ArrowRight, Sparkles, Check, Star, Quote, ShieldCheck, Rocket,
+  ArrowRight, Sparkles, Check, ShieldCheck, Rocket,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { BRANDMIND } from "@/brandmind";
 import QuantumOrb from "@/components/landing/QuantumOrb";
-import { STEPS, FEATURES, BENEFITS, AUDIENCES, OUTPUT_SAMPLES, TESTIMONIALS } from "@/pages/landingContent";
+import StatusBadge from "@/components/StatusBadge";
+import { STEPS, FEATURES, BENEFITS, AUDIENCES, OUTPUT_SAMPLES } from "@/pages/landingContent";
 
 const C = BRANDMIND.colors;
 
@@ -65,7 +66,7 @@ export default function Landing() {
 
   if (isAuthenticated) return <Navigate to="/app" replace />;
 
-  const startFree = () => navigate("/auth");
+  const requestEarlyAccess = () => navigate("/auth");
   const login = () => navigate("/auth");
   const activeFeature = FEATURES.find((f) => f.id === activeAgent) || FEATURES[0];
   const ActiveIcon = activeFeature.icon;
@@ -88,11 +89,11 @@ export default function Landing() {
             {T("Anmelden", "Log in")}
           </button>
           <button
-            onClick={startFree}
+            onClick={requestEarlyAccess}
             className="text-sm font-semibold px-4 py-2 rounded-lg text-white transition-transform hover:scale-[1.02]"
             style={{ background: C.primary, boxShadow: `0 6px 24px ${C.glow}` }}
           >
-            {T("Kostenlos starten", "Start free")}
+            {T("Early Access anfragen", "Request early access")}
           </button>
         </div>
       </header>
@@ -126,11 +127,11 @@ export default function Landing() {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={startFree}
+                onClick={requestEarlyAccess}
                 className="flex items-center gap-2 px-7 py-3.5 rounded-xl text-base font-semibold text-white"
                 style={{ background: C.primary, boxShadow: `0 10px 40px ${C.glow}` }}
               >
-                {T("Kostenlos starten", "Start free")} <ArrowRight size={18} />
+                {T("Early Access anfragen", "Request early access")} <ArrowRight size={18} />
               </motion.button>
               <button
                 onClick={login}
@@ -140,9 +141,9 @@ export default function Landing() {
               </button>
             </div>
             <div className="mt-7 flex flex-wrap justify-center lg:justify-start gap-x-6 gap-y-2 text-xs text-zinc-500">
-              <span className="flex items-center gap-1.5"><Check size={13} style={{ color: C.primary }} /> {T("Ohne Kreditkarte", "No credit card")}</span>
-              <span className="flex items-center gap-1.5"><Check size={13} style={{ color: C.primary }} /> {T("In Minuten startklar", "Ready in minutes")}</span>
-              <span className="flex items-center gap-1.5"><Check size={13} style={{ color: C.primary }} /> {T("Markenkonform auf jedem Kanal", "On-brand on every channel")}</span>
+              <span className="flex items-center gap-1.5"><Check size={13} style={{ color: C.primary }} /> {T("Transparentes Early-Access-Angebot", "Transparent early-access offer")}</span>
+              <span className="flex items-center gap-1.5"><Check size={13} style={{ color: C.primary }} /> {T("Erste Workflows als Beta gekennzeichnet", "First workflows clearly marked beta")}</span>
+              <span className="flex items-center gap-1.5"><Check size={13} style={{ color: C.primary }} /> {T("Markenwissen als Kontext", "Brand knowledge as context")}</span>
               <span className="flex items-center gap-1.5"><Check size={13} style={{ color: C.primary }} /> {T("Für Gründer, Teams & Agenturen", "For founders, teams & agencies")}</span>
             </div>
           </motion.div>
@@ -177,7 +178,7 @@ export default function Landing() {
       <section className="relative px-6 md:px-10 py-20 border-t border-white/5">
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-14">
-            <h2 className="text-2xl md:text-3xl font-bold">{T("Nicht nur denken — produzieren.", "Not just thinking — producing.")}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold">{T("Von der Idee zu prüfbaren Marken-Outputs.", "From idea to review-ready brand outputs.")}</h2>
             <p className="mt-3 text-zinc-400">
               {T("Ein Ausschnitt dessen, was dein KI-Team in Minuten liefert.", "A slice of what your AI team ships in minutes.")}
             </p>
@@ -261,6 +262,7 @@ export default function Landing() {
                     <ActiveIcon size={18} style={{ color: C.primary }} />
                   </div>
                   <h3 className="font-semibold text-lg">{isDE ? activeFeature.de[0] : activeFeature.en[0]}</h3>
+                  {activeFeature.status && <StatusBadge status={activeFeature.status} lang={lang} />}
                 </div>
                 <p className="text-sm text-zinc-400 leading-relaxed">{isDE ? activeFeature.de[1] : activeFeature.en[1]}</p>
               </motion.div>
@@ -278,7 +280,7 @@ export default function Landing() {
                       borderColor: activeAgent === f.id ? C.primary : "rgba(255,255,255,0.1)",
                     }}
                   >
-                    {isDE ? f.de[0] : f.en[0]}
+                    <span className="inline-flex items-center gap-2">{isDE ? f.de[0] : f.en[0]} {f.status && <StatusBadge status={f.status} lang={lang} />}</span>
                   </button>
                 ))}
               </div>
@@ -327,26 +329,28 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Early Access */}
       <section className="relative px-6 md:px-10 py-20 border-t border-white/5">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-center gap-1 mb-10">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} size={16} fill={C.primary} style={{ color: C.primary }} />
-            ))}
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="rounded-2xl p-6 bg-white/[0.03] border border-white/8">
-                <Quote size={20} style={{ color: C.primary }} className="mb-3 opacity-70" />
-                <p className="text-sm text-zinc-300 leading-relaxed">{t.q[lang] || t.q.DE}</p>
-                <div className="mt-5 text-xs">
-                  <span className="font-semibold text-white">{t.name}</span>
-                  <span className="text-zinc-500"> · {t.role[lang] || t.role.DE}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="max-w-4xl mx-auto rounded-3xl p-8 md:p-10 bg-white/[0.03] border border-white/8 text-center">
+          <StatusBadge status="beta" lang={lang} className="mb-5" />
+          <h2 className="text-2xl md:text-3xl font-bold">
+            {T("Werde Teil der ersten Brandmind-Pioniere", "Become one of the first Brandmind pioneers")}
+          </h2>
+          <p className="mt-4 text-zinc-400 leading-relaxed max-w-2xl mx-auto">
+            {T(
+              "Teste Brandmind frühzeitig, teile dein Feedback und hilf mit, die KI-Zentrale für moderne Marken weiterzuentwickeln.",
+              "Test Brandmind early, share your feedback and help evolve the AI command center for modern brands."
+            )}
+          </p>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={requestEarlyAccess}
+            className="mt-8 inline-flex items-center gap-2 px-7 py-3.5 rounded-xl text-base font-semibold text-white"
+            style={{ background: C.primary, boxShadow: `0 10px 40px ${C.glow}` }}
+          >
+            {T("Early Access anfragen", "Request early access")} <ArrowRight size={18} />
+          </motion.button>
         </div>
       </section>
 
@@ -358,22 +362,22 @@ export default function Landing() {
             <Rocket size={14} /> {T("Bereit, wenn du es bist", "Ready when you are")}
           </div>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-            {T("Bereit für dein KI-Marketing-Team?", "Ready for your AI marketing team?")}
+            {T("Bereit für Early Access?", "Ready for early access?")}
           </h2>
           <p className="mt-4 text-zinc-400">
-            {T("Starte in Minuten — ohne Setup-Aufwand.", "Get started in minutes — no setup required.")}
+            {T("Fordere Zugang an und hilf uns, Brandmind produktreif weiterzuentwickeln.", "Request access and help us evolve Brandmind toward product readiness.")}
           </p>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={startFree}
+            onClick={requestEarlyAccess}
             className="mt-8 inline-flex items-center gap-2 px-8 py-4 rounded-xl text-base font-semibold text-white"
             style={{ background: C.primary, boxShadow: `0 10px 40px ${C.glow}` }}
           >
-            {T("Kostenlos starten", "Start free")} <ArrowRight size={18} />
+            {T("Early Access anfragen", "Request early access")} <ArrowRight size={18} />
           </motion.button>
           <p className="mt-5 flex items-center justify-center gap-1.5 text-xs text-zinc-600">
-            <ShieldCheck size={13} /> {T("Markenkonformität automatisch geprüft", "Automatic brand-consistency checks")}
+            <ShieldCheck size={13} /> {T("Beta-Funktionen werden transparent gekennzeichnet", "Beta features are marked transparently")}
           </p>
         </div>
       </section>

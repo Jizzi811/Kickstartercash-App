@@ -18,51 +18,55 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] },
 });
 
-/* ─── KPI data ───────────────────────────────────────────────────── */
-const KPI_CARDS = [
+/* ─── KPI empty state data ───────────────────────────────────────── */
+const KPI_EMPTY_CARDS = [
   {
     icon: Bot,
     labelDE: "KI-Agenten",
     labelEN: "AI Agents",
-    value: "40+",
-    subDE: "Aktiv & einsatzbereit",
-    subEN: "Active & ready",
+    value: "—",
+    subDE: "Registry wird geladen",
+    subEN: "Loading registry",
+    emptyDE: "Die Anzahl erscheint, sobald die Agent-Registry geladen wurde.",
+    emptyEN: "The count appears once the agent registry has loaded.",
     color: "#7C3AED",
-    trend: "+2",
-    sparkPath: "M0,20 C10,18 20,8 30,10 C40,12 50,4 60,6 C70,8 80,2 90,0",
+    trend: "…",
   },
   {
     icon: Cpu,
     labelDE: "Generierte Assets",
     labelEN: "Generated Assets",
-    value: "2.4K",
-    subDE: "Diese Woche",
-    subEN: "This week",
+    value: "—",
+    subDE: "Noch keine Assets erstellt",
+    subEN: "No assets created yet",
+    emptyDE: "Deine Ergebnisse erscheinen hier nach deiner ersten Quantum-Mission.",
+    emptyEN: "Your results appear here after your first Quantum mission.",
     color: "#C084FC",
-    trend: "+18%",
-    sparkPath: "M0,20 C15,16 25,12 40,8 C55,4 65,10 80,6 C85,4 88,2 90,0",
+    trend: "—",
   },
   {
     icon: TrendingUp,
     labelDE: "Reichweite",
     labelEN: "Reach",
-    value: "+38%",
-    subDE: "Letzter Monat",
-    subEN: "Last month",
+    value: "—",
+    subDE: "Keine Datenquelle verbunden",
+    subEN: "No data source connected",
+    emptyDE: "Verbinde einen Datenkanal, um Reichweiteninformationen zu sehen.",
+    emptyEN: "Connect a data channel to see reach information.",
     color: "#34D399",
-    trend: "+38%",
-    sparkPath: "M0,20 C10,17 20,14 35,10 C50,6 60,8 75,4 C82,2 87,1 90,0",
+    trend: "—",
   },
   {
     icon: FileText,
     labelDE: "Projekte",
     labelEN: "Projects",
-    value: "14",
-    subDE: "In Bearbeitung",
-    subEN: "In progress",
+    value: "—",
+    subDE: "Noch keine Projekte",
+    subEN: "No projects yet",
+    emptyDE: "Starte in Mission Control, damit Projekte hier erscheinen.",
+    emptyEN: "Start in Mission Control so projects can appear here.",
     color: "#F472B6",
-    trend: "+3",
-    sparkPath: "M0,18 C12,16 22,20 36,14 C50,8 62,12 76,6 C84,3 88,1 90,0",
+    trend: "—",
   },
 ];
 
@@ -290,47 +294,53 @@ export default function Dashboard() {
       labelDE: "KI-Agenten",
       labelEN: "AI Agents",
       value: String(stats.agents),
-      subDE: "Aktiv & einsatzbereit",
-      subEN: "Active & ready",
+      subDE: "Aus der Agent-Registry",
+      subEN: "From the agent registry",
       color: "#7C3AED",
-      trend: stats.custom_agents > 0 ? `+${stats.custom_agents}` : "Live",
+      trend: stats.custom_agents > 0 ? `${stats.custom_agents} custom` : "Registry",
       sparkPath: "M0,20 C10,18 20,8 30,10 C40,12 50,4 60,6 C70,8 80,2 90,0",
     },
     {
       icon: Cpu,
       labelDE: "Generierte Assets",
       labelEN: "Generated Assets",
-      value: fmt(stats.assets_this_week),
-      subDE: "Diese Woche",
-      subEN: "This week",
+      value: stats.assets_total > 0 ? fmt(stats.assets_total) : "—",
+      subDE: stats.assets_total > 0 ? "Aus Output Factory" : "Noch keine Assets erstellt",
+      subEN: stats.assets_total > 0 ? "From Output Factory" : "No assets created yet",
+      emptyDE: "Deine Ergebnisse erscheinen hier nach deiner ersten Quantum-Mission.",
+      emptyEN: "Your results appear here after your first Quantum mission.",
       color: "#C084FC",
-      trend: stats.assets_growth_pct >= 0 ? `+${stats.assets_growth_pct}%` : `${stats.assets_growth_pct}%`,
+      trend: stats.assets_total > 0 ? "Live" : "—",
       sparkPath: "M0,20 C15,16 25,12 40,8 C55,4 65,10 80,6 C85,4 88,2 90,0",
     },
     {
       icon: Users,
       labelDE: "Leads",
       labelEN: "Leads",
-      value: fmt(stats.leads_qualified),
-      subDE: "Qualifizierte Kontakte",
-      subEN: "Qualified contacts",
+      value: "—",
+      subDE: "Keine Datenquelle verbunden",
+      subEN: "No data source connected",
+      emptyDE: "Verbinde einen Datenkanal, um Reichweiteninformationen zu sehen.",
+      emptyEN: "Connect a data channel to see reach information.",
       color: "#34D399",
-      trend: stats.tickets_open > 0 ? `${stats.tickets_open} offen` : "Live",
+      trend: "—",
       sparkPath: "M0,20 C10,17 20,14 35,10 C50,6 60,8 75,4 C82,2 87,1 90,0",
     },
     {
       icon: FileText,
-      labelDE: "Gespräche",
-      labelEN: "Sessions",
-      value: fmt(stats.sessions_total),
-      subDE: "KASH Chat-Sessions",
-      subEN: "KASH chat sessions",
+      labelDE: "Projekte",
+      labelEN: "Projects",
+      value: stats.projects_total > 0 ? fmt(stats.projects_total) : "—",
+      subDE: stats.projects_total > 0 ? "Aus Mission Control" : "Noch keine Projekte",
+      subEN: stats.projects_total > 0 ? "From Mission Control" : "No projects yet",
+      emptyDE: "Starte in Mission Control, damit Projekte hier erscheinen.",
+      emptyEN: "Start in Mission Control so projects can appear here.",
       color: "#F472B6",
-      trend: `${stats.knowledge_docs} KB-Docs`,
+      trend: stats.projects_total > 0 ? "Live" : "—",
       sparkPath: "M0,18 C12,16 22,20 36,14 C50,8 62,12 76,6 C84,3 88,1 90,0",
     },
   // While loading (or if stats are unavailable) show em-dashes – never invented numbers.
-  ] : KPI_CARDS.map((c) => ({ ...c, value: "—", trend: "…" }));
+  ] : KPI_EMPTY_CARDS;
 
   const greetDE = () => {
     const h = new Date().getHours();
@@ -588,6 +598,11 @@ export default function Dashboard() {
                     <div className="text-[10px] text-zinc-600 mt-0.5">
                       {lang === "DE" ? card.subDE : card.subEN}
                     </div>
+                    {card.value === "—" && card.emptyDE && (
+                      <div className="mt-3 text-[10px] leading-relaxed text-zinc-500">
+                        {lang === "DE" ? card.emptyDE : card.emptyEN}
+                      </div>
+                    )}
 
                     {/* sparkline SVG decoration */}
                     <div className="mt-4 overflow-hidden" style={{ height: 22 }}>
@@ -599,7 +614,7 @@ export default function Dashboard() {
                           </linearGradient>
                         </defs>
                         <path
-                          d={card.sparkPath}
+                          d={card.sparkPath || "M0,11 C20,11 40,11 60,11 C75,11 84,11 90,11"}
                           fill="none"
                           stroke={`url(#spark-grad-${i})`}
                           strokeWidth="1.5"
