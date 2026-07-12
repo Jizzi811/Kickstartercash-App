@@ -6,6 +6,7 @@ import { PenLine, Loader2 } from "lucide-react";
 import { StudioContextArea } from "@/components/StudioLayout";
 import { useApp, API } from "@/context/AppContext";
 import { PageTitle } from "@/components/PageTitle";
+import { BrainBadge } from "@/components/BrainBadge";
 import { CopyButton } from "@/components/CopyButton";
 import { COPY_FORMATS } from "@/i18n";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,6 +39,7 @@ export default function Copywriter() {
   return (
     <div>
       <PageTitle title={t("copy_title")} subtitle={t("copy_sub")} icon={PenLine} />
+      <div className="mb-4"><BrainBadge /></div>
 
       <div className="bg-[#0A0A0A] border border-white/10 rounded-md p-6 md:p-7 space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">

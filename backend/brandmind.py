@@ -15,6 +15,7 @@ import os
 import re
 import json
 import hmac
+import time
 import base64
 import hashlib
 import secrets
@@ -237,6 +238,23 @@ async def current_user(authorization: Optional[str] = Header(default=None)) -> d
     return user
 
 
+# --- Login rate limit (in-memory; per process is enough for a single instance) ---
+LOGIN_RATE_LIMIT = 5
+LOGIN_RATE_WINDOW_S = 60
+_login_attempts: dict = {}
+
+
+def _rate_limit_login(key: str) -> None:
+    """Sliding-window limit on login attempts per email+IP. Raises 429 when hit."""
+    now = time.time()
+    attempts = [t for t in _login_attempts.get(key, []) if now - t < LOGIN_RATE_WINDOW_S]
+    if len(attempts) >= LOGIN_RATE_LIMIT:
+        _login_attempts[key] = attempts
+        raise HTTPException(status_code=429, detail="Zu viele Login-Versuche. Bitte eine Minute warten.")
+    attempts.append(now)
+    _login_attempts[key] = attempts
+
+
 def _slugify(name: str) -> str:
     base = "".join(c if c.isalnum() else "-" for c in name.lower()).strip("-")
     base = "-".join(filter(None, base.split("-"))) or "workspace"
@@ -279,7 +297,14 @@ async def register(req: RegisterRequest):
         "password": _hash_password(req.password),
         "created_at": _now_iso(),
     }
-    await db.bm_users.insert_one({**user})
+    try:
+        await db.bm_users.insert_one({**user})
+    except Exception as e:
+        # Unique index on bm_users.email closes the check-then-insert race;
+        # translate the duplicate-key error into the same 409 as the pre-check.
+        if type(e).__name__ == "DuplicateKeyError":
+            raise HTTPException(status_code=409, detail="Diese E-Mail ist bereits registriert.")
+        raise
 
     ws_name = req.company.strip() or (req.name.strip() or email.split("@")[0]) + "s Workspace"
     workspace = {
@@ -312,9 +337,11 @@ async def register(req: RegisterRequest):
 
 
 @router.post("/auth/login", response_model=AuthResponse)
-async def login(req: LoginRequest):
+async def login(req: LoginRequest, request: Request = None):
     db = _require_db()
     email = req.email.lower().strip()
+    client_ip = request.client.host if request is not None and request.client else ""
+    _rate_limit_login(f"{email}|{client_ip}")
     user = await db.bm_users.find_one({"email": email})
     if not user or not _verify_password(req.password, user.get("password", "")):
         raise HTTPException(status_code=401, detail="E-Mail oder Passwort ist falsch.")
@@ -342,6 +369,54 @@ async def me(authorization: Optional[str] = Header(default=None)):
 async def list_workspaces(authorization: Optional[str] = Header(default=None)):
     user = await current_user(authorization)
     return await _workspaces_for(user["id"])
+
+
+@router.get("/workspaces/current")
+async def workspace_current(
+    authorization: Optional[str] = Header(default=None),
+    x_workspace_id: Optional[str] = Header(default=None, alias="X-Workspace-Id"),
+):
+    """The single workspace-context contract for the frontend.
+
+    Resolves the caller's active workspace (X-Workspace-Id header, else the
+    first membership) and returns it together with role, plan and quota so
+    every page can gate features from one response.
+    """
+    user = await current_user(authorization)
+    db = _require_db()
+
+    if x_workspace_id:
+        membership = await _assert_member(user["id"], x_workspace_id)
+        ws = await db.bm_workspaces.find_one({"id": x_workspace_id}, {"_id": 0})
+    else:
+        memberships = await db.bm_memberships.find({"user_id": user["id"]}, {"_id": 0}).to_list(200)
+        if not memberships:
+            raise HTTPException(status_code=404, detail="Kein Workspace vorhanden.")
+        membership = memberships[0]
+        ws = await db.bm_workspaces.find_one({"id": membership["workspace_id"]}, {"_id": 0})
+    if not ws:
+        raise HTTPException(status_code=404, detail="Workspace nicht gefunden.")
+
+    plan_id = ws.get("plan", "trial")
+    plan = PLANS.get(plan_id) or PLANS["trial"]
+    limit = int(plan["limits"]["generations_per_month"])
+    # Quota source of truth: successful generations recorded in gateway_usage
+    # this month (same count app.usage.metering enforces against). The stored
+    # workspace counter is only the fallback for degraded lookups.
+    month = datetime.now(timezone.utc).strftime("%Y-%m")
+    try:
+        used = int(await db.gateway_usage.count_documents({
+            "workspace_id": ws["id"], "ok": True,
+            "created_at": {"$regex": f"^{month}"},
+        }))
+    except Exception:
+        used = int((ws.get("usage") or {}).get("generations_this_month") or 0)
+    return {
+        "workspace": {"id": ws["id"], "name": ws["name"], "slug": ws.get("slug", "")},
+        "role": membership.get("role", "member"),
+        "plan": {"id": plan_id, "name": plan["name"], "limits": plan["limits"]},
+        "quota": {"used": used, "limit": limit, "remaining": max(0, limit - used)},
+    }
 
 
 @router.post("/workspaces", response_model=WorkspaceOut)

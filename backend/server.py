@@ -7807,6 +7807,42 @@ async def onboarding_status_update(payload: OnboardingStatusUpdate, user: dict =
     resume_route = await _founder_resume_route(user["id"], ws, doc.get("current_step", "")) if doc.get("selected_path", "") == "founder" else _onboarding_route(doc.get("selected_path", ""), doc.get("current_step", ""))
     return {**doc, "workspace_id": ws or "", "user_id": user["id"], "resume_route": resume_route}
 
+_EVENT_NAME_RE = re.compile(r"^[a-z0-9_]{1,64}$")
+
+
+class TrackEventPayload(BaseModel):
+    event: str
+    props: dict = {}
+
+
+@api_router.post("/track")
+async def track_event(payload: TrackEventPayload, user: dict = Depends(_authed_user),
+                      ws: Optional[str] = Depends(current_workspace)):
+    """Self-hosted product analytics: one append-only event per call.
+
+    Feeds the activation funnel (blueprint stage 03 core metric) without an
+    external analytics vendor. Event names are snake_case identifiers; props
+    are clamped at the boundary so a client can't grow documents unbounded.
+    """
+    if not _EVENT_NAME_RE.match(payload.event or ""):
+        raise HTTPException(status_code=422, detail="Invalid event name (a-z0-9_ only, max 64)")
+    if db is None:
+        return {"ok": False}
+    props = {
+        str(k)[:64]: (v if isinstance(v, (int, float, bool)) else str(v)[:200])
+        for k, v in list((payload.props or {}).items())[:20]
+    }
+    await db.product_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "workspace_id": ws or "",
+        "event": payload.event,
+        "props": props,
+        "created_at": _now_iso(),
+    })
+    return {"ok": True}
+
+
 PLACEHOLDER_VALUES = {"", "—", "n/a", "na", "none", "keine", "kein", "tbd", "todo", "test", "demo", "lorem ipsum"}
 
 def _has_real_value(value: Any) -> bool:
@@ -9067,6 +9103,32 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def workspace_context_middleware(request: Request, call_next):
+    """Resolve the caller's workspace into the request context.
+
+    Deep layers (app.services.llm, app.gateway) read it for quota checks and
+    usage metering without every route having to pass a workspace through.
+    Resolution reuses workspace_from_request: JWT + X-Workspace-Id, validated
+    against memberships; anything unresolved stays None (legacy = unmetered).
+    """
+    from brandmind import workspace_from_request
+    from app.core.request_context import set_workspace_id, reset_workspace_id
+
+    try:
+        ws = await workspace_from_request(
+            request.headers.get("authorization"),
+            request.headers.get("x-workspace-id"),
+        )
+    except Exception:
+        ws = None
+    token = set_workspace_id(ws)
+    try:
+        return await call_next(request)
+    finally:
+        reset_workspace_id(token)
 
 
 @app.on_event("shutdown")

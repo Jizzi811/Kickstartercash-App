@@ -1,6 +1,9 @@
 export const NAV_GROUPS = [
   { id: "home", labelDE: "Home", labelEN: "Home", to: "/app", icon: "Building2", primary: true, items: [{ to: "/app", labelDE: "BrandMind HQ", labelEN: "BrandMind HQ", end: true }] },
   { id: "quantum", labelDE: "Quantum", labelEN: "Quantum", to: "/quantum", icon: "Crown", primary: true, highlight: true, items: [{ to: "/quantum", labelDE: "Quantum Command", labelEN: "Quantum Command" }] },
+  { id: "journey", labelDE: "Gründung", labelEN: "Founder Journey", icon: "TrendingUp", items: [
+    { to: "/onboarding/select-path", labelDE: "Einstieg & Pfadwahl", labelEN: "Start & path select" }, { to: "/onboarding/founder/ideas", labelDE: "Ideen", labelEN: "Ideas" }, { to: "/onboarding/founder/ideas/compare", labelDE: "Ideen-Vergleich", labelEN: "Idea compare" }, { to: "/onboarding/founder/business-plan", labelDE: "Businessplan", labelEN: "Business plan" }, { to: "/onboarding/founder/finance", labelDE: "Finanzplan", labelEN: "Finance plan" }, { to: "/onboarding/founder/offers", labelDE: "Angebote", labelEN: "Offers" },
+  ]},
   { id: "my-brand", labelDE: "Meine Marke", labelEN: "My Brand", icon: "BrainCircuit", items: [
     { to: "/brand-brain", labelDE: "Brand Brain", labelEN: "Brand Brain" }, { to: "/brand-identity", labelDE: "Brand Identity", labelEN: "Brand Identity" }, { to: "/knowledge", labelDE: "Knowledge Base", labelEN: "Knowledge Base" }, { to: "/knowledge-graph", labelDE: "Knowledge Graph", labelEN: "Knowledge Graph" }, { to: "/memory", labelDE: "Memory", labelEN: "Memory" },
   ]},

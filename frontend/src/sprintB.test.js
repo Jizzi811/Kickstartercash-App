@@ -11,9 +11,16 @@ const routesFor = (id) => [
 
 afterEach(() => clearQuantumHomePrompt());
 
-test("Sprint B main navigation contains six primary areas in German and English", () => {
-  expect(NAV_GROUPS.map((item) => item.labelDE)).toEqual(["Home", "Quantum", "Meine Marke", "Erstellen", "Projekte", "Mehr"]);
-  expect(NAV_GROUPS.map((item) => item.labelEN)).toEqual(["Home", "Quantum", "My Brand", "Create", "Projects", "More"]);
+test("Sprint B main navigation contains the primary areas in German and English", () => {
+  expect(NAV_GROUPS.map((item) => item.labelDE)).toEqual(["Home", "Quantum", "Gründung", "Meine Marke", "Erstellen", "Projekte", "Mehr"]);
+  expect(NAV_GROUPS.map((item) => item.labelEN)).toEqual(["Home", "Quantum", "Founder Journey", "My Brand", "Create", "Projects", "More"]);
+});
+
+test("Founder journey group links the wedge flow", () => {
+  expect(routesFor("journey")).toEqual(expect.arrayContaining([
+    "/onboarding/select-path", "/onboarding/founder/ideas", "/onboarding/founder/ideas/compare",
+    "/onboarding/founder/business-plan", "/onboarding/founder/finance", "/onboarding/founder/offers",
+  ]));
 });
 
 test("Sprint B subpages are assigned to the requested groups", () => {

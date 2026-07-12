@@ -9,18 +9,20 @@ NVIDIA_API_KEY at it, and asserts:
     does NOT hit NVIDIA.
 
 No real NVIDIA key or network access required.
+
+app.services.image freezes NVIDIA_IMAGE_BASE/NVIDIA_API_KEY at first import,
+so env vars set at module import don't reach it when another test module
+imported the app first. Each test binds an ephemeral port and monkeypatches
+the frozen module constants instead.
 """
 import asyncio
-import base64
 import json
 import os
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-_PORT = 8233
-os.environ["NVIDIA_API_KEY"] = "nvapi-test-key"
-os.environ["NVIDIA_IMAGE_BASE"] = f"http://127.0.0.1:{_PORT}/v1/genai"
 os.environ.setdefault("MONGO_URL", "")
+os.environ.setdefault("NVIDIA_API_KEY", "nvapi-test-key")
 
 # tiny 1x1 PNG, base64 (no data: prefix), like NVIDIA returns
 _B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
@@ -51,15 +53,20 @@ class _Handler(BaseHTTPRequestHandler):
 
 
 def _serve():
-    srv = HTTPServer(("127.0.0.1", _PORT), _Handler)
+    srv = HTTPServer(("127.0.0.1", 0), _Handler)  # ephemeral port: no clashes across tests/workers
     threading.Thread(target=srv.serve_forever, daemon=True).start()
-    return srv
+    base = f"http://127.0.0.1:{srv.server_address[1]}/v1/genai"
+    return srv, base
 
 
-def test_nvidia_models_route_correctly():
-    srv = _serve()
+def test_nvidia_models_route_correctly(monkeypatch):
+    srv, base = _serve()
     try:
         import server
+        from app.services import image as image_service
+        monkeypatch.setattr(image_service, "NVIDIA_IMAGE_BASE", base)
+        monkeypatch.setattr(image_service, "NVIDIA_API_KEY", "nvapi-test-key")
+
         cases = {
             "flux2": ("black-forest-labs/flux.2-klein-4b", (1024, 1024), "1:1"),
             "flux-schnell": ("black-forest-labs/flux.1-schnell", (1344, 768), "16:9"),
@@ -81,20 +88,20 @@ def test_nvidia_models_route_correctly():
             assert last["keys"] == ["height", "prompt", "seed", "width"], last["keys"]
     finally:
         srv.shutdown()
+        srv.server_close()
 
 
-def test_gpt_model_does_not_hit_nvidia():
-    srv = _serve()
+def test_gpt_model_does_not_hit_nvidia(monkeypatch):
+    srv, base = _serve()
     try:
         import server
+        from app.services import image as image_service
+        monkeypatch.setattr(image_service, "NVIDIA_IMAGE_BASE", base)
+        monkeypatch.setattr(image_service, "NVIDIA_API_KEY", "nvapi-test-key")
+
         _received.clear()
         img, status = asyncio.run(server.image_by_model_verbose("gpt", "a red cube", size="1:1"))
         assert _received == [], "gpt must not call NVIDIA image API"
     finally:
         srv.shutdown()
-
-
-if __name__ == "__main__":
-    test_nvidia_models_route_correctly()
-    test_gpt_model_does_not_hit_nvidia()
-    print("NVIDIA image wiring: ALL CHECKS PASSED")
+        srv.server_close()
