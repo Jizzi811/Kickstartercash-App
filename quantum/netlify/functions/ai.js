@@ -1,4 +1,6 @@
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const NVIDIA_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
+const NVIDIA_DEFAULT_MODEL = 'nvidia/nemotron-3-super-120b-a12b';
 const requests = new Map();
 
 exports.handler = async (event) => {
@@ -6,9 +8,10 @@ exports.handler = async (event) => {
     return response(405, { error: 'Method not allowed' });
   }
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const nvidiaKey = process.env.NVIDIA_API_KEY;
+  const openRouterKey = process.env.OPENROUTER_API_KEY;
   const accessToken = process.env.QUANTUM_ACCESS_TOKEN;
-  if (!apiKey || !accessToken) {
+  if ((!nvidiaKey && !openRouterKey) || !accessToken) {
     return response(503, { error: 'Quantum AI is not fully configured in Netlify.' });
   }
 
@@ -35,33 +38,41 @@ exports.handler = async (event) => {
   }
 
   try {
-    const upstream = await fetch(OPENROUTER_URL, {
+    const provider = nvidiaKey ? 'nvidia' : 'openrouter';
+    const apiKey = nvidiaKey || openRouterKey;
+    const model = provider === 'nvidia'
+      ? (process.env.NVIDIA_MODEL || NVIDIA_DEFAULT_MODEL)
+      : (process.env.OPENROUTER_MODEL || 'openrouter/free');
+    const upstream = await fetch(provider === 'nvidia' ? NVIDIA_URL : OPENROUTER_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': event.headers.origin || event.headers.referer || 'https://quantum.local',
-        'X-Title': 'Quantum Neon Chat',
+        ...(provider === 'openrouter' ? {
+          'HTTP-Referer': event.headers.origin || event.headers.referer || 'https://quantum.local',
+          'X-Title': 'Quantum Neon Chat',
+        } : {}),
       },
       body: JSON.stringify({
-        model: process.env.OPENROUTER_MODEL || 'openrouter/free',
+        model,
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: prompt },
         ],
-        temperature: Number.isFinite(Number(body.temperature)) ? Number(body.temperature) : 0.35,
+        temperature: provider === 'nvidia' ? 1.0 : (Number.isFinite(Number(body.temperature)) ? Number(body.temperature) : 0.35),
+        ...(provider === 'nvidia' ? { top_p: 0.95 } : {}),
         max_tokens: Math.min(Math.max(Number(body.maxTokens) || 7000, 256), 12000),
       }),
     });
     const data = await upstream.json();
     if (!upstream.ok) {
-      return response(upstream.status, { error: data.error?.message || 'OpenRouter request failed.' });
+      return response(upstream.status, { error: data.error?.message || `${provider} request failed.` });
     }
     const text = data.choices?.[0]?.message?.content;
     if (!text) return response(502, { error: 'The model returned no content.' });
-    return response(200, { text, model: data.model || process.env.OPENROUTER_MODEL || 'openrouter/free' });
+    return response(200, { text, model: data.model || model, provider });
   } catch (error) {
-    return response(502, { error: error.message || 'OpenRouter is unavailable.' });
+    return response(502, { error: error.message || 'The configured AI provider is unavailable.' });
   }
 };
 
