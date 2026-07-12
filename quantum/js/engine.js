@@ -71,12 +71,26 @@ window.Quantum = window.Quantum || {};
     { re: /^[\d\s+\-*/().^%]+$/, fn: (text) => window.Quantum.skills.run('rechner', text) },
   ];
 
+  /* Aktive Skill-Session (z. B. laufender Fragebogen): solange gesetzt,
+     bekommt sie jede Nachricht zuerst; gibt sie undefined zurück,
+     greift das normale Routing */
+  let session = null;
+
   window.Quantum.engine = {
     greeting() { return pick(GREETINGS); },
+    setSession(fn) { session = fn; },
+    clearSession() { session = null; },
+    hasSession() { return !!session; },
 
-    /* Verarbeitet eine User-Nachricht und liefert die Antwort */
+    /* Verarbeitet eine User-Nachricht und liefert die Antwort
+       (String oder Promise<String>) */
     respond(raw) {
       const text = raw.trim();
+
+      if (session) {
+        const out = session(text);
+        if (out !== undefined && out !== null) return out;
+      }
 
       if (text.startsWith('/')) {
         const [cmd, ...rest] = text.slice(1).split(/\s+/);

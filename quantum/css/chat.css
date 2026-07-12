@@ -101,6 +101,66 @@
 
 .chat-window__clear:hover { box-shadow: 0 0 12px rgba(0, 245, 255, 0.5); transform: rotate(-180deg); }
 
+.chat-window__menu-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 45, 247, 0.4);
+  border-radius: 5px;
+  color: var(--neon-magenta);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  padding: 0.32rem 0.55rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chat-window__menu-btn:hover { box-shadow: 0 0 12px rgba(255, 45, 247, 0.5); }
+
+/* ── Skill-Menü (Dropdown im Chatfenster) ────────────────────── */
+
+.skill-menu {
+  position: absolute;
+  top: 44px;
+  right: 10px;
+  z-index: 30;
+  min-width: 280px;
+  max-height: 60%;
+  overflow-y: auto;
+  background: rgba(6, 2, 30, 0.97);
+  border: 1px solid rgba(0, 245, 255, 0.45);
+  border-radius: 10px;
+  box-shadow: 0 0 30px rgba(0, 245, 255, 0.35), 0 12px 40px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  padding: 0.4rem;
+  animation: msg-in 0.2s ease-out;
+}
+
+.skill-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  padding: 0.5rem 0.6rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.skill-menu__item:hover {
+  background: rgba(0, 245, 255, 0.1);
+  box-shadow: inset 0 0 12px rgba(0, 245, 255, 0.12);
+}
+
+.skill-menu__item--off { opacity: 0.35; }
+.skill-menu__item small { display: block; color: var(--text-dim); font-size: 0.72rem; }
+
 /* ── Nachrichten ─────────────────────────────────────────────── */
 
 .chat-messages {

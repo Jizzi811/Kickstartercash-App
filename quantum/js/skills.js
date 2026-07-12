@@ -215,7 +215,13 @@ window.Quantum = window.Quantum || {};
       const skill = this.get(id);
       if (!skill) return 'Unbekannter Skill `' + id + '`. Tippe `/skills` für die Liste.';
       if (!enabled.has(id)) return 'Skill „' + skill.name + '“ ist deaktiviert. Aktiviere ihn im Skills-Panel.';
-      try { return skill.run(input || ''); }
+      try {
+        const out = skill.run(input || '');
+        /* Async-Skills liefern ein Promise — Fehler dort ebenfalls abfangen */
+        return (out && typeof out.then === 'function')
+          ? out.catch((e) => '⚠️ Skill-Fehler: ' + e.message)
+          : out;
+      }
       catch (e) { return '⚠️ Skill-Fehler: ' + e.message; }
     },
   };

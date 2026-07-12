@@ -15,6 +15,8 @@
     form: $('#chat-form'),
     input: $('#chat-input-field'),
     clear: $('#btn-clear'),
+    menuBtn: $('#btn-skillmenu'),
+    menu: $('#skill-menu'),
     skillList: $('#skill-list'),
     skillsCount: $('#skills-count'),
     autoForm: $('#auto-form'),
@@ -49,13 +51,16 @@
     els.messages.scrollTop = els.messages.scrollHeight;
   }
 
-  function botReply(text, label) {
+  /* Nimmt String ODER Promise<String> entgegen (async-Skills wie SoulTrace) */
+  function botReply(result, label) {
     els.typing.hidden = false;
-    const delay = Math.min(400 + text.length * 6, 1600);
-    setTimeout(() => {
-      els.typing.hidden = true;
-      addMessage('bot', text, label);
-    }, delay);
+    Promise.resolve(result).then((text) => {
+      const delay = Math.min(400 + String(text).length * 6, 1600);
+      setTimeout(() => {
+        els.typing.hidden = true;
+        addMessage('bot', String(text), label);
+      }, delay);
+    });
   }
 
   els.form.addEventListener('submit', (e) => {
@@ -77,6 +82,42 @@
   els.clear.addEventListener('click', () => {
     els.messages.innerHTML = '';
     addMessage('system', 'Chat geleert. Neural-Link bereit.');
+  });
+
+  /* ── Skill-Menü (Dropdown im Chatfenster) ──────────────────── */
+
+  function runSkillFromUi(skill) {
+    addMessage('system', 'Skill „' + skill.name + '“ gestartet — ' + skill.usage);
+    botReply(window.Quantum.skills.run(skill.id, ''));
+  }
+
+  function renderSkillMenu() {
+    const skills = window.Quantum.skills;
+    els.menu.innerHTML = '';
+    skills.all.forEach((skill) => {
+      const enabled = skills.isEnabled(skill.id);
+      const btn = document.createElement('button');
+      btn.className = 'skill-menu__item' + (enabled ? '' : ' skill-menu__item--off');
+      btn.setAttribute('data-testid', 'skill-menu-' + skill.id);
+      btn.innerHTML = '<span>' + skill.icon + '</span><span>' + skill.name +
+        '<small>' + skill.desc + '</small></span>';
+      btn.addEventListener('click', () => {
+        els.menu.hidden = true;
+        if (!enabled) { addMessage('system', 'Skill „' + skill.name + '“ ist deaktiviert — im Skills-Panel aktivieren.'); return; }
+        runSkillFromUi(skill);
+      });
+      els.menu.appendChild(btn);
+    });
+  }
+
+  els.menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (els.menu.hidden) renderSkillMenu();
+    els.menu.hidden = !els.menu.hidden;
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!els.menu.hidden && !els.menu.contains(e.target)) els.menu.hidden = true;
   });
 
   /* ── Skills-Panel ──────────────────────────────────────────── */
@@ -105,8 +146,7 @@
       });
       li.addEventListener('click', () => {
         if (!skills.isEnabled(skill.id)) return;
-        addMessage('system', 'Skill „' + skill.name + '“ gestartet — ' + skill.usage);
-        botReply(skills.run(skill.id, ''));
+        runSkillFromUi(skill);
       });
       els.skillList.appendChild(li);
     });
