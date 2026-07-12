@@ -184,14 +184,31 @@ window.Quantum = window.Quantum || {};
   ];
 
   const enabled = new Set(JSON.parse(localStorage.getItem('quantum.skills.enabled') || 'null') || SKILLS.map(s => s.id));
+  const known = new Set(JSON.parse(localStorage.getItem('quantum.skills.known') || 'null') || SKILLS.map(s => s.id));
+
+  function persist() {
+    localStorage.setItem('quantum.skills.enabled', JSON.stringify([...enabled]));
+    localStorage.setItem('quantum.skills.known', JSON.stringify([...known]));
+  }
 
   window.Quantum.skills = {
     all: SKILLS,
     get(id) { return SKILLS.find(s => s.id === id); },
     isEnabled(id) { return enabled.has(id); },
+    /* Nachträglich geladene Skills (eigene Module) registrieren;
+       neue Skills starten aktiviert, auch wenn localStorage älter ist */
+    register(skill) {
+      if (SKILLS.some(s => s.id === skill.id)) return;
+      SKILLS.push(skill);
+      if (!known.has(skill.id)) {
+        known.add(skill.id);
+        enabled.add(skill.id);
+        persist();
+      }
+    },
     toggle(id) {
       if (enabled.has(id)) enabled.delete(id); else enabled.add(id);
-      localStorage.setItem('quantum.skills.enabled', JSON.stringify([...enabled]));
+      persist();
       return enabled.has(id);
     },
     run(id, input) {
