@@ -76,11 +76,25 @@ window.Quantum = window.Quantum || {};
     id: 'game', icon: '🎮', name: 'Browser Game Studio',
     desc: 'Entwickelt und prüft ein spielbares Browser-Game',
     usage: '/skill game Neon-Reaktionsspiel mit 30 Sekunden Timer',
-    run(input) {
+    async run(input) {
       const prompt = input.trim();
       if (!prompt) return 'Beschreibe dein Spiel, z. B. `/skill game Neon-Reaktionsspiel mit 30 Sekunden Timer`.';
       const spec = design(prompt);
-      let html = build(spec);
+      let html;
+      let model = 'lokaler Fallback';
+      try {
+        const result = await window.Quantum.ai.ask({
+          system: 'You are a browser game studio with four roles: designer, builder, reviewer and repair agent. Return only one complete standalone HTML document with embedded CSS and JavaScript. It must be immediately playable and responsive, with visible instructions, keyboard or pointer controls, objective, score or timer, win/loss state and restart. Do not use markdown fences, external assets, libraries, network calls, browser storage, navigation, iframe, object or embed.',
+          prompt: 'Create and internally review this browser game: ' + prompt,
+          temperature: 0.45,
+          maxTokens: 9000,
+        });
+        const fenced = String(result.text).match(/```(?:html)?\s*([\s\S]*?)```/i);
+        html = (fenced ? fenced[1] : result.text).trim();
+        model = result.model;
+      } catch (_) {
+        html = build(spec);
+      }
       let report = review(html);
       let repaired = false;
       if (!report.approved) {
@@ -93,7 +107,7 @@ window.Quantum = window.Quantum || {};
       return [
         '🎮 **BROWSER GAME STUDIO**',
         '✓ Game Designer: Spezifikation erstellt (' + spec.mode + ')',
-        '✓ Game Builder: eigenständige HTML-Datei gebaut',
+        '✓ Game Builder: eigenständige HTML-Datei gebaut (`' + model + '`)',
         '✓ Game Reviewer: Spielbarkeit und Sandbox-Regeln geprüft',
         repaired ? '✓ Repair Agent: Sicherheitskorrektur durchgeführt' : '✓ Repair Agent: nicht nötig',
         '',
