@@ -297,7 +297,14 @@ async def register(req: RegisterRequest):
         "password": _hash_password(req.password),
         "created_at": _now_iso(),
     }
-    await db.bm_users.insert_one({**user})
+    try:
+        await db.bm_users.insert_one({**user})
+    except Exception as e:
+        # Unique index on bm_users.email closes the check-then-insert race;
+        # translate the duplicate-key error into the same 409 as the pre-check.
+        if type(e).__name__ == "DuplicateKeyError":
+            raise HTTPException(status_code=409, detail="Diese E-Mail ist bereits registriert.")
+        raise
 
     ws_name = req.company.strip() or (req.name.strip() or email.split("@")[0]) + "s Workspace"
     workspace = {

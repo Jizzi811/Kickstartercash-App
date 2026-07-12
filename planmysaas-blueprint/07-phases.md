@@ -105,6 +105,7 @@ Ziel: 20k € MRR; der AI Marketing Director wird vom Nordstern zum Feature.
 4. **Finanz-Suite (5 Studios) → 1 Finanzplan im Wedge** — Wartungslast runter, Story schärfer; Alt-Studios hinter Flag, nicht gelöscht.
 5. **Kein E-Mail-Versand im Produkt** — E-Mail-Studio liefert Copy-out; Versand-Infrastruktur (Deliverability!) ist ein eigenes Geschäft und Anti-Scope.
 6. **Director erst in Phase 4** — dokumentiert in eigener Roadmap: er setzt Brain, Skills, Orchestrierung voraus; früher gebaut wäre er die teuerste Ablenkung.
+7. **Bestehende Plan-IDs bleiben stabil** (trial/starter/pro/agency aus `brandmind.py`) — sie stecken in produktiven Workspace-Dokumenten und Stripe-Preis-Envs; eine Umbenennung auf die Blueprint-Tiers (Free/Pro/Business) wäre Migrationsrisiko ohne Kundennutzen. Die Blueprint-Namen sind Marketing-Labels; Preis-/Struktur-Anpassungen laufen über die Stripe-Preise, nicht über die IDs.
 
 ## Initiatives (cross-cutting)
 
