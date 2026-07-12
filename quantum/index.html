@@ -20,7 +20,9 @@
 
   <header class="q-header" data-testid="quantum-header">
     <div class="q-logo">
-      <span class="q-logo__atom" aria-hidden="true">⚛</span>
+      <img class="q-logo__bot" src="assets/robot.png" alt="Quantum Roboter-Maskottchen"
+           onerror="this.hidden=true; this.nextElementSibling.hidden=false;" />
+      <span class="q-logo__atom" hidden aria-hidden="true">⚛</span>
       <h1 class="q-logo__text" data-text="QUANTUM">QUANTUM</h1>
       <span class="q-logo__tag">DEIN AI WORKER</span>
     </div>
@@ -123,6 +125,7 @@
   <script src="js/agents-live.js"></script>
   <script src="js/agents-tools.js"></script>
   <script src="js/agents-personal.js"></script>
+  <script src="js/codereview.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

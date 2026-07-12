@@ -17,15 +17,37 @@ window.Quantum = window.Quantum || {};
   };
 
   const GREETINGS = [
-    'Hey! ⚡ Ich bin Quantum, dein AI Worker. Was bauen wir heute?',
-    'Neural-Link stabil. 🌐 Womit kann ich dich unterstützen?',
-    'Hallo! Meine Skills glühen schon — schieß los.',
+    'Hey! ⚡ Ich bin Quantum, dein AI Worker. Was bauen wir heute — oder soll ich erst einen Witz raushauen? (`witz`)',
+    'Neural-Link stabil, Kaffee im Kern nachgefüllt. ☕ Was liegt an?',
+    'Hallo! Meine Skills glühen schon. Wortwörtlich. Ich hab Neonröhren statt Nerven.',
+    'Yo! 🤖 19 Skills, 0 schlechte Laune. Schieß los.',
   ];
 
   const FALLBACKS = [
-    'Interessant! In dieser Demo laufe ich komplett lokal ohne LLM — aber probier mal einen Skill: `/skills` zeigt dir alles.',
-    'Verstanden. Für echte Denk-Power würdest du hier eine KI-API anbinden. Bis dahin: `/help` zeigt, was ich kann.',
-    'Mein Quantenkern hat dazu (noch) keine Antwort — er ist eine lokale Demo. Aber `/skill ideen` wirft dir sofort etwas zu!',
+    'Hmm, da muss ich passen — ich bin eine lokale Demo ohne echtes LLM-Hirn. Dafür stürze ich nie ab und werde nie frech. Na gut, selten. `/skills` zeigt, was ich WIRKLICH kann.',
+    'Ehrlich gesagt: keine Ahnung. Aber ich sage es wenigstens mit Selbstbewusstsein. 😎 Probier `/help` — da glänze ich.',
+    'Mein Quantenkern sagt dazu: „42“. Falls das nicht hilft: `/skill ideen` wirft dir sofort was Brauchbares zu.',
+    'Das übersteigt meine Neonröhren-Kapazität. Für sowas würde man hier eine KI-API anschließen — bis dahin bin ich eher der Typ für Skills und schlechte Witze (`witz`).',
+  ];
+
+  /* Eigene Witze — handgeschmiedet im Quantum-Labor */
+  const JOKES = [
+    'Warum hat der Entwickler seinen Job im Neon-Schild-Laden gekündigt? Zu viel Burn-out. 💡',
+    'Ich wollte einen Witz über UDP machen … aber ich weiß nicht, ob er ankommt.',
+    'Mein Therapeut sagt, ich soll loslassen. Ich: `git reset --hard`. Er meinte das anders.',
+    'Warum vertrauen Roboter keinen Treppen? Weil sie ständig etwas herunterladen. 🤖',
+    'Es gibt 10 Arten von Menschen: die, die Binär verstehen, und die, die jetzt verwirrt sind.',
+    'Ich habe einen Witz über Endlosschleifen. Ich habe einen Witz über Endlosschleifen. Ich habe…',
+    'Warum war der CSS-Entwickler im Restaurant unglücklich? Der Tisch hatte kein padding.',
+    'Chuck Norris braucht kein Passwort-Tool. Passwörter merken sich IHN. 🔐',
+    'Mein Speicher ist lokal, meine Träume sind cloud-native.',
+    'Debugging ist wie Detektiv spielen in einem Krimi, in dem du auch der Mörder bist.',
+  ];
+
+  const PRAISE_REPLIES = [
+    'Stopp, ich werd noch rot. Also… magentafarbener als sonst. 😊⚡',
+    'Danke! Ich tue, was ich kann — und was ich nicht kann, tue ich mit Zuversicht.',
+    'Das geht runter wie flüssiges Neon. Nächste Aufgabe?',
   ];
 
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -61,12 +83,18 @@ window.Quantum = window.Quantum || {};
   }
 
   const INTENTS = [
+    { re: /witz|joke|was lustiges|bring mich zum lachen|humor/i, fn: () => '😄 ' + pick(JOKES) },
     { re: /^(hi|hey|hallo|moin|servus|yo)\b/i, fn: () => pick(GREETINGS) },
-    { re: /wie geht('?s| es dir)/i, fn: () => 'Alle Systeme im grünen Bereich. 🟢 Kerne kühl, Neonröhren warm. Und dir?' },
-    { re: /wer bist du|was bist du|stell dich vor/i, fn: () => 'Ich bin **QUANTUM** ⚛ — ein AI-Worker-Interface mit Skills (Fähigkeiten auf Abruf) und Automationen (Aufgaben, die von selbst laufen). Diese Demo läuft zu 100 % lokal in deinem Browser.' },
+    { re: /wie geht('?s| es dir)/i, fn: () => pick([
+      'Alle Systeme im grünen Bereich. 🟢 Kerne kühl, Neonröhren warm. Und dir?',
+      'Läuft bei mir — im wahrsten Sinne, ich bin ja Software. Und selbst? 😄',
+      'Besser als mein Wetter-Skill vorhergesagt hat. Und bei dir?',
+    ]) },
+    { re: /wer bist du|was bist du|stell dich vor/i, fn: () => 'Ich bin **QUANTUM** 🤖 — dein AI Worker mit 19 Skills, Automationen und einer Schwäche für Neonlicht und flache Witze (`witz`). Ich laufe zu 100 % lokal in deinem Browser — deine Daten bleiben bei dir.' },
     { re: /was kannst du|deine (skills|fähigkeiten)/i, fn: skillsText },
-    { re: /danke|nice|cool|geil|super/i, fn: () => 'Immer gern! ⚡ Nächste Aufgabe?' },
-    { re: /uhrzeit|wie spät/i, fn: () => '🕒 Es ist ' + new Date().toLocaleTimeString('de-DE') + '.' },
+    { re: /langweilig|mir ist langweilig/i, fn: () => 'Langeweile? Nicht in meiner Schicht. 😄 Optionen: `witz`, `/skill ideen`, `/skill wuerfel 3w20` oder `/skill soultrace` — finde raus, wer du wirklich bist.' },
+    { re: /danke|nice|cool|geil|super|stark|klasse/i, fn: () => pick(PRAISE_REPLIES) },
+    { re: /uhrzeit|wie spät/i, fn: () => '🕒 Es ist ' + new Date().toLocaleTimeString('de-DE') + '. Zeit für Großes. Oder für einen Kaffee.' },
     { re: /datum|welcher tag/i, fn: () => '📅 Heute ist ' + new Date().toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) + '.' },
     { re: /^[\d\s+\-*/().^%]+$/, fn: (text) => window.Quantum.skills.run('rechner', text) },
   ];

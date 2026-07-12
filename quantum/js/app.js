@@ -209,6 +209,12 @@
 
   /* ── Bus-Verdrahtung ───────────────────────────────────────── */
 
+  /* Minimales UI-Interface für Skill-Module (z. B. Code-Reviewer) */
+  window.Quantum.ui = {
+    system: (text) => addMessage('system', text),
+    reply: botReply,
+  };
+
   window.Quantum.bus.on('autochange', renderAutos);
   window.Quantum.bus.on('autolog', renderLog);
   window.Quantum.bus.on('automessage', ({ auto, output }) => {

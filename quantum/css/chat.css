@@ -367,6 +367,85 @@
   animation: pulse-dot 1s ease-in-out infinite;
 }
 
+/* ── Code-Reviewer-Overlay ───────────────────────────────────── */
+
+.cr-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(3, 0, 20, 0.8);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.cr-box {
+  width: min(760px, 100%);
+  background: linear-gradient(160deg, rgba(7, 2, 31, 0.98), rgba(12, 3, 44, 0.98));
+  border: 1px solid rgba(57, 255, 20, 0.5);
+  border-radius: 12px;
+  box-shadow: 0 0 34px rgba(57, 255, 20, 0.3), 0 20px 60px rgba(0, 0, 0, 0.7);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.cr-box__head {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  color: var(--neon-green);
+  text-shadow: var(--glow-green);
+}
+
+.cr-box__code {
+  width: 100%;
+  min-height: 280px;
+  resize: vertical;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(57, 255, 20, 0.3);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  padding: 0.8rem;
+  outline: none;
+  caret-color: var(--neon-green);
+}
+
+.cr-box__code:focus { border-color: var(--neon-green); box-shadow: 0 0 16px rgba(57, 255, 20, 0.3); }
+
+.cr-box__actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+
+.cr-box__btn {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  border-radius: 7px;
+  color: var(--text-dim);
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 44px;
+}
+
+.cr-box__btn:hover { color: var(--text-main); border-color: var(--text-dim); }
+
+.cr-box__btn--go {
+  color: var(--bg-void);
+  background: linear-gradient(90deg, var(--neon-green), var(--neon-cyan));
+  border: none;
+}
+
+.cr-box__btn--go:hover { box-shadow: 0 0 20px rgba(57, 255, 20, 0.6); }
+
 /* ── Mobile ──────────────────────────────────────────────────── */
 
 @media (max-width: 600px) {
