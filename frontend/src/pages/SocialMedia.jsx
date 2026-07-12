@@ -7,6 +7,7 @@ import { StudioContextArea } from "@/components/StudioLayout";
 import { useApp, API } from "@/context/AppContext";
 import { PageTitle } from "@/components/PageTitle";
 import { PageHeader } from "@/components/PageHeader";
+import { BrainBadge } from "@/components/BrainBadge";
 import { CopyButton } from "@/components/CopyButton";
 import { SOCIAL_PLATFORMS } from "@/i18n";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,6 +46,7 @@ export default function SocialMedia() {
         subtitle={t("social_sub")}
         badge="Social"
       />
+      <div className="mb-4"><BrainBadge /></div>
 
       <div className="bg-[#0A0A0A] border border-white/10 rounded-md p-6 md:p-7 space-y-5">
         <div className="space-y-1.5">
