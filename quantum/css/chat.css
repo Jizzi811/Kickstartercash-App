@@ -239,6 +239,29 @@
   color: var(--neon-green);
 }
 
+/* ── Bild-Nachrichten (z. B. SongSee-Visualisierung) ─────────── */
+
+.msg--media { max-width: 92%; padding: 0.55rem; }
+
+.msg__img {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 245, 255, 0.3);
+}
+
+.msg__download {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--neon-cyan);
+  text-decoration: none;
+}
+
+.msg__download:hover { text-shadow: var(--glow-cyan); text-decoration: underline; }
+
 /* ── Typing-Indikator ────────────────────────────────────────── */
 
 .chat-typing {

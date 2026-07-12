@@ -20,8 +20,14 @@ window.Quantum = window.Quantum || {};
     'Hey! ⚡ Ich bin Quantum, dein AI Worker. Was bauen wir heute — oder soll ich erst einen Witz raushauen? (`witz`)',
     'Neural-Link stabil, Kaffee im Kern nachgefüllt. ☕ Was liegt an?',
     'Hallo! Meine Skills glühen schon. Wortwörtlich. Ich hab Neonröhren statt Nerven.',
-    'Yo! 🤖 19 Skills, 0 schlechte Laune. Schieß los.',
+    'Yo! 🤖 {n} Skills, 0 schlechte Laune. Schieß los.',
   ];
+
+  /* Skill-Anzahl erst beim Antworten einsetzen — Module registrieren
+     sich nach dem Laden dieser Datei */
+  function withCount(text) {
+    return text.replace(/\{n\}/g, String(window.Quantum.skills.all.length));
+  }
 
   const FALLBACKS = [
     'Hmm, da muss ich passen — ich bin eine lokale Demo ohne echtes LLM-Hirn. Dafür stürze ich nie ab und werde nie frech. Na gut, selten. `/skills` zeigt, was ich WIRKLICH kann.',
@@ -84,13 +90,13 @@ window.Quantum = window.Quantum || {};
 
   const INTENTS = [
     { re: /witz|joke|was lustiges|bring mich zum lachen|humor/i, fn: () => '😄 ' + pick(JOKES) },
-    { re: /^(hi|hey|hallo|moin|servus|yo)\b/i, fn: () => pick(GREETINGS) },
+    { re: /^(hi|hey|hallo|moin|servus|yo)\b/i, fn: () => withCount(pick(GREETINGS)) },
     { re: /wie geht('?s| es dir)/i, fn: () => pick([
       'Alle Systeme im grünen Bereich. 🟢 Kerne kühl, Neonröhren warm. Und dir?',
       'Läuft bei mir — im wahrsten Sinne, ich bin ja Software. Und selbst? 😄',
       'Besser als mein Wetter-Skill vorhergesagt hat. Und bei dir?',
     ]) },
-    { re: /wer bist du|was bist du|stell dich vor/i, fn: () => 'Ich bin **QUANTUM** 🤖 — dein AI Worker mit 19 Skills, Automationen und einer Schwäche für Neonlicht und flache Witze (`witz`). Ich laufe zu 100 % lokal in deinem Browser — deine Daten bleiben bei dir.' },
+    { re: /wer bist du|was bist du|stell dich vor/i, fn: () => withCount('Ich bin **QUANTUM** 🤖 — dein AI Worker mit {n} Skills, Automationen und einer Schwäche für Neonlicht und flache Witze (`witz`). Ich laufe zu 100 % lokal in deinem Browser — deine Daten bleiben bei dir.') },
     { re: /was kannst du|deine (skills|fähigkeiten)/i, fn: skillsText },
     { re: /langweilig|mir ist langweilig/i, fn: () => 'Langeweile? Nicht in meiner Schicht. 😄 Optionen: `witz`, `/skill ideen`, `/skill wuerfel 3w20` oder `/skill soultrace` — finde raus, wer du wirklich bist.' },
     { re: /danke|nice|cool|geil|super|stark|klasse/i, fn: () => pick(PRAISE_REPLIES) },
@@ -105,7 +111,7 @@ window.Quantum = window.Quantum || {};
   let session = null;
 
   window.Quantum.engine = {
-    greeting() { return pick(GREETINGS); },
+    greeting() { return withCount(pick(GREETINGS)); },
     setSession(fn) { session = fn; },
     clearSession() { session = null; },
     hasSession() { return !!session; },

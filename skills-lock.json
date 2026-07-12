@@ -55,6 +55,12 @@
       "skillPath": "skills/remotion-render/SKILL.md",
       "computedHash": "aa9a3e23042111dc801ffe4996f96110aec4060ff60057e307329a3482baba1f"
     },
+    "songsee": {
+      "source": "steipete/songsee",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "d72b37088b7a09d781183ab0ff38adcda0e3596db79d902c117b57dda73a432a"
+    },
     "soultrace": {
       "source": "soultrace-ai/soultrace-skill",
       "sourceType": "github",

@@ -209,10 +209,34 @@
 
   /* ── Bus-Verdrahtung ───────────────────────────────────────── */
 
+  /* Bild-Nachricht (z. B. SongSee-Spektrogramm) mit Download-Link */
+  function addImageMessage(dataUrl, opts) {
+    opts = opts || {};
+    const div = document.createElement('div');
+    div.className = 'msg msg--bot msg--media';
+    div.setAttribute('data-testid', 'msg-media');
+    const meta = document.createElement('span');
+    meta.className = 'msg__meta';
+    meta.textContent = (opts.label || 'QUANTUM ⚛') + ' · ' + new Date().toLocaleTimeString('de-DE');
+    const img = document.createElement('img');
+    img.className = 'msg__img';
+    img.src = dataUrl;
+    img.alt = opts.alt || 'Visualisierung';
+    const link = document.createElement('a');
+    link.className = 'msg__download';
+    link.href = dataUrl;
+    link.download = opts.filename || 'quantum.png';
+    link.textContent = '⭳ ' + (opts.filename || 'Bild speichern');
+    div.append(meta, img, link);
+    els.messages.appendChild(div);
+    els.messages.scrollTop = els.messages.scrollHeight;
+  }
+
   /* Minimales UI-Interface für Skill-Module (z. B. Code-Reviewer) */
   window.Quantum.ui = {
     system: (text) => addMessage('system', text),
     reply: botReply,
+    image: addImageMessage,
   };
 
   window.Quantum.bus.on('autochange', renderAutos);
