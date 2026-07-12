@@ -50,7 +50,29 @@ class _Coll:
         return out
 
     def _matches(self, doc, query):
-        return all(doc.get(k) == v for k, v in query.items())
+        for k, v in query.items():
+            if isinstance(v, dict) and "$regex" in v:
+                val = str(doc.get(k, ""))
+                pattern = v["$regex"]
+                if pattern.startswith("^"):
+                    if not val.startswith(pattern[1:]):
+                        return False
+                elif pattern not in val:
+                    return False
+            elif doc.get(k) != v:
+                return False
+        return True
+
+    @staticmethod
+    def _set_path(doc, dotted, value, inc=False):
+        parts = dotted.split(".")
+        target = doc
+        for part in parts[:-1]:
+            target = target.setdefault(part, {})
+        if inc:
+            target[parts[-1]] = target.get(parts[-1], 0) + value
+        else:
+            target[parts[-1]] = value
 
     async def find_one(self, query, proj=None):
         for d in self.docs:
@@ -61,14 +83,21 @@ class _Coll:
     async def insert_one(self, doc):
         self.docs.append(dict(doc))
 
+    async def count_documents(self, query):
+        return sum(1 for d in self.docs if self._matches(d, query))
+
     async def update_one(self, query, update, upsert=False):
         for d in self.docs:
             if self._matches(d, query):
-                d.update(update.get("$set", {}))
+                for k, v in update.get("$set", {}).items():
+                    self._set_path(d, k, v)
+                for k, v in update.get("$inc", {}).items():
+                    self._set_path(d, k, v, inc=True)
                 return
         if upsert:
             merged = dict(query)
-            merged.update(update.get("$set", {}))
+            for k, v in update.get("$set", {}).items():
+                self._set_path(merged, k, v)
             self.docs.append(merged)
 
     def find(self, query, proj=None):
@@ -192,8 +221,13 @@ def test_workspace_current_returns_plan_and_quota(db):
 def test_workspace_current_reflects_usage(db):
     res = _register(db)
     ws_id = res["active_workspace_id"]
-    asyncio.run(db.bm_workspaces.update_one(
-        {"id": ws_id}, {"$set": {"usage": {"generations_this_month": 12}}}))
+    month = datetime.now(timezone.utc).strftime("%Y-%m")
+    for _ in range(12):
+        asyncio.run(db.gateway_usage.insert_one(
+            {"workspace_id": ws_id, "ok": True, "created_at": f"{month}-05T10:00:00+00:00"}))
+    # failed generations must not burn quota
+    asyncio.run(db.gateway_usage.insert_one(
+        {"workspace_id": ws_id, "ok": False, "created_at": f"{month}-05T10:00:00+00:00"}))
     out = asyncio.run(workspace_current(f"Bearer {res['token']}", ws_id))
     assert out["quota"]["used"] == 12
     assert out["quota"]["remaining"] == out["quota"]["limit"] - 12

@@ -231,6 +231,15 @@ _FALLBACK_CHAIN = [
 
 
 async def llm_text(model_choice: str, system_message: str, user_text: str, grok_extra_data: dict = None) -> str:
+    # Quota + metering hook: the workspace middleware (server.py) resolves the
+    # caller's workspace into the request context; unresolved (legacy or
+    # background) calls stay unmetered, matching _scope_filter semantics.
+    from app.core.request_context import current_workspace_id
+    from app.usage import metering
+
+    ws = current_workspace_id()
+    await metering.check_quota(ws)
+
     provider, model = MODEL_MAP.get(model_choice, MODEL_MAP["gpt"])
 
     # Try requested provider first (skip if circuit breaker open)
@@ -241,6 +250,7 @@ async def llm_text(model_choice: str, system_message: str, user_text: str, grok_
                 timeout=60.0
             )
             _cb_record_success(provider)
+            await metering.record_generation(ws, "llm_text", provider, model, True)
             return result
         except Exception as e:
             _cb_record_failure(provider)
@@ -259,11 +269,13 @@ async def llm_text(model_choice: str, system_message: str, user_text: str, grok_
             )
             _cb_record_success(fb_provider)
             logger.info(f"Fallback to '{fb_provider}' succeeded.")
+            await metering.record_generation(ws, "llm_text", fb_provider, fb_model, True)
             return result
         except Exception as e:
             _cb_record_failure(fb_provider)
             logger.warning(f"Fallback '{fb_provider}' also failed: {e}")
 
+    await metering.record_generation(ws, "llm_text", provider, model, False)
     raise HTTPException(status_code=503, detail="All LLM providers unavailable. Please try again shortly.")
 
 

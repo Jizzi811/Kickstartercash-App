@@ -9069,6 +9069,32 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def workspace_context_middleware(request: Request, call_next):
+    """Resolve the caller's workspace into the request context.
+
+    Deep layers (app.services.llm, app.gateway) read it for quota checks and
+    usage metering without every route having to pass a workspace through.
+    Resolution reuses workspace_from_request: JWT + X-Workspace-Id, validated
+    against memberships; anything unresolved stays None (legacy = unmetered).
+    """
+    from brandmind import workspace_from_request
+    from app.core.request_context import set_workspace_id, reset_workspace_id
+
+    try:
+        ws = await workspace_from_request(
+            request.headers.get("authorization"),
+            request.headers.get("x-workspace-id"),
+        )
+    except Exception:
+        ws = None
+    token = set_workspace_id(ws)
+    try:
+        return await call_next(request)
+    finally:
+        reset_workspace_id(token)
+
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     if client:

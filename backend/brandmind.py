@@ -400,7 +400,17 @@ async def workspace_current(
     plan_id = ws.get("plan", "trial")
     plan = PLANS.get(plan_id) or PLANS["trial"]
     limit = int(plan["limits"]["generations_per_month"])
-    used = int((ws.get("usage") or {}).get("generations_this_month") or 0)
+    # Quota source of truth: successful generations recorded in gateway_usage
+    # this month (same count app.usage.metering enforces against). The stored
+    # workspace counter is only the fallback for degraded lookups.
+    month = datetime.now(timezone.utc).strftime("%Y-%m")
+    try:
+        used = int(await db.gateway_usage.count_documents({
+            "workspace_id": ws["id"], "ok": True,
+            "created_at": {"$regex": f"^{month}"},
+        }))
+    except Exception:
+        used = int((ws.get("usage") or {}).get("generations_this_month") or 0)
     return {
         "workspace": {"id": ws["id"], "name": ws["name"], "slug": ws.get("slug", "")},
         "role": membership.get("role", "member"),

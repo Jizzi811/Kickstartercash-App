@@ -159,6 +159,11 @@ class AIGateway:
                    call: Callable[[Any, str], Any], explicit_model: Optional[str],
                    tokens_in: int, ws: Optional[str], timeout: float,
                    retry_max: int, out_text_of: Callable[[Any], str]) -> GatewayResult:
+        # Plan quota (PLANS generations_per_month) is enforced here in addition
+        # to the permission-policy preflight below; raises 402 when exhausted.
+        from app.usage import metering
+        await metering.check_quota(ws)
+
         enabled = cfg.get("enabled", {})
         result = GatewayResult(ok=False, capability=capability)
         policy = cfg.get("permission_policy") or default_policy(ws)
