@@ -80,6 +80,11 @@ jobs:
         # --legacy-peer-deps mirrors the deploy install; the project has a known
         # react-day-picker/date-fns peer-dep mismatch (tech debt, tracked in ROADMAP).
         run: npm ci --legacy-peer-deps
+      - name: Unit tests
+        working-directory: frontend
+        env:
+          CI: true
+        run: npx craco test --watchAll=false
       - name: Build
         working-directory: frontend
         env:

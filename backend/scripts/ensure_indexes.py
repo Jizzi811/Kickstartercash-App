@@ -48,6 +48,11 @@ INDEX_SPECS = [
     ("custom_agents", [("workspace_id", 1)], {}),
     ("gateway_usage", [("workspace_id", 1)], {}),
     ("onboarding_status", [("workspace_id", 1)], {}),
+
+    # Product analytics (POST /api/track): the activation funnel reads by
+    # event over time, per-workspace drilldowns by workspace.
+    ("product_events", [("event", 1), ("created_at", 1)], {}),
+    ("product_events", [("workspace_id", 1)], {}),
 ]
 
 

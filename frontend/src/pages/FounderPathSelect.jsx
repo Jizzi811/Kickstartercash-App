@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Building2, Compass, Sparkles, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/context/AppContext";
+import { track } from "@/lib/analytics";
 import { Page, Hero, Card, Btn, GradientHeading, BMBadge } from "@/components/bm";
 
 function PathCard({ icon: Icon, title, description, outcome, steps, cta, onClick }) {
@@ -31,11 +32,13 @@ export default function FounderPathSelect() {
   const choose = async (selected_path, current_step, route) => {
     try {
       await updateOnboardingStatus({ status: "path_selected", selected_path, current_step, completed_steps: [] });
+      track("onboarding_path_selected", { path: selected_path });
       navigate(route);
     } catch (e) { toast.error(de ? "Auswahl konnte nicht gespeichert werden" : "Could not save selection"); }
   };
   const skip = async () => {
     await updateOnboardingStatus({ status: "skipped", selected_path: "explore", current_step: "home" }).catch(() => null);
+    track("onboarding_skipped", {});
     navigate("/app");
   };
   const copy = de ? {
