@@ -49,6 +49,7 @@
       new Date().toLocaleTimeString('de-DE') + '</span>' + renderRich(text);
     els.messages.appendChild(div);
     els.messages.scrollTop = els.messages.scrollHeight;
+    if (role === 'bot') window.Quantum.bus.emit('botmessage', text);
   }
 
   /* Nimmt String ODER Promise<String> entgegen (async-Skills wie SoulTrace) */
@@ -214,12 +215,36 @@
     botReply(output, '⟳ AUTOMATION · ' + auto.name.toUpperCase());
   });
 
+  /* ── Mobile: Panels als Akkordeon ──────────────────────────── */
+
+  const mobileQuery = window.matchMedia('(max-width: 1100px)');
+
+  function setupPanelAccordion() {
+    document.querySelectorAll('.q-panel').forEach((panel) => {
+      const head = panel.querySelector('.q-panel__head');
+      if (!head || head.dataset.accordion) return;
+      head.dataset.accordion = '1';
+      head.addEventListener('click', () => {
+        if (mobileQuery.matches) panel.classList.toggle('q-panel--collapsed');
+      });
+    });
+    /* Auf dem Handy starten beide Panels eingeklappt — der Chat steht im Fokus */
+    if (mobileQuery.matches) {
+      document.querySelectorAll('.q-panel').forEach((p) => p.classList.add('q-panel--collapsed'));
+    }
+  }
+
+  mobileQuery.addEventListener('change', (e) => {
+    if (!e.matches) document.querySelectorAll('.q-panel').forEach((p) => p.classList.remove('q-panel--collapsed'));
+  });
+
   /* ── Uhr & Start ───────────────────────────────────────────── */
 
   setInterval(() => {
     els.clock.textContent = new Date().toLocaleTimeString('de-DE');
   }, 1000);
 
+  setupPanelAccordion();
   fillActionSelect();
   renderSkills();
   window.Quantum.automations.start();
