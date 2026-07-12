@@ -232,11 +232,39 @@
     els.messages.scrollTop = els.messages.scrollHeight;
   }
 
+  /* Video-Nachricht (z. B. Video-Studio) mit Download-Link */
+  function addVideoMessage(url, opts) {
+    opts = opts || {};
+    const div = document.createElement('div');
+    div.className = 'msg msg--bot msg--media';
+    div.setAttribute('data-testid', 'msg-video');
+    const meta = document.createElement('span');
+    meta.className = 'msg__meta';
+    meta.textContent = (opts.label || 'QUANTUM ⚛') + ' · ' + new Date().toLocaleTimeString('de-DE');
+    const video = document.createElement('video');
+    video.className = 'msg__img';
+    video.src = url;
+    video.controls = true;
+    video.loop = true;
+    video.muted = true;
+    video.autoplay = true;
+    video.playsInline = true;
+    const link = document.createElement('a');
+    link.className = 'msg__download';
+    link.href = url;
+    link.download = opts.filename || 'quantum.webm';
+    link.textContent = '⭳ ' + (opts.filename || 'Video speichern');
+    div.append(meta, video, link);
+    els.messages.appendChild(div);
+    els.messages.scrollTop = els.messages.scrollHeight;
+  }
+
   /* Minimales UI-Interface für Skill-Module (z. B. Code-Reviewer) */
   window.Quantum.ui = {
     system: (text) => addMessage('system', text),
     reply: botReply,
     image: addImageMessage,
+    video: addVideoMessage,
   };
 
   window.Quantum.bus.on('autochange', renderAutos);
