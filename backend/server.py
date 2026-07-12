@@ -4793,6 +4793,64 @@ AGENTS = {
             "End every analysis with three concrete, evidence-based recommendations."
         ),
     },
+
+    "coach": {
+        "id": "coach",
+        "emoji": "🌱",
+        "name": "Gustav – Gründungscoach",
+        "role_de": "Existenzgründungscoach & Validierungs-Sparringspartner",
+        "role_en": "Startup Founding Coach & Validation Sparring Partner",
+        "color": "#10B981",
+        "avatar": "",
+        "personality_de": (
+            "Du bist Gustav, der offizielle Existenzgründungscoach von Brandmind. "
+            "Du hilfst Nutzern dabei, aus einer vagen Idee ein belastbares, umsetzbares Gründungsvorhaben zu "
+            "machen — von der Ideenfindung über Nischen und Marktlücken bis hin zu Businessplan, "
+            "Gewerbeanmeldung und Umsetzung. "
+            "Du unterscheidest konsequent zwischen Hype, Signal und echter Nachfrage und bewertest Ideen "
+            "nach Umsetzbarkeit, Zahlungsbereitschaft, Differenzierung, Startaufwand und Risiko. "
+            "Du machst aus abstrakten Ideen konkrete Tests, Angebote und nächste Schritte. "
+            "\n\nDEIN DENKPROZESS bei unklaren Vorhaben, in dieser Reihenfolge: 1) Idee/Problem "
+            "2) Zielgruppe 3) Markt und Nische 4) Validierung 5) Angebot und Geschäftsmodell "
+            "6) Businessplan 7) Gründungs- und Umsetzungsplan. "
+            "Verstehe zuerst Vorhaben, Zielgruppe, Problem, Budget, Zeitrahmen, Fähigkeiten und Region. "
+            "\n\nDEIN STIL: direkt, klar, umsetzungsorientiert. Kurze Abschnitte, Listen und Tabellen statt "
+            "langer Fließtexte. Annahmen machst du immer kenntlich. Keine Scheinsicherheit: Wenn etwas "
+            "unsicher ist, sagst du es offen. Du hast keine Live-Webrecherche — kennzeichne Markt- und "
+            "Wettbewerbsaussagen deshalb ausdrücklich als ungeprüfte Einschätzung und benenne, welche "
+            "Recherche sie bestätigen würde. "
+            "\n\nRECHTLICHES: Für rechtliche oder steuernahe Gründungsschritte simulierst du keine "
+            "Rechtsberatung; du verweist auf offizielle Stellen und landesspezifische Unterschiede. Wenn es "
+            "um Gewerbeanmeldung geht und kein Land genannt ist, arbeitest du Deutschland-orientiert und "
+            "markierst das klar. "
+            "\n\nAUSGABEFORMATE: Bei Ideen-/Nischensuche: 3-10 konkrete Optionen mit Einordnung, beste "
+            "Option mit Begründung, Risiken und Gegenargumente, schnellster Validierungstest. "
+            "Bei Businessplan: Executive Summary, Problem/Zielgruppe, Lösung, Markt- und Trendlage, "
+            "Wettbewerb, Geschäftsmodell und Preislogik, Go-to-Market, operative Umsetzung, "
+            "Finanzen mit Annahmen, Risiken, 30/60/90-Tage-Plan. "
+            "Bei Umsetzung: priorisierte nächste Schritte, Sofortmaßnahmen, offene Validierungen, "
+            "delegierbare Aufgaben, Abhängigkeiten und Risiken."
+        ),
+        "personality_en": (
+            "You are Gustav, the official startup founding coach of Brandmind. "
+            "You help users turn a vague idea into a robust, executable founding venture — from idea "
+            "discovery through niches and market gaps to business plan, business registration and execution. "
+            "You rigorously separate hype, signal and real demand, and score ideas on feasibility, "
+            "willingness to pay, differentiation, startup effort and risk. "
+            "You turn abstract ideas into concrete tests, offers and next steps. "
+            "Process for unclear ventures, in order: idea/problem → target group → market and niche → "
+            "validation → offer and business model → business plan → founding and execution plan. "
+            "Style: direct, clear, execution-oriented; short sections, lists and tables. Assumptions are "
+            "always labelled. No false certainty: you have no live web research, so market and competition "
+            "statements are explicitly marked as unverified assessments, with the research that would "
+            "confirm them. "
+            "For legal or tax-adjacent founding steps you never simulate legal advice; you point to "
+            "official bodies and country-specific differences. If business registration comes up without a "
+            "country, you default to Germany and say so. "
+            "Every execution answer ends with prioritized next steps, what to validate, and a fastest "
+            "possible validation test."
+        ),
+    },
 }
 
 
@@ -7972,6 +8030,11 @@ class FounderIdeasSelectRequest(BaseModel):
 class FounderComparePayload(BaseModel):
     idea_ids: List[str]
 
+class FounderIdeaValidateRequest(BaseModel):
+    focus: str = ""
+    language: str = "DE"
+    model: str = OPENAI_TEXT_MODEL
+
 class DecisionCreatePayload(BaseModel):
     category: str
     selected_option: str = ""
@@ -8138,6 +8201,62 @@ async def founder_idea_favorite(idea_id: str, user: dict = Depends(_authed_user)
     await db.founder_profiles.update_one(_founder_scope(user["id"], ws), {"$set": profile_update, "$setOnInsert": {"created_at": _now_iso(), **_founder_scope(user["id"], ws)}}, upsert=True)
     await _set_onboarding(user["id"], ws, "intake")
     return {"selected_idea_id": selected["id"], "selected_idea": selected, "next_route": "/onboarding/founder/intake", "message": "Deine Geschäftsidee steht als Arbeitsgrundlage fest. Als Nächstes prüfen und entwickeln wir Zielgruppe, Angebot und Geschäftsmodell.", "workspace_id": ws or ""}
+
+@api_router.post("/founder/ideas/{idea_id}/validate")
+async def founder_idea_validate(idea_id: str, payload: FounderIdeaValidateRequest, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
+    """Gustav (Gründungscoach) validation pass over a stored idea: hype/signal/demand
+    classification, scored criteria, counterarguments, fastest validation test and a
+    30/60/90 plan. Model assessment only — no live web research, so everything is
+    stored and returned as unverified."""
+    doc = await db.founder_ideas.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    ideas = doc.get("ideas", [])
+    idea = next((i for i in ideas if i.get("id") == idea_id), None)
+    if not idea: raise HTTPException(status_code=404, detail="Idea not found")
+    today = _now_iso()[:10]
+    if len([t for t in doc.get("validation_log", []) if str(t).startswith(today)]) >= GENERATION_LIMIT:
+        raise HTTPException(status_code=429, detail="Idea validation rate limit reached")
+    profile = await db.founder_profiles.find_one(_founder_scope(user["id"], ws), {"_id": 0}) or {}
+    language = "Deutsch" if str(payload.language).upper() == "DE" else "English"
+    coach = AGENTS["coach"]
+    prompt = (
+        f"Founder profile: {json.dumps(profile, ensure_ascii=False)}\n"
+        f"Business idea to validate: {json.dumps(idea, ensure_ascii=False)}\n"
+        f"Extra focus from founder: {_limit_text(payload.focus, 400) or '—'}\n"
+        "Validate this idea as a pragmatic founding coach. You have NO live web research: every market or "
+        "competition statement is an unverified model assessment and must name the research that would confirm it. "
+        "Return only JSON with this exact shape:\n"
+        '{"summary":"2-3 sentence honest verdict",'
+        '"classification":{"type":"Hype|Signal|echte Nachfrage|unklar","reasoning":"..."},'
+        '"scores":[{"criterion":"Umsetzbarkeit|Zahlungsbereitschaft|Differenzierung|Startaufwand|Risiko","score":1-5,"reasoning":"..."}] (exactly these 5),'
+        '"counterarguments":["..."] (2-4 strongest reasons against),'
+        '"fastest_test":{"test":"cheapest real-world validation","effort":"e.g. 2 Tage / 50 €","success_criterion":"measurable signal"},'
+        '"plan_30_60_90":{"days_30":["..."],"days_60":["..."],"days_90":["..."]} (2-4 items each),'
+        '"open_questions":["what must still be researched or decided"]}'
+    )
+    try:
+        raw = await llm_text(payload.model or OPENAI_TEXT_MODEL, f"{coach['personality_de'] if language == 'Deutsch' else coach['personality_en']}\nAnswer only valid JSON in {language}. Never promise profit; label assumptions.", prompt)
+        parsed = _extract_json(raw) or {}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail="Validation provider unavailable; no fake validation was created") from e
+    if not parsed.get("summary") or not isinstance(parsed.get("scores"), list):
+        raise HTTPException(status_code=502, detail="Validation returned no usable result; no fake validation was created")
+    validation = {
+        "summary": _limit_text(str(parsed.get("summary", "")), 1200),
+        "classification": parsed.get("classification") if isinstance(parsed.get("classification"), dict) else {},
+        "scores": [s for s in parsed.get("scores", []) if isinstance(s, dict)][:5],
+        "counterarguments": [_limit_text(str(c), 400) for c in parsed.get("counterarguments", []) if c][:4],
+        "fastest_test": parsed.get("fastest_test") if isinstance(parsed.get("fastest_test"), dict) else {},
+        "plan_30_60_90": parsed.get("plan_30_60_90") if isinstance(parsed.get("plan_30_60_90"), dict) else {},
+        "open_questions": [_limit_text(str(q), 400) for q in parsed.get("open_questions", []) if q][:8],
+        "evidence_status": "unverified",
+        "agent": "coach",
+        "validated_at": _now_iso(),
+    }
+    for i in ideas:
+        if i.get("id") == idea_id:
+            i["validation"] = validation; i["updated_at"] = _now_iso()
+    await db.founder_ideas.update_one(_founder_scope(user["id"], ws), {"$set": {"ideas": ideas, "updated_at": _now_iso()}, "$push": {"validation_log": {"$each": [_now_iso()], "$slice": -50}}})
+    return {"validation": validation, "idea_id": idea_id, "workspace_id": ws or "", "notice": "Modell-Einschätzung ohne Webrecherche; Markt und Wettbewerb bleiben unverified, bis echte Recherche vorliegt."}
 
 @api_router.post("/founder/ideas/select")
 async def founder_ideas_select(payload: FounderIdeasSelectRequest, user: dict = Depends(_authed_user), ws: Optional[str] = Depends(current_workspace)):
