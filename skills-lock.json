@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "skills": {
+    "doc-coauthoring": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/doc-coauthoring/SKILL.md",
+      "computedHash": "b964e4c3ffe13f66f76dd7919073e60c7aec622cd8a8363bb36323188100cf8e"
+    },
+    "docx": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/docx/SKILL.md",
+      "computedHash": "6962db07127ee540a56e4677f65576d0727668a1d67f7da8bc978f10791c2bfe"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "4eabc66183767153e404b39d1b839b1c37f2d82d86f0a0d7e880a579d8d62336"
+    },
+    "here-now": {
+      "source": "heredotnow/skill",
+      "sourceType": "github",
+      "skillPath": "here-now/SKILL.md",
+      "computedHash": "0a6f4d4bc31f658707b5d3f0f29ed41ddb2bd8af0a89b96e4406d36042d07b6c"
+    },
+    "imagegen": {
+      "source": "openai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/.system/imagegen/SKILL.md",
+      "computedHash": "9f14832d6538d83047ef41223ba9b0fb4a8c393d144ad4015ce4c10cc3d5414c"
+    },
+    "pdf": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/pdf/SKILL.md",
+      "computedHash": "cfbc539377088ca7e44a813b30c306327385bbd973cd7a721e1743f60837dd62"
+    },
+    "quarkdown": {
+      "source": "iamgio/quarkdown",
+      "sourceType": "github",
+      "skillPath": "skills/quarkdown/SKILL.md",
+      "computedHash": "34587f1aa82db4344b5f6c5bcb86e12e52b5ab805026b01d8398d851ffa2c3bc"
+    },
+    "remotion-best-practices": {
+      "source": "remotion-dev/skills",
+      "sourceType": "github",
+      "skillPath": "skills/remotion-best-practices/SKILL.md",
+      "computedHash": "3c92fd961e11ea0be692138a9ba7cccaea4ec509d2e462d7e170a5b1238ab112"
+    },
+    "remotion-create": {
+      "source": "remotion-dev/skills",
+      "sourceType": "github",
+      "skillPath": "skills/remotion-create/SKILL.md",
+      "computedHash": "39e6cab17355496309d304b317db56057e6386d490c8f92664343cdd0cb3c933"
+    },
+    "remotion-render": {
+      "source": "remotion-dev/skills",
+      "sourceType": "github",
+      "skillPath": "skills/remotion-render/SKILL.md",
+      "computedHash": "aa9a3e23042111dc801ffe4996f96110aec4060ff60057e307329a3482baba1f"
+    },
+    "songsee": {
+      "source": "steipete/songsee",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "d72b37088b7a09d781183ab0ff38adcda0e3596db79d902c117b57dda73a432a"
+    },
+    "soultrace": {
+      "source": "soultrace-ai/soultrace-skill",
+      "sourceType": "github",
+      "skillPath": "skills/soultrace/SKILL.md",
+      "computedHash": "2cceda69901d52d71525010da52a88b11cbcea3611af91e5e0c250605daa7268"
+    },
+    "vercel-react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-best-practices/SKILL.md",
+      "computedHash": "3219a1944e404ffc14d1d9d6aef6dd2e3855b81387ee0a044ccbfe14d34c2357"
+    },
+    "web-artifacts-builder": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-artifacts-builder/SKILL.md",
+      "computedHash": "d52d422ead3fa26859a6af129609841a8536b230a2d649f86e61771d063e05e2"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "a6a44d5498f7e8f68289902f3dedfc6f38ae0cee1e96527c80724cf27f727c2a"
+    }
+  }
+}

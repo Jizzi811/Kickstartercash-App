@@ -107,3 +107,6 @@ CLAUDE.local.md
 
 # claude-flow local tooling state
 .claude-flow/
+
+# here.now — Credentials/State nie committen (siehe .claude/skills/here-now)
+.herenow/
