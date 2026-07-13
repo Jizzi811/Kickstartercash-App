@@ -74,6 +74,9 @@
             placeholder="Frag Quantum irgendwas… (/help für Befehle)"
             maxlength="500"
           />
+          <button type="button" class="chat-input__mic" id="btn-upload" data-testid="upload-btn" title="Dokument oder Bild hochladen">📎</button>
+          <input type="file" id="file-upload" data-testid="upload-input" hidden multiple
+                 accept="image/*,.txt,.md,.json,.csv,.qd,.js,.ts,.jsx,.tsx,.py,.html,.htm,.css,.pdf,.docx" />
           <button type="button" class="chat-input__mic" id="btn-mic" data-testid="mic-btn" title="Diktieren">🎤</button>
           <button type="submit" class="chat-input__send" data-testid="send-btn">
             <span>SENDEN</span>
@@ -132,6 +135,10 @@
   <script src="js/superpowers.js"></script>
   <script src="js/video.js"></script>
   <script src="js/bild.js"></script>
+  <script src="js/designcheck.js"></script>
+  <script src="js/webseite.js"></script>
+  <script src="js/coauthor.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/upload.js"></script>
 </body>
 </html>
