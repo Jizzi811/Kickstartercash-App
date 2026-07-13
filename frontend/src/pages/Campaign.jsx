@@ -7,6 +7,7 @@ import { useApp, API } from "@/context/AppContext";
 import { PageTitle } from "@/components/PageTitle";
 import { CopyButton } from "@/components/CopyButton";
 import { SOCIAL_PLATFORMS, IMAGE_STYLES } from "@/i18n";
+import { loadPuter } from "@/lib/puter";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 
@@ -42,10 +43,11 @@ export default function Campaign() {
   const generatePuterImage = async () => {
     const prompt = result?.image_prompt
       || `Premium marketing image, ${style} style, about: ${topic}. Elegant, dramatic lighting, professional advertising asset.`;
-    if (!window.puter?.ai?.txt2img) { toast.error("Puter konnte nicht geladen werden."); return; }
     setPuterLoading(true);
     try {
-      const el = await window.puter.ai.txt2img(prompt, { model: "gpt-image-2" });
+      const puter = await loadPuter();
+      if (!puter?.ai?.txt2img) { toast.error("Puter konnte nicht geladen werden."); return; }
+      const el = await puter.ai.txt2img(prompt, { model: "gpt-image-2" });
       const src = el?.src || (typeof el === "string" ? el : null);
       if (src) setPuterImg(src);
       else toast.error(t("error_generic"));
