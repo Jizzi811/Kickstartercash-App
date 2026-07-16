@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J.A.R.V.I.S.</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}html,body{min-height:100%}
+  body{background:radial-gradient(circle at 50% 35%,#061320 0%,#02060c 70%,#000 100%);
+    font-family:-apple-system,"Segoe UI",system-ui,sans-serif;color:#9fe8ff;
+    display:flex;flex-direction:column;align-items:center;padding:24px 0 60px;user-select:none}
+  .stage{position:relative;width:340px;height:340px;display:flex;align-items:center;justify-content:center}
+  .orb{position:relative;width:200px;height:200px;border-radius:50%;cursor:pointer;
+    background:radial-gradient(circle at 35% 30%,#aef3ff,#2bb6ff 35%,#0a6fd6 60%,#053a78 100%);
+    box-shadow:0 0 60px 12px rgba(43,182,255,.55),0 0 140px 30px rgba(20,110,220,.30),inset 0 0 50px rgba(255,255,255,.35);
+    transition:.4s;animation:breathe 5s ease-in-out infinite}
+  .orb::after{content:"";position:absolute;inset:18%;border-radius:50%;
+    background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.9),rgba(174,243,255,.1) 60%,transparent 70%);filter:blur(2px)}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+  .ring{position:absolute;border-radius:50%;border:1px solid rgba(120,220,255,.35);top:50%;left:50%;transform:translate(-50%,-50%)}
+  .ring.r1{width:250px;height:250px;border-style:dashed;animation:spin 14s linear infinite}
+  .ring.r2{width:300px;height:300px;border-color:rgba(120,220,255,.18);animation:spin 22s linear infinite reverse}
+  .ring.r3{width:340px;height:340px;border-color:rgba(120,220,255,.10);border-top-color:rgba(120,220,255,.5);animation:spin 9s linear infinite}
+  @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+  .stage.listening .orb{animation:breathe 1.4s ease-in-out infinite;box-shadow:0 0 80px 20px rgba(43,255,180,.55),0 0 160px 40px rgba(20,220,150,.3),inset 0 0 50px rgba(255,255,255,.4);filter:hue-rotate(-60deg)}
+  .stage.thinking .orb{animation:spin 1.1s linear infinite;background:conic-gradient(from 0deg,#aef3ff,#2bb6ff,#053a78,#2bb6ff,#aef3ff)}
+  .stage.speaking .orb{box-shadow:0 0 90px 24px rgba(180,120,255,.6),0 0 170px 44px rgba(140,80,255,.32),inset 0 0 50px rgba(255,255,255,.45);filter:hue-rotate(40deg)}
+  .title{letter-spacing:.5em;font-size:13px;margin-top:30px;opacity:.7;text-shadow:0 0 12px rgba(43,182,255,.8)}
+  .status{font-size:12px;letter-spacing:.25em;opacity:.55;margin-top:8px;min-height:16px;text-transform:uppercase}
+  .transcript{margin-top:22px;max-width:540px;width:92%;max-height:34vh;overflow-y:auto;font-size:14px;line-height:1.55;padding:0 8px}
+  .transcript::-webkit-scrollbar{width:5px}.transcript::-webkit-scrollbar-thumb{background:rgba(120,220,255,.3);border-radius:3px}
+  .msg{margin:8px 0;padding:9px 14px;border-radius:14px}
+  .msg.user{background:rgba(43,182,255,.12);border:1px solid rgba(43,182,255,.25);color:#cdeeff;text-align:right;margin-left:18%}
+  .msg.ai{background:rgba(140,90,255,.10);border:1px solid rgba(140,90,255,.22);color:#e3d9ff;margin-right:18%}
+  .msg.sys{background:rgba(255,170,60,.08);border:1px solid rgba(255,170,60,.25);color:#ffe2b0;font-size:12px;font-family:ui-monospace,monospace}
+  .msg.skill{background:rgba(43,255,180,.07);border:1px solid rgba(43,255,180,.22);color:#b8ffe2;font-size:12px;font-family:ui-monospace,monospace}
+  .controls{display:flex;gap:12px;margin-top:18px;align-items:center;flex-wrap:wrap;justify-content:center}
+  button,input,textarea,select{font-family:inherit;border-radius:30px;border:1px solid rgba(120,220,255,.35);background:rgba(10,40,70,.5);color:#aef3ff;padding:11px 18px;font-size:14px;cursor:pointer;transition:.2s}
+  button:hover{background:rgba(43,182,255,.25);box-shadow:0 0 18px rgba(43,182,255,.5)}
+  button.mic.active{background:rgba(43,255,180,.25);border-color:rgba(43,255,180,.6);color:#aeffe0}
+  #textInput{width:300px;cursor:text;text-align:left}#textInput::placeholder{color:rgba(159,232,255,.4)}
+  .speed{display:flex;gap:8px;align-items:center;margin-top:16px;font-size:12px;opacity:.85;flex-wrap:wrap;justify-content:center}
+  .speed span{letter-spacing:.15em;opacity:.6;text-transform:uppercase;font-size:11px}
+  .speed button{padding:6px 12px;font-size:12px;border-radius:20px}
+  .speed button.sel{background:rgba(43,182,255,.3);border-color:rgba(43,182,255,.7);color:#dffaff;box-shadow:0 0 12px rgba(43,182,255,.4)}
+  .config{width:92%;max-width:620px;margin-top:18px;border:1px solid rgba(120,220,255,.18);border-radius:18px;background:rgba(5,20,35,.48);overflow:hidden}
+  .config summary{list-style:none;cursor:pointer;padding:14px 18px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#dffaff}
+  .config summary::-webkit-details-marker{display:none}
+  .config .panel{display:grid;gap:12px;padding:0 14px 16px}
+  .config label{display:grid;gap:6px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(159,232,255,.65)}
+  .config textarea{width:100%;min-height:82px;border-radius:14px;resize:vertical;cursor:text;line-height:1.45;color:#dffaff;background:rgba(2,10,18,.55)}
+  .config input,.config select{width:100%;border-radius:14px;cursor:text;color:#dffaff;background:rgba(2,10,18,.55)}
+  .config select{cursor:pointer}
+  .config select option{background:#04101c;color:#dffaff}
+  .config .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .config .save{justify-self:end;padding:8px 14px;border-radius:18px;font-size:12px}
+  .config .memBtns{display:flex;gap:8px;justify-content:flex-end}
+  .config .memBtns button{padding:8px 14px;border-radius:18px;font-size:12px}
+  .skills{width:92%;max-width:620px;margin-top:12px;display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
+  .skills span{font-size:11px;letter-spacing:.08em;padding:5px 12px;border-radius:16px;border:1px solid rgba(43,255,180,.25);background:rgba(43,255,180,.06);color:#9fffd8}
+  .hint{font-size:11px;opacity:.4;margin-top:16px;text-align:center;padding:0 16px;max-width:560px;line-height:1.5}
+  .voiceInfo{font-size:11px;opacity:.55;margin-top:8px;text-align:center;padding:0 16px;max-width:560px;line-height:1.5;color:#dffaff}
+  code{color:#aef3ff;background:rgba(43,182,255,.12);padding:1px 5px;border-radius:5px}
+  @media(max-width:560px){.stage{width:300px;height:300px}.ring.r3{width:300px;height:300px}.ring.r2{width:270px;height:270px}.ring.r1{width:230px;height:230px}.config .row{grid-template-columns:1fr}#textInput{width:min(300px,92vw)}}
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+    <div class="orb" id="orb"></div>
+  </div>
+  <div class="title">J &middot; A &middot; R &middot; V &middot; I &middot; S</div>
+  <div class="status" id="status">bereit</div>
+  <div class="transcript" id="transcript"></div>
+  <div class="controls">
+    <button class="mic" id="micBtn">&#127908; Sprechen</button>
+    <button id="voiceTest">Stimme testen</button>
+    <input id="textInput" placeholder="&hellip;oder hier tippen und Enter" />
+  </div>
+
+  <div class="speed">
+    <span>Tempo</span>
+    <button data-rate="1.0" class="sel">Normal</button>
+    <button data-rate="1.15">Schnell</button>
+    <button data-rate="1.3">Schneller</button>
+    <button data-rate="1.5">Turbo</button>
+  </div>
+
+  <div class="skills">
+    <span>&#128337; Uhrzeit &amp; Datum</span>
+    <span>&#9925; Wetter</span>
+    <span>&#9200; Timer</span>
+    <span>&#129518; Rechner</span>
+    <span>&#128218; Wikipedia</span>
+    <span>&#129504; Merken &amp; Erinnern</span>
+  </div>
+
+  <details class="config" id="configBox">
+    <summary>J.A.R.V.I.S. konfigurieren</summary>
+    <div class="panel">
+      <label>OpenAI API-Key (bleibt nur in diesem Browser gespeichert)
+        <input id="apiKey" type="password" placeholder="sk-..." autocomplete="off" />
+      </label>
+      <div class="row">
+        <label>KI-Modell
+          <select id="modelSel">
+            <option value="gpt-4o-mini">GPT-4o mini (schnell &amp; guenstig)</option>
+            <option value="gpt-4o">GPT-4o (schlauer)</option>
+            <option value="gpt-4.1-mini">GPT-4.1 mini</option>
+            <option value="gpt-4.1">GPT-4.1</option>
+          </select>
+        </label>
+        <label>Stimme
+          <select id="voiceSel">
+            <option value="onyx">Onyx (tief &amp; markant)</option>
+            <option value="echo">Echo</option>
+            <option value="alloy">Alloy</option>
+            <option value="ash">Ash</option>
+            <option value="ballad">Ballad</option>
+            <option value="coral">Coral</option>
+            <option value="fable">Fable</option>
+            <option value="nova">Nova</option>
+            <option value="sage">Sage</option>
+            <option value="shimmer">Shimmer</option>
+            <option value="verse">Verse</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <label>Name
+          <input id="jarvisName" placeholder="J.A.R.V.I.S." />
+        </label>
+        <label>Tonfall
+          <input id="jarvisTone" placeholder="cool, witzig, direkt" />
+        </label>
+      </div>
+      <label>Persoenlichkeit
+        <textarea id="jarvisPersona" placeholder="Wie soll er sich anfuehlen?"></textarea>
+      </label>
+      <label>Wissen
+        <textarea id="jarvisKnowledge" placeholder="Fakten, Vorlieben, Namen, Projekte, Regeln..."></textarea>
+      </label>
+      <label>Langzeit-Gedaechtnis (per Sprache: "Merk dir ...")
+        <textarea id="jarvisMemory" placeholder="Hier landet alles, was Jarvis sich merkt."></textarea>
+      </label>
+      <div class="memBtns">
+        <button id="clearMemory" type="button">Gedaechtnis loeschen</button>
+        <button class="save" id="saveConfig" type="button">Speichern</button>
+      </div>
+    </div>
+  </details>
+
+  <div class="hint">Mit OpenAI-Key: GPT + echte Onyx-Stimme direkt von OpenAI. Ohne Key: Fallback auf n8n-Workflow <code id="ep"></code> und Browser-Stimme. Der Key bleibt in deinem Browser (localStorage) &mdash; die Seite deshalb nicht oeffentlich ins Netz stellen. Sprache am besten in Chrome/Edge.</div>
+  <div class="voiceInfo" id="voiceInfo">Stimme wird geprueft...</div>
+
+<script>
+  const N8N_WEBHOOK = "https://nadjas.app.n8n.cloud/webhook/jarvis";
+  document.getElementById('ep').textContent = N8N_WEBHOOK;
+
+  const stage=document.getElementById('stage'),orb=document.getElementById('orb'),statusEl=document.getElementById('status');
+  const transcriptEl=document.getElementById('transcript'),micBtn=document.getElementById('micBtn'),textInput=document.getElementById('textInput'),voiceTest=document.getElementById('voiceTest'),voiceInfo=document.getElementById('voiceInfo');
+  const jarvisName=document.getElementById('jarvisName'),jarvisTone=document.getElementById('jarvisTone'),jarvisPersona=document.getElementById('jarvisPersona'),jarvisKnowledge=document.getElementById('jarvisKnowledge'),jarvisMemory=document.getElementById('jarvisMemory');
+  const apiKeyInput=document.getElementById('apiKey'),modelSel=document.getElementById('modelSel'),voiceSel=document.getElementById('voiceSel');
+  const saveConfig=document.getElementById('saveConfig'),clearMemory=document.getElementById('clearMemory');
+  const sessionId='orb-'+Math.random().toString(36).slice(2);
+  const setState=(s,l)=>{stage.className='stage '+s;statusEl.textContent=l};
+  function addMsg(role,text){const d=document.createElement('div');d.className='msg '+role;d.textContent=text;transcriptEl.appendChild(d);transcriptEl.scrollTop=transcriptEl.scrollHeight;}
+
+  const defaultConfig={
+    name:'J.A.R.V.I.S.',
+    tone:'cool, witzig, charmant, klar und ein bisschen frech',
+    persona:'Du bist ein smarter deutschsprachiger Assistent. Du klingst souveraen, warm, trocken witzig und hilfreich. Du antwortest knapp, praktisch und mit Charakter, ohne albern zu werden.',
+    knowledge:'Nutzerin: Nadja. Sprich sie direkt und respektvoll an.',
+    apiKey:'', model:'gpt-4o-mini', voice:'onyx'
+  };
+  function loadConfig(){
+    let cfg=defaultConfig;
+    try{cfg=Object.assign({},defaultConfig,JSON.parse(localStorage.getItem('jarvisConfig')||'{}'));}catch(_){}
+    jarvisName.value=cfg.name;jarvisTone.value=cfg.tone;jarvisPersona.value=cfg.persona;jarvisKnowledge.value=cfg.knowledge;
+    apiKeyInput.value=cfg.apiKey||'';modelSel.value=cfg.model||'gpt-4o-mini';voiceSel.value=cfg.voice||'onyx';
+    jarvisMemory.value=loadMemory().join('\n');
+  }
+  function getConfig(){return{
+    name:jarvisName.value.trim()||defaultConfig.name,
+    tone:jarvisTone.value.trim()||defaultConfig.tone,
+    persona:jarvisPersona.value.trim()||defaultConfig.persona,
+    knowledge:jarvisKnowledge.value.trim()||defaultConfig.knowledge,
+    apiKey:apiKeyInput.value.trim(),
+    model:modelSel.value,
+    voice:voiceSel.value
+  };}
+  function hasKey(){return /^sk-/.test(apiKeyInput.value.trim());}
+
+  // === Langzeit-Gedaechtnis ===
+  function loadMemory(){try{const m=JSON.parse(localStorage.getItem('jarvisMemory')||'[]');return Array.isArray(m)?m:[];}catch(_){return[];}}
+  function saveMemory(list){localStorage.setItem('jarvisMemory',JSON.stringify(list));jarvisMemory.value=list.join('\n');}
+  clearMemory.onclick=function(){saveMemory([]);addMsg('sys','Gedaechtnis geloescht.');};
+
+  function systemPrompt(){
+    const c=getConfig(),mem=loadMemory();
+    const now=new Date().toLocaleString('de-DE',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    return 'Name: '+c.name+'\nTonfall: '+c.tone+'\nPersoenlichkeit: '+c.persona
+      +'\nWissen ueber Nutzerin, Projekte und Regeln:\n'+c.knowledge
+      +(mem.length?'\nLangzeit-Gedaechtnis (frueher gemerkte Fakten):\n- '+mem.join('\n- '):'')
+      +'\nAktuelles Datum/Uhrzeit: '+now
+      +'\nDeine Antworten werden laut vorgelesen: antworte auf Deutsch, gesprochen-natuerlich, knapp (meist 1-4 Saetze), ohne Markdown, Listenzeichen oder Emojis.'
+      +'\nDu hast Werkzeuge (Wetter, Timer, Rechner, Wikipedia, Merken). Nutze sie, wenn sie helfen, und erfinde keine Fakten.';
+  }
+  loadConfig();
+  saveConfig.onclick=function(){
+    const c=getConfig();
+    localStorage.setItem('jarvisConfig',JSON.stringify(c));
+    const mem=jarvisMemory.value.split('\n').map(function(x){return x.trim();}).filter(Boolean);
+    saveMemory(mem);
+    addMsg('sys','Konfiguration gespeichert.'+(c.apiKey?' OpenAI-Modus aktiv ('+c.model+', Stimme '+c.voice+').':' Kein API-Key: n8n-Fallback aktiv.'));
+    refreshVoiceInfo();
+  };
+
+  // === Sprechgeschwindigkeit ===
+  let speechRate = 1.0;
+  document.querySelectorAll('.speed button').forEach(function(b){
+    b.onclick=function(){
+      speechRate=parseFloat(b.dataset.rate);
+      document.querySelectorAll('.speed button').forEach(function(x){x.classList.remove('sel');});
+      b.classList.add('sel');
+    };
+  });
+
+  // === Browser-TTS (Fallback) ===
+  let deVoice=null;
+  function hasSpeech(){return 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;}
+  function refreshVoiceInfo(){
+    if(hasKey()){voiceInfo.textContent='OpenAI-Stimme "'+voiceSel.value+'" aktiv ('+modelSel.value+').';return;}
+    if(!hasSpeech()){voiceInfo.textContent='Kein API-Key und keine Browser-Sprachausgabe verfuegbar.';return;}
+    var voices=speechSynthesis.getVoices();
+    if(!voices.length){voiceInfo.textContent='Kein API-Key gesetzt. Browser-Stimme laedt noch - einmal "Stimme testen" klicken.';return;}
+    var v=deVoice||voices[0];
+    voiceInfo.textContent='Kein API-Key gesetzt: Browser-Stimme '+v.name+' ('+v.lang+'). Fuer Onyx den OpenAI-Key in der Konfiguration eintragen.';
+  }
+  function pickVoice(){
+    if(!hasSpeech())return;
+    var voices=speechSynthesis.getVoices();
+    var de=voices.filter(function(x){return /^de/i.test(x.lang||'');});
+    deVoice=de.find(function(x){return /google|microsoft|anna|katja|german|deutsch/i.test(x.name);})||de[0]||voices[0]||null;
+    refreshVoiceInfo();
+  }
+  if(hasSpeech()){speechSynthesis.onvoiceschanged=pickVoice;pickVoice();setTimeout(pickVoice,300);setTimeout(pickVoice,1200);}else{refreshVoiceInfo();}
+  function cleanSpeechText(t){return String(t||'').replace(/https?:\/\/\S+/g,'Link').replace(/[`*_#>{}\[\]]/g,'').replace(/\s+/g,' ').trim();}
+  function splitSpeech(t){var parts=cleanSpeechText(t).match(/.{1,220}(?:[.!?]\s|,\s|\s|$)/g)||[];return parts.map(function(x){return x.trim();}).filter(Boolean);}
+  function speakBrowser(t){return new Promise(function(resolve){
+    var parts=splitSpeech(t); if(!parts.length){setState('idle','bereit');resolve();return;}
+    if(!hasSpeech()){addMsg('sys','Sprachausgabe wird in diesem Browser nicht unterstuetzt.');setState('idle','bereit');resolve();return;}
+    speechSynthesis.resume();speechSynthesis.cancel();pickVoice();setState('speaking','spricht');
+    var i=0,done=false,watchdog=null,keepAlive=null;
+    function finish(){if(done)return;done=true;clearTimeout(watchdog);clearInterval(keepAlive);setState('idle','bereit');resolve();}
+    function next(){
+      if(i>=parts.length){finish();return;}
+      var u=new SpeechSynthesisUtterance(parts[i++]);u.lang='de-DE';u.rate=speechRate;u.pitch=.95;u.volume=1;if(deVoice)u.voice=deVoice;
+      u.onend=next;u.onerror=function(e){
+        var err=(e&&e.error)||'unbekannt';
+        if(err==='interrupted'||err==='canceled'){finish();return;}
+        addMsg('sys','Sprachausgabe-Fehler: '+err);next();
+      };
+      try{speechSynthesis.speak(u);}catch(e){addMsg('sys','Sprachausgabe konnte nicht gestartet werden: '+e.message);finish();return;}
+    }
+    keepAlive=setInterval(function(){if(speechSynthesis.paused)speechSynthesis.resume();},700);
+    watchdog=setTimeout(finish,Math.max(8000,parts.join(' ').length*120));
+    next();
+  });}
+
+  // === OpenAI-TTS (Onyx & Co.) ===
+  let currentAudio=null;
+  function stopAudio(){if(currentAudio){try{currentAudio.pause();}catch(_){}}currentAudio=null;speechSynthesis.cancel&&speechSynthesis.cancel();}
+  async function speakOpenAI(text){
+    const c=getConfig();
+    const clean=cleanSpeechText(text).slice(0,4000);
+    if(!clean){setState('idle','bereit');return;}
+    setState('speaking','spricht');
+    voiceInfo.textContent='Spricht mit OpenAI-Stimme "'+c.voice+'"...';
+    const res=await fetch('https://api.openai.com/v1/audio/speech',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+c.apiKey},
+      body:JSON.stringify({
+        model:'gpt-4o-mini-tts',voice:c.voice,input:clean,speed:speechRate,response_format:'mp3',
+        instructions:'Sprich fluessig auf Deutsch. Klinge wie ein souveraener, charmanter KI-Butler: ruhig, warm, trocken-witzig, praezise.'
+      })
+    });
+    if(!res.ok){const err=await res.text();throw new Error('TTS '+res.status+': '+err.slice(0,180));}
+    const blob=await res.blob();
+    const url=URL.createObjectURL(blob);
+    await new Promise(function(resolve,reject){
+      const a=new Audio(url);currentAudio=a;
+      a.onended=function(){URL.revokeObjectURL(url);resolve();};
+      a.onerror=function(){URL.revokeObjectURL(url);reject(new Error('Audio konnte nicht abgespielt werden.'));};
+      const p=a.play();
+      if(p&&p.catch)p.catch(function(){URL.revokeObjectURL(url);reject(new Error('Audio vom Browser blockiert - einmal auf die Seite klicken.'));});
+    });
+    setState('idle','bereit');
+  }
+  async function speak(text){
+    if(hasKey()){
+      try{await speakOpenAI(text);return;}
+      catch(e){addMsg('sys','OpenAI-Stimme fehlgeschlagen ('+e.message+'). Nutze Browser-Stimme.');}
+    }
+    await speakBrowser(text);
+  }
+
+  // ==========================================================
+  // SKILLS - Werkzeuge, die GPT per Function-Calling nutzt
+  // ==========================================================
+  const WMO={0:'klarer Himmel',1:'ueberwiegend klar',2:'teils bewoelkt',3:'bedeckt',45:'Nebel',48:'Reifnebel',51:'leichter Nieselregen',53:'Nieselregen',55:'starker Nieselregen',61:'leichter Regen',63:'Regen',65:'starker Regen',66:'gefrierender Regen',67:'starker gefrierender Regen',71:'leichter Schneefall',73:'Schneefall',75:'starker Schneefall',77:'Schneegriesel',80:'leichte Regenschauer',81:'Regenschauer',82:'heftige Regenschauer',85:'Schneeschauer',86:'starke Schneeschauer',95:'Gewitter',96:'Gewitter mit Hagel',99:'schweres Gewitter mit Hagel'};
+  const activeTimers=[];
+
+  const tools=[
+    {type:'function',function:{name:'get_weather',description:'Aktuelles Wetter und heutige Vorhersage fuer eine Stadt (Open-Meteo, ohne API-Key).',
+      parameters:{type:'object',properties:{city:{type:'string',description:'Stadtname, z.B. Berlin'}},required:['city']}}},
+    {type:'function',function:{name:'set_timer',description:'Stellt einen Timer. Nach Ablauf meldet sich Jarvis mit Ton und Sprache.',
+      parameters:{type:'object',properties:{seconds:{type:'number',description:'Dauer in Sekunden'},label:{type:'string',description:'Wofuer der Timer ist, z.B. Nudeln'}},required:['seconds']}}},
+    {type:'function',function:{name:'calculate',description:'Rechnet einen mathematischen Ausdruck aus, z.B. (1200*0.19)+50.',
+      parameters:{type:'object',properties:{expression:{type:'string',description:'Mathematischer Ausdruck mit + - * / ( ) . %'}},required:['expression']}}},
+    {type:'function',function:{name:'wikipedia_lookup',description:'Schlaegt ein Thema in der deutschen Wikipedia nach und liefert die Zusammenfassung.',
+      parameters:{type:'object',properties:{query:{type:'string',description:'Suchbegriff'}},required:['query']}}},
+    {type:'function',function:{name:'remember_fact',description:'Speichert einen Fakt dauerhaft im Langzeit-Gedaechtnis (z.B. wenn die Nutzerin sagt: merk dir ...).',
+      parameters:{type:'object',properties:{fact:{type:'string',description:'Der Fakt als kurzer Satz'}},required:['fact']}}},
+    {type:'function',function:{name:'forget_fact',description:'Loescht Fakten aus dem Langzeit-Gedaechtnis, die den Suchtext enthalten.',
+      parameters:{type:'object',properties:{search:{type:'string',description:'Textstueck des zu loeschenden Fakts'}},required:['search']}}}
+  ];
+
+  async function runTool(name,args){
+    if(name==='get_weather'){
+      const geo=await fetch('https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(args.city)+'&count=1&language=de').then(r=>r.json());
+      if(!geo.results||!geo.results.length)return 'Stadt "'+args.city+'" nicht gefunden.';
+      const g=geo.results[0];
+      const w=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+g.latitude+'&longitude='+g.longitude+'&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1').then(r=>r.json());
+      const c=w.current,d=w.daily;
+      return 'Wetter in '+g.name+(g.country?', '+g.country:'')+': '+(WMO[c.weather_code]||'unbekannt')+', '+Math.round(c.temperature_2m)+' Grad (gefuehlt '+Math.round(c.apparent_temperature)+'), Wind '+Math.round(c.wind_speed_10m)+' km/h, Luftfeuchte '+c.relative_humidity_2m+' %. Heute: max '+Math.round(d.temperature_2m_max[0])+', min '+Math.round(d.temperature_2m_min[0])+' Grad, Regenwahrscheinlichkeit '+(d.precipitation_probability_max[0]!=null?d.precipitation_probability_max[0]:'?')+' %.';
+    }
+    if(name==='set_timer'){
+      const secs=Math.max(1,Math.round(args.seconds)),label=args.label||'Timer';
+      const id=setTimeout(async function(){
+        addMsg('skill','Timer abgelaufen: '+label);
+        try{
+          const ctx=new (window.AudioContext||window.webkitAudioContext)();
+          const o=ctx.createOscillator(),gn=ctx.createGain();
+          o.connect(gn);gn.connect(ctx.destination);o.frequency.value=880;gn.gain.value=.15;
+          o.start();setTimeout(function(){o.stop();ctx.close();},700);
+        }catch(_){}
+        await speak('Dein Timer ist abgelaufen: '+label+'.');
+      },secs*1000);
+      activeTimers.push(id);
+      const m=Math.floor(secs/60),s=secs%60;
+      addMsg('skill','Timer gestellt: '+label+' ('+(m?m+' min ':'')+(s?s+' s':'')+')');
+      return 'Timer "'+label+'" laeuft, meldet sich in '+(m?m+' Minuten ':'')+(s?s+' Sekunden':'')+'.';
+    }
+    if(name==='calculate'){
+      const expr=String(args.expression||'').replace(/,/g,'.');
+      if(!/^[0-9+\-*/().%\s]+$/.test(expr))return 'Ungueltiger Ausdruck.';
+      try{
+        const val=Function('"use strict";return('+expr+')')();
+        if(typeof val!=='number'||!isFinite(val))return 'Das ergibt kein gueltiges Ergebnis.';
+        return expr+' = '+(Math.round(val*1e10)/1e10);
+      }catch(e){return 'Konnte das nicht ausrechnen: '+e.message;}
+    }
+    if(name==='wikipedia_lookup'){
+      const s=await fetch('https://de.wikipedia.org/w/api.php?action=opensearch&search='+encodeURIComponent(args.query)+'&limit=1&format=json&origin=*').then(r=>r.json());
+      const title=s[1]&&s[1][0];
+      if(!title)return 'Dazu habe ich in der Wikipedia nichts gefunden.';
+      const sum=await fetch('https://de.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(title)).then(r=>r.json());
+      return (sum.title||title)+': '+(sum.extract||'Keine Zusammenfassung verfuegbar.');
+    }
+    if(name==='remember_fact'){
+      const mem=loadMemory();
+      if(mem.indexOf(args.fact)===-1)mem.push(args.fact);
+      saveMemory(mem);
+      addMsg('skill','Gemerkt: '+args.fact);
+      return 'Gemerkt: '+args.fact;
+    }
+    if(name==='forget_fact'){
+      const mem=loadMemory(),q=String(args.search||'').toLowerCase();
+      const keep=mem.filter(function(f){return f.toLowerCase().indexOf(q)===-1;});
+      const removed=mem.length-keep.length;
+      saveMemory(keep);
+      if(removed)addMsg('skill','Vergessen: '+removed+' Eintrag/Eintraege zu "'+args.search+'"');
+      return removed?removed+' Eintraege geloescht.':'Nichts Passendes im Gedaechtnis gefunden.';
+    }
+    return 'Unbekanntes Werkzeug.';
+  }
+
+  // === Gespraechsverlauf fuer OpenAI ===
+  let history=[];
+
+  async function askOpenAI(text){
+    const c=getConfig();
+    history.push({role:'user',content:text});
+    if(history.length>24)history=history.slice(-24);
+    let messages=[{role:'system',content:systemPrompt()}].concat(history);
+    for(let round=0;round<5;round++){
+      const res=await fetch('https://api.openai.com/v1/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+c.apiKey},
+        body:JSON.stringify({model:c.model,messages:messages,tools:tools,tool_choice:'auto',temperature:.8,max_tokens:600})
+      });
+      if(!res.ok){const err=await res.text();throw new Error('OpenAI '+res.status+': '+err.slice(0,200));}
+      const data=await res.json();
+      const msg=data.choices[0].message;
+      if(msg.tool_calls&&msg.tool_calls.length){
+        messages.push(msg);history.push(msg);
+        for(const tc of msg.tool_calls){
+          let result;
+          setState('thinking','skill: '+tc.function.name.replace(/_/g,' '));
+          try{result=await runTool(tc.function.name,JSON.parse(tc.function.arguments||'{}'));}
+          catch(e){result='Fehler im Werkzeug: '+e.message;}
+          const toolMsg={role:'tool',tool_call_id:tc.id,content:String(result)};
+          messages.push(toolMsg);history.push(toolMsg);
+        }
+        continue;
+      }
+      const reply=(msg.content||'').trim()||'Hm, mir fehlen gerade die Worte. Das kommt selten vor.';
+      history.push({role:'assistant',content:reply});
+      return reply;
+    }
+    return 'Ich habe mich in meinen Werkzeugen verlaufen. Frag mich das bitte nochmal.';
+  }
+
+  // === n8n-Fallback (wie bisher) ===
+  function pickAudioPayload(j){
+    if(!j||typeof j!=='object')return null;
+    var audio=j.audioBase64||j.audioData||j.audio||j.speech||j.fileBase64||j.data;
+    var url=j.audioUrl||j.audioURL||j.url;
+    var mime=j.audioMime||j.mimeType||j.mime||'audio/mpeg';
+    if(audio&&typeof audio==='object'){
+      mime=audio.mimeType||audio.mime||mime;
+      url=audio.url||url;
+      audio=audio.data||audio.base64||audio.audioBase64||audio.fileBase64||null;
+    }
+    if(typeof audio==='string'){
+      audio=audio.trim();
+      if(audio.indexOf('data:audio/')===0)return {src:audio};
+      if(audio.indexOf('http')===0)return {src:audio};
+      return {src:'data:'+mime+';base64,'+audio};
+    }
+    if(typeof url==='string'&&url.trim())return {src:url.trim()};
+    return null;
+  }
+  function playAssistantAudio(audioPayload,fallbackText){return new Promise(function(resolve){
+    if(!audioPayload||!audioPayload.src){speak(fallbackText).then(resolve);return;}
+    stopAudio();setState('speaking','spricht');
+    var a=new Audio(audioPayload.src),done=false;currentAudio=a;
+    function finish(){if(done)return;done=true;setState('idle','bereit');resolve();}
+    a.onended=finish;
+    a.onerror=function(){addMsg('sys','Workflow-Audio konnte nicht abgespielt werden. Nutze Ersatzstimme.');speak(fallbackText).then(resolve);};
+    var p=a.play();
+    if(p&&p.catch)p.catch(function(){addMsg('sys','Audio wurde vom Browser blockiert. Bitte einmal auf die Seite klicken.');speak(fallbackText).then(resolve);});
+  });}
+  async function askN8n(text){
+    const cfg=getConfig();
+    const res=await fetch(N8N_WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:text, chatInput:text, message:text, sessionId:sessionId, ts:new Date().toISOString(), config:cfg, systemPrompt:systemPrompt(), knowledge:cfg.knowledge, tone:cfg.tone, persona:cfg.persona})});
+    const raw=await res.text(); let reply,audioPayload=null;
+    try{
+      const j=JSON.parse(raw);
+      reply=j.reply||j.output||j.text||j.answer||j.message||j.response||raw;
+      audioPayload=pickAudioPayload(j);
+    }catch(_){ reply=raw; }
+    if(typeof reply!=='string') reply=JSON.stringify(reply);
+    reply=reply.trim()||'Der n8n-Workflow hat eine leere Antwort geliefert. Am einfachsten: OpenAI-Key in der Konfiguration eintragen, dann antworte ich direkt ueber GPT mit Onyx-Stimme.';
+    if(!res.ok){ addMsg('sys','n8n '+res.status+': '+raw.slice(0,200)); reply='Der Workflow meldete einen Fehler.'; }
+    return {reply:reply,audioPayload:audioPayload};
+  }
+
+  // === Hauptlogik ===
+  let busy=false;
+  async function ask(text){
+    if(busy)return;
+    busy=true;
+    stopAudio();
+    addMsg('user',text); setState('thinking','denkt nach');
+    try{
+      if(hasKey()){
+        const reply=await askOpenAI(text);
+        addMsg('ai',reply);
+        await speak(reply);
+      }else{
+        addMsg('sys','Hinweis: Kein OpenAI-Key eingetragen - ich frage den n8n-Workflow. Fuer GPT + Onyx-Stimme unter "J.A.R.V.I.S. konfigurieren" den Key (sk-...) eintragen und speichern.');
+        const r=await askN8n(text);
+        addMsg('ai',r.reply);
+        await playAssistantAudio(r.audioPayload,r.reply);
+      }
+    }catch(e){
+      setState('idle','bereit');
+      addMsg('sys','Fehler: '+e.message);
+      if(/401/.test(e.message))addMsg('sys','Der API-Key scheint ungueltig zu sein. Bitte in der Konfiguration pruefen.');
+    }
+    busy=false;
+  }
+
+  // === Spracheingabe ===
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let recog=null,listening=false;
+  if(SR){recog=new SR();recog.lang='de-DE';recog.interimResults=false;
+    recog.onstart=function(){listening=true;micBtn.classList.add('active');micBtn.textContent='⏹ Stop';setState('listening','hört zu');};
+    recog.onend=function(){listening=false;micBtn.classList.remove('active');micBtn.textContent='🎙 Sprechen';if(stage.className.indexOf('listening')>-1)setState('idle','bereit');};
+    recog.onerror=function(){setState('idle','bereit');};
+    recog.onresult=function(e){ask(e.results[0][0].transcript);};
+  }else{micBtn.textContent='🎙 (nicht unterstützt)';}
+  micBtn.onclick=function(){if(!recog){alert('Spracherkennung hier nicht unterstützt — Textfeld nutzen (Chrome/Edge).');return;}if(listening)recog.stop();else{stopAudio();try{recog.start();}catch(_){}}};
+  voiceTest.onclick=function(){speak('System online. Onyx-Stimme aktiv. Und ja, ich klinge dabei ziemlich gut.').catch(function(e){addMsg('sys','Stimmtest fehlgeschlagen: '+e.message);});};
+  textInput.addEventListener('keydown',function(e){if(e.key==='Enter'&&textInput.value.trim()){var t=textInput.value.trim();textInput.value='';ask(t);}});
+  orb.addEventListener('click',function(){if(!transcriptEl.children.length)ask('Stell dich kurz vor und sag mir, was du alles kannst.');});
+  refreshVoiceInfo();
+</script>
+</body>
+</html>
